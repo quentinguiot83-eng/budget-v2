@@ -60,6 +60,7 @@ import {
   uid,
   today,
   month,
+  incomeBudgetMonth,
   shiftMonth,
   dateLabel,
   monthLabel,
@@ -918,7 +919,15 @@ export default function App() {
     }
     const fields: Field[] = [
       amountField("amount", "Montant (€)", existing?.amount || 0),
-      field("date", "Date", existing?.date || today(), "date"),
+      field(
+        "date",
+        "Date",
+        existing?.date || today(),
+        "date",
+        type === "income"
+          ? "Un salaire reçu à partir du 27 est rattaché au mois suivant pour le budget."
+          : "",
+      ),
       field("description", "Description", existing?.description),
       choice(
         "account",
@@ -1350,7 +1359,7 @@ export default function App() {
         <Row
           title={
             useActualIncome
-              ? "Revenus réellement reçus"
+              ? "Revenus affectés à ce mois"
               : "Revenus mensuels estimés"
           }
           value={money(incomeUsed)}
@@ -1400,7 +1409,8 @@ export default function App() {
         <p>
           Les charges fixes ne sont déduites qu’une seule fois. Les virements et
           dépenses voyage ne sont pas considérés comme des revenus ou des
-          enveloppes ordinaires.
+          enveloppes ordinaires. Un salaire reçu à partir du 27 est affecté au
+          mois budgétaire suivant.
         </p>
 
         {useActualIncome ? (
@@ -1476,7 +1486,13 @@ export default function App() {
             )
           }
           title={t.description}
-          sub={`${dateLabel(t.date)} · ${t.trip ? "Voyage" : s.categories.find((c) => c.id === t.category)?.name || t.incomeType || "Mouvement de compte"}`}
+          sub={`${dateLabel(t.date)} · ${t.trip ? "Voyage" : s.categories.find((c) => c.id === t.category)?.name || t.incomeType || "Mouvement de compte"}${
+            t.type === "income" &&
+            t.incomeType === "Salaire" &&
+            incomeBudgetMonth(t) !== month(t.date)
+              ? ` · budget ${monthLabel(incomeBudgetMonth(t))}`
+              : ""
+          }`}
           value={
             <span
               className={["income", "repay"].includes(t.type) ? "positive" : ""}
@@ -2143,7 +2159,7 @@ export default function App() {
                   <span className="metric-icon">
                     <ArrowDownLeft />
                   </span>
-                  <small>Revenus reçus ce mois</small>
+                  <small>Revenus affectés à ce mois</small>
                   <strong>{money(totals.income)}</strong>
                   <button
                     className="text"
@@ -3206,14 +3222,19 @@ export default function App() {
               </div>
               <section className="card">
                 {txRows(
-                  sortedTx.filter(
-                    (t) =>
-                      month(t.date) === selectedMonth &&
+                  sortedTx.filter((t) => {
+                    const sameMonth =
+                      txFilter === "income" && t.type === "income"
+                        ? incomeBudgetMonth(t) === selectedMonth
+                        : month(t.date) === selectedMonth;
+                    return (
+                      sameMonth &&
                       (!txFilter ||
                         (txFilter.startsWith("cat:")
                           ? t.category === txFilter.slice(4)
-                          : t.type === txFilter)),
-                  ),
+                          : t.type === txFilter))
+                    );
+                  }),
                 )}
               </section>
             </>
