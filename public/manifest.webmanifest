@@ -1,1 +1,17 @@
-{"name":"Notre budget","short_name":"Budget","lang":"fr","start_url":"/","display":"standalone","background_color":"#f6f8fb","theme_color":"#bdd3f6","icons":[{"src":"/favicon.svg","sizes":"any","type":"image/svg+xml","purpose":"any"}]}
+{
+  "name": "Wimm — Where is my money?",
+  "short_name": "Wimm",
+  "lang": "fr",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f6f8f4",
+  "theme_color": "#174f49",
+  "icons": [
+    {
+      "src": "/wimm-icon.png",
+      "sizes": "1024x1024",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

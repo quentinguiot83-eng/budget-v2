@@ -273,3 +273,25 @@ test("projet financé non déduit, projet impossible explicite", () => {
   s.projects[0].settled = true;
   assert.equal(project(s, 1).at(-1)!.wealth, 10000);
 });
+
+
+test("mois budgétaire explicite du salaire", () => {
+  const s = fixture();
+
+  s.transactions.push({
+    id: "salary-budget-month",
+    type: "income",
+    account: "current",
+    amount: 200000,
+    date: "2020-01-27",
+    description: "Salaire",
+    incomeType: "Salaire",
+    budgetMonth: "2020-02",
+  });
+
+  assert.equal(stats(s, "2020-01").income, 0);
+  assert.equal(stats(s, "2020-02").income, 200000);
+
+  // Le solde bancaire utilise toujours la vraie date du 27 janvier.
+  assert.equal(balance(s, "current", "2020-01-31"), 300000);
+});

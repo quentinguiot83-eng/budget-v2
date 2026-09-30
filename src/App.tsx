@@ -31,6 +31,27 @@ import {
   Download,
   Menu,
   X,
+  Car,
+  Coffee,
+  HeartPulse,
+  Dumbbell,
+  Shirt,
+  Gift,
+  PawPrint,
+  Baby,
+  GraduationCap,
+  Briefcase,
+  Wrench,
+  Smartphone,
+  Wifi,
+  Zap,
+  Bus,
+  Fuel,
+  Gamepad2,
+  Music,
+  BookOpen,
+  Stethoscope,
+  ShoppingCart,
 } from "lucide-react";
 import {
   ResponsiveContainer,
@@ -62,6 +83,7 @@ import {
   month,
   incomeBudgetMonth,
   shiftMonth,
+  dateAt,
   dateLabel,
   monthLabel,
   money,
@@ -107,6 +129,28 @@ const icons: Record<string, ReactNode> = {
   food: <ShoppingBasket size={20} />,
   out: <Utensils size={20} />,
   other: <Wallet size={20} />,
+  car: <Car size={20} />,
+  coffee: <Coffee size={20} />,
+  health: <HeartPulse size={20} />,
+  sport: <Dumbbell size={20} />,
+  clothes: <Shirt size={20} />,
+  gift: <Gift size={20} />,
+  pets: <PawPrint size={20} />,
+  baby: <Baby size={20} />,
+  education: <GraduationCap size={20} />,
+  work: <Briefcase size={20} />,
+  repair: <Wrench size={20} />,
+  phone: <Smartphone size={20} />,
+  internet: <Wifi size={20} />,
+  energy: <Zap size={20} />,
+  transport: <Bus size={20} />,
+  fuel: <Fuel size={20} />,
+  games: <Gamepad2 size={20} />,
+  music: <Music size={20} />,
+  books: <BookOpen size={20} />,
+  doctor: <Stethoscope size={20} />,
+  shopping: <ShoppingCart size={20} />,
+  travel: <Plane size={20} />,
 };
 const field = (
   name: string,
@@ -486,10 +530,32 @@ export default function App() {
           "icon",
           "Icône",
           [
-            ["home", "Maison"],
-            ["food", "Courses"],
-            ["out", "Sorties"],
-            ["other", "Autre"],
+            ["home", "🏠 Maison"],
+            ["food", "🥕 Courses / alimentation"],
+            ["out", "🍽️ Restaurant / sorties"],
+            ["shopping", "🛒 Achats"],
+            ["car", "🚗 Voiture"],
+            ["transport", "🚌 Transports"],
+            ["fuel", "⛽ Carburant"],
+            ["travel", "✈️ Voyage"],
+            ["coffee", "☕ Café"],
+            ["health", "❤️ Santé"],
+            ["doctor", "🩺 Médecin"],
+            ["sport", "🏋️ Sport"],
+            ["clothes", "👕 Vêtements"],
+            ["gift", "🎁 Cadeaux"],
+            ["pets", "🐾 Animaux"],
+            ["baby", "👶 Enfants"],
+            ["education", "🎓 Études"],
+            ["work", "💼 Travail"],
+            ["repair", "🔧 Entretien / bricolage"],
+            ["phone", "📱 Téléphone"],
+            ["internet", "📶 Internet"],
+            ["energy", "⚡ Énergie"],
+            ["games", "🎮 Jeux"],
+            ["music", "🎵 Musique"],
+            ["books", "📚 Livres"],
+            ["other", "💳 Autre"],
           ],
           c?.icon || "other",
         ),
@@ -925,7 +991,7 @@ export default function App() {
         existing?.date || today(),
         "date",
         type === "income"
-          ? "Un salaire reçu à partir du 27 est rattaché au mois suivant pour le budget."
+          ? "La date bancaire reste réelle. Le mois budgétaire du salaire dépend du réglage choisi dans Réglages."
           : "",
       ),
       field("description", "Description", existing?.description),
@@ -988,6 +1054,12 @@ export default function App() {
             account: v.account,
             category: v.category || undefined,
             incomeType: v.incomeType || undefined,
+            budgetMonth:
+              type === "income" && v.incomeType === "Salaire"
+                ? (s.salaryBudget ?? "next") === "next"
+                  ? shiftMonth(month(v.date), 1)
+                  : month(v.date)
+                : undefined,
             trip: trip?.id || existing?.trip,
             tripCategory: v.tripCategory || undefined,
           };
@@ -1000,6 +1072,64 @@ export default function App() {
       },
     );
   }
+  function confirmSalary() {
+    if (!current) {
+      editAccount();
+      return;
+    }
+
+    const plannedDate = dateAt(month(), s.salaryDay ?? 27);
+
+    openForm(
+      "Confirmer le salaire reçu",
+      [
+        amountField(
+          "amount",
+          "Montant réellement reçu (€)",
+          s.income,
+          "Vous pouvez remplacer l'estimation par le montant exact reçu.",
+        ),
+        field(
+          "date",
+          "Date réelle de réception",
+          plannedDate,
+          "date",
+        ),
+        field(
+          "description",
+          "Description",
+          "Salaire",
+        ),
+        choice(
+          "account",
+          "Compte crédité",
+          accountOptions(),
+          current.id,
+        ),
+      ],
+      async (v) => {
+        await change((d) => {
+          const realMonth = month(v.date);
+
+          d.transactions.push({
+            id: uid(),
+            type: "income",
+            amount: euro(v.amount),
+            date: v.date,
+            description: v.description || "Salaire",
+            account: v.account,
+            incomeType: "Salaire",
+            budgetMonth:
+              (d.salaryBudget ?? "next") === "next"
+                ? shiftMonth(realMonth, 1)
+                : realMonth,
+          });
+        }, "Salaire confirmé");
+      },
+      "Confirmer le salaire",
+    );
+  }
+
   function newLoan() {
     if (!current) {
       editAccount();
@@ -1409,8 +1539,7 @@ export default function App() {
         <p>
           Les charges fixes ne sont déduites qu’une seule fois. Les virements et
           dépenses voyage ne sont pas considérés comme des revenus ou des
-          enveloppes ordinaires. Un salaire reçu à partir du 27 est affecté au
-          mois budgétaire suivant.
+          enveloppes ordinaires. Les salaires suivent le réglage choisi dans Réglages.
         </p>
 
         {useActualIncome ? (
@@ -1728,7 +1857,7 @@ export default function App() {
       <main className="auth-page">
         <section className="auth-story">
           <div className="brand">
-            <span>N</span> Notre budget
+            <img src="/wimm-icon.png" alt="" className="brand-logo" /> Wimm
           </div>
           <h1>
             Une vue claire.
@@ -1756,7 +1885,7 @@ export default function App() {
         </section>
         <section className="auth-panel">
           <div className="mobile-brand brand">
-            <span>N</span> Notre budget
+            <img src="/wimm-icon.png" alt="" className="brand-logo" /> Wimm
           </div>
           <p className="eyebrow">BIENVENUE CHEZ VOUS</p>
           <h2>
@@ -1875,7 +2004,7 @@ export default function App() {
     return (
       <main className="onboarding">
         <div className="brand">
-          <span>N</span> Notre budget
+          <img src="/wimm-icon.png" alt="" className="brand-logo" /> Wimm
         </div>
         <h1>Bienvenue dans votre budget.</h1>
         <p className="muted">
@@ -1921,6 +2050,24 @@ export default function App() {
   const alerts = overdue(s).filter(
     (d) => d.rule.kind !== "repay" || loanRemaining(s, d.rule.loanId || "") > 0,
   );
+
+  const salaryDay = Math.min(31, Math.max(1, s.salaryDay ?? 27));
+  const salaryBudget = s.salaryBudget ?? "next";
+  const salaryReminder = s.salaryReminder ?? true;
+  const salaryPlannedDate = dateAt(month(), salaryDay);
+
+  const salaryReceivedThisMonth = s.transactions.some(
+    (t) =>
+      t.type === "income" &&
+      t.incomeType === "Salaire" &&
+      month(t.date) === month() &&
+      t.date <= today(),
+  );
+
+  const salaryAlert =
+    salaryReminder &&
+    today() >= salaryPlannedDate &&
+    !salaryReceivedThisMonth;
   const wealth = s.accounts
       .filter((a) => a.group === "wealth")
       .reduce((n, a) => n + balance(s, a.id), 0),
@@ -1945,7 +2092,7 @@ export default function App() {
     <div className="app">
       <aside className="sidebar">
         <button className="brand" onClick={() => navigate("home")}>
-          <span>N</span> Notre budget
+          <img src="/wimm-icon.png" alt="" className="brand-logo" /> Wimm
         </button>
         <p className="eyebrow">{doc.household.name}</p>
         <nav>
@@ -2001,7 +2148,7 @@ export default function App() {
               >
                 <Menu size={23} />
               </button>
-              <span>Notre budget</span>
+              <span>Wimm</span>
             </div>
             <span className="eyebrow">{doc.household.name}</span>
           </div>
@@ -2062,6 +2209,16 @@ export default function App() {
             "fixed",
           ].includes(route) && (
             <div className="month-picker">
+              {selectedMonth !== month() && (
+                <button
+                  className="secondary current-month-button"
+                  type="button"
+                  onClick={() => setMonth(month())}
+                >
+                  Mois actuel
+                </button>
+              )}
+
               <button
                 className="icon"
                 aria-label="Mois précédent"
@@ -2069,12 +2226,14 @@ export default function App() {
               >
                 <ChevronLeft size={18} />
               </button>
+
               <input
                 type="month"
                 aria-label="Mois affiché"
                 value={selectedMonth}
                 onChange={(e) => e.target.value && setMonth(e.target.value)}
               />
+
               <button
                 className="icon"
                 aria-label="Mois suivant"
@@ -2102,6 +2261,21 @@ export default function App() {
           )}
           {route === "home" && (
             <>
+              {salaryAlert && (
+                <button
+                  type="button"
+                  className="alert-bar"
+                  onClick={confirmSalary}
+                >
+                  <Bell size={19} />
+                  <strong>Salaire à confirmer</strong>
+                  <span>
+                    Prévu le {dateLabel(salaryPlannedDate)} · indiquez le montant réellement reçu
+                  </span>
+                  <ChevronRight size={18} />
+                </button>
+              )}
+
               <div className="overview">
                 <section className="balance-card">
                   <div className="split">
@@ -3668,6 +3842,96 @@ export default function App() {
                 )}
               </section>
               <section className="card">
+                <div className="section-head">
+                  <div>
+                    <h2>Salaire</h2>
+                    <p className="muted">
+                      Choisissez la date prévue et le mois auquel votre salaire
+                      doit être affecté dans le budget.
+                    </p>
+                  </div>
+
+                  <button
+                    type="button"
+                    className="secondary"
+                    onClick={() =>
+                      openForm(
+                        "Réglages du salaire",
+                        [
+                          {
+                            ...field(
+                              "day",
+                              "Jour prévu de réception",
+                              salaryDay,
+                              "number",
+                              "Si le mois est plus court, Wimm utilisera automatiquement le dernier jour du mois.",
+                            ),
+                            min: 1,
+                            max: 31,
+                            step: "1",
+                          },
+                          choice(
+                            "budget",
+                            "Affecter le salaire au",
+                            [
+                              ["current", "Mois de réception"],
+                              ["next", "Mois suivant"],
+                            ],
+                            salaryBudget,
+                          ),
+                          choice(
+                            "reminder",
+                            "Rappel à la date prévue",
+                            [
+                              ["yes", "Activé"],
+                              ["no", "Désactivé"],
+                            ],
+                            salaryReminder ? "yes" : "no",
+                          ),
+                        ],
+                        async (v) => {
+                          const day = Number(v.day);
+
+                          if (!Number.isInteger(day) || day < 1 || day > 31) {
+                            throw Error("Le jour doit être compris entre 1 et 31.");
+                          }
+
+                          await change((d) => {
+                            d.salaryDay = day;
+                            d.salaryBudget =
+                              v.budget === "current" ? "current" : "next";
+                            d.salaryReminder = v.reminder === "yes";
+                          }, "Réglages du salaire modifiés");
+                        },
+                        "Enregistrer",
+                      )
+                    }
+                  >
+                    Modifier
+                  </button>
+                </div>
+
+                <Row
+                  title="Date prévue"
+                  value={`Le ${salaryDay} de chaque mois`}
+                />
+
+                <Row
+                  title="Affectation budgétaire"
+                  value={
+                    salaryBudget === "next"
+                      ? "Mois suivant"
+                      : "Mois de réception"
+                  }
+                />
+
+                <Row
+                  title="Rappel"
+                  value={salaryReminder ? "Activé" : "Désactivé"}
+                />
+              </section>
+
+              <section className="card">
                 <h2>Modules affichés</h2>
                 <p className="muted">
                   Masquer un module conserve toutes ses données.
@@ -3768,7 +4032,22 @@ export default function App() {
           )}
         </main>
         <footer className="page-footer">
-          Notre budget <span>·</span> Vos saisies, vos repères.
+          <span>
+            Wimm <span>·</span> Where is my money?
+          </span>
+
+          <button
+            type="button"
+            className="back-to-top"
+            onClick={() =>
+              window.scrollTo({
+                top: 0,
+                behavior: "smooth",
+              })
+            }
+          >
+            ↑ Retour en haut
+          </button>
         </footer>
       </div>
       {mobileMenuOpen && (
@@ -3787,7 +4066,7 @@ export default function App() {
           >
             <div className="mobile-drawer-head">
               <button className="brand" onClick={() => navigate("home")}>
-                <span>N</span> Notre budget
+                <img src="/wimm-icon.png" alt="" className="brand-logo" /> Wimm
               </button>
               <button
                 type="button"

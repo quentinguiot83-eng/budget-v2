@@ -1984,3 +1984,54 @@ dialog::backdrop {
     transform: translateX(0);
   }
 }
+
+
+/* Wimm — Retour en haut */
+.page-footer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  flex-wrap: wrap;
+}
+
+.back-to-top {
+  border: 0;
+  background: transparent;
+  color: var(--text-muted, #667085);
+  font: inherit;
+  font-size: 0.82rem;
+  cursor: pointer;
+  padding: 6px 8px;
+  border-radius: 8px;
+  transition:
+    background 0.2s ease,
+    color 0.2s ease;
+}
+
+.back-to-top:hover {
+  background: rgba(0, 0, 0, 0.04);
+  color: var(--text, #1f2937);
+}
+
+@media (max-width: 760px) {
+  .page-footer {
+    flex-direction: column;
+    gap: 6px;
+    padding-bottom: 115px;
+  }
+
+  .back-to-top {
+    min-height: 38px;
+  }
+}
+
+
+/* Wimm — logo de marque */
+.brand-logo {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  object-fit: cover;
+  flex-shrink: 0;
+}
