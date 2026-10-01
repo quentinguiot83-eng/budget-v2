@@ -93,6 +93,7 @@ import {
   budget,
   personalEnvelope,
   personalBudgetEnvelope,
+  personalTransferBudgetAmount,
   stats,
   dues,
   overdue,
@@ -107,8 +108,13 @@ import {
 import {
   type PersonalState,
   type PersonalTransaction,
+  type PersonalRule,
+  type PersonalDue,
+  type PersonalBudget,
   emptyPersonalState,
   personalBalance,
+  personalDues,
+  personalProjection,
   validatePersonal,
 } from "./personal";
 
@@ -367,6 +373,7 @@ export default function App() {
     [saving, setSaving] = useState(false),
     [invite, setInvite] = useState(""),
     [years, setYears] = useState(10),
+    [personalProjectionMonths, setPersonalProjectionMonths] = useState(24),
     [activeTrip, setActiveTrip] = useState(""),
     [txFilter, setTxFilter] = useState(""),
     [analysisCats, setAnalysisCats] = useState<string[] | null>(null),
@@ -1140,6 +1147,81 @@ export default function App() {
   }
 
 
+  function editPersonalHistoryTransaction(
+    t: PersonalTransaction,
+  ) {
+
+    // Une dépense ordinaire ou une mensualité validée
+    // utilise déjà notre formulaire de dépense.
+    if (t.type === "expense") {
+      personalExpense(t);
+      return;
+    }
+
+    // Les ajustements peuvent être positifs ou négatifs.
+    openForm(
+      "Modifier le mouvement privé",
+      [
+        {
+          ...field(
+            "amount",
+            "Ajustement (€)",
+            t.amount / 100,
+            "number",
+            "Positif = ajoute au solde · négatif = retire du solde.",
+          ),
+          step: "0.01",
+        },
+
+        field(
+          "date",
+          "Date",
+          t.date,
+          "date",
+        ),
+
+        field(
+          "description",
+          "Description",
+          t.description,
+        ),
+      ],
+
+      async (v) => {
+
+        const amount =
+          euro(v.amount);
+
+        await changePersonal(
+          (d) => {
+
+            d.transactions =
+              d.transactions.map(
+                (x) =>
+                  x.id === t.id
+                    ? {
+                        ...x,
+                        amount,
+                        date: v.date,
+                        description:
+                          v.description,
+                      }
+                    : x,
+              );
+
+          },
+
+          "Mouvement privé modifié",
+        );
+
+      },
+
+      "Enregistrer",
+    );
+
+  }
+
+
   function adjustPersonalBalance() {
 
     if (!ps.account)
@@ -1195,6 +1277,540 @@ export default function App() {
         );
 
       },
+    );
+
+  }
+
+
+  function editPersonalRule(
+    rule?: PersonalRule,
+  ) {
+
+    if (!ps.account)
+      return;
+
+    const paid =
+      rule
+        ? ps.transactions
+            .filter(
+              (t) =>
+                t.dueKey?.startsWith(
+                  rule.id + ":",
+                ),
+            )
+            .sort(
+              (a, b) =>
+                a.date.localeCompare(
+                  b.date,
+                ),
+            )
+        : [];
+
+    const pendingDates =
+      rule
+        ? Array.from(
+            {
+              length:
+                rule.count || 0,
+            },
+            (_, i) =>
+              addMonths(
+                rule.start,
+                i *
+                  rule.interval,
+              ),
+          ).filter(
+            (date) =>
+              (!rule.end ||
+                date <=
+                  rule.end) &&
+              !ps.transactions.some(
+                (t) =>
+                  t.dueKey ===
+                  rule.id +
+                    ":" +
+                    date,
+              ),
+          )
+        : [];
+
+    const nextDate =
+      pendingDates[0] ||
+      today();
+
+    const remaining =
+      rule
+        ? Math.max(
+            1,
+            pendingDates.length,
+          )
+        : 3;
+
+    openForm(
+      rule
+        ? "Modifier les prochaines mensualités"
+        : "Paiement en plusieurs fois",
+      [
+        field(
+          "name",
+          "Description",
+          rule?.name || "",
+        ),
+
+        amountField(
+          "amount",
+          "Montant de chaque paiement (€)",
+          rule?.amount || 0,
+        ),
+
+        field(
+          "start",
+          rule
+            ? "Première échéance modifiée"
+            : "Première échéance",
+          rule
+            ? nextDate
+            : today(),
+          "date",
+          paid.length
+            ? "Les mensualités déjà validées sont conservées."
+            : "",
+        ),
+
+        choice(
+          "interval",
+          "Fréquence",
+          [
+            ["1", "Mensuelle"],
+            ["3", "Trimestrielle"],
+            ["12", "Annuelle"],
+          ],
+          String(
+            rule?.interval || 1,
+          ),
+        ),
+
+        {
+          ...field(
+            "count",
+            rule
+              ? "Nombre de paiements restants"
+              : "Nombre de paiements",
+            remaining,
+            "number",
+          ),
+          min: 1,
+          max: 1200,
+          step: "1",
+        },
+      ],
+
+      async (v) => {
+
+        const amount =
+          euro(v.amount);
+
+        const count =
+          Number(v.count);
+
+        const interval =
+          Number(v.interval);
+
+        if (
+          amount <= 0 ||
+          !Number.isInteger(count) ||
+          count < 1 ||
+          count > 1200
+        )
+          throw Error(
+            "Vérifiez le montant et le nombre de paiements.",
+          );
+
+        const latestPaid =
+          paid.at(-1)?.date;
+
+        if (
+          latestPaid &&
+          v.start <= latestPaid
+        )
+          throw Error(
+            "La nouvelle première échéance doit être postérieure aux mensualités déjà validées.",
+          );
+
+        await changePersonal(
+          (d) => {
+
+            if (
+              rule &&
+              paid.length
+            ) {
+
+              const old =
+                d.rules.find(
+                  (r) =>
+                    r.id ===
+                    rule.id,
+                );
+
+              if (!old)
+                throw Error(
+                  "Échéancier introuvable.",
+                );
+
+              old.end =
+                previousDate(
+                  v.start,
+                );
+
+              d.rules.push({
+                id: uid(),
+                name: v.name,
+                amount,
+                start: v.start,
+                interval,
+                count,
+              });
+
+            } else {
+
+              const entry:
+                PersonalRule = {
+                  id:
+                    rule?.id ||
+                    uid(),
+                  name:
+                    v.name,
+                  amount,
+                  start:
+                    v.start,
+                  interval,
+                  count,
+                };
+
+              if (rule)
+                d.rules =
+                  d.rules.map(
+                    (r) =>
+                      r.id ===
+                      rule.id
+                        ? entry
+                        : r,
+                  );
+              else
+                d.rules.push(
+                  entry,
+                );
+
+            }
+
+          },
+
+          rule
+            ? "Paiement perso modifié"
+            : "Paiement en plusieurs fois perso",
+        );
+
+      },
+
+      "Enregistrer",
+    );
+
+  }
+
+
+  function payPersonalDue(
+    due: PersonalDue,
+  ) {
+
+    openForm(
+      "Valider : " + due.rule.name,
+      [
+        amountField(
+          "amount",
+          "Montant réellement payé (€)",
+          due.rule.amount,
+        ),
+        field(
+          "date",
+          "Date du paiement",
+          due.date,
+          "date",
+        ),
+        field(
+          "description",
+          "Description",
+          due.rule.name,
+        ),
+      ],
+      async (v) => {
+
+        if (
+          ps.transactions.some(
+            (t) =>
+              t.dueKey === due.key,
+          )
+        )
+          throw Error(
+            "Cette mensualité a déjà été validée.",
+          );
+
+        await changePersonal(
+          (d) =>
+            d.transactions.push({
+              id: uid(),
+              type: "expense",
+              amount: euro(v.amount),
+              date: v.date,
+              description:
+                v.description,
+              dueKey: due.key,
+            }),
+          "Mensualité perso validée",
+        );
+
+      },
+      "Valider le paiement",
+    );
+
+  }
+
+
+  function editPersonalBudget(
+    item?: PersonalBudget,
+  ) {
+
+    if (!ps.account)
+      return;
+
+    openForm(
+      item
+        ? "Modifier le budget perso"
+        : "Nouveau budget mensuel perso",
+      [
+        field(
+          "name",
+          "Nom",
+          item?.name || "",
+          "text",
+          "Exemple : sorties, jeux, photo…",
+        ),
+
+        amountField(
+          "amount",
+          "Budget mensuel (€)",
+          item?.amount || 0,
+        ),
+
+        field(
+          "start",
+          "À partir de",
+          item?.start ||
+            month(),
+          "month",
+        ),
+
+        {
+          ...field(
+            "end",
+            "Jusqu’au mois (optionnel)",
+            item?.end || "",
+            "month",
+          ),
+          required: false,
+        },
+      ],
+
+      async (v) => {
+
+        const amount =
+          euro(v.amount);
+
+        if (amount <= 0)
+          throw Error(
+            "Le budget mensuel doit être supérieur à zéro.",
+          );
+
+        if (
+          v.end &&
+          v.end < v.start
+        )
+          throw Error(
+            "Le mois de fin doit être postérieur au mois de début.",
+          );
+
+        const entry:
+          PersonalBudget = {
+            id:
+              item?.id ||
+              uid(),
+            name: v.name,
+            amount,
+            start: v.start,
+            end:
+              v.end ||
+              undefined,
+          };
+
+        await changePersonal(
+          (d) => {
+
+            d.budgets ??= [];
+
+            if (item)
+              d.budgets =
+                d.budgets.map(
+                  (b) =>
+                    b.id ===
+                    item.id
+                      ? entry
+                      : b,
+                );
+            else
+              d.budgets.push(
+                entry,
+              );
+
+          },
+
+          item
+            ? "Budget perso modifié"
+            : "Budget perso créé",
+        );
+
+      },
+
+      "Enregistrer",
+    );
+
+  }
+
+
+  function personalAdvance() {
+
+    if (
+      !current ||
+      !ps.account ||
+      !personalOwnerId
+    )
+      return;
+
+    openForm(
+      "Faire une avance",
+      [
+        amountField(
+          "amount",
+          "Montant versé immédiatement (€)",
+          50000,
+          "Cette somme quittera immédiatement le compte courant et sera ajoutée à votre compte perso.",
+        ),
+        {
+          ...field(
+            "months",
+            "Nombre de mois pour l’imputer au budget",
+            10,
+            "number",
+            "Exemple : 500 € sur 10 mois = environ 50 € déduits chaque mois de votre enveloppe perso.",
+          ),
+          min: 1,
+          max: 120,
+          step: "1",
+        },
+        field(
+          "date",
+          "Date du virement",
+          today(),
+          "date",
+        ),
+        field(
+          "startMonth",
+          "Première mensualité budgétaire",
+          month(),
+          "month",
+        ),
+        field(
+          "description",
+          "Description",
+          "Avance compte perso",
+        ),
+        choice(
+          "overdraft",
+          "Autoriser le découvert du compte courant",
+          [
+            ["no", "Non"],
+            [
+              "yes",
+              "Oui, je confirme",
+            ],
+          ],
+          "no",
+        ),
+      ],
+      async (v) => {
+
+        const amount =
+          euro(v.amount);
+
+        const months =
+          Number(v.months);
+
+        if (
+          amount <= 0 ||
+          !Number.isInteger(months) ||
+          months < 1 ||
+          months > 120
+        )
+          throw Error(
+            "Vérifiez le montant et le nombre de mois.",
+          );
+
+        if (
+          v.startMonth <
+          month(v.date)
+        )
+          throw Error(
+            "La première mensualité ne peut pas être antérieure au mois du virement.",
+          );
+
+        if (
+          balance(
+            s,
+            current.id,
+            v.date,
+          ) < amount &&
+          v.overdraft !== "yes"
+        )
+          throw Error(
+            "Le compte courant serait négatif après cette avance.",
+          );
+
+        await change(
+          (d) =>
+            d.transactions.push({
+              id: uid(),
+              type:
+                "personal_transfer",
+              account:
+                current.id,
+              amount,
+              date: v.date,
+              description:
+                v.description,
+              category:
+                ps.account!.category,
+              personalOwner:
+                personalOwnerId,
+              personalKind:
+                "advance",
+              personalMonths:
+                months,
+              personalStartMonth:
+                v.startMonth,
+            }),
+          "Avance compte perso",
+        );
+
+      },
+      "Faire l’avance",
     );
 
   }
@@ -1724,6 +2340,7 @@ export default function App() {
       setNotice("Ajoutez d’abord un compte courant et une catégorie.");
       return;
     }
+
     openForm(
       rule
         ? "Modifier les prochaines échéances"
@@ -1783,6 +2400,7 @@ export default function App() {
   : []),
       ],
       async (v) => {
+
         await change((d) => {
           if (
             rule &&
@@ -4310,6 +4928,26 @@ export default function App() {
                         <button
                           className="secondary wide"
                           onClick={() =>
+                            personalAdvance()
+                          }
+                        >
+                          <Coins size={17} />
+                          Faire une avance
+                        </button>
+
+                        <button
+                          className="secondary wide"
+                          onClick={() =>
+                            editPersonalRule()
+                          }
+                        >
+                          <CalendarDays size={17} />
+                          Paiement en plusieurs fois
+                        </button>
+
+                        <button
+                          className="secondary wide"
+                          onClick={() =>
                             adjustPersonalBalance()
                           }
                         >
@@ -4336,6 +4974,654 @@ export default function App() {
 
                     <section className="card">
                       <div className="section-head">
+                        <div>
+                          <h2>
+                            Avances en cours
+                          </h2>
+                          <p className="muted">
+                            Le montant a déjà quitté le compte courant.
+                            Seule sa part mensuelle réduit maintenant votre budget perso.
+                          </p>
+                        </div>
+
+                        <button
+                          className="secondary"
+                          onClick={() =>
+                            personalAdvance()
+                          }
+                        >
+                          <Plus size={17} />
+                          Faire une avance
+                        </button>
+                      </div>
+
+                      {s.transactions
+                        .filter(
+                          (t) =>
+                            t.type ===
+                              "personal_transfer" &&
+                            t.personalOwner ===
+                              personalOwnerId &&
+                            t.category ===
+                              account.category &&
+                            t.personalKind ===
+                              "advance",
+                        )
+                        .map((t) => {
+
+                          const start =
+                            t.personalStartMonth ||
+                            month(t.date);
+
+                          const count =
+                            Math.max(
+                              1,
+                              t.personalMonths ||
+                                1,
+                            );
+
+                          const end =
+                            shiftMonth(
+                              start,
+                              count - 1,
+                            );
+
+                          const currentPart =
+                            personalTransferBudgetAmount(
+                              t,
+                              selectedMonth,
+                            );
+
+                          let remaining = 0;
+
+                          for (
+                            let i = 0;
+                            i < count;
+                            i++
+                          ) {
+                            const m =
+                              shiftMonth(
+                                start,
+                                i,
+                              );
+
+                            if (
+                              m >= month()
+                            )
+                              remaining +=
+                                personalTransferBudgetAmount(
+                                  t,
+                                  m,
+                                );
+                          }
+
+                          return (
+                            <div
+                              className="rule-row"
+                              key={t.id}
+                            >
+                              <div className="grow">
+                                <strong>
+                                  {t.description ||
+                                    "Avance perso"}
+                                </strong>
+
+                                <small>
+                                  {money(
+                                    t.amount,
+                                  )}{" "}
+                                  reçus immédiatement
+                                </small>
+
+                                <small>
+                                  {monthLabel(
+                                    start,
+                                  )}{" "}
+                                  →{" "}
+                                  {monthLabel(
+                                    end,
+                                  )}{" "}
+                                  · {count} mois
+                                </small>
+
+                                {currentPart >
+                                  0 && (
+                                  <small>
+                                    Part de{" "}
+                                    {monthLabel(
+                                      selectedMonth,
+                                    )}{" "}
+                                    :{" "}
+                                    {money(
+                                      currentPart,
+                                    )}
+                                  </small>
+                                )}
+                              </div>
+
+                              <div>
+                                <strong>
+                                  {money(
+                                    remaining,
+                                  )}
+                                </strong>
+                                <small>
+                                  encore à imputer
+                                </small>
+                              </div>
+                            </div>
+                          );
+
+                        })}
+
+                      {!s.transactions.some(
+                        (t) =>
+                          t.type ===
+                            "personal_transfer" &&
+                          t.personalOwner ===
+                            personalOwnerId &&
+                          t.category ===
+                            account.category &&
+                          t.personalKind ===
+                            "advance",
+                      ) && (
+                        <p className="muted">
+                          Aucune avance en cours.
+                        </p>
+                      )}
+                    </section>
+
+
+                    <section className="card">
+                      <div className="section-head">
+                        <div>
+                          <h2>
+                            Paiements en plusieurs fois
+                          </h2>
+                          <p className="muted">
+                            Ces échéances débitent uniquement votre compte perso.
+                          </p>
+                        </div>
+
+                        <button
+                          className="secondary"
+                          onClick={() =>
+                            editPersonalRule()
+                          }
+                        >
+                          <Plus size={17} />
+                          Paiement
+                        </button>
+                      </div>
+
+                      {ps.rules
+                        .filter(
+                          (r) =>
+                            !r.end ||
+                            r.end >= today(),
+                        )
+                        .map((r) => {
+
+                        const due =
+                          personalDues(
+                            ps,
+                            selectedMonth,
+                          ).find(
+                            (d) =>
+                              d.rule.id ===
+                              r.id,
+                          );
+
+                        const paidCount =
+                          ps.transactions.filter(
+                            (t) =>
+                              t.dueKey?.startsWith(
+                                r.id + ":",
+                              ),
+                          ).length;
+
+                        return (
+                          <div
+                            className="rule-row"
+                            key={r.id}
+                          >
+                            <div className="grow">
+                              <strong>
+                                {r.name}
+                              </strong>
+
+                              <small>
+                                {money(
+                                  r.amount,
+                                )}{" "}
+                                · {r.count} paiement
+                                {r.count >
+                                1
+                                  ? "s"
+                                  : ""}
+                              </small>
+
+                              <small>
+                                {paidCount} validé
+                                {paidCount >
+                                1
+                                  ? "s"
+                                  : ""}{" "}
+                                ·{" "}
+                                {Math.max(
+                                  0,
+                                  r.count -
+                                    paidCount,
+                                )}{" "}
+                                restant
+                                {Math.max(
+                                  0,
+                                  r.count -
+                                    paidCount,
+                                ) > 1
+                                  ? "s"
+                                  : ""}
+                              </small>
+                            </div>
+
+                            {due &&
+                              (
+                                due.paid ? (
+                                  <span className="badge">
+                                    <Check
+                                      size={14}
+                                    />
+                                    Payé
+                                  </span>
+                                ) : (
+                                  <button
+                                    className="primary compact"
+                                    onClick={() =>
+                                      payPersonalDue(
+                                        due,
+                                      )
+                                    }
+                                  >
+                                    Valider{" "}
+                                    {money(
+                                      r.amount,
+                                    )}
+                                  </button>
+                                )
+                              )}
+
+                            <button
+                              className="secondary compact"
+                              onClick={() =>
+                                editPersonalRule(
+                                  r,
+                                )
+                              }
+                            >
+                              Modifier
+                            </button>
+
+                            <button
+                              className="icon"
+                              aria-label="Supprimer cet échéancier"
+                              onClick={() =>
+                                confirmAction(
+                                  "Supprimer " +
+                                    r.name +
+                                    " ?",
+                                  "Les échéances futures seront supprimées. Les mensualités déjà validées pour cet échéancier seront également retirées de l’historique et recréditées sur le solde du compte perso.",
+                                  async () =>
+                                    changePersonal(
+                                      (d) => {
+                                        d.rules =
+                                          d.rules.filter(
+                                            (
+                                              x,
+                                            ) =>
+                                              x.id !==
+                                              r.id,
+                                          );
+
+                                        d.transactions =
+                                          d.transactions.filter(
+                                            (t) =>
+                                              !t.dueKey?.startsWith(
+                                                r.id + ":",
+                                              ),
+                                          );
+                                      },
+                                      "Paiement en plusieurs fois supprimé",
+                                    ),
+                                )
+                              }
+                            >
+                              <Trash2
+                                size={16}
+                              />
+                            </button>
+                          </div>
+                        );
+
+                      })}
+
+                      {!ps.rules.length && (
+                        <p className="muted">
+                          Aucun paiement en plusieurs fois sur votre compte perso.
+                        </p>
+                      )}
+                    </section>
+
+
+                    <section className="card">
+                      <div className="section-head">
+                        <div>
+                          <h2>
+                            Budgets mensuels perso
+                          </h2>
+
+                          <p className="muted">
+                            Ces montants servent uniquement à prévoir vos futures
+                            dépenses personnelles. Ils n’affectent pas le budget
+                            commun et ne modifient pas votre solde réel tant que
+                            vous n’avez pas réellement dépensé l’argent.
+                          </p>
+                        </div>
+
+                        <button
+                          className="secondary"
+                          onClick={() =>
+                            editPersonalBudget()
+                          }
+                        >
+                          <Plus size={17} />
+                          Budget
+                        </button>
+                      </div>
+
+                      {(ps.budgets ?? []).map(
+                        (b) => (
+                          <div
+                            className="rule-row"
+                            key={b.id}
+                          >
+                            <div className="grow">
+                              <strong>
+                                {b.name}
+                              </strong>
+
+                              <small>
+                                {money(
+                                  b.amount,
+                                )}{" "}
+                                / mois
+                              </small>
+
+                              <small>
+                                Dès{" "}
+                                {monthLabel(
+                                  b.start,
+                                )}
+                                {b.end
+                                  ? " · jusqu’à " +
+                                    monthLabel(
+                                      b.end,
+                                    )
+                                  : " · sans date de fin"}
+                              </small>
+                            </div>
+
+                            <button
+                              className="secondary compact"
+                              onClick={() =>
+                                editPersonalBudget(
+                                  b,
+                                )
+                              }
+                            >
+                              Modifier
+                            </button>
+
+                            <button
+                              className="icon"
+                              aria-label="Supprimer le budget perso"
+                              onClick={() =>
+                                confirmAction(
+                                  "Supprimer " +
+                                    b.name +
+                                    " ?",
+                                  "Il ne sera plus pris en compte dans vos projections futures. Cela ne modifie aucune dépense déjà enregistrée.",
+                                  async () =>
+                                    changePersonal(
+                                      (d) => {
+                                        d.budgets =
+                                          (
+                                            d.budgets ??
+                                            []
+                                          ).filter(
+                                            (
+                                              x,
+                                            ) =>
+                                              x.id !==
+                                              b.id,
+                                          );
+                                      },
+                                      "Budget perso supprimé",
+                                    ),
+                                )
+                              }
+                            >
+                              <Trash2
+                                size={16}
+                              />
+                            </button>
+                          </div>
+                        ),
+                      )}
+
+                      {!(ps.budgets ?? [])
+                        .length && (
+                        <p className="muted">
+                          Aucun budget mensuel personnel.
+                        </p>
+                      )}
+
+                      {(ps.budgets ?? [])
+                        .length > 0 && (
+                        <Row
+                          title="Budgets actifs ce mois"
+                          value={money(
+                            (
+                              ps.budgets ??
+                              []
+                            )
+                              .filter(
+                                (b) =>
+                                  selectedMonth >=
+                                    b.start &&
+                                  (
+                                    !b.end ||
+                                    selectedMonth <=
+                                      b.end
+                                  ),
+                              )
+                              .reduce(
+                                (
+                                  n,
+                                  b,
+                                ) =>
+                                  n +
+                                  b.amount,
+                                0,
+                              ),
+                          )}
+                        />
+                      )}
+                    </section>
+
+
+                    <section className="card">
+                      <div className="section-head">
+                        <div>
+                          <h2>
+                            Projection du compte perso
+                          </h2>
+                          <p className="muted">
+                            Projection basée sur votre solde actuel,
+                            les futurs virements de budget, vos avances,
+                            vos mensualités connues et vos budgets mensuels perso.
+                          </p>
+                        </div>
+
+                        <div className="pills">
+                          {[
+                            [6, "6 mois"],
+                            [12, "1 an"],
+                            [24, "2 ans"],
+                            [60, "5 ans"],
+                          ].map(
+                            ([value, label]) => (
+                              <button
+                                type="button"
+                                key={value}
+                                className={
+                                  personalProjectionMonths ===
+                                  value
+                                    ? "selected"
+                                    : ""
+                                }
+                                onClick={() =>
+                                  setPersonalProjectionMonths(
+                                    Number(
+                                      value,
+                                    ),
+                                  )
+                                }
+                              >
+                                {label}
+                              </button>
+                            ),
+                          )}
+                        </div>
+                      </div>
+
+                      {(() => {
+
+                        const data =
+                          personalProjection(
+                            ps,
+                            s,
+                            personalOwnerId,
+                            personalProjectionMonths,
+                          ).map(
+                            (p) => ({
+                              ...p,
+                              name:
+                                monthLabel(
+                                  p.date,
+                                ),
+                            }),
+                          );
+
+                        const last =
+                          data.at(-1);
+
+                        return (
+                          <>
+                            <div className="chart">
+                              <ResponsiveContainer
+                                width="100%"
+                                height="100%"
+                              >
+                                <LineChart
+                                  data={
+                                    data
+                                  }
+                                >
+                                  <CartesianGrid
+                                    vertical={
+                                      false
+                                    }
+                                  />
+
+                                  <XAxis
+                                    dataKey="name"
+                                    tick={{
+                                      fontSize: 11,
+                                    }}
+                                  />
+
+                                  <YAxis
+                                    tickFormatter={(
+                                      v,
+                                    ) =>
+                                      Math.round(
+                                        Number(
+                                          v,
+                                        ) /
+                                          100,
+                                      ) +
+                                      " €"
+                                    }
+                                    width={70}
+                                  />
+
+                                  <Tooltip
+                                    formatter={(
+                                      v,
+                                    ) =>
+                                      money(
+                                        Number(
+                                          v,
+                                        ),
+                                      )
+                                    }
+                                  />
+
+                                  <Line
+                                    type="monotone"
+                                    dataKey="balance"
+                                    name="Solde projeté"
+                                    strokeWidth={
+                                      3
+                                    }
+                                    dot={
+                                      false
+                                    }
+                                  />
+                                </LineChart>
+                              </ResponsiveContainer>
+                            </div>
+
+                            {last && (
+                              <div className="split">
+                                <span>
+                                  Solde projeté en{" "}
+                                  {monthLabel(
+                                    last.date,
+                                  )}
+                                </span>
+
+                                <strong className="large">
+                                  {money(
+                                    last.balance,
+                                  )}
+                                </strong>
+                              </div>
+                            )}
+
+                            <p className="footnote">
+                              Les budgets mensuels perso sont considérés comme des dépenses futures prévues.
+                              Les dépenses ponctuelles non budgétées ne peuvent pas être anticipées.
+                            </p>
+                          </>
+                        );
+
+                      })()}
+                    </section>
+
+
+                    <section className="card">
+                      <div className="section-head">
                         <h2>
                           Historique privé
                         </h2>
@@ -4352,57 +5638,95 @@ export default function App() {
                       {history.length ? (
                         history
                           .slice(0, 15)
-                          .map((h) => (
-                            <Row
-                              key={h.id}
-                              icon={
-                                h.positive ? (
-                                  <ArrowDownLeft />
-                                ) : (
-                                  <ArrowUpRight />
-                                )
-                              }
-                              title={h.title}
-                              sub={dateLabel(
-                                h.date,
-                              )}
-                              value={
-                                <span
-                                  className={
-                                    h.positive
-                                      ? "positive"
-                                      : ""
-                                  }
-                                >
-                                  {h.positive
-                                    ? "+"
-                                    : "−"}
-                                  {money(
-                                    h.amount,
-                                  )}
-                                </span>
-                              }
-                              onClick={
-                                ps.transactions.some(
-                                  (t) =>
-                                    t.id === h.id &&
-                                    t.type === "expense",
-                                )
-                                  ? () => {
-                                      const tx =
-                                        ps.transactions.find(
-                                          (t) =>
-                                            t.id === h.id &&
-                                            t.type === "expense",
-                                        );
+                          .map((h) => {
 
-                                      if (tx)
-                                        personalExpense(tx);
-                                    }
-                                  : undefined
-                              }
-                            />
-                          ))
+                            const privateTx =
+                              ps.transactions.find(
+                                (t) =>
+                                  t.id === h.id,
+                              );
+
+                            return (
+                              <Row
+                                key={h.id}
+                                icon={
+                                  h.positive ? (
+                                    <ArrowDownLeft />
+                                  ) : (
+                                    <ArrowUpRight />
+                                  )
+                                }
+                                title={h.title}
+                                sub={
+                                  privateTx
+                                    ? `${dateLabel(h.date)} · Mouvement privé`
+                                    : `${dateLabel(h.date)} · Virement du foyer`
+                                }
+                                value={
+                                  <span className="flex">
+                                    <span
+                                      className={
+                                        h.positive
+                                          ? "positive"
+                                          : ""
+                                      }
+                                    >
+                                      {h.positive
+                                        ? "+"
+                                        : "−"}
+                                      {money(
+                                        h.amount,
+                                      )}
+                                    </span>
+
+                                    {privateTx && (
+                                      <>
+                                        <button
+                                          type="button"
+                                          className="text"
+                                          onClick={() =>
+                                            editPersonalHistoryTransaction(
+                                              privateTx,
+                                            )
+                                          }
+                                        >
+                                          Modifier
+                                        </button>
+
+                                        <button
+                                          type="button"
+                                          className="text danger-text"
+                                          onClick={() =>
+                                            confirmAction(
+                                              "Supprimer ce mouvement ?",
+                                              privateTx.dueKey
+                                                ? "Cette mensualité sera retirée du compte perso et redeviendra à valider."
+                                                : "Cette opération sera retirée de l’historique et son effet sur le solde sera annulé.",
+                                              async () =>
+                                                changePersonal(
+                                                  (d) => {
+                                                    d.transactions =
+                                                      d.transactions.filter(
+                                                        (t) =>
+                                                          t.id !==
+                                                          privateTx.id,
+                                                      );
+                                                  },
+                                                  "Mouvement privé supprimé",
+                                                ),
+                                            )
+                                          }
+                                        >
+                                          Supprimer
+                                        </button>
+                                      </>
+                                    )}
+                                  </span>
+                                }
+                              />
+                            );
+
+                          })
                       ) : (
                         <p className="muted padded">
                           Aucun mouvement pour

@@ -34,11 +34,30 @@ export type PersonalRule = {
   end?: string;
 };
 
+export type PersonalBudget = {
+  id: string;
+  name: string;
+  amount: number;
+  start: string;
+  end?: string;
+};
+
+export type PersonalDue = {
+  key: string;
+  date: string;
+  rule: PersonalRule;
+  paid?: PersonalTransaction;
+};
+
 export type PersonalState = {
   schema: 1;
   account: PersonalAccount | null;
   transactions: PersonalTransaction[];
   rules: PersonalRule[];
+
+  // Optionnel pour rester compatible avec les comptes
+  // privés créés avant l'ajout des budgets perso.
+  budgets?: PersonalBudget[];
 };
 
 export const emptyPersonalState = (): PersonalState => ({
@@ -46,6 +65,7 @@ export const emptyPersonalState = (): PersonalState => ({
   account: null,
   transactions: [],
   rules: [],
+  budgets: [],
 });
 
 export function personalRuleDue(
@@ -90,6 +110,37 @@ export function personalRuleDue(
     amount: rule.amount,
     occurrence,
   };
+
+}
+
+export function personalDues(
+  p: PersonalState,
+  m: string,
+): PersonalDue[] {
+
+  return p.rules.flatMap((rule) => {
+
+    const due = personalRuleDue(
+      rule,
+      m,
+    );
+
+    if (!due)
+      return [];
+
+    return [
+      {
+        key: due.key,
+        date: due.date,
+        rule,
+        paid: p.transactions.find(
+          (t) =>
+            t.dueKey === due.key,
+        ),
+      },
+    ];
+
+  });
 
 }
 
@@ -163,6 +214,7 @@ export function personalProjection(
       balance: projected,
       incoming: 0,
       scheduled: 0,
+      budgeted: 0,
     },
   ];
 
@@ -187,28 +239,41 @@ export function personalProjection(
     const incoming =
       envelope.remaining;
 
-    const scheduled = p.rules
-      .map((r) => personalRuleDue(r, m))
-      .filter(
-        (
-          d,
-        ): d is NonNullable<
-          ReturnType<typeof personalRuleDue>
-        > => !!d,
-      )
+    const scheduled = personalDues(
+      p,
+      m,
+    )
+      .filter((d) => !d.paid)
       .reduce(
-        (sum, d) => sum + d.amount,
+        (sum, d) =>
+          sum + d.rule.amount,
         0,
       );
 
+    const budgeted =
+      (p.budgets ?? [])
+        .filter(
+          (b) =>
+            m >= b.start &&
+            (!b.end || m <= b.end),
+        )
+        .reduce(
+          (sum, b) =>
+            sum + b.amount,
+          0,
+        );
+
     projected +=
-      incoming - scheduled;
+      incoming -
+      scheduled -
+      budgeted;
 
     points.push({
       date: m,
       balance: projected,
       incoming,
       scheduled,
+      budgeted,
     });
 
   }
@@ -266,6 +331,18 @@ export function validatePersonal(
       "Échéancier personnel en double.",
     );
 
+  const dueKeys = p.transactions
+    .map((t) => t.dueKey)
+    .filter(Boolean);
+
+  if (
+    new Set(dueKeys).size !==
+    dueKeys.length
+  )
+    throw Error(
+      "Cette mensualité personnelle a déjà été validée.",
+    );
+
   for (const t of p.transactions) {
 
     if (
@@ -300,6 +377,42 @@ export function validatePersonal(
     )
       throw Error(
         "Échéancier personnel invalide.",
+      );
+
+  }
+
+  for (const b of p.budgets ?? []) {
+
+    if (
+      !b.id ||
+      !b.name ||
+      !Number.isSafeInteger(b.amount) ||
+      b.amount <= 0
+    )
+      throw Error(
+        "Budget personnel invalide.",
+      );
+
+    if (
+      !/^\d{4}-\d{2}$/.test(
+        b.start,
+      )
+    )
+      throw Error(
+        "Mois de début du budget personnel invalide.",
+      );
+
+    if (
+      b.end &&
+      (
+        !/^\d{4}-\d{2}$/.test(
+          b.end,
+        ) ||
+        b.end < b.start
+      )
+    )
+      throw Error(
+        "Mois de fin du budget personnel invalide.",
       );
 
   }
