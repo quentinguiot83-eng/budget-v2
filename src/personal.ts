@@ -22,6 +22,9 @@ export type PersonalTransaction = {
   date: string;
   description: string;
   dueKey?: string;
+
+  // Catégorie / budget mensuel perso.
+  budgetId?: string;
 };
 
 export type PersonalRule = {
@@ -32,6 +35,9 @@ export type PersonalRule = {
   interval: number;
   count: number;
   end?: string;
+
+  // Catégorie / budget mensuel perso.
+  budgetId?: string;
 };
 
 export type PersonalBudget = {
@@ -239,34 +245,87 @@ export function personalProjection(
     const incoming =
       envelope.remaining;
 
-    const scheduled = personalDues(
+    const unpaidDues = personalDues(
       p,
       m,
-    )
-      .filter((d) => !d.paid)
-      .reduce(
-        (sum, d) =>
-          sum + d.rule.amount,
-        0,
+    ).filter((d) => !d.paid);
+
+    const scheduled = unpaidDues.reduce(
+      (sum, d) =>
+        sum + d.rule.amount,
+      0,
+    );
+
+    const activeBudgets =
+      (p.budgets ?? []).filter(
+        (b) =>
+          m >= b.start &&
+          (!b.end || m <= b.end),
       );
 
     const budgeted =
-      (p.budgets ?? [])
+      activeBudgets.reduce(
+        (sum, b) =>
+          sum + b.amount,
+        0,
+      );
+
+    /*
+     * Les échéances classées dans un budget perso
+     * consomment ce budget au lieu de s'y ajouter.
+     *
+     * Exemple :
+     * Sorties 50 €
+     * + mensualité classée Sorties 20 €
+     * = 50 € projetés, pas 70 €.
+     *
+     * Si les mensualités Sorties atteignent 65 €,
+     * les 15 € dépassant le budget sont ajoutés.
+     */
+    let uncoveredScheduled =
+      unpaidDues
         .filter(
-          (b) =>
-            m >= b.start &&
-            (!b.end || m <= b.end),
+          (d) =>
+            !d.rule.budgetId ||
+            !activeBudgets.some(
+              (b) =>
+                b.id ===
+                d.rule.budgetId,
+            ),
         )
         .reduce(
-          (sum, b) =>
-            sum + b.amount,
+          (sum, d) =>
+            sum + d.rule.amount,
           0,
         );
 
+    for (const b of activeBudgets) {
+
+      const linked =
+        unpaidDues
+          .filter(
+            (d) =>
+              d.rule.budgetId ===
+              b.id,
+          )
+          .reduce(
+            (sum, d) =>
+              sum + d.rule.amount,
+            0,
+          );
+
+      uncoveredScheduled +=
+        Math.max(
+          0,
+          linked - b.amount,
+        );
+
+    }
+
     projected +=
       incoming -
-      scheduled -
-      budgeted;
+      budgeted -
+      uncoveredScheduled;
 
     points.push({
       date: m,

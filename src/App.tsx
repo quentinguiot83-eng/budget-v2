@@ -1074,6 +1074,22 @@ export default function App() {
   }
 
 
+  function personalCategoryChoices(): [string, string][] {
+
+    return [
+      ["none", "Sans catégorie"],
+      ...(ps.budgets ?? []).map(
+        (b) =>
+          [
+            b.id,
+            b.name,
+          ] as [string, string],
+      ),
+    ];
+
+  }
+
+
   function personalExpense(
     existing?: PersonalTransaction,
   ) {
@@ -1091,6 +1107,15 @@ export default function App() {
           "Montant (€)",
           existing?.amount || 0,
         ),
+
+        choice(
+          "budgetId",
+          "Catégorie perso",
+          personalCategoryChoices(),
+          existing?.budgetId ||
+            "none",
+        ),
+
         field(
           "date",
           "Date",
@@ -1118,6 +1143,10 @@ export default function App() {
             date: v.date,
             description:
               v.description,
+            budgetId:
+              v.budgetId === "none"
+                ? undefined
+                : v.budgetId,
           };
 
         await changePersonal(
@@ -1363,6 +1392,14 @@ export default function App() {
           rule?.amount || 0,
         ),
 
+        choice(
+          "budgetId",
+          "Catégorie perso",
+          personalCategoryChoices(),
+          rule?.budgetId ||
+            "none",
+        ),
+
         field(
           "start",
           rule
@@ -1469,6 +1506,11 @@ export default function App() {
                 start: v.start,
                 interval,
                 count,
+                budgetId:
+                  v.budgetId ===
+                  "none"
+                    ? undefined
+                    : v.budgetId,
               });
 
             } else {
@@ -1485,6 +1527,11 @@ export default function App() {
                     v.start,
                   interval,
                   count,
+                  budgetId:
+                    v.budgetId ===
+                    "none"
+                      ? undefined
+                      : v.budgetId,
                 };
 
               if (rule)
@@ -1564,6 +1611,8 @@ export default function App() {
               description:
                 v.description,
               dueKey: due.key,
+              budgetId:
+                due.rule.budgetId,
             }),
           "Mensualité perso validée",
         );
@@ -5202,6 +5251,21 @@ export default function App() {
                               </small>
 
                               <small>
+                                Catégorie :{" "}
+                                {r.budgetId
+                                  ? (
+                                      ps.budgets ??
+                                      []
+                                    ).find(
+                                      (b) =>
+                                        b.id ===
+                                        r.budgetId,
+                                    )?.name ||
+                                    "Catégorie supprimée"
+                                  : "Sans catégorie"}
+                              </small>
+
+                              <small>
                                 {paidCount} validé
                                 {paidCount >
                                 1
@@ -5646,6 +5710,18 @@ export default function App() {
                                   t.id === h.id,
                               );
 
+                            const privateCategory =
+                              privateTx?.budgetId
+                                ? (
+                                    ps.budgets ??
+                                    []
+                                  ).find(
+                                    (b) =>
+                                      b.id ===
+                                      privateTx.budgetId,
+                                  )?.name
+                                : undefined;
+
                             return (
                               <Row
                                 key={h.id}
@@ -5659,7 +5735,7 @@ export default function App() {
                                 title={h.title}
                                 sub={
                                   privateTx
-                                    ? `${dateLabel(h.date)} · Mouvement privé`
+                                    ? `${dateLabel(h.date)} · ${privateCategory || "Sans catégorie"} · Mouvement privé`
                                     : `${dateLabel(h.date)} · Virement du foyer`
                                 }
                                 value={

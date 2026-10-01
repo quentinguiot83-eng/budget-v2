@@ -17,6 +17,10 @@ import {
   type Account,
   type State,
 } from "./engine";
+import {
+  personalProjection,
+  type PersonalState,
+} from "./personal";
 function fixture() {
   const s = emptyState();
   s.accounts = [
@@ -550,6 +554,76 @@ test("avance perso de 500 euros répartie sur 10 mois", () => {
       "2026-10-01",
     ),
     50000,
+  );
+
+});
+
+
+test("mensualité perso catégorisée incluse dans le budget perso sans double comptage", () => {
+
+  const s = fixture();
+  const currentMonth = month();
+  const nextDate = addMonths(
+    currentMonth + "-01",
+    1,
+  );
+
+  s.categories.push({
+    id: "perso",
+    name: "Perso",
+    icon: "other",
+    budgets: {
+      [currentMonth]: 15000,
+    },
+    personalOwner: "quentin",
+    personalSince: currentMonth,
+  });
+
+  const p: PersonalState = {
+    schema: 1,
+    account: {
+      id: "personal",
+      name: "Revolut",
+      opening: 0,
+      date: currentMonth + "-01",
+      category: "perso",
+    },
+    transactions: [],
+    budgets: [
+      {
+        id: "sorties",
+        name: "Sorties",
+        amount: 5000,
+        start: currentMonth,
+      },
+    ],
+    rules: [
+      {
+        id: "credit-perso",
+        name: "Achat",
+        amount: 2000,
+        start: nextDate,
+        interval: 1,
+        count: 3,
+        budgetId: "sorties",
+      },
+    ],
+  };
+
+  const projection =
+    personalProjection(
+      p,
+      s,
+      "quentin",
+      1,
+    );
+
+  // Le foyer verse 150 €.
+  // Sorties prévoit 50 €, dont la mensualité de 20 €.
+  // On obtient donc +100 €, pas +80 €.
+  assert.equal(
+    projection.at(-1)?.balance,
+    10000,
   );
 
 });
