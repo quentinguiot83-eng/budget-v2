@@ -40,6 +40,10 @@ export type Category = {
 
   archived?: string;
 
+  personalOwner?: string;
+
+  personalSince?: string;
+
 };
 
 export type Rule = {
@@ -72,7 +76,14 @@ export type Tx = {
 
   id: string;
 
-  type: "expense" | "income" | "transfer" | "loan" | "repay" | "adjust";
+  type:
+    | "expense"
+    | "income"
+    | "transfer"
+    | "personal_transfer"
+    | "loan"
+    | "repay"
+    | "adjust";
 
   amount: number;
 
@@ -101,6 +112,14 @@ export type Tx = {
   savingMonth?: string;
 
   budgetMonth?: string;
+
+  personalOwner?: string;
+
+  personalKind?: "budget" | "advance";
+
+  personalMonths?: number;
+
+  personalStartMonth?: string;
 
 };
 
@@ -373,8 +392,12 @@ export function budget(c: Category, m: string) {
 }
 
 
-export function personalAccountForCategory(s: State, categoryId: string) {
+export function personalAccountForCategory(
+  s: State,
+  categoryId: string,
+) {
 
+  // Compatibilité temporaire avec la première V1.
   return s.accounts.find(
     (a) =>
       !a.archived &&
@@ -384,29 +407,70 @@ export function personalAccountForCategory(s: State, categoryId: string) {
 
 }
 
-function personalCommittedForMonth(s: State, account: Account, m: string) {
+function monthDistance(from: string, to: string) {
 
-  const categoryId = account.personalCategory;
+  const [fy, fm] = from.split("-").map(Number);
+  const [ty, tm] = to.split("-").map(Number);
 
-  if (!categoryId) return 0;
+  return (ty - fy) * 12 + tm - fm;
 
-  // Mensualités / charges payées directement depuis le compte commun.
-  // Une échéance payée depuis le compte perso ne doit pas être comptée
-  // une deuxième fois dans le budget commun.
+}
+
+export function personalTransferBudgetAmount(
+  t: Tx,
+  m: string,
+) {
+
+  if (t.type !== "personal_transfer")
+    return 0;
+
+  const start = t.personalStartMonth || month(t.date);
+
+  const count =
+    t.personalKind === "advance"
+      ? Math.max(1, t.personalMonths || 1)
+      : 1;
+
+  const index = monthDistance(start, m);
+
+  if (index < 0 || index >= count)
+    return 0;
+
+  const regular = Math.floor(t.amount / count);
+
+  // Le dernier mois absorbe les éventuels centimes restants.
+  return index === count - 1
+    ? t.amount - regular * (count - 1)
+    : regular;
+
+}
+
+function personalCommittedForMonth(
+  s: State,
+  ownerId: string,
+  categoryId: string,
+  m: string,
+  legacyAccountId?: string,
+) {
+
+  // Paiements / mensualités directement débités d'un compte partagé.
   const scheduled = dues(s, m)
     .filter(
       (d) =>
         !d.cancelled &&
         d.rule.kind !== "repay" &&
         d.rule.category === categoryId &&
-        d.rule.account !== account.id,
+        s.accounts.find((a) => a.id === d.rule.account)?.group !==
+          "personal",
     )
     .reduce(
-      (sum, d) => sum + (d.paid?.amount ?? d.rule.amount),
+      (sum, d) =>
+        sum + (d.paid?.amount ?? d.rule.amount),
       0,
     );
 
-  // Dépenses ponctuelles directement payées depuis un compte du foyer.
+  // Dépense ponctuelle directement payée depuis le foyer et
+  // imputée sur l'enveloppe personnelle.
   const directExpenses = s.transactions
     .filter(
       (t) =>
@@ -414,39 +478,64 @@ function personalCommittedForMonth(s: State, account: Account, m: string) {
         !t.fixed &&
         !t.trip &&
         t.category === categoryId &&
-        t.account !== account.id &&
-        month(t.date) === m &&
-        t.date <= today(),
-    )
-    .reduce((sum, t) => sum + t.amount, 0);
-
-  // Argent envoyé du compte commun vers le compte personnel.
-  const transfers = s.transactions
-    .filter(
-      (t) =>
-        t.type === "transfer" &&
-        t.to === account.id &&
         month(t.date) === m &&
         t.date <= today() &&
-        s.accounts.find((a) => a.id === t.account)?.group === "current",
+        s.accounts.find((a) => a.id === t.account)?.group !==
+          "personal",
     )
     .reduce((sum, t) => sum + t.amount, 0);
 
-  return scheduled + directExpenses + transfers;
+  // Nouveau système :
+  // - virement mensuel = 100 % sur un mois
+  // - avance = montant réparti sur N mois
+  const personalTransfers = s.transactions
+    .filter(
+      (t) =>
+        t.type === "personal_transfer" &&
+        t.personalOwner === ownerId &&
+        t.category === categoryId,
+    )
+    .reduce(
+      (sum, t) =>
+        sum + personalTransferBudgetAmount(t, m),
+      0,
+    );
+
+  // Compatibilité avec les anciens virements de la V1.
+  const legacyTransfers = legacyAccountId
+    ? s.transactions
+        .filter(
+          (t) =>
+            t.type === "transfer" &&
+            t.to === legacyAccountId &&
+            month(t.date) === m &&
+            t.date <= today(),
+        )
+        .reduce((sum, t) => sum + t.amount, 0)
+    : 0;
+
+  return (
+    scheduled +
+    directExpenses +
+    personalTransfers +
+    legacyTransfers
+  );
 
 }
 
-export function personalEnvelope(s: State, accountId: string, m: string) {
+export function personalBudgetEnvelope(
+  s: State,
+  ownerId: string,
+  categoryId: string,
+  m: string,
+  startOverride?: string,
+) {
 
-  const account = s.accounts.find(
-    (a) => a.id === accountId && !a.archived && a.group === "personal",
+  const category = s.categories.find(
+    (c) => c.id === categoryId,
   );
 
-  const category = account?.personalCategory
-    ? s.categories.find((c) => c.id === account.personalCategory)
-    : undefined;
-
-  if (!account || !category || m < month(account.date)) {
+  if (!category) {
     return {
       base: 0,
       carryIn: 0,
@@ -457,22 +546,54 @@ export function personalEnvelope(s: State, accountId: string, m: string) {
     };
   }
 
-  let currentMonth = month(account.date);
+  const budgetKeys = Object.keys(category.budgets).sort();
+
+  const start =
+    startOverride ||
+    category.personalSince ||
+    budgetKeys[0] ||
+    m;
+
+  if (m < start) {
+    return {
+      base: 0,
+      carryIn: 0,
+      available: 0,
+      committed: 0,
+      remaining: 0,
+      carryOut: 0,
+    };
+  }
+
+  let currentMonth = start;
   let carry = 0;
   let guard = 0;
 
   while (currentMonth <= m && guard++ < 1200) {
 
     const base = budget(category, currentMonth);
-    const available = Math.max(0, base - carry);
+
+    const available = Math.max(
+      0,
+      base - carry,
+    );
+
     const committed = personalCommittedForMonth(
       s,
-      account,
+      ownerId,
+      categoryId,
       currentMonth,
     );
 
-    const remaining = Math.max(0, available - committed);
-    const carryOut = Math.max(0, committed - available);
+    const remaining = Math.max(
+      0,
+      available - committed,
+    );
+
+    const carryOut = Math.max(
+      0,
+      committed - available,
+    );
 
     if (currentMonth === m) {
       return {
@@ -486,7 +607,116 @@ export function personalEnvelope(s: State, accountId: string, m: string) {
     }
 
     carry = carryOut;
-    currentMonth = shiftMonth(currentMonth, 1);
+
+    currentMonth = shiftMonth(
+      currentMonth,
+      1,
+    );
+
+  }
+
+  return {
+    base: 0,
+    carryIn: carry,
+    available: 0,
+    committed: 0,
+    remaining: 0,
+    carryOut: 0,
+  };
+
+}
+
+// Compatibilité temporaire avec les comptes perso V1 encore
+// présents dans le document partagé.
+export function personalEnvelope(
+  s: State,
+  accountId: string,
+  m: string,
+) {
+
+  const account = s.accounts.find(
+    (a) =>
+      a.id === accountId &&
+      !a.archived &&
+      a.group === "personal",
+  );
+
+  const category = account?.personalCategory
+    ? s.categories.find(
+        (c) => c.id === account.personalCategory,
+      )
+    : undefined;
+
+  if (!account || !category) {
+    return {
+      base: 0,
+      carryIn: 0,
+      available: 0,
+      committed: 0,
+      remaining: 0,
+      carryOut: 0,
+    };
+  }
+
+  const owner =
+    category.personalOwner ||
+    account.id;
+
+  const start =
+    category.personalSince ||
+    month(account.date);
+
+  let currentMonth = start;
+  let carry = 0;
+  let guard = 0;
+
+  while (currentMonth <= m && guard++ < 1200) {
+
+    const base = budget(
+      category,
+      currentMonth,
+    );
+
+    const available = Math.max(
+      0,
+      base - carry,
+    );
+
+    const committed =
+      personalCommittedForMonth(
+        s,
+        owner,
+        category.id,
+        currentMonth,
+        account.id,
+      );
+
+    const remaining = Math.max(
+      0,
+      available - committed,
+    );
+
+    const carryOut = Math.max(
+      0,
+      committed - available,
+    );
+
+    if (currentMonth === m) {
+      return {
+        base,
+        carryIn: carry,
+        available,
+        committed,
+        remaining,
+        carryOut,
+      };
+    }
+
+    carry = carryOut;
+    currentMonth = shiftMonth(
+      currentMonth,
+      1,
+    );
 
   }
 
@@ -677,17 +907,42 @@ export function stats(s: State, m: string) {
   // 40 € de fixe + 110 € d'enveloppe restante = 150 €.
   const variable = s.categories.reduce((n, c) => {
 
-    const personal = personalAccountForCategory(s, c.id);
+    const legacyPersonal =
+      personalAccountForCategory(s, c.id);
 
-    if (!personal) return n + budget(c, m);
+    if (!c.personalOwner && !legacyPersonal)
+      return n + budget(c, m);
 
-    const envelope = personalEnvelope(s, personal.id, m);
+    const envelope = c.personalOwner
+      ? personalBudgetEnvelope(
+          s,
+          c.personalOwner,
+          c.id,
+          m,
+        )
+      : personalEnvelope(
+          s,
+          legacyPersonal!.id,
+          m,
+        );
 
     const fixedInsideEnvelope = scheduled
       .filter((d) => d.rule.category === c.id)
-      .reduce((sum, d) => sum + d.rule.amount, 0);
+      .reduce(
+        (sum, d) => sum + d.rule.amount,
+        0,
+      );
 
-    return n + Math.max(0, envelope.available - fixedInsideEnvelope);
+    // Les avances ne s'ajoutent pas au budget :
+    // elles consomment une partie de l'enveloppe existante.
+    return (
+      n +
+      Math.max(
+        0,
+        envelope.available -
+          fixedInsideEnvelope,
+      )
+    );
 
   }, 0);
 

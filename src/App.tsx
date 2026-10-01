@@ -92,6 +92,7 @@ import {
   balance,
   budget,
   personalEnvelope,
+  personalBudgetEnvelope,
   stats,
   dues,
   overdue,
@@ -103,6 +104,19 @@ import {
   addMonths,
   deposits,
 } from "./engine";
+import {
+  type PersonalState,
+  type PersonalTransaction,
+  emptyPersonalState,
+  personalBalance,
+  validatePersonal,
+} from "./personal";
+
+type PersonalDoc = {
+  state: PersonalState;
+  revision: number;
+};
+
 type Doc = {
   household: { id: string; name: string; owner: string };
   state: State;
@@ -337,6 +351,11 @@ function demo(): Doc {
 export default function App() {
   const [session, setSession] = useState<Session | null>(null),
     [doc, setDoc] = useState<Doc | null>(demoEnabled ? demo() : null),
+    [personalDoc, setPersonalDoc] = useState<PersonalDoc | null>(
+      demoEnabled
+        ? { state: emptyPersonalState(), revision: 0 }
+        : null,
+    ),
     [loading, setLoading] = useState(!demoEnabled),
     [error, setError] = useState(""),
     [notice, setNotice] = useState(""),
@@ -355,13 +374,22 @@ export default function App() {
     [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const busy = useRef(false),
     docRef = useRef(doc),
+    personalDocRef = useRef(personalDoc),
     sheetRef = useRef(sheet),
     sessionRef = useRef(session);
   docRef.current = doc;
+  personalDocRef.current = personalDoc;
   sheetRef.current = sheet;
   sessionRef.current = session;
   const s = doc?.state || emptyState();
-  const current = s.accounts.find((a) => a.group === "current" && !a.archived);
+  const ps = personalDoc?.state || emptyPersonalState();
+
+  const personalOwnerId =
+    session?.user.id || (demoEnabled ? "demo" : "");
+
+  const current = s.accounts.find(
+    (a) => a.group === "current" && !a.archived,
+  );
   const totals = stats(s, selectedMonth);
   const savingsCapacity =
     totals.income > 0 ? totals.actualCapacity : totals.capacity;
@@ -373,9 +401,26 @@ export default function App() {
     : Math.max(0, savingsCapacity - totals.saved);
   const isOwner = demoEnabled || doc?.household?.owner === session?.user.id;
   async function load() {
+
     const d = await rpc("budget_load");
+
     setDoc(d);
-    if (d.theme) setTheme(d.theme);
+
+    if (d.theme)
+      setTheme(d.theme);
+
+    if (d.household) {
+
+      const p = await rpc("budget_personal_load");
+
+      setPersonalDoc(p);
+
+    } else {
+
+      setPersonalDoc(null);
+
+    }
+
   }
   useEffect(() => {
     if (demoEnabled) return;
@@ -386,6 +431,7 @@ export default function App() {
       if (event === "PASSWORD_RECOVERY") setAuthMode("new-password");
       if (!next) {
         setDoc(null);
+        setPersonalDoc(null);
         setLoading(false);
       }
     });
@@ -413,11 +459,7 @@ export default function App() {
         document.visibilityState === "hidden"
       )
         return;
-      rpc("budget_load")
-        .then((d) => {
-          if (!busy.current && !sheetRef.current) setDoc(d);
-        })
-        .catch(() => {});
+      load().catch(() => {});
     };
     const timer = setInterval(refresh, 20000);
     window.addEventListener("focus", refresh);
@@ -474,6 +516,101 @@ export default function App() {
     fn(next);
     await commit(next, action);
   }
+  async function commitPersonal(
+    next: PersonalState,
+    action: string,
+  ) {
+
+    if (!personalDocRef.current)
+      throw Error(
+        "Le compte personnel n’est pas encore chargé.",
+      );
+
+    if (busy.current)
+      throw Error(
+        "Un enregistrement est déjà en cours.",
+      );
+
+    validatePersonal(next);
+
+    busy.current = true;
+    setSaving(true);
+
+    try {
+
+      const revision = demoEnabled
+        ? personalDocRef.current.revision + 1
+        : (
+            await rpc(
+              "budget_personal_save",
+              {
+                p_state: next,
+                p_revision:
+                  personalDocRef.current.revision,
+                p_action: action,
+              },
+            )
+          ).revision;
+
+      setPersonalDoc((d) =>
+        d
+          ? {
+              ...d,
+              state: next,
+              revision,
+            }
+          : d,
+      );
+
+      setNotice(
+        demoEnabled
+          ? "Compte perso mis à jour dans l’aperçu."
+          : "Compte perso enregistré",
+      );
+
+    } catch (e) {
+
+      if (
+        e instanceof Error &&
+        e.message.includes("CONFLICT")
+      )
+        await load();
+
+      throw e;
+
+    } finally {
+
+      busy.current = false;
+      setSaving(false);
+
+    }
+
+  }
+
+  async function changePersonal(
+    fn: (d: PersonalState) => void,
+    action: string,
+  ) {
+
+    if (!personalDocRef.current)
+      throw Error(
+        "Le compte personnel n’est pas encore chargé.",
+      );
+
+    const next =
+      structuredClone(
+        personalDocRef.current.state,
+      );
+
+    fn(next);
+
+    await commitPersonal(
+      next,
+      action,
+    );
+
+  }
+
   function openForm(
     title: string,
     fields: Field[],
@@ -738,49 +875,65 @@ export default function App() {
       },
     );
   }
-  function editPersonalAccount(a?: Account) {
+  function editPersonalAccount() {
 
-    const options = categoryOptions.filter(
-      ([id]) =>
-        id === a?.personalCategory ||
-        !s.accounts.some(
-          (other) =>
-            other.id !== a?.id &&
-            !other.archived &&
-            other.group === "personal" &&
-            other.personalCategory === id,
-        ),
-    );
+    const account = ps.account;
+
+    const options =
+      categoryOptions.filter(
+        ([id]) => {
+
+          const c =
+            s.categories.find(
+              (x) => x.id === id,
+            );
+
+          return (
+            !c?.personalOwner ||
+            c.personalOwner ===
+              personalOwnerId ||
+            id === account?.category
+          );
+
+        },
+      );
 
     if (!options.length) {
+
       setNotice(
-        "Créez d’abord une catégorie de budget dédiée, par exemple Perso Quentin.",
+        "Créez d’abord une catégorie de budget dédiée à votre compte perso.",
       );
+
       navigate("budget");
+
       return;
+
     }
 
     openForm(
-      a ? "Paramétrer le compte perso" : "Créer un compte perso",
+      account
+        ? "Paramétrer mon compte perso"
+        : "Créer mon compte perso",
       [
         field(
           "name",
           "Nom du compte",
-          a?.name || "Compte perso",
+          account?.name ||
+            "Compte perso",
         ),
         choice(
           "category",
           "Budget mensuel lié",
           options,
-          a?.personalCategory || options[0]?.[0],
+          account?.category ||
+            options[0]?.[0],
         ),
-        ...(!a
+        ...(!account
           ? [
               amountField(
                 "opening",
-                "Solde actuel du compte (€)",
+                "Solde actuel (€)",
                 0,
-                "Indiquez ce qu’il y a réellement aujourd’hui sur ce compte.",
               ),
               field(
                 "date",
@@ -792,73 +945,134 @@ export default function App() {
           : []),
       ],
       async (v) => {
-        await change((d) => {
 
-          const id = a?.id || uid();
+        if (!personalOwnerId)
+          throw Error(
+            "Utilisateur non identifié.",
+          );
 
-          if (
-            d.accounts.some(
-              (other) =>
-                other.id !== id &&
-                !other.archived &&
-                other.group === "personal" &&
-                other.personalCategory === v.category,
+        if (
+          account &&
+          account.category !== v.category &&
+          (
+            ps.transactions.length ||
+            ps.rules.length ||
+            s.transactions.some(
+              (t) =>
+                t.type ===
+                  "personal_transfer" &&
+                t.personalOwner ===
+                  personalOwnerId,
             )
           )
-            throw Error(
-              "Cette catégorie est déjà liée à un autre compte personnel.",
-            );
+        )
+          throw Error(
+            "La catégorie ne peut plus être changée après les premiers mouvements du compte.",
+          );
 
-          if (
-            a &&
-            a.personalCategory !== v.category &&
-            d.transactions.some(
-              (t) => t.account === a.id || t.to === a.id,
-            )
-          )
-            throw Error(
-              "La catégorie ne peut plus être changée après les premiers mouvements du compte. Le nom du compte reste modifiable.",
-            );
+        const selected =
+          s.categories.find(
+            (c) =>
+              c.id === v.category,
+          );
 
-          const entry: Account = {
-            ...a,
-            id,
-            name: v.name,
-            opening: a?.opening ?? euro(v.opening),
-            date: a?.date ?? v.date,
-            group: "personal",
-            rate: 0,
-            cap: 0,
-            capType: "balance",
-            contributed: 0,
-            relay: "",
-            allocation: 0,
-            personalCategory: v.category,
-          };
+        if (
+          selected?.personalOwner &&
+          selected.personalOwner !==
+            personalOwnerId
+        )
+          throw Error(
+            "Cette catégorie appartient déjà au compte perso d’un autre utilisateur.",
+          );
 
-          if (entry.date > today())
-            throw Error(
-              "La date du solde doit être passée ou actuelle.",
-            );
+        await change(
+          (d) => {
 
-          if (a) {
-            d.accounts = d.accounts.map((x) =>
-              x.id === a.id ? entry : x,
-            );
-          } else {
-            d.accounts.push(entry);
-          }
+            if (
+              account &&
+              account.category !==
+                v.category
+            ) {
 
-        }, a ? "Compte perso modifié" : "Compte perso créé");
+              const old =
+                d.categories.find(
+                  (c) =>
+                    c.id ===
+                    account.category,
+                );
+
+              if (
+                old?.personalOwner ===
+                personalOwnerId
+              ) {
+                old.personalOwner =
+                  undefined;
+                old.personalSince =
+                  undefined;
+              }
+
+            }
+
+            const category =
+              d.categories.find(
+                (c) =>
+                  c.id ===
+                  v.category,
+              );
+
+            if (!category)
+              throw Error(
+                "Catégorie inconnue.",
+              );
+
+            category.personalOwner =
+              personalOwnerId;
+
+            category.personalSince =
+              account
+                ? month(account.date)
+                : month(v.date);
+
+          },
+          "Budget perso rattaché",
+        );
+
+        await changePersonal(
+          (d) => {
+
+            d.account = {
+              id:
+                account?.id ||
+                uid(),
+              name: v.name,
+              opening:
+                account?.opening ??
+                euro(v.opening),
+              date:
+                account?.date ||
+                v.date,
+              category:
+                v.category,
+            };
+
+          },
+          account
+            ? "Compte perso modifié"
+            : "Compte perso créé",
+        );
+
       },
     );
 
   }
 
-  function personalExpense(a: Account, existing?: Tx) {
 
-    if (!a.personalCategory)
-      throw Error("Ce compte personnel n’a aucune catégorie liée.");
+  function personalExpense(
+    existing?: PersonalTransaction,
+  ) {
+
+    if (!ps.account)
+      return;
 
     openForm(
       existing
@@ -873,7 +1087,8 @@ export default function App() {
         field(
           "date",
           "Date",
-          existing?.date || today(),
+          existing?.date ||
+            today(),
           "date",
         ),
         field(
@@ -884,41 +1099,66 @@ export default function App() {
       ],
       async (v) => {
 
-        const tx: Tx = {
-          ...existing,
-          id: existing?.id || uid(),
-          type: "expense",
-          amount: euro(v.amount),
-          date: v.date,
-          description: v.description,
-          account: a.id,
-          category: a.personalCategory,
-        };
+        const tx:
+          PersonalTransaction = {
+            ...existing,
+            id:
+              existing?.id ||
+              uid(),
+            type: "expense",
+            amount:
+              euro(v.amount),
+            date: v.date,
+            description:
+              v.description,
+          };
 
-        await change((d) => {
-          if (existing) {
-            d.transactions = d.transactions.map((t) =>
-              t.id === existing.id ? tx : t,
-            );
-          } else {
-            d.transactions.push(tx);
-          }
-        }, "Dépense personnelle enregistrée");
+        await changePersonal(
+          (d) => {
+
+            if (existing)
+              d.transactions =
+                d.transactions.map(
+                  (t) =>
+                    t.id ===
+                    existing.id
+                      ? tx
+                      : t,
+                );
+            else
+              d.transactions.push(
+                tx,
+              );
+
+          },
+          "Dépense perso enregistrée",
+        );
 
       },
     );
 
   }
 
-  function adjustPersonalBalance(a: Account) {
+
+  function adjustPersonalBalance() {
+
+    if (!ps.account)
+      return;
+
+    const currentBalance =
+      personalBalance(
+        ps,
+        s,
+        personalOwnerId,
+      );
 
     openForm(
-      "Ajuster le solde de " + a.name,
+      "Ajuster le solde",
       [
         amountField(
           "balance",
           "Solde réel constaté (€)",
-          balance(s, a.id),
+          currentBalance,
         ),
         field(
           "reason",
@@ -929,25 +1169,294 @@ export default function App() {
       async (v) => {
 
         const difference =
-          euro(v.balance) - balance(s, a.id);
+          euro(v.balance) -
+          personalBalance(
+            ps,
+            s,
+            personalOwnerId,
+          );
 
-        if (!difference) return;
+        if (!difference)
+          return;
 
-        await change(
+        await changePersonal(
           (d) =>
             d.transactions.push({
               id: uid(),
               type: "adjust",
-              amount: difference,
+              amount:
+                difference,
               date: today(),
-              description: "Ajustement : " + v.reason,
-              account: a.id,
+              description:
+                "Ajustement : " +
+                v.reason,
             }),
-          "Solde du compte perso ajusté",
+          "Solde perso ajusté",
         );
 
       },
     );
+
+  }
+
+
+  async function migrateLegacyPersonal(
+    a: Account,
+  ) {
+
+    if (!personalOwnerId)
+      throw Error(
+        "Utilisateur non identifié.",
+      );
+
+    if (ps.account)
+      throw Error(
+        "Vous avez déjà un compte perso privé.",
+      );
+
+    if (!a.personalCategory)
+      throw Error(
+        "Cet ancien compte n’a aucune catégorie liée.",
+      );
+
+    const category =
+      s.categories.find(
+        (c) =>
+          c.id ===
+          a.personalCategory,
+      );
+
+    if (!category)
+      throw Error(
+        "Catégorie liée introuvable.",
+      );
+
+    if (
+      category.personalOwner &&
+      category.personalOwner !==
+        personalOwnerId
+    )
+      throw Error(
+        "Cette catégorie appartient déjà à un autre utilisateur.",
+      );
+
+    const unsupportedRule =
+      s.rules.find(
+        (r) =>
+          r.account === a.id &&
+          (
+            r.kind !== "credit" ||
+            !r.count
+          ),
+      );
+
+    if (unsupportedRule)
+      throw Error(
+        `L’ancien compte contient l’échéancier « ${unsupportedRule.name} ». Supprimez ou modifiez-le avant la migration.`,
+      );
+
+    const privateTx:
+      PersonalTransaction[] = [];
+
+    for (
+      const t of
+      s.transactions.filter(
+        (t) =>
+          t.account === a.id,
+      )
+    ) {
+
+      if (
+        t.type === "expense"
+      ) {
+
+        privateTx.push({
+          id: t.id,
+          type: "expense",
+          amount: t.amount,
+          date: t.date,
+          description:
+            t.description,
+          dueKey: t.dueKey,
+        });
+
+      } else if (
+        t.type === "adjust"
+      ) {
+
+        privateTx.push({
+          id: t.id,
+          type: "adjust",
+          amount: t.amount,
+          date: t.date,
+          description:
+            t.description,
+        });
+
+      } else if (
+        ["income", "repay"].includes(
+          t.type,
+        )
+      ) {
+
+        privateTx.push({
+          id: t.id,
+          type: "adjust",
+          amount: t.amount,
+          date: t.date,
+          description:
+            t.description,
+        });
+
+      } else if (
+        t.type === "transfer" &&
+        t.to
+      ) {
+
+        privateTx.push({
+          id: t.id,
+          type: "adjust",
+          amount: -t.amount,
+          date: t.date,
+          description:
+            "Virement sortant · " +
+            t.description,
+        });
+
+      }
+
+    }
+
+    const privateRules =
+      s.rules
+        .filter(
+          (r) =>
+            r.account === a.id &&
+            r.kind === "credit" &&
+            r.count > 0,
+        )
+        .map((r) => ({
+          id: r.id,
+          name: r.name,
+          amount: r.amount,
+          start: r.start,
+          interval: r.interval,
+          count: r.count,
+          end: r.end,
+        }));
+
+    const nextPrivate:
+      PersonalState = {
+        schema: 1,
+        account: {
+          id: a.id,
+          name: a.name,
+          opening: a.opening,
+          date: a.date,
+          category:
+            a.personalCategory,
+        },
+        transactions:
+          privateTx,
+        rules:
+          privateRules,
+      };
+
+    await commitPersonal(
+      nextPrivate,
+      "Migration du compte perso",
+    );
+
+    await change(
+      (d) => {
+
+        const cat =
+          d.categories.find(
+            (c) =>
+              c.id ===
+              a.personalCategory,
+          )!;
+
+        cat.personalOwner =
+          personalOwnerId;
+
+        cat.personalSince =
+          month(a.date);
+
+        d.transactions =
+          d.transactions
+            .map((t) => {
+
+              if (
+                t.type === "transfer" &&
+                t.to === a.id
+              ) {
+
+                return {
+                  ...t,
+                  type:
+                    "personal_transfer" as const,
+                  to: undefined,
+                  category:
+                    a.personalCategory,
+                  personalOwner:
+                    personalOwnerId,
+                  personalKind:
+                    "budget" as const,
+                  personalMonths: 1,
+                  personalStartMonth:
+                    month(t.date),
+                };
+
+              }
+
+              if (
+                t.type === "transfer" &&
+                t.account === a.id &&
+                t.to
+              ) {
+
+                return {
+                  id: t.id,
+                  type:
+                    "adjust" as const,
+                  amount:
+                    t.amount,
+                  date: t.date,
+                  description:
+                    "Retour du compte perso",
+                  account: t.to,
+                };
+
+              }
+
+              return t;
+
+            })
+            .filter(
+              (t) =>
+                t.account !==
+                a.id,
+            );
+
+        d.rules =
+          d.rules.filter(
+            (r) =>
+              r.account !==
+              a.id,
+          );
+
+        d.accounts =
+          d.accounts.filter(
+            (x) =>
+              x.id !== a.id,
+          );
+
+      },
+      "Ancien compte perso migré",
+    );
+
+    await load();
 
   }
 
@@ -973,15 +1482,26 @@ export default function App() {
       },
     );
   }
-  function transferPersonal(a: Account) {
+  function transferPersonal() {
 
-    if (!current || a.group !== "personal" || !a.personalCategory) return;
+    if (
+      !current ||
+      !ps.account ||
+      !personalOwnerId
+    )
+      return;
 
-    const envelope = personalEnvelope(s, a.id, selectedMonth);
-    const category = s.categories.find((c) => c.id === a.personalCategory);
+    const envelope =
+      personalBudgetEnvelope(
+        s,
+        personalOwnerId,
+        ps.account.category,
+        selectedMonth,
+        month(ps.account.date),
+      );
 
     openForm(
-      "Virer vers " + a.name,
+      "Virer mon budget perso",
       [
         amountField(
           "amount",
@@ -989,37 +1509,70 @@ export default function App() {
           envelope.remaining,
           `Reste prévu pour ${monthLabel(selectedMonth)} : ${money(envelope.remaining)}.`,
         ),
-        field("date", "Date du virement", today(), "date"),
         field(
-          "description",
-          "Description",
-          "Budget perso · " + (category?.name || a.name),
+          "date",
+          "Date du virement",
+          today(),
+          "date",
+        ),
+        choice(
+          "overdraft",
+          "Autoriser un solde négatif du compte courant",
+          [
+            ["no", "Non"],
+            [
+              "yes",
+              "Oui, je confirme",
+            ],
+          ],
+          "no",
         ),
       ],
       async (v) => {
 
-        const amount = euro(v.amount);
+        const amount =
+          euro(v.amount);
 
         if (amount <= 0)
-          throw Error("Le montant doit être supérieur à zéro.");
-
-        if (balance(s, current.id, v.date) < amount)
           throw Error(
-            "Le solde du compte courant est insuffisant pour ce virement.",
+            "Le montant doit être supérieur à zéro.",
+          );
+
+        if (
+          balance(
+            s,
+            current.id,
+            v.date,
+          ) < amount &&
+          v.overdraft !== "yes"
+        )
+          throw Error(
+            "Le compte courant serait négatif après ce virement.",
           );
 
         await change(
           (d) =>
             d.transactions.push({
               id: uid(),
-              type: "transfer",
-              account: current.id,
-              to: a.id,
+              type:
+                "personal_transfer",
+              account:
+                current.id,
               amount,
               date: v.date,
-              description: v.description,
+              description:
+                "Budget perso",
+              category:
+                ps.account!.category,
+              personalOwner:
+                personalOwnerId,
+              personalKind:
+                "budget",
+              personalMonths: 1,
+              personalStartMonth:
+                selectedMonth,
             }),
-          "Budget personnel viré",
+          "Virement budget perso",
         );
 
       },
@@ -1762,15 +2315,13 @@ export default function App() {
           <button
             className="secondary"
             onClick={() =>
-              a?.group === "personal" && t.type === "expense"
-                ? personalExpense(a, t)
-                : operation(
-                    t.type,
-                    t.trip
-                      ? s.trips.find((v) => v.id === t.trip)
-                      : undefined,
-                    t,
-                  )
+              operation(
+                t.type,
+                t.trip
+                  ? s.trips.find((v) => v.id === t.trip)
+                  : undefined,
+                t,
+              )
             }
           >
             Modifier
@@ -1806,24 +2357,61 @@ export default function App() {
       </>,
     );
   }
-  function categoryVariableBudget(c: Category) {
+  function categoryVariableBudget(
+    c: Category,
+  ) {
 
-    const personal = s.accounts.find(
-      (a) =>
-        !a.archived &&
-        a.group === "personal" &&
-        a.personalCategory === c.id,
+    const legacyPersonal =
+      s.accounts.find(
+        (a) =>
+          !a.archived &&
+          a.group === "personal" &&
+          a.personalCategory ===
+            c.id,
+      );
+
+    const envelope =
+      c.personalOwner
+        ? personalBudgetEnvelope(
+            s,
+            c.personalOwner,
+            c.id,
+            selectedMonth,
+            c.personalSince,
+          )
+        : legacyPersonal
+          ? personalEnvelope(
+              s,
+              legacyPersonal.id,
+              selectedMonth,
+            )
+          : null;
+
+    if (!envelope)
+      return budget(
+        c,
+        selectedMonth,
+      );
+
+    const fixed =
+      totals.scheduled
+        .filter(
+          (d) =>
+            d.rule.category ===
+            c.id,
+        )
+        .reduce(
+          (n, d) =>
+            n +
+            d.rule.amount,
+          0,
+        );
+
+    return Math.max(
+      0,
+      envelope.available -
+        fixed,
     );
-
-    if (!personal) return budget(c, selectedMonth);
-
-    const envelope = personalEnvelope(s, personal.id, selectedMonth);
-
-    const fixed = totals.scheduled
-      .filter((d) => d.rule.category === c.id)
-      .reduce((n, d) => n + d.rule.amount, 0);
-
-    return Math.max(0, envelope.available - fixed);
 
   }
 
@@ -2000,89 +2588,166 @@ export default function App() {
   const sortedTx = [...s.transactions].reverse().sort((a, b) =>
     b.date.localeCompare(a.date),
   );
-  const categoryCards = (simple = false) =>
+  const categoryCards = (
+    simple = false,
+  ) =>
     s.categories
       .filter(
         (c) =>
           !c.archived ||
-          c.archived > selectedMonth ||
-          totals.tx.some((t) => t.category === c.id),
+          c.archived >
+            selectedMonth ||
+          totals.tx.some(
+            (t) =>
+              t.category === c.id,
+          ),
       )
       .map((c, index) => {
 
-        const personal = s.accounts.find(
-          (a) =>
-            !a.archived &&
-            a.group === "personal" &&
-            a.personalCategory === c.id,
-        );
+        const legacyPersonal =
+          s.accounts.find(
+            (a) =>
+              !a.archived &&
+              a.group ===
+                "personal" &&
+              a.personalCategory ===
+                c.id,
+          );
 
-        const envelope = personal
-          ? personalEnvelope(s, personal.id, selectedMonth)
-          : null;
+        const envelope =
+          c.personalOwner
+            ? personalBudgetEnvelope(
+                s,
+                c.personalOwner,
+                c.id,
+                selectedMonth,
+                c.personalSince,
+              )
+            : legacyPersonal
+              ? personalEnvelope(
+                  s,
+                  legacyPersonal.id,
+                  selectedMonth,
+                )
+              : null;
 
-        const fixed = totals.scheduled
-          .filter((d) => d.rule.category === c.id)
-          .reduce((n, d) => n + d.rule.amount, 0);
+        const isPersonal =
+          !!c.personalOwner ||
+          !!legacyPersonal;
 
-        const ordinarySpent = totals.tx
-          .filter(
-            (t) =>
-              t.type === "expense" &&
-              t.category === c.id &&
-              !t.trip,
-          )
-          .reduce((n, t) => n + t.amount, 0);
+        const isMine =
+          !!c.personalOwner &&
+          c.personalOwner ===
+            personalOwnerId;
+
+        const fixed =
+          totals.scheduled
+            .filter(
+              (d) =>
+                d.rule.category ===
+                c.id,
+            )
+            .reduce(
+              (n, d) =>
+                n +
+                d.rule.amount,
+              0,
+            );
+
+        const ordinarySpent =
+          totals.tx
+            .filter(
+              (t) =>
+                t.type ===
+                  "expense" &&
+                t.category ===
+                  c.id &&
+                !t.trip,
+            )
+            .reduce(
+              (n, t) =>
+                n + t.amount,
+              0,
+            );
 
         const spent = envelope
           ? envelope.committed
           : ordinarySpent;
 
-        const variable = categoryVariableBudget(c);
+        const variable =
+          categoryVariableBudget(c);
 
-        const totalBudget = envelope
-          ? envelope.available
-          : fixed + variable;
+        const totalBudget =
+          envelope
+            ? envelope.available
+            : fixed + variable;
 
-        const fixedPaid = totals.tx
-          .filter(
-            (t) =>
-              t.type === "expense" &&
-              t.category === c.id &&
-              t.fixed &&
-              !t.trip,
-          )
-          .reduce((n, t) => n + t.amount, 0);
+        const fixedPaid =
+          totals.tx
+            .filter(
+              (t) =>
+                t.type ===
+                  "expense" &&
+                t.category ===
+                  c.id &&
+                t.fixed &&
+                !t.trip,
+            )
+            .reduce(
+              (n, t) =>
+                n +
+                t.amount,
+              0,
+            );
 
         return (
-          <article className="category" key={c.id}>
+          <article
+            className="category"
+            key={c.id}
+          >
 
             <div className="flex">
 
               <span
                 className="category-icon"
                 style={{
-                  background: palette[index % 6] + "28",
-                  color: palette[index % 6],
+                  background:
+                    palette[
+                      index % 6
+                    ] + "28",
+                  color:
+                    palette[
+                      index % 6
+                    ],
                 }}
               >
-                {icons[c.icon] || icons.other}
+                {icons[c.icon] ||
+                  icons.other}
               </span>
 
               <div className="grow">
 
-                <strong>{c.name}</strong>
+                <strong>
+                  {c.name}
+                </strong>
 
                 <p>
                   {money(spent)}{" "}
                   <span className="muted">
-                    / {money(totalBudget)}
+                    /{" "}
+                    {money(
+                      totalBudget,
+                    )}
                   </span>
                 </p>
 
-                {personal && envelope && (
+                {isPersonal && (
                   <small className="muted">
-                    {personal.name} · Solde {money(balance(s, personal.id))}
+                    {isMine
+                      ? "Votre budget personnel"
+                      : c.personalOwner
+                        ? "Budget personnel du foyer"
+                        : "Ancien compte perso à migrer"}
                   </small>
                 )}
 
@@ -2091,78 +2756,101 @@ export default function App() {
               {!simple && (
                 <button
                   className="icon"
-                  aria-label={"Modifier " + c.name}
-                  onClick={() => editCategory(c)}
+                  aria-label={
+                    "Modifier " +
+                    c.name
+                  }
+                  onClick={() =>
+                    editCategory(c)
+                  }
                 >
-                  <Pencil size={17} />
+                  <Pencil
+                    size={17}
+                  />
                 </button>
               )}
 
             </div>
 
-            <Progress value={spent} max={totalBudget} />
+            <Progress
+              value={spent}
+              max={Math.max(
+                1,
+                totalBudget,
+              )}
+            />
 
-            {!simple && envelope && personal ? (
+            {!simple &&
+            envelope &&
+            isPersonal ? (
               <>
 
                 <div className="split meta">
                   <span>
-                    Budget mensuel : {money(envelope.base)}
+                    Budget mensuel :{" "}
+                    {money(
+                      envelope.base,
+                    )}
                   </span>
                   <span>
-                    Report : {money(envelope.carryIn)}
+                    Report :{" "}
+                    {money(
+                      envelope.carryIn,
+                    )}
                   </span>
                 </div>
 
                 <div className="split meta">
                   <span>
-                    Déjà engagé : {money(envelope.committed)}
+                    Déjà engagé :{" "}
+                    {money(
+                      envelope.committed,
+                    )}
                   </span>
                   <span>
-                    Reste à virer : {money(envelope.remaining)}
+                    Reste :{" "}
+                    {money(
+                      envelope.remaining,
+                    )}
                   </span>
                 </div>
 
-                {envelope.carryOut > 0 && (
+                {envelope.carryOut >
+                  0 && (
                   <p className="negative">
-                    {money(envelope.carryOut)} seront déduits du mois suivant.
+                    {money(
+                      envelope.carryOut,
+                    )}{" "}
+                    seront déduits du
+                    mois suivant.
                   </p>
                 )}
 
-                <div className="split">
-
-                  {envelope.remaining > 0 ? (
-                    <button
-                      className="secondary compact"
-                      onClick={() => transferPersonal(personal)}
-                    >
-                      Virer {money(envelope.remaining)}
-                    </button>
-                  ) : (
-                    <span className="muted">
-                      Budget perso entièrement affecté
-                    </span>
-                  )}
-
+                {isMine &&
+                ps.account?.category ===
+                  c.id ? (
                   <button
-                    className="text"
+                    className="secondary compact"
                     onClick={() =>
-                      explain(
-                        personal.name + " · Historique",
-                        txRows(
-                          sortedTx.filter(
-                            (t) =>
-                              t.account === personal.id ||
-                              t.to === personal.id,
-                          ),
-                        ),
-                      )
+                      transferPersonal()
                     }
                   >
-                    Historique du compte
+                    Virer{" "}
+                    {money(
+                      envelope.remaining,
+                    )}
                   </button>
-
-                </div>
+                ) : legacyPersonal ? (
+                  <small className="muted">
+                    Migrez ce compte depuis
+                    l’onglet Compte perso.
+                  </small>
+                ) : (
+                  <small className="muted">
+                    Les détails du compte
+                    sont privés.
+                  </small>
+                )}
 
               </>
             ) : !simple ? (
@@ -2170,10 +2858,23 @@ export default function App() {
 
                 <div className="split meta">
                   <span>
-                    Fixe : {money(fixedPaid)} / {money(fixed)}
+                    Fixe :{" "}
+                    {money(
+                      fixedPaid,
+                    )}{" "}
+                    / {money(fixed)}
                   </span>
+
                   <span>
-                    Variable : {money(spent - fixedPaid)} / {money(variable)}
+                    Variable :{" "}
+                    {money(
+                      spent -
+                        fixedPaid,
+                    )}{" "}
+                    /{" "}
+                    {money(
+                      variable,
+                    )}
                   </span>
                 </div>
 
@@ -2181,26 +2882,52 @@ export default function App() {
 
                   <small
                     className={
-                      spent > fixed + variable ? "negative" : ""
+                      spent >
+                      fixed +
+                        variable
+                        ? "negative"
+                        : ""
                     }
                   >
-                    {spent > fixed + variable
-                      ? "Dépassé de " + money(spent - fixed - variable)
-                      : money(fixed + variable - spent) + " restants"}
+                    {spent >
+                    fixed +
+                      variable
+                      ? "Dépassé de " +
+                        money(
+                          spent -
+                            fixed -
+                            variable,
+                        )
+                      : money(
+                          fixed +
+                            variable -
+                            spent,
+                        ) +
+                        " restants"}
                   </small>
 
                   <button
                     className="text danger-text"
                     onClick={() =>
                       confirmAction(
-                        "Archiver " + c.name + " ?",
+                        "Archiver " +
+                          c.name +
+                          " ?",
                         "Son historique reste disponible. Les charges fixes associées restent actives et doivent être arrêtées séparément si nécessaire.",
                         async () =>
-                          change((d) => {
-                            d.categories.find(
-                              (x) => x.id === c.id,
-                            )!.archived = selectedMonth;
-                          }, "Catégorie archivée"),
+                          change(
+                            (d) => {
+                              d.categories.find(
+                                (
+                                  x,
+                                ) =>
+                                  x.id ===
+                                  c.id,
+                              )!.archived =
+                                selectedMonth;
+                            },
+                            "Catégorie archivée",
+                          ),
                       )
                     }
                   >
@@ -2587,10 +3314,6 @@ export default function App() {
     salaryReminder &&
     today() >= salaryPlannedDate &&
     !salaryReceivedThisMonth;
-  const personalAccounts = s.accounts.filter(
-    (a) => !a.archived && a.group === "personal",
-  );
-
   const wealth = s.accounts
       .filter((a) => a.group === "wealth")
       .reduce((n, a) => n + balance(s, a.id), 0),
@@ -3168,286 +3891,530 @@ export default function App() {
               <div className="section-head">
                 <div>
                   <p className="lead">
-                    Votre argent personnel, séparé du budget commun.
+                    Votre compte personnel.
                   </p>
                   <p className="muted">
-                    Les virements depuis le compte commun consomment votre
-                    enveloppe mensuelle. Les dépenses faites ensuite depuis ce
-                    compte ne sont pas comptées une deuxième fois.
+                    Son solde, ses achats et son historique
+                    sont visibles uniquement depuis votre
+                    compte Wimm.
                   </p>
                 </div>
 
-                <button
-                  className="primary"
-                  onClick={() => editPersonalAccount()}
-                >
-                  <Plus size={17} />
-                  Compte perso
-                </button>
+                {ps.account && (
+                  <button
+                    className="secondary"
+                    onClick={() =>
+                      editPersonalAccount()
+                    }
+                  >
+                    <Pencil size={17} />
+                    Paramétrer
+                  </button>
+                )}
               </div>
 
-              {!personalAccounts.length ? (
-                <Empty
-                  title="Configurez votre compte perso"
-                  action={
-                    <button
-                      className="primary"
-                      onClick={() => editPersonalAccount()}
-                    >
-                      Créer mon compte perso
-                    </button>
-                  }
-                >
-                  Reliez-le à une catégorie comme « Perso Quentin ».
-                  Son solde et ses dépenses resteront séparés du compte
-                  courant du foyer.
-                </Empty>
-              ) : (
-                personalAccounts.map((a) => {
+              {!ps.account ? (
+                <>
+                  {s.accounts.some(
+                    (a) =>
+                      !a.archived &&
+                      a.group ===
+                        "personal",
+                  ) && (
+                    <section className="card">
+                      <h2>
+                        Importer votre ancien
+                        compte perso
+                      </h2>
 
-                  const category = s.categories.find(
-                    (c) => c.id === a.personalCategory,
-                  );
+                      <p className="muted">
+                        Choisissez uniquement
+                        votre propre compte.
+                        Après migration, ses
+                        données personnelles
+                        quitteront le document
+                        partagé du foyer.
+                      </p>
 
-                  const envelope = personalEnvelope(
-                    s,
-                    a.id,
-                    selectedMonth,
-                  );
-
-                  const history = sortedTx.filter(
-                    (t) => t.account === a.id || t.to === a.id,
-                  );
-
-                  return (
-                    <div key={a.id}>
-                      <div className="overview">
-
-                        <section className="balance-card">
-                          <div className="split">
-                            <span>{a.name}</span>
-                            <UserRound size={23} />
-                          </div>
-
-                          <div className="hero-number">
-                            {money(balance(s, a.id))}
-                          </div>
-
-                          <div className="split">
-                            <span>
-                              Solde actuel · {dateLabel(today())}
-                            </span>
-
-                            <button
-                              onClick={() =>
-                                explain(
-                                  "Fonctionnement du compte perso",
-                                  <>
-                                    <Row
-                                      title="Catégorie liée"
-                                      value={
-                                        category?.name ||
-                                        "Aucune catégorie"
-                                      }
-                                    />
-                                    <Row
-                                      title="Budget mensuel"
-                                      value={money(envelope.base)}
-                                    />
-                                    <p>
-                                      Les achats effectués depuis ce compte
-                                      modifient son solde, mais pas une
-                                      deuxième fois le budget du foyer.
-                                    </p>
-                                  </>,
-                                )
-                              }
-                            >
-                              Voir le fonctionnement{" "}
-                              <CircleHelp size={14} />
-                            </button>
-                          </div>
-                        </section>
-
-                        <section className="metric">
-                          <small>Budget lié</small>
-                          <strong>
-                            {category?.name || "Non configuré"}
-                          </strong>
-                          <span className="muted">
-                            {money(envelope.base)} / mois
-                          </span>
-
-                          {category && (
-                            <button
-                              className="text"
-                              onClick={() => editCategory(category)}
-                            >
-                              Modifier le budget
-                            </button>
-                          )}
-                        </section>
-
-                        <section className="metric">
-                          <small>Reste à virer ce mois</small>
-                          <strong>{money(envelope.remaining)}</strong>
-                          <span className="muted">
-                            {envelope.carryIn > 0
-                              ? `${money(envelope.carryIn)} reportés du mois précédent`
-                              : "Aucun report du mois précédent"}
-                          </span>
-                        </section>
-
-                      </div>
-
-                      <div className="two-col">
-
-                        <section className="card">
-                          <div className="section-head">
-                            <h2>
-                              Enveloppe · {monthLabel(selectedMonth)}
-                            </h2>
-                          </div>
-
-                          <div className="split">
-                            <span>Budget mensuel</span>
-                            <strong>{money(envelope.base)}</strong>
-                          </div>
-
-                          {envelope.carryIn > 0 && (
-                            <div className="split">
-                              <span>Report du mois précédent</span>
-                              <strong className="negative">
-                                − {money(envelope.carryIn)}
-                              </strong>
-                            </div>
-                          )}
-
-                          <div className="split">
-                            <span>Disponible ce mois</span>
-                            <strong>{money(envelope.available)}</strong>
-                          </div>
-
-                          <div className="split">
-                            <span>Déjà engagé / viré</span>
-                            <strong>{money(envelope.committed)}</strong>
-                          </div>
-
-                          <Progress
-                            value={envelope.committed}
-                            max={Math.max(1, envelope.available)}
+                      {s.accounts
+                        .filter(
+                          (a) =>
+                            !a.archived &&
+                            a.group ===
+                              "personal",
+                        )
+                        .map((a) => (
+                          <Row
+                            key={a.id}
+                            icon={
+                              <UserRound
+                                size={18}
+                              />
+                            }
+                            title={a.name}
+                            sub={
+                              s.categories.find(
+                                (c) =>
+                                  c.id ===
+                                  a.personalCategory,
+                              )?.name ||
+                              "Aucune catégorie liée"
+                            }
+                            value={
+                              <button
+                                className="primary compact"
+                                onClick={() =>
+                                  migrateLegacyPersonal(
+                                    a,
+                                  ).catch(
+                                    showError,
+                                  )
+                                }
+                              >
+                                C’est mon compte
+                              </button>
+                            }
                           />
+                        ))}
+                    </section>
+                  )}
 
-                          <div className="split">
-                            <span>Reste à virer</span>
-                            <strong className="large">
-                              {money(envelope.remaining)}
-                            </strong>
-                          </div>
+                  <Empty
+                    title="Configurez votre compte perso"
+                    action={
+                      <button
+                        className="primary"
+                        onClick={() =>
+                          editPersonalAccount()
+                        }
+                      >
+                        Créer mon compte perso
+                      </button>
+                    }
+                  >
+                    Un compte privé lié à votre
+                    enveloppe personnelle du
+                    budget commun.
+                  </Empty>
+                </>
+              ) : (() => {
 
-                          {envelope.carryOut > 0 && (
-                            <p className="warning">
-                              Dépassement de {money(envelope.carryOut)} :
-                              cette somme sera automatiquement déduite du
-                              mois suivant.
-                            </p>
-                          )}
+                const account =
+                  ps.account;
 
-                          <button
-                            className="primary"
-                            onClick={() => transferPersonal(a)}
-                          >
-                            <ArrowLeftRight size={17} />
-                            {envelope.remaining > 0
-                              ? `Virer ${money(envelope.remaining)}`
-                              : "Faire une avance"}
-                          </button>
-                        </section>
+                const category =
+                  s.categories.find(
+                    (c) =>
+                      c.id ===
+                      account.category,
+                  );
 
-                        <section className="card">
-                          <div className="section-head">
-                            <h2>Gérer le compte</h2>
+                const envelope =
+                  personalBudgetEnvelope(
+                    s,
+                    personalOwnerId,
+                    account.category,
+                    selectedMonth,
+                    month(account.date),
+                  );
 
-                            <button
-                              className="icon"
-                              aria-label="Paramétrer le compte perso"
-                              onClick={() => editPersonalAccount(a)}
-                            >
-                              <Pencil size={17} />
-                            </button>
-                          </div>
+                const privateBalance =
+                  personalBalance(
+                    ps,
+                    s,
+                    personalOwnerId,
+                  );
 
-                          <button
-                            className="primary wide"
-                            onClick={() => personalExpense(a)}
-                          >
-                            <Plus size={17} />
-                            Ajouter une dépense perso
-                          </button>
+                const sharedIncoming =
+                  s.transactions
+                    .filter(
+                      (t) =>
+                        t.type ===
+                          "personal_transfer" &&
+                        t.personalOwner ===
+                          personalOwnerId &&
+                        t.category ===
+                          account.category,
+                    )
+                    .map((t) => ({
+                      id: t.id,
+                      date: t.date,
+                      title:
+                        t.description ||
+                        "Virement perso",
+                      amount:
+                        t.amount,
+                      positive: true,
+                    }));
 
-                          <button
-                            className="secondary wide"
-                            onClick={() => transferPersonal(a)}
-                          >
-                            <ArrowLeftRight size={17} />
-                            Virement / avance
-                          </button>
+                const privateHistory =
+                  ps.transactions.map(
+                    (t) => ({
+                      id: t.id,
+                      date: t.date,
+                      title:
+                        t.description,
+                      amount:
+                        Math.abs(
+                          t.amount,
+                        ),
+                      positive:
+                        t.type ===
+                          "adjust" &&
+                        t.amount > 0,
+                      source: t,
+                    }),
+                  );
 
-                          <button
-                            className="secondary wide"
-                            onClick={() => adjustPersonalBalance(a)}
-                          >
-                            Ajuster le solde
-                          </button>
+                const history = [
+                  ...sharedIncoming,
+                  ...privateHistory,
+                ].sort(
+                  (a, b) =>
+                    b.date.localeCompare(
+                      a.date,
+                    ),
+                );
 
-                          {category && (
-                            <button
-                              className="secondary wide"
-                              onClick={() => editCategory(category)}
-                            >
-                              Modifier le budget lié
-                            </button>
-                          )}
+                return (
+                  <>
+                    <div className="overview">
 
-                          <p className="muted">
-                            Ce compte est volontairement exclu du patrimoine,
-                            de l’épargne et des projections.
-                          </p>
-                        </section>
-
-                      </div>
-
-                      <section className="card">
-                        <div className="section-head">
-                          <h2>Historique du compte</h2>
-
-                          <span className="muted">
-                            {history.length} mouvement
-                            {history.length > 1 ? "s" : ""}
+                      <section className="balance-card">
+                        <div className="split">
+                          <span>
+                            {account.name}
                           </span>
+                          <UserRound
+                            size={23}
+                          />
                         </div>
 
-                        {txRows(history.slice(0, 10))}
+                        <div className="hero-number">
+                          {money(
+                            privateBalance,
+                          )}
+                        </div>
 
-                        {history.length > 10 && (
+                        <div className="split">
+                          <span>
+                            Solde privé actuel
+                          </span>
+
                           <button
-                            className="text"
                             onClick={() =>
                               explain(
-                                a.name + " · Historique complet",
-                                txRows(history),
+                                "Confidentialité du compte perso",
+                                <>
+                                  <p>
+                                    Ce solde et
+                                    vos achats
+                                    personnels
+                                    sont stockés
+                                    séparément
+                                    pour votre
+                                    utilisateur.
+                                  </p>
+                                  <p>
+                                    Les autres
+                                    membres du
+                                    foyer voient
+                                    uniquement
+                                    l’impact des
+                                    virements sur
+                                    le compte
+                                    commun et
+                                    l’enveloppe
+                                    budgétaire.
+                                  </p>
+                                </>,
                               )
                             }
                           >
-                            Voir tout l’historique
+                            Privé{" "}
+                            <CircleHelp
+                              size={14}
+                            />
+                          </button>
+                        </div>
+                      </section>
+
+                      <section className="metric">
+                        <small>
+                          Budget lié
+                        </small>
+                        <strong>
+                          {category?.name ||
+                            "Non configuré"}
+                        </strong>
+                        <span className="muted">
+                          {money(
+                            envelope.base,
+                          )}{" "}
+                          / mois
+                        </span>
+
+                        {category && (
+                          <button
+                            className="text"
+                            onClick={() =>
+                              editCategory(
+                                category,
+                              )
+                            }
+                          >
+                            Modifier le budget
                           </button>
                         )}
                       </section>
-                    </div>
-                  );
 
-                })
-              )}
+                      <section className="metric">
+                        <small>
+                          Reste à virer
+                        </small>
+                        <strong>
+                          {money(
+                            envelope.remaining,
+                          )}
+                        </strong>
+                        <span className="muted">
+                          {envelope.carryIn >
+                          0
+                            ? `${money(
+                                envelope.carryIn,
+                              )} reportés`
+                            : "Aucun report"}
+                        </span>
+                      </section>
+
+                    </div>
+
+                    <div className="two-col">
+
+                      <section className="card">
+                        <div className="section-head">
+                          <h2>
+                            Enveloppe ·{" "}
+                            {monthLabel(
+                              selectedMonth,
+                            )}
+                          </h2>
+                        </div>
+
+                        <Row
+                          title="Budget mensuel"
+                          value={money(
+                            envelope.base,
+                          )}
+                        />
+
+                        {envelope.carryIn >
+                          0 && (
+                          <Row
+                            title="Report précédent"
+                            value={
+                              "− " +
+                              money(
+                                envelope.carryIn,
+                              )
+                            }
+                          />
+                        )}
+
+                        <Row
+                          title="Disponible"
+                          value={money(
+                            envelope.available,
+                          )}
+                        />
+
+                        <Row
+                          title="Déjà engagé / viré"
+                          value={money(
+                            envelope.committed,
+                          )}
+                        />
+
+                        <Progress
+                          value={
+                            envelope.committed
+                          }
+                          max={Math.max(
+                            1,
+                            envelope.available,
+                          )}
+                        />
+
+                        <Row
+                          title="Reste à virer"
+                          value={money(
+                            envelope.remaining,
+                          )}
+                        />
+
+                        {envelope.carryOut >
+                          0 && (
+                          <p className="warning">
+                            Dépassement de{" "}
+                            {money(
+                              envelope.carryOut,
+                            )}{" "}
+                            reporté sur le mois
+                            suivant.
+                          </p>
+                        )}
+
+                        <button
+                          className="primary"
+                          onClick={() =>
+                            transferPersonal()
+                          }
+                        >
+                          <ArrowLeftRight
+                            size={17}
+                          />
+                          Virer mon budget
+                        </button>
+                      </section>
+
+                      <section className="card">
+                        <div className="section-head">
+                          <h2>
+                            Gérer mon compte
+                          </h2>
+                        </div>
+
+                        <button
+                          className="primary wide"
+                          onClick={() =>
+                            personalExpense()
+                          }
+                        >
+                          <Plus size={17} />
+                          Ajouter une dépense
+                          perso
+                        </button>
+
+                        <button
+                          className="secondary wide"
+                          onClick={() =>
+                            transferPersonal()
+                          }
+                        >
+                          <ArrowLeftRight
+                            size={17}
+                          />
+                          Virer mon budget
+                        </button>
+
+                        <button
+                          className="secondary wide"
+                          onClick={() =>
+                            adjustPersonalBalance()
+                          }
+                        >
+                          Ajuster le solde
+                        </button>
+
+                        <button
+                          className="secondary wide"
+                          onClick={() =>
+                            editPersonalAccount()
+                          }
+                        >
+                          Paramétrer le compte
+                        </button>
+
+                        <p className="muted">
+                          Le compte perso est
+                          exclu du patrimoine et
+                          de l’épargne commune.
+                        </p>
+                      </section>
+
+                    </div>
+
+                    <section className="card">
+                      <div className="section-head">
+                        <h2>
+                          Historique privé
+                        </h2>
+                        <span className="muted">
+                          {history.length}{" "}
+                          mouvement
+                          {history.length >
+                          1
+                            ? "s"
+                            : ""}
+                        </span>
+                      </div>
+
+                      {history.length ? (
+                        history
+                          .slice(0, 15)
+                          .map((h) => (
+                            <Row
+                              key={h.id}
+                              icon={
+                                h.positive ? (
+                                  <ArrowDownLeft />
+                                ) : (
+                                  <ArrowUpRight />
+                                )
+                              }
+                              title={h.title}
+                              sub={dateLabel(
+                                h.date,
+                              )}
+                              value={
+                                <span
+                                  className={
+                                    h.positive
+                                      ? "positive"
+                                      : ""
+                                  }
+                                >
+                                  {h.positive
+                                    ? "+"
+                                    : "−"}
+                                  {money(
+                                    h.amount,
+                                  )}
+                                </span>
+                              }
+                              onClick={
+                                ps.transactions.some(
+                                  (t) =>
+                                    t.id === h.id &&
+                                    t.type === "expense",
+                                )
+                                  ? () => {
+                                      const tx =
+                                        ps.transactions.find(
+                                          (t) =>
+                                            t.id === h.id &&
+                                            t.type === "expense",
+                                        );
+
+                                      if (tx)
+                                        personalExpense(tx);
+                                    }
+                                  : undefined
+                              }
+                            />
+                          ))
+                      ) : (
+                        <p className="muted padded">
+                          Aucun mouvement pour
+                          le moment.
+                        </p>
+                      )}
+                    </section>
+
+                  </>
+                );
+
+              })()}
             </>
           )}
 

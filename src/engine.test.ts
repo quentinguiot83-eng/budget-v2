@@ -7,6 +7,7 @@ import {
   stats,
   balance,
   personalEnvelope,
+  personalBudgetEnvelope,
   validate,
   allocation,
   project,
@@ -448,5 +449,107 @@ test("compte perso, mensualité, avance et report", () => {
   );
 
   assert.equal(balance(s, "personal", "2020-02-28"), 11500);
+
+});
+
+
+test("avance perso de 500 euros répartie sur 10 mois", () => {
+
+  const s = fixture();
+
+  s.categories.push({
+    id: "perso-advance",
+    name: "Loisirs Quentin",
+    icon: "games",
+    budgets: {
+      "2026-10": 15000,
+    },
+    personalOwner: "quentin",
+    personalSince: "2026-10",
+  });
+
+  s.transactions.push({
+    id: "advance-500",
+    type: "personal_transfer",
+    amount: 50000,
+    date: "2026-10-01",
+    description: "Avance compte perso",
+    account: "current",
+    category: "perso-advance",
+    personalOwner: "quentin",
+    personalKind: "advance",
+    personalMonths: 10,
+    personalStartMonth: "2026-10",
+  });
+
+  const october =
+    personalBudgetEnvelope(
+      s,
+      "quentin",
+      "perso-advance",
+      "2026-10",
+    );
+
+  assert.equal(
+    october.base,
+    15000,
+  );
+
+  assert.equal(
+    october.committed,
+    5000,
+  );
+
+  assert.equal(
+    october.remaining,
+    10000,
+  );
+
+  const july =
+    personalBudgetEnvelope(
+      s,
+      "quentin",
+      "perso-advance",
+      "2027-07",
+    );
+
+  assert.equal(
+    july.committed,
+    5000,
+  );
+
+  assert.equal(
+    july.remaining,
+    10000,
+  );
+
+  const august =
+    personalBudgetEnvelope(
+      s,
+      "quentin",
+      "perso-advance",
+      "2027-08",
+    );
+
+  assert.equal(
+    august.committed,
+    0,
+  );
+
+  assert.equal(
+    august.remaining,
+    15000,
+  );
+
+  // Les 500 € sortent bien immédiatement
+  // du compte courant.
+  assert.equal(
+    balance(
+      s,
+      "current",
+      "2026-10-01",
+    ),
+    50000,
+  );
 
 });
