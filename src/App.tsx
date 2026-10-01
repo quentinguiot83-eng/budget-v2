@@ -3771,14 +3771,12 @@ export default function App() {
             <img src="/wimm-icon.png" alt="" className="brand-logo" /> Wimm
           </div>
           <h1>
-            Une vue claire.
+            Anticipez vos finances.
             <br />
-            Des projets à deux.
+            Construisez vos projets d’avenir.
           </h1>
           <p>
-            Le quotidien, l’épargne et les voyages.
-            <br />
-            Tout simplement, au même endroit.
+            Budget, épargne, voyages et projets réunis au même endroit.
           </p>
           <div className="auth-visual">
             <div className="visual-icon">
