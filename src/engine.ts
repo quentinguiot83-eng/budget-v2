@@ -8,7 +8,7 @@ export type Account = {
 
   date: string;
 
-  group: "current" | "wealth" | "travel";
+  group: "current" | "wealth" | "travel" | "personal";
 
   rate: number;
 
@@ -21,6 +21,8 @@ export type Account = {
   relay: string;
 
   allocation: number;
+
+  personalCategory?: string;
 
   archived?: boolean;
 
@@ -370,6 +372,135 @@ export function budget(c: Category, m: string) {
 
 }
 
+
+export function personalAccountForCategory(s: State, categoryId: string) {
+
+  return s.accounts.find(
+    (a) =>
+      !a.archived &&
+      a.group === "personal" &&
+      a.personalCategory === categoryId,
+  );
+
+}
+
+function personalCommittedForMonth(s: State, account: Account, m: string) {
+
+  const categoryId = account.personalCategory;
+
+  if (!categoryId) return 0;
+
+  // Mensualités / charges payées directement depuis le compte commun.
+  // Une échéance payée depuis le compte perso ne doit pas être comptée
+  // une deuxième fois dans le budget commun.
+  const scheduled = dues(s, m)
+    .filter(
+      (d) =>
+        !d.cancelled &&
+        d.rule.kind !== "repay" &&
+        d.rule.category === categoryId &&
+        d.rule.account !== account.id,
+    )
+    .reduce(
+      (sum, d) => sum + (d.paid?.amount ?? d.rule.amount),
+      0,
+    );
+
+  // Dépenses ponctuelles directement payées depuis un compte du foyer.
+  const directExpenses = s.transactions
+    .filter(
+      (t) =>
+        t.type === "expense" &&
+        !t.fixed &&
+        !t.trip &&
+        t.category === categoryId &&
+        t.account !== account.id &&
+        month(t.date) === m &&
+        t.date <= today(),
+    )
+    .reduce((sum, t) => sum + t.amount, 0);
+
+  // Argent envoyé du compte commun vers le compte personnel.
+  const transfers = s.transactions
+    .filter(
+      (t) =>
+        t.type === "transfer" &&
+        t.to === account.id &&
+        month(t.date) === m &&
+        t.date <= today() &&
+        s.accounts.find((a) => a.id === t.account)?.group === "current",
+    )
+    .reduce((sum, t) => sum + t.amount, 0);
+
+  return scheduled + directExpenses + transfers;
+
+}
+
+export function personalEnvelope(s: State, accountId: string, m: string) {
+
+  const account = s.accounts.find(
+    (a) => a.id === accountId && !a.archived && a.group === "personal",
+  );
+
+  const category = account?.personalCategory
+    ? s.categories.find((c) => c.id === account.personalCategory)
+    : undefined;
+
+  if (!account || !category || m < month(account.date)) {
+    return {
+      base: 0,
+      carryIn: 0,
+      available: 0,
+      committed: 0,
+      remaining: 0,
+      carryOut: 0,
+    };
+  }
+
+  let currentMonth = month(account.date);
+  let carry = 0;
+  let guard = 0;
+
+  while (currentMonth <= m && guard++ < 1200) {
+
+    const base = budget(category, currentMonth);
+    const available = Math.max(0, base - carry);
+    const committed = personalCommittedForMonth(
+      s,
+      account,
+      currentMonth,
+    );
+
+    const remaining = Math.max(0, available - committed);
+    const carryOut = Math.max(0, committed - available);
+
+    if (currentMonth === m) {
+      return {
+        base,
+        carryIn: carry,
+        available,
+        committed,
+        remaining,
+        carryOut,
+      };
+    }
+
+    carry = carryOut;
+    currentMonth = shiftMonth(currentMonth, 1);
+
+  }
+
+  return {
+    base: 0,
+    carryIn: carry,
+    available: 0,
+    committed: 0,
+    remaining: 0,
+    carryOut: 0,
+  };
+
+}
+
 export function balance(s: State, id: string, until = today()) {
 
   const a = s.accounts.find((a) => a.id === id);
@@ -522,63 +653,69 @@ export function overdue(s: State) {
 
 export function stats(s: State, m: string) {
 
-  // Les opérations ordinaires restent rattachées à leur date réelle.
+  // Les opérations du compte personnel restent dans son historique,
+  // mais ne sont pas mélangées aux dépenses du foyer.
   const tx = s.transactions.filter(
-
-    (t) => month(t.date) === m && t.date <= today(),
-
+    (t) =>
+      month(t.date) === m &&
+      t.date <= today() &&
+      s.accounts.find((a) => a.id === t.account)?.group !== "personal",
   );
 
   const scheduled = dues(s, m).filter(
-
-    (d) => !d.cancelled && d.rule.kind !== "repay",
-
+    (d) =>
+      !d.cancelled &&
+      d.rule.kind !== "repay" &&
+      s.accounts.find((a) => a.id === d.rule.account)?.group !== "personal",
   );
 
   const fixed = scheduled.reduce((n, d) => n + d.rule.amount, 0);
 
-  const variable = s.categories.reduce((n, c) => n + budget(c, m), 0);
+  // Pour une catégorie liée à un compte personnel :
+  // budget perso total - mensualités déjà comptées en charges fixes.
+  // Ainsi 150 € de budget avec une mensualité de 40 € donne bien
+  // 40 € de fixe + 110 € d'enveloppe restante = 150 €.
+  const variable = s.categories.reduce((n, c) => {
 
-  // Pour le budget, un salaire reçu à partir du 27 appartient au mois suivant.
-  // La date réelle reste toutefois utilisée pour le solde bancaire et l'historique.
+    const personal = personalAccountForCategory(s, c.id);
+
+    if (!personal) return n + budget(c, m);
+
+    const envelope = personalEnvelope(s, personal.id, m);
+
+    const fixedInsideEnvelope = scheduled
+      .filter((d) => d.rule.category === c.id)
+      .reduce((sum, d) => sum + d.rule.amount, 0);
+
+    return n + Math.max(0, envelope.available - fixedInsideEnvelope);
+
+  }, 0);
+
   const income = s.transactions
-
     .filter(
-
       (t) =>
         t.type === "income" &&
         t.date <= today() &&
-        incomeBudgetMonth(t) === m,
-
+        incomeBudgetMonth(t) === m &&
+        s.accounts.find((a) => a.id === t.account)?.group !== "personal",
     )
-
     .reduce((n, t) => n + t.amount, 0);
 
   const fixedPaid = tx
-
     .filter((t) => t.type === "expense" && t.fixed && !t.trip)
-
     .reduce((n, t) => n + t.amount, 0);
 
   const spending = tx
-
     .filter((t) => t.type === "expense" && !t.trip)
-
     .reduce((n, t) => n + t.amount, 0);
 
-  // L'épargne suit son mois budgétaire, même si le virement a été fait
-  // quelques jours avant le début de ce mois.
   const saved = s.transactions
-
     .filter(
-
       (t) =>
         t.type === "transfer" &&
         t.savingMonth === m &&
         t.date <= today(),
-
     )
-
     .reduce((n, t) => n + t.amount, 0);
 
   return {
@@ -643,7 +780,7 @@ export function allocation(
 
   const total = s.accounts
 
-    .filter((a) => !a.archived && a.group !== "current")
+    .filter((a) => !a.archived && ["wealth", "travel"].includes(a.group))
 
     .reduce((n, a) => n + a.allocation, 0);
 
@@ -655,7 +792,7 @@ export function allocation(
 
     const a = s.accounts.find((a) => a.id === id && !a.archived);
 
-    if (!a || a.group === "current") return;
+    if (!a || !["wealth", "travel"].includes(a.group)) return;
 
     const space =
 
@@ -689,7 +826,7 @@ export function allocation(
 
   for (const a of s.accounts.filter(
 
-    (a) => a.group !== "current" && !a.archived,
+    (a) => ["wealth", "travel"].includes(a.group) && !a.archived,
 
   )) {
 
@@ -1197,7 +1334,7 @@ export function validate(s: State) {
 
       const target = s.accounts.find((x) => x.id === next);
 
-      if (!target || target.group === "current")
+      if (!target || !["wealth", "travel"].includes(target.group))
 
         throw Error("Compte de relais invalide.");
 
@@ -1211,7 +1348,7 @@ export function validate(s: State) {
 
     s.accounts
 
-      .filter((a) => !a.archived && a.group !== "current")
+      .filter((a) => !a.archived && ["wealth", "travel"].includes(a.group))
 
       .reduce((n, a) => n + a.allocation, 0) > 100.0001
 

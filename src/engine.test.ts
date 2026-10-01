@@ -6,6 +6,7 @@ import {
   dues,
   stats,
   balance,
+  personalEnvelope,
   validate,
   allocation,
   project,
@@ -338,4 +339,114 @@ test("opérations antérieures au solde de départ : historique sans impact sur 
   // Les deux mouvements avant le 15 janvier sont ignorés.
   // Seule la dépense de 100 € du 20 janvier est déduite.
   assert.equal(balance(s, "current", "2025-01-31"), 90000);
+});
+
+
+test("compte perso, mensualité, avance et report", () => {
+
+  const s = fixture();
+
+  s.categories.push({
+    id: "perso",
+    name: "Perso Quentin",
+    icon: "games",
+    budgets: { "2020-01": 15000 },
+  });
+
+  s.accounts.push({
+    id: "personal",
+    name: "Compte perso Quentin",
+    opening: 0,
+    date: "2020-01-01",
+    group: "personal",
+    rate: 0,
+    cap: 0,
+    capType: "balance",
+    contributed: 0,
+    relay: "",
+    allocation: 0,
+    personalCategory: "perso",
+  });
+
+  s.rules.push({
+    id: "phone",
+    name: "Téléphone en 4 fois",
+    category: "perso",
+    account: "current",
+    amount: 4000,
+    start: "2020-01-10",
+    interval: 1,
+    count: 4,
+    kind: "credit",
+  });
+
+  let envelope = personalEnvelope(s, "personal", "2020-01");
+
+  assert.equal(envelope.base, 15000);
+  assert.equal(envelope.committed, 4000);
+  assert.equal(envelope.remaining, 11000);
+
+  // Le paiement en plusieurs fois reste inclus dans les 150 €,
+  // il ne transforme pas l'enveloppe en 190 €.
+  assert.equal(stats(s, "2020-01").fixed, 4000);
+  assert.equal(stats(s, "2020-01").variable, 51000);
+  assert.equal(stats(s, "2020-01").capacity, 345000);
+
+  s.transactions.push({
+    id: "personal-transfer",
+    type: "transfer",
+    account: "current",
+    to: "personal",
+    amount: 11000,
+    date: "2020-01-05",
+    description: "Budget perso",
+  });
+
+  envelope = personalEnvelope(s, "personal", "2020-01");
+
+  assert.equal(envelope.committed, 15000);
+  assert.equal(envelope.remaining, 0);
+
+  // Avance supplémentaire de 30 €.
+  s.transactions.push({
+    id: "advance",
+    type: "transfer",
+    account: "current",
+    to: "personal",
+    amount: 3000,
+    date: "2020-01-20",
+    description: "Avance perso",
+  });
+
+  envelope = personalEnvelope(s, "personal", "2020-01");
+
+  assert.equal(envelope.carryOut, 3000);
+
+  const february = personalEnvelope(s, "personal", "2020-02");
+
+  // Février : 150 € - 30 € de report = 120 € disponibles.
+  // La mensualité de 40 € laisse donc 80 € à virer.
+  assert.equal(february.available, 12000);
+  assert.equal(february.committed, 4000);
+  assert.equal(february.remaining, 8000);
+
+  // Une dépense faite depuis le compte perso ne revient pas
+  // une deuxième fois dans le budget commun.
+  s.transactions.push({
+    id: "personal-expense",
+    type: "expense",
+    account: "personal",
+    amount: 2500,
+    date: "2020-02-12",
+    description: "Jeu",
+    category: "perso",
+  });
+
+  assert.equal(
+    personalEnvelope(s, "personal", "2020-02").committed,
+    4000,
+  );
+
+  assert.equal(balance(s, "personal", "2020-02-28"), 11500);
+
 });

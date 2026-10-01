@@ -27,6 +27,7 @@ import {
   Pencil,
   Coins,
   Users,
+  UserRound,
   Target,
   Download,
   Menu,
@@ -90,6 +91,7 @@ import {
   euro,
   balance,
   budget,
+  personalEnvelope,
   stats,
   dues,
   overdue,
@@ -521,7 +523,12 @@ export default function App() {
   }
   const accountOptions = (group?: string): [string, string][] =>
     s.accounts
-      .filter((a) => !a.archived && (!group || a.group === group))
+      .filter(
+        (a) =>
+          !a.archived &&
+          a.group !== "personal" &&
+          (!group || a.group === group),
+      )
       .map((a) => [a.id, a.name]);
   const categoryOptions: [string, string][] = s.categories
     .filter((c) => !c.archived || c.archived > selectedMonth)
@@ -731,13 +738,226 @@ export default function App() {
       },
     );
   }
+  function editPersonalAccount(a?: Account) {
+
+    const options = categoryOptions.filter(
+      ([id]) =>
+        id === a?.personalCategory ||
+        !s.accounts.some(
+          (other) =>
+            other.id !== a?.id &&
+            !other.archived &&
+            other.group === "personal" &&
+            other.personalCategory === id,
+        ),
+    );
+
+    if (!options.length) {
+      setNotice(
+        "Créez d’abord une catégorie de budget dédiée, par exemple Perso Quentin.",
+      );
+      navigate("budget");
+      return;
+    }
+
+    openForm(
+      a ? "Paramétrer le compte perso" : "Créer un compte perso",
+      [
+        field(
+          "name",
+          "Nom du compte",
+          a?.name || "Compte perso",
+        ),
+        choice(
+          "category",
+          "Budget mensuel lié",
+          options,
+          a?.personalCategory || options[0]?.[0],
+        ),
+        ...(!a
+          ? [
+              amountField(
+                "opening",
+                "Solde actuel du compte (€)",
+                0,
+                "Indiquez ce qu’il y a réellement aujourd’hui sur ce compte.",
+              ),
+              field(
+                "date",
+                "Solde constaté au",
+                today(),
+                "date",
+              ),
+            ]
+          : []),
+      ],
+      async (v) => {
+        await change((d) => {
+
+          const id = a?.id || uid();
+
+          if (
+            d.accounts.some(
+              (other) =>
+                other.id !== id &&
+                !other.archived &&
+                other.group === "personal" &&
+                other.personalCategory === v.category,
+            )
+          )
+            throw Error(
+              "Cette catégorie est déjà liée à un autre compte personnel.",
+            );
+
+          if (
+            a &&
+            a.personalCategory !== v.category &&
+            d.transactions.some(
+              (t) => t.account === a.id || t.to === a.id,
+            )
+          )
+            throw Error(
+              "La catégorie ne peut plus être changée après les premiers mouvements du compte. Le nom du compte reste modifiable.",
+            );
+
+          const entry: Account = {
+            ...a,
+            id,
+            name: v.name,
+            opening: a?.opening ?? euro(v.opening),
+            date: a?.date ?? v.date,
+            group: "personal",
+            rate: 0,
+            cap: 0,
+            capType: "balance",
+            contributed: 0,
+            relay: "",
+            allocation: 0,
+            personalCategory: v.category,
+          };
+
+          if (entry.date > today())
+            throw Error(
+              "La date du solde doit être passée ou actuelle.",
+            );
+
+          if (a) {
+            d.accounts = d.accounts.map((x) =>
+              x.id === a.id ? entry : x,
+            );
+          } else {
+            d.accounts.push(entry);
+          }
+
+        }, a ? "Compte perso modifié" : "Compte perso créé");
+      },
+    );
+
+  }
+
+  function personalExpense(a: Account, existing?: Tx) {
+
+    if (!a.personalCategory)
+      throw Error("Ce compte personnel n’a aucune catégorie liée.");
+
+    openForm(
+      existing
+        ? "Modifier la dépense perso"
+        : "Ajouter une dépense perso",
+      [
+        amountField(
+          "amount",
+          "Montant (€)",
+          existing?.amount || 0,
+        ),
+        field(
+          "date",
+          "Date",
+          existing?.date || today(),
+          "date",
+        ),
+        field(
+          "description",
+          "Description",
+          existing?.description,
+        ),
+      ],
+      async (v) => {
+
+        const tx: Tx = {
+          ...existing,
+          id: existing?.id || uid(),
+          type: "expense",
+          amount: euro(v.amount),
+          date: v.date,
+          description: v.description,
+          account: a.id,
+          category: a.personalCategory,
+        };
+
+        await change((d) => {
+          if (existing) {
+            d.transactions = d.transactions.map((t) =>
+              t.id === existing.id ? tx : t,
+            );
+          } else {
+            d.transactions.push(tx);
+          }
+        }, "Dépense personnelle enregistrée");
+
+      },
+    );
+
+  }
+
+  function adjustPersonalBalance(a: Account) {
+
+    openForm(
+      "Ajuster le solde de " + a.name,
+      [
+        amountField(
+          "balance",
+          "Solde réel constaté (€)",
+          balance(s, a.id),
+        ),
+        field(
+          "reason",
+          "Motif",
+          "Correction du solde",
+        ),
+      ],
+      async (v) => {
+
+        const difference =
+          euro(v.balance) - balance(s, a.id);
+
+        if (!difference) return;
+
+        await change(
+          (d) =>
+            d.transactions.push({
+              id: uid(),
+              type: "adjust",
+              amount: difference,
+              date: today(),
+              description: "Ajustement : " + v.reason,
+              account: a.id,
+            }),
+          "Solde du compte perso ajusté",
+        );
+
+      },
+    );
+
+  }
+
   function allocations() {
     openForm(
       "Répartir mon épargne",
       [
         amountField("income", "Revenus mensuels estimés (€)", s.income),
         ...s.accounts
-          .filter((a) => a.group !== "current" && !a.archived)
+          .filter((a) => !["current", "personal"].includes(a.group) && !a.archived)
           .map((a) => ({
             ...field(a.id, a.name + " (%)", a.allocation, "number"),
             min: 0,
@@ -753,6 +973,61 @@ export default function App() {
       },
     );
   }
+  function transferPersonal(a: Account) {
+
+    if (!current || a.group !== "personal" || !a.personalCategory) return;
+
+    const envelope = personalEnvelope(s, a.id, selectedMonth);
+    const category = s.categories.find((c) => c.id === a.personalCategory);
+
+    openForm(
+      "Virer vers " + a.name,
+      [
+        amountField(
+          "amount",
+          "Montant (€)",
+          envelope.remaining,
+          `Reste prévu pour ${monthLabel(selectedMonth)} : ${money(envelope.remaining)}.`,
+        ),
+        field("date", "Date du virement", today(), "date"),
+        field(
+          "description",
+          "Description",
+          "Budget perso · " + (category?.name || a.name),
+        ),
+      ],
+      async (v) => {
+
+        const amount = euro(v.amount);
+
+        if (amount <= 0)
+          throw Error("Le montant doit être supérieur à zéro.");
+
+        if (balance(s, current.id, v.date) < amount)
+          throw Error(
+            "Le solde du compte courant est insuffisant pour ce virement.",
+          );
+
+        await change(
+          (d) =>
+            d.transactions.push({
+              id: uid(),
+              type: "transfer",
+              account: current.id,
+              to: a.id,
+              amount,
+              date: v.date,
+              description: v.description,
+            }),
+          "Budget personnel viré",
+        );
+
+      },
+      "Effectuer le virement",
+    );
+
+  }
+
   function transfer(to?: Account, travel?: Trip, from?: Account) {
     if (s.accounts.length < 2) {
       setNotice("Ajoutez au moins deux comptes pour effectuer un virement.");
@@ -1472,9 +1747,11 @@ export default function App() {
           {t.type === "transfer"
             ? `Virement vers ${s.accounts.find((a) => a.id === t.to)?.name}. Aucun revenu ni dépense de consommation.`
             : t.type === "expense"
-              ? t.trip
-                ? "Déduit du compte et du budget voyage, sans impacter les enveloppes ordinaires."
-                : "Déduit du compte et de la catégorie concernée."
+              ? a?.group === "personal"
+                ? "Déduit uniquement du solde du compte perso. Le budget du foyer a déjà été consommé lors du virement vers ce compte."
+                : t.trip
+                  ? "Déduit du compte et du budget voyage, sans impacter les enveloppes ordinaires."
+                  : "Déduit du compte et de la catégorie concernée."
               : t.type === "loan"
                 ? "Déduit du compte courant. Créance créée."
                 : t.type === "repay"
@@ -1485,11 +1762,15 @@ export default function App() {
           <button
             className="secondary"
             onClick={() =>
-              operation(
-                t.type,
-                t.trip ? s.trips.find((v) => v.id === t.trip) : undefined,
-                t,
-              )
+              a?.group === "personal" && t.type === "expense"
+                ? personalExpense(a, t)
+                : operation(
+                    t.type,
+                    t.trip
+                      ? s.trips.find((v) => v.id === t.trip)
+                      : undefined,
+                    t,
+                  )
             }
           >
             Modifier
@@ -1525,6 +1806,27 @@ export default function App() {
       </>,
     );
   }
+  function categoryVariableBudget(c: Category) {
+
+    const personal = s.accounts.find(
+      (a) =>
+        !a.archived &&
+        a.group === "personal" &&
+        a.personalCategory === c.id,
+    );
+
+    if (!personal) return budget(c, selectedMonth);
+
+    const envelope = personalEnvelope(s, personal.id, selectedMonth);
+
+    const fixed = totals.scheduled
+      .filter((d) => d.rule.category === c.id)
+      .reduce((n, d) => n + d.rule.amount, 0);
+
+    return Math.max(0, envelope.available - fixed);
+
+  }
+
   function calc() {
     const useActualIncome = totals.income > 0;
     const incomeUsed = useActualIncome ? totals.income : s.income;
@@ -1571,12 +1873,12 @@ export default function App() {
         />
 
         {s.categories
-          .filter((c) => budget(c, selectedMonth) > 0)
+          .filter((c) => categoryVariableBudget(c) > 0)
           .map((c) => (
             <Row
               key={c.id}
               title={c.name}
-              value={money(budget(c, selectedMonth))}
+              value={money(categoryVariableBudget(c))}
             />
           ))}
 
@@ -1614,6 +1916,7 @@ export default function App() {
   const nav = [
     { id: "home", label: "Accueil", icon: <Home /> },
     { id: "budget", label: "Budget", icon: <ChartNoAxesCombined /> },
+    { id: "personal", label: "Compte perso", icon: <UserRound /> },
     { id: "add", label: "Ajouter", icon: <Plus /> },
     { id: "wealth", label: "Patrimoine", icon: <Wallet /> },
     { id: "trips", label: "Voyages", icon: <Plane /> },
@@ -1629,6 +1932,11 @@ export default function App() {
   const mobileDrawerItems = [
     { id: "home", label: "Accueil", icon: <Home size={20} /> },
     { id: "budget", label: "Budget", icon: <ChartNoAxesCombined size={20} /> },
+    {
+      id: "personal",
+      label: "Compte perso",
+      icon: <UserRound size={20} />,
+    },
     { id: "add", label: "Ajouter", icon: <Plus size={20} /> },
     { id: "wealth", label: "Patrimoine", icon: <Wallet size={20} /> },
     !s.hidden.includes("trips") && {
@@ -1701,22 +2009,56 @@ export default function App() {
           totals.tx.some((t) => t.category === c.id),
       )
       .map((c, index) => {
+
+        const personal = s.accounts.find(
+          (a) =>
+            !a.archived &&
+            a.group === "personal" &&
+            a.personalCategory === c.id,
+        );
+
+        const envelope = personal
+          ? personalEnvelope(s, personal.id, selectedMonth)
+          : null;
+
         const fixed = totals.scheduled
           .filter((d) => d.rule.category === c.id)
           .reduce((n, d) => n + d.rule.amount, 0);
-        const spent = totals.tx
-          .filter((t) => t.type === "expense" && t.category === c.id && !t.trip)
+
+        const ordinarySpent = totals.tx
+          .filter(
+            (t) =>
+              t.type === "expense" &&
+              t.category === c.id &&
+              !t.trip,
+          )
           .reduce((n, t) => n + t.amount, 0);
-        const variable = budget(c, selectedMonth);
+
+        const spent = envelope
+          ? envelope.committed
+          : ordinarySpent;
+
+        const variable = categoryVariableBudget(c);
+
+        const totalBudget = envelope
+          ? envelope.available
+          : fixed + variable;
+
         const fixedPaid = totals.tx
           .filter(
             (t) =>
-              t.type === "expense" && t.category === c.id && t.fixed && !t.trip,
+              t.type === "expense" &&
+              t.category === c.id &&
+              t.fixed &&
+              !t.trip,
           )
           .reduce((n, t) => n + t.amount, 0);
+
         return (
           <article className="category" key={c.id}>
+
             <div className="flex">
+
               <span
                 className="category-icon"
                 style={{
@@ -1726,13 +2068,26 @@ export default function App() {
               >
                 {icons[c.icon] || icons.other}
               </span>
+
               <div className="grow">
+
                 <strong>{c.name}</strong>
+
                 <p>
                   {money(spent)}{" "}
-                  <span className="muted">/ {money(fixed + variable)}</span>
+                  <span className="muted">
+                    / {money(totalBudget)}
+                  </span>
                 </p>
+
+                {personal && envelope && (
+                  <small className="muted">
+                    {personal.name} · Solde {money(balance(s, personal.id))}
+                  </small>
+                )}
+
               </div>
+
               {!simple && (
                 <button
                   className="icon"
@@ -1742,10 +2097,77 @@ export default function App() {
                   <Pencil size={17} />
                 </button>
               )}
+
             </div>
-            <Progress value={spent} max={fixed + variable} />
-            {!simple && (
+
+            <Progress value={spent} max={totalBudget} />
+
+            {!simple && envelope && personal ? (
               <>
+
+                <div className="split meta">
+                  <span>
+                    Budget mensuel : {money(envelope.base)}
+                  </span>
+                  <span>
+                    Report : {money(envelope.carryIn)}
+                  </span>
+                </div>
+
+                <div className="split meta">
+                  <span>
+                    Déjà engagé : {money(envelope.committed)}
+                  </span>
+                  <span>
+                    Reste à virer : {money(envelope.remaining)}
+                  </span>
+                </div>
+
+                {envelope.carryOut > 0 && (
+                  <p className="negative">
+                    {money(envelope.carryOut)} seront déduits du mois suivant.
+                  </p>
+                )}
+
+                <div className="split">
+
+                  {envelope.remaining > 0 ? (
+                    <button
+                      className="secondary compact"
+                      onClick={() => transferPersonal(personal)}
+                    >
+                      Virer {money(envelope.remaining)}
+                    </button>
+                  ) : (
+                    <span className="muted">
+                      Budget perso entièrement affecté
+                    </span>
+                  )}
+
+                  <button
+                    className="text"
+                    onClick={() =>
+                      explain(
+                        personal.name + " · Historique",
+                        txRows(
+                          sortedTx.filter(
+                            (t) =>
+                              t.account === personal.id ||
+                              t.to === personal.id,
+                          ),
+                        ),
+                      )
+                    }
+                  >
+                    Historique du compte
+                  </button>
+
+                </div>
+
+              </>
+            ) : !simple ? (
+              <>
+
                 <div className="split meta">
                   <span>
                     Fixe : {money(fixedPaid)} / {money(fixed)}
@@ -1754,12 +2176,19 @@ export default function App() {
                     Variable : {money(spent - fixedPaid)} / {money(variable)}
                   </span>
                 </div>
+
                 <div className="split">
-                  <small className={spent > fixed + variable ? "negative" : ""}>
+
+                  <small
+                    className={
+                      spent > fixed + variable ? "negative" : ""
+                    }
+                  >
                     {spent > fixed + variable
                       ? "Dépassé de " + money(spent - fixed - variable)
                       : money(fixed + variable - spent) + " restants"}
                   </small>
+
                   <button
                     className="text danger-text"
                     onClick={() =>
@@ -1768,20 +2197,26 @@ export default function App() {
                         "Son historique reste disponible. Les charges fixes associées restent actives et doivent être arrêtées séparément si nécessaire.",
                         async () =>
                           change((d) => {
-                            d.categories.find((x) => x.id === c.id)!.archived =
-                              selectedMonth;
+                            d.categories.find(
+                              (x) => x.id === c.id,
+                            )!.archived = selectedMonth;
                           }, "Catégorie archivée"),
                       )
                     }
                   >
                     Archiver
                   </button>
+
                 </div>
+
               </>
-            )}
+            ) : null}
+
           </article>
         );
+
       });
+
   const savings = monthlyPlan(s, selectedMonth);
   const savingsTarget = Object.values(savings.amounts).reduce(
     (n, x) => n + x,
@@ -1834,7 +2269,7 @@ export default function App() {
           max={savingsTarget}
         />
         {s.accounts
-          .filter((a) => a.group !== "current" && !a.archived)
+          .filter((a) => !["current", "personal"].includes(a.group) && !a.archived)
           .map((a) => {
             const paid = s.transactions
               .filter(
@@ -2152,6 +2587,10 @@ export default function App() {
     salaryReminder &&
     today() >= salaryPlannedDate &&
     !salaryReceivedThisMonth;
+  const personalAccounts = s.accounts.filter(
+    (a) => !a.archived && a.group === "personal",
+  );
+
   const wealth = s.accounts
       .filter((a) => a.group === "wealth")
       .reduce((n, a) => n + balance(s, a.id), 0),
@@ -2161,6 +2600,7 @@ export default function App() {
   const titles: Record<string, string> = {
     home: "Un regard sur votre mois",
     budget: "Votre budget",
+    personal: "Compte perso",
     wealth: "Votre patrimoine",
     trips: "Vos voyages",
     projection: "Demain se prépare ici",
@@ -2286,6 +2726,7 @@ export default function App() {
           {[
             "home",
             "budget",
+            "personal",
             "calendar",
             "transactions",
             "analysis",
@@ -2722,6 +3163,294 @@ export default function App() {
               </section>
             </>
           )}
+          {route === "personal" && (
+            <>
+              <div className="section-head">
+                <div>
+                  <p className="lead">
+                    Votre argent personnel, séparé du budget commun.
+                  </p>
+                  <p className="muted">
+                    Les virements depuis le compte commun consomment votre
+                    enveloppe mensuelle. Les dépenses faites ensuite depuis ce
+                    compte ne sont pas comptées une deuxième fois.
+                  </p>
+                </div>
+
+                <button
+                  className="primary"
+                  onClick={() => editPersonalAccount()}
+                >
+                  <Plus size={17} />
+                  Compte perso
+                </button>
+              </div>
+
+              {!personalAccounts.length ? (
+                <Empty
+                  title="Configurez votre compte perso"
+                  action={
+                    <button
+                      className="primary"
+                      onClick={() => editPersonalAccount()}
+                    >
+                      Créer mon compte perso
+                    </button>
+                  }
+                >
+                  Reliez-le à une catégorie comme « Perso Quentin ».
+                  Son solde et ses dépenses resteront séparés du compte
+                  courant du foyer.
+                </Empty>
+              ) : (
+                personalAccounts.map((a) => {
+
+                  const category = s.categories.find(
+                    (c) => c.id === a.personalCategory,
+                  );
+
+                  const envelope = personalEnvelope(
+                    s,
+                    a.id,
+                    selectedMonth,
+                  );
+
+                  const history = sortedTx.filter(
+                    (t) => t.account === a.id || t.to === a.id,
+                  );
+
+                  return (
+                    <div key={a.id}>
+                      <div className="overview">
+
+                        <section className="balance-card">
+                          <div className="split">
+                            <span>{a.name}</span>
+                            <UserRound size={23} />
+                          </div>
+
+                          <div className="hero-number">
+                            {money(balance(s, a.id))}
+                          </div>
+
+                          <div className="split">
+                            <span>
+                              Solde actuel · {dateLabel(today())}
+                            </span>
+
+                            <button
+                              onClick={() =>
+                                explain(
+                                  "Fonctionnement du compte perso",
+                                  <>
+                                    <Row
+                                      title="Catégorie liée"
+                                      value={
+                                        category?.name ||
+                                        "Aucune catégorie"
+                                      }
+                                    />
+                                    <Row
+                                      title="Budget mensuel"
+                                      value={money(envelope.base)}
+                                    />
+                                    <p>
+                                      Les achats effectués depuis ce compte
+                                      modifient son solde, mais pas une
+                                      deuxième fois le budget du foyer.
+                                    </p>
+                                  </>,
+                                )
+                              }
+                            >
+                              Voir le fonctionnement{" "}
+                              <CircleHelp size={14} />
+                            </button>
+                          </div>
+                        </section>
+
+                        <section className="metric">
+                          <small>Budget lié</small>
+                          <strong>
+                            {category?.name || "Non configuré"}
+                          </strong>
+                          <span className="muted">
+                            {money(envelope.base)} / mois
+                          </span>
+
+                          {category && (
+                            <button
+                              className="text"
+                              onClick={() => editCategory(category)}
+                            >
+                              Modifier le budget
+                            </button>
+                          )}
+                        </section>
+
+                        <section className="metric">
+                          <small>Reste à virer ce mois</small>
+                          <strong>{money(envelope.remaining)}</strong>
+                          <span className="muted">
+                            {envelope.carryIn > 0
+                              ? `${money(envelope.carryIn)} reportés du mois précédent`
+                              : "Aucun report du mois précédent"}
+                          </span>
+                        </section>
+
+                      </div>
+
+                      <div className="two-col">
+
+                        <section className="card">
+                          <div className="section-head">
+                            <h2>
+                              Enveloppe · {monthLabel(selectedMonth)}
+                            </h2>
+                          </div>
+
+                          <div className="split">
+                            <span>Budget mensuel</span>
+                            <strong>{money(envelope.base)}</strong>
+                          </div>
+
+                          {envelope.carryIn > 0 && (
+                            <div className="split">
+                              <span>Report du mois précédent</span>
+                              <strong className="negative">
+                                − {money(envelope.carryIn)}
+                              </strong>
+                            </div>
+                          )}
+
+                          <div className="split">
+                            <span>Disponible ce mois</span>
+                            <strong>{money(envelope.available)}</strong>
+                          </div>
+
+                          <div className="split">
+                            <span>Déjà engagé / viré</span>
+                            <strong>{money(envelope.committed)}</strong>
+                          </div>
+
+                          <Progress
+                            value={envelope.committed}
+                            max={Math.max(1, envelope.available)}
+                          />
+
+                          <div className="split">
+                            <span>Reste à virer</span>
+                            <strong className="large">
+                              {money(envelope.remaining)}
+                            </strong>
+                          </div>
+
+                          {envelope.carryOut > 0 && (
+                            <p className="warning">
+                              Dépassement de {money(envelope.carryOut)} :
+                              cette somme sera automatiquement déduite du
+                              mois suivant.
+                            </p>
+                          )}
+
+                          <button
+                            className="primary"
+                            onClick={() => transferPersonal(a)}
+                          >
+                            <ArrowLeftRight size={17} />
+                            {envelope.remaining > 0
+                              ? `Virer ${money(envelope.remaining)}`
+                              : "Faire une avance"}
+                          </button>
+                        </section>
+
+                        <section className="card">
+                          <div className="section-head">
+                            <h2>Gérer le compte</h2>
+
+                            <button
+                              className="icon"
+                              aria-label="Paramétrer le compte perso"
+                              onClick={() => editPersonalAccount(a)}
+                            >
+                              <Pencil size={17} />
+                            </button>
+                          </div>
+
+                          <button
+                            className="primary wide"
+                            onClick={() => personalExpense(a)}
+                          >
+                            <Plus size={17} />
+                            Ajouter une dépense perso
+                          </button>
+
+                          <button
+                            className="secondary wide"
+                            onClick={() => transferPersonal(a)}
+                          >
+                            <ArrowLeftRight size={17} />
+                            Virement / avance
+                          </button>
+
+                          <button
+                            className="secondary wide"
+                            onClick={() => adjustPersonalBalance(a)}
+                          >
+                            Ajuster le solde
+                          </button>
+
+                          {category && (
+                            <button
+                              className="secondary wide"
+                              onClick={() => editCategory(category)}
+                            >
+                              Modifier le budget lié
+                            </button>
+                          )}
+
+                          <p className="muted">
+                            Ce compte est volontairement exclu du patrimoine,
+                            de l’épargne et des projections.
+                          </p>
+                        </section>
+
+                      </div>
+
+                      <section className="card">
+                        <div className="section-head">
+                          <h2>Historique du compte</h2>
+
+                          <span className="muted">
+                            {history.length} mouvement
+                            {history.length > 1 ? "s" : ""}
+                          </span>
+                        </div>
+
+                        {txRows(history.slice(0, 10))}
+
+                        {history.length > 10 && (
+                          <button
+                            className="text"
+                            onClick={() =>
+                              explain(
+                                a.name + " · Historique complet",
+                                txRows(history),
+                              )
+                            }
+                          >
+                            Voir tout l’historique
+                          </button>
+                        )}
+                      </section>
+                    </div>
+                  );
+
+                })
+              )}
+            </>
+          )}
+
           {route === "wealth" && (
             <>
               <div className="overview wealth-overview">
@@ -2783,7 +3512,7 @@ export default function App() {
               </div>
               <div className="account-grid">
                 {s.accounts
-                  .filter((a) => !a.archived)
+                  .filter((a) => !a.archived && a.group !== "personal")
                   .map((a) => (
                     <article className="card account" key={a.id}>
                       <div className="split">
