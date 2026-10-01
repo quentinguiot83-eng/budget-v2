@@ -6,6 +6,8 @@ import {
   dues,
   stats,
   balance,
+  personalEnvelope,
+  personalBudgetEnvelope,
   validate,
   allocation,
   project,
@@ -15,6 +17,10 @@ import {
   type Account,
   type State,
 } from "./engine";
+import {
+  personalProjection,
+  type PersonalState,
+} from "./personal";
 function fixture() {
   const s = emptyState();
   s.accounts = [
@@ -338,4 +344,286 @@ test("opérations antérieures au solde de départ : historique sans impact sur 
   // Les deux mouvements avant le 15 janvier sont ignorés.
   // Seule la dépense de 100 € du 20 janvier est déduite.
   assert.equal(balance(s, "current", "2025-01-31"), 90000);
+});
+
+
+test("compte perso, mensualité, avance et report", () => {
+
+  const s = fixture();
+
+  s.categories.push({
+    id: "perso",
+    name: "Perso Quentin",
+    icon: "games",
+    budgets: { "2020-01": 15000 },
+  });
+
+  s.accounts.push({
+    id: "personal",
+    name: "Compte perso Quentin",
+    opening: 0,
+    date: "2020-01-01",
+    group: "personal",
+    rate: 0,
+    cap: 0,
+    capType: "balance",
+    contributed: 0,
+    relay: "",
+    allocation: 0,
+    personalCategory: "perso",
+  });
+
+  s.rules.push({
+    id: "phone",
+    name: "Téléphone en 4 fois",
+    category: "perso",
+    account: "current",
+    amount: 4000,
+    start: "2020-01-10",
+    interval: 1,
+    count: 4,
+    kind: "credit",
+  });
+
+  let envelope = personalEnvelope(s, "personal", "2020-01");
+
+  assert.equal(envelope.base, 15000);
+  assert.equal(envelope.committed, 4000);
+  assert.equal(envelope.remaining, 11000);
+
+  // Le paiement en plusieurs fois reste inclus dans les 150 €,
+  // il ne transforme pas l'enveloppe en 190 €.
+  assert.equal(stats(s, "2020-01").fixed, 4000);
+  assert.equal(stats(s, "2020-01").variable, 51000);
+  assert.equal(stats(s, "2020-01").capacity, 345000);
+
+  s.transactions.push({
+    id: "personal-transfer",
+    type: "transfer",
+    account: "current",
+    to: "personal",
+    amount: 11000,
+    date: "2020-01-05",
+    description: "Budget perso",
+  });
+
+  envelope = personalEnvelope(s, "personal", "2020-01");
+
+  assert.equal(envelope.committed, 15000);
+  assert.equal(envelope.remaining, 0);
+
+  // Avance supplémentaire de 30 €.
+  s.transactions.push({
+    id: "advance",
+    type: "transfer",
+    account: "current",
+    to: "personal",
+    amount: 3000,
+    date: "2020-01-20",
+    description: "Avance perso",
+  });
+
+  envelope = personalEnvelope(s, "personal", "2020-01");
+
+  assert.equal(envelope.carryOut, 3000);
+
+  const february = personalEnvelope(s, "personal", "2020-02");
+
+  // Février : 150 € - 30 € de report = 120 € disponibles.
+  // La mensualité de 40 € laisse donc 80 € à virer.
+  assert.equal(february.available, 12000);
+  assert.equal(february.committed, 4000);
+  assert.equal(february.remaining, 8000);
+
+  // Une dépense faite depuis le compte perso ne revient pas
+  // une deuxième fois dans le budget commun.
+  s.transactions.push({
+    id: "personal-expense",
+    type: "expense",
+    account: "personal",
+    amount: 2500,
+    date: "2020-02-12",
+    description: "Jeu",
+    category: "perso",
+  });
+
+  assert.equal(
+    personalEnvelope(s, "personal", "2020-02").committed,
+    4000,
+  );
+
+  assert.equal(balance(s, "personal", "2020-02-28"), 11500);
+
+});
+
+
+test("avance perso de 500 euros répartie sur 10 mois", () => {
+
+  const s = fixture();
+
+  s.categories.push({
+    id: "perso-advance",
+    name: "Loisirs Quentin",
+    icon: "games",
+    budgets: {
+      "2026-10": 15000,
+    },
+    personalOwner: "quentin",
+    personalSince: "2026-10",
+  });
+
+  s.transactions.push({
+    id: "advance-500",
+    type: "personal_transfer",
+    amount: 50000,
+    date: "2026-10-01",
+    description: "Avance compte perso",
+    account: "current",
+    category: "perso-advance",
+    personalOwner: "quentin",
+    personalKind: "advance",
+    personalMonths: 10,
+    personalStartMonth: "2026-10",
+  });
+
+  const october =
+    personalBudgetEnvelope(
+      s,
+      "quentin",
+      "perso-advance",
+      "2026-10",
+    );
+
+  assert.equal(
+    october.base,
+    15000,
+  );
+
+  assert.equal(
+    october.committed,
+    5000,
+  );
+
+  assert.equal(
+    october.remaining,
+    10000,
+  );
+
+  const july =
+    personalBudgetEnvelope(
+      s,
+      "quentin",
+      "perso-advance",
+      "2027-07",
+    );
+
+  assert.equal(
+    july.committed,
+    5000,
+  );
+
+  assert.equal(
+    july.remaining,
+    10000,
+  );
+
+  const august =
+    personalBudgetEnvelope(
+      s,
+      "quentin",
+      "perso-advance",
+      "2027-08",
+    );
+
+  assert.equal(
+    august.committed,
+    0,
+  );
+
+  assert.equal(
+    august.remaining,
+    15000,
+  );
+
+  // Les 500 € sortent bien immédiatement
+  // du compte courant.
+  assert.equal(
+    balance(
+      s,
+      "current",
+      "2026-10-01",
+    ),
+    50000,
+  );
+
+});
+
+
+test("mensualité perso catégorisée incluse dans le budget perso sans double comptage", () => {
+
+  const s = fixture();
+  const currentMonth = month();
+  const nextDate = addMonths(
+    currentMonth + "-01",
+    1,
+  );
+
+  s.categories.push({
+    id: "perso",
+    name: "Perso",
+    icon: "other",
+    budgets: {
+      [currentMonth]: 15000,
+    },
+    personalOwner: "quentin",
+    personalSince: currentMonth,
+  });
+
+  const p: PersonalState = {
+    schema: 1,
+    account: {
+      id: "personal",
+      name: "Revolut",
+      opening: 0,
+      date: currentMonth + "-01",
+      category: "perso",
+    },
+    transactions: [],
+    budgets: [
+      {
+        id: "sorties",
+        name: "Sorties",
+        amount: 5000,
+        start: currentMonth,
+      },
+    ],
+    rules: [
+      {
+        id: "credit-perso",
+        name: "Achat",
+        amount: 2000,
+        start: nextDate,
+        interval: 1,
+        count: 3,
+        budgetId: "sorties",
+      },
+    ],
+  };
+
+  const projection =
+    personalProjection(
+      p,
+      s,
+      "quentin",
+      1,
+    );
+
+  // Le foyer verse 150 €.
+  // Sorties prévoit 50 €, dont la mensualité de 20 €.
+  // On obtient donc +100 €, pas +80 €.
+  assert.equal(
+    projection.at(-1)?.balance,
+    10000,
+  );
+
 });
