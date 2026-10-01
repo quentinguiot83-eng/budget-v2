@@ -363,7 +363,12 @@ export default function App() {
   const totals = stats(s, selectedMonth);
   const savingsCapacity =
     totals.income > 0 ? totals.actualCapacity : totals.capacity;
-  const savingsRemaining = Math.max(0, savingsCapacity - totals.saved);
+  const savingMonthMarkedDone =
+    (s.savingDoneMonths ?? []).includes(selectedMonth);
+
+  const savingsRemaining = savingMonthMarkedDone
+    ? 0
+    : Math.max(0, savingsCapacity - totals.saved);
   const isOwner = demoEnabled || doc?.household?.owner === session?.user.id;
   async function load() {
     const d = await rpc("budget_load");
@@ -616,6 +621,28 @@ export default function App() {
               ),
             ]
           : []),
+        ...(!a && !current
+          ? [
+              choice(
+                "salaryReceived",
+                "Salaire de ce mois déjà reçu ?",
+                [
+                  ["no", "Non"],
+                  ["yes", "Oui"],
+                ],
+                "no",
+              ),
+              choice(
+                "savingDone",
+                "Épargne de ce mois déjà effectuée ?",
+                [
+                  ["no", "Non"],
+                  ["yes", "Oui"],
+                ],
+                "no",
+              ),
+            ]
+          : []),
         field("rate", "Rendement annuel estimé (%)", a?.rate || 0, "number"),
         amountField("cap", "Plafond (€) — 0 = sans plafond", a?.cap || 0),
         choice(
@@ -679,6 +706,27 @@ export default function App() {
           if (a)
             d.accounts = d.accounts.map((x) => (x.id === a.id ? entry : x));
           else d.accounts.push(entry);
+
+          if (!a && !current) {
+            const currentMonth = month();
+
+            d.salaryReceivedMonths ??= [];
+            d.savingDoneMonths ??= [];
+
+            if (
+              v.salaryReceived === "yes" &&
+              !d.salaryReceivedMonths.includes(currentMonth)
+            ) {
+              d.salaryReceivedMonths.push(currentMonth);
+            }
+
+            if (
+              v.savingDone === "yes" &&
+              !d.savingDoneMonths.includes(currentMonth)
+            ) {
+              d.savingDoneMonths.push(currentMonth);
+            }
+          }
         }, "Compte enregistré");
       },
     );
@@ -1274,6 +1322,7 @@ export default function App() {
               { id: uid(), name: "Sur place", budget: 0 },
             ],
             projectId,
+            closedAt: t?.closedAt,
           };
 
           if (
@@ -1306,7 +1355,7 @@ export default function App() {
           const newBudget = euro(v.budget);
 
           const otherBudgets = trip.categories
-            .filter((x) => x.id !== c?.id)
+            .filter((x) => !x.archived && x.id !== c?.id)
             .reduce((sum, x) => sum + x.budget, 0);
 
           const totalAfterChange = otherBudgets + newBudget;
@@ -1740,6 +1789,28 @@ export default function App() {
   );
 
   function savingsPanel(location: "home" | "wealth") {
+    if (location === "home" && totals.income <= 0) {
+      return (
+        <section className="card">
+          <div className="section-head">
+            <h2>Votre épargne du mois</h2>
+          </div>
+
+          <p className="muted">
+            La répartition de l’épargne sera calculée lorsque les revenus du mois auront été saisis.
+          </p>
+
+          <button
+            className="secondary"
+            type="button"
+            onClick={() => operation("income")}
+          >
+            Ajouter un revenu
+          </button>
+        </section>
+      );
+    }
+
     return (
       <section className="card">
         <div className="section-head">
@@ -1749,10 +1820,19 @@ export default function App() {
           </button>
         </div>
         <div className="split">
-          <strong className="large">{money(totals.saved)}</strong>
-          <span className="muted">sur {money(savingsTarget)}</span>
+          <strong className="large">
+            {savingMonthMarkedDone ? "Fait" : money(totals.saved)}
+          </strong>
+          <span className="muted">
+            {savingMonthMarkedDone
+              ? "déjà effectué avant Wimm"
+              : `sur ${money(savingsTarget)}`}
+          </span>
         </div>
-        <Progress value={totals.saved} max={savingsTarget} />
+        <Progress
+          value={savingMonthMarkedDone ? savingsTarget : totals.saved}
+          max={savingsTarget}
+        />
         {s.accounts
           .filter((a) => a.group !== "current" && !a.archived)
           .map((a) => {
@@ -1774,7 +1854,9 @@ export default function App() {
                 title={a.name}
                 sub={`${a.allocation} % · Objectif ${money(target)} · ${money(paid)} déjà versés · ${money(remaining)} restants`}
                 value={
-                  remaining <= 0 ? (
+                  savingMonthMarkedDone ? (
+                    <span className="muted">Déjà fait</span>
+                  ) : remaining <= 0 ? (
                     <span className="muted">Fait</span>
                   ) : savingsRemaining <= 0 ? (
                     <span className="muted">Capacité atteinte</span>
@@ -2056,13 +2138,15 @@ export default function App() {
   const salaryReminder = s.salaryReminder ?? true;
   const salaryPlannedDate = dateAt(month(), salaryDay);
 
-  const salaryReceivedThisMonth = s.transactions.some(
-    (t) =>
-      t.type === "income" &&
-      t.incomeType === "Salaire" &&
-      month(t.date) === month() &&
-      t.date <= today(),
-  );
+  const salaryReceivedThisMonth =
+    (s.salaryReceivedMonths ?? []).includes(month()) ||
+    s.transactions.some(
+      (t) =>
+        t.type === "income" &&
+        t.incomeType === "Salaire" &&
+        month(t.date) === month() &&
+        t.date <= today(),
+    );
 
   const salaryAlert =
     salaryReminder &&
@@ -2148,7 +2232,6 @@ export default function App() {
               >
                 <Menu size={23} />
               </button>
-              <span>Wimm</span>
             </div>
             <span className="eyebrow">{doc.household.name}</span>
           </div>
@@ -2195,9 +2278,9 @@ export default function App() {
         )}
         <div className="page-heading">
           <div>
-            <p className="eyebrow">
-              {route === "home" ? "LE QUOTIDIEN, EN CLAIR" : "NOTRE BUDGET"}
-            </p>
+            {route === "home" && (
+              <p className="eyebrow">LE QUOTIDIEN, EN CLAIR</p>
+            )}
             <h1>{titles[route]}</h1>
           </div>
           {[
@@ -2854,21 +2937,7 @@ export default function App() {
                         {n} an{n > 1 ? "s" : ""}
                       </button>
                     ))}
-                    <input
-                      aria-label="Nombre d’années"
-                      type="number"
-                      min="1"
-                      max="50"
-                      value={years}
-                      onChange={(e) =>
-                        setYears(
-                          Math.max(
-                            1,
-                            Math.min(50, Number(e.target.value) || 1),
-                          ),
-                        )
-                      }
-                    />
+
                   </div>
                 </div>
                 <div className="chart">
@@ -2929,9 +2998,16 @@ export default function App() {
                 </div>
                 {project(s, years).at(-1)!.deficit > 0 && (
                   <p className="warning">
-                    Financement manquant cumulé :{" "}
-                    {money(project(s, years).at(-1)!.deficit)}. Les déficits ne
-                    sont pas automatiquement retirés de vos comptes d’épargne.
+                    Financement manquant
+                    {project(s, years).at(-1)!.deficitSince
+                      ? ` à partir de ${monthLabel(
+                          project(s, years).at(-1)!.deficitSince!,
+                        )}`
+                      : ""}
+                    {" · "}
+                    Cumul : {money(project(s, years).at(-1)!.deficit)}.
+                    {" "}Les déficits ne sont pas automatiquement retirés de
+                    vos comptes d’épargne.
                   </p>
                 )}
                 <details>
@@ -3086,10 +3162,12 @@ export default function App() {
                   </button>
                 ))}
               </div>
-              {s.trips.length > 0 && (
+              {s.trips.some((t) => !t.closedAt) && (
                 <section className="card">
                   <h2>Une dépense de voyage</h2>
-                  {s.trips.map((t) => (
+                  {s.trips
+                    .filter((t) => !t.closedAt)
+                    .map((t) => (
                     <Row
                       key={t.id}
                       icon={<Plane />}
@@ -3128,25 +3206,73 @@ export default function App() {
                 </Empty>
               ) : (
                 <>
-                  <div className="trip-tabs">
-                    {s.trips.map((t) => (
-                      <button
-                        className={
-                          (activeTrip || s.trips[0]?.id) === t.id
-                            ? "selected"
-                            : ""
-                        }
-                        key={t.id}
-                        onClick={() => setActiveTrip(t.id)}
-                      >
-                        <Plane size={16} />
-                        {t.name}
-                      </button>
-                    ))}
-                  </div>
+                  {s.trips.some((t) => !t.closedAt) && (
+                    <>
+                      <p className="eyebrow">VOYAGES ACTIFS</p>
+                      <div className="trip-tabs">
+                        {s.trips
+                          .filter((t) => !t.closedAt)
+                          .map((t) => (
+                            <button
+                              className={
+                                (
+                                  activeTrip ||
+                                  s.trips.find((x) => !x.closedAt)?.id ||
+                                  s.trips[0]?.id
+                                ) === t.id
+                                  ? "selected"
+                                  : ""
+                              }
+                              key={t.id}
+                              onClick={() => setActiveTrip(t.id)}
+                            >
+                              <Plane size={16} />
+                              {t.name}
+                            </button>
+                          ))}
+                      </div>
+                    </>
+                  )}
+
+                  {s.trips.some((t) => !!t.closedAt) && (
+                    <>
+                      <p className="eyebrow">VOYAGES TERMINÉS</p>
+
+                      <div className="trip-tabs">
+                        {s.trips
+                          .filter((t) => !!t.closedAt)
+                          .map((t) => {
+                            const total = s.transactions
+                              .filter(
+                                (x) =>
+                                  x.trip === t.id &&
+                                  x.type === "expense",
+                              )
+                              .reduce((n, x) => n + x.amount, 0);
+
+                            return (
+                              <button
+                                className={
+                                  activeTrip === t.id
+                                    ? "selected"
+                                    : ""
+                                }
+                                key={t.id}
+                                onClick={() => setActiveTrip(t.id)}
+                              >
+                                <Plane size={16} />
+                                {t.name} · {money(total)}
+                              </button>
+                            );
+                          })}
+                      </div>
+                    </>
+                  )}
                   {(() => {
                     const t =
-                      s.trips.find((t) => t.id === activeTrip) || s.trips[0];
+                      s.trips.find((t) => t.id === activeTrip) ||
+                      s.trips.find((t) => !t.closedAt) ||
+                      s.trips[0];
                     const tx = s.transactions.filter((x) => x.trip === t.id);
                     const spent = tx
                       .filter((x) => x.type === "expense")
@@ -3176,14 +3302,80 @@ export default function App() {
                               {dateLabel(t.start)} — {dateLabel(t.end)}
                             </p>
                           </div>
-                          <button
-                            className="icon"
-                            aria-label="Modifier le voyage"
-                            onClick={() => editTrip(t)}
-                          >
-                            <Pencil size={19} />
-                          </button>
+                          {!t.closedAt && (
+                            <button
+                              className="icon"
+                              aria-label="Modifier le voyage"
+                              onClick={() => editTrip(t)}
+                            >
+                              <Pencil size={19} />
+                            </button>
+                          )}
                         </section>
+
+                        {t.closedAt ? (
+                          <section className="card">
+                            <div className="section-head">
+                              <div>
+                                <h2>Voyage clôturé</h2>
+                                <p className="muted">
+                                  Clôturé le {dateLabel(t.closedAt)} · Coût total : {money(spent)}
+                                </p>
+                              </div>
+
+                              <button
+                                type="button"
+                                className="secondary"
+                                onClick={() =>
+                                  confirmAction(
+                                    "Réouvrir ce voyage ?",
+                                    "Vous pourrez de nouveau ajouter des dépenses et modifier ses enveloppes.",
+                                    async () =>
+                                      change((d) => {
+                                        const trip = d.trips.find(
+                                          (x) => x.id === t.id,
+                                        )!;
+                                        trip.closedAt = undefined;
+                                      }, "Voyage réouvert"),
+                                  )
+                                }
+                              >
+                                Réouvrir
+                              </button>
+                            </div>
+                          </section>
+                        ) : (
+                          <section className="card">
+                            <div className="section-head">
+                              <div>
+                                <h2>Clôturer le voyage</h2>
+                                <p className="muted">
+                                  Vous pouvez le clôturer à tout moment, même avant sa date de fin prévue.
+                                </p>
+                              </div>
+
+                              <button
+                                type="button"
+                                className="secondary"
+                                onClick={() =>
+                                  confirmAction(
+                                    "Clôturer ce voyage ?",
+                                    "Il sera déplacé dans Voyages terminés. Son historique et son coût total resteront accessibles.",
+                                    async () =>
+                                      change((d) => {
+                                        const trip = d.trips.find(
+                                          (x) => x.id === t.id,
+                                        )!;
+                                        trip.closedAt = today();
+                                      }, "Voyage clôturé"),
+                                  )
+                                }
+                              >
+                                Clôturer
+                              </button>
+                            </div>
+                          </section>
+                        )}
                         <div className="two-col">
                           <section className="card">
                             <h2>Budget du voyage</h2>
@@ -3201,13 +3393,15 @@ export default function App() {
                                 ? "Dépassement : " + money(spent - t.budget)
                                 : money(t.budget - spent) + " restants"}
                             </p>
-                            <button
-                              className="primary"
-                              onClick={() => operation("expense", t)}
-                            >
-                              <Plus size={17} />
-                              Ajouter une dépense
-                            </button>
+                            {!t.closedAt && (
+                              <button
+                                className="primary"
+                                onClick={() => operation("expense", t)}
+                              >
+                                <Plus size={17} />
+                                Ajouter une dépense
+                              </button>
+                            )}
                           </section>
                           <section className="card">
                             <h2>Financement</h2>
@@ -3221,29 +3415,33 @@ export default function App() {
                                 : "Dépenses non compensées : " +
                                   money(spent - funded)}
                             </p>
-                            <button
-                              className="secondary"
-                              onClick={() =>
-                                transfer(
-                                  undefined,
-                                  t,
-                                  s.accounts.find((a) => a.group === "travel"),
-                                )
-                              }
-                            >
-                              Financer le voyage
-                            </button>
+                            {!t.closedAt && (
+                              <button
+                                className="secondary"
+                                onClick={() =>
+                                  transfer(
+                                    undefined,
+                                    t,
+                                    s.accounts.find((a) => a.group === "travel"),
+                                  )
+                                }
+                              >
+                                Financer le voyage
+                              </button>
+                            )}
                           </section>
                         </div>
                         <section className="card">
                           <div className="section-head">
                             <h2>Les enveloppes du voyage</h2>
-                            <button
-                              className="text"
-                              onClick={() => tripCategory(t)}
-                            >
-                              Ajouter une catégorie
-                            </button>
+                            {!t.closedAt && (
+                              <button
+                                className="text"
+                                onClick={() => tripCategory(t)}
+                              >
+                                Ajouter une catégorie
+                              </button>
+                            )}
                           </div>
                           {t.categories
                             .filter(
@@ -3269,13 +3467,16 @@ export default function App() {
                                     <span>
                                       {money(paid)} / {money(c.budget)}
                                     </span>
-                                    <button
-                                      className="icon"
-                                      aria-label="Modifier la catégorie"
-                                      onClick={() => tripCategory(t, c)}
-                                    >
-                                      <Pencil size={15} />
-                                    </button>
+                                    {!t.closedAt && (
+                                      <button
+                                        className="icon"
+                                        aria-label="Modifier la catégorie"
+                                        onClick={() => tripCategory(t, c)}
+                                      >
+                                        <Pencil size={15} />
+                                      </button>
+                                    )}
+                                    {!t.closedAt && (
                                     <button
                                       className="icon"
                                       aria-label="Archiver la catégorie"
@@ -3296,6 +3497,7 @@ export default function App() {
                                     >
                                       <Trash2 size={15} />
                                     </button>
+                                    )}
                                   </div>
                                   <Progress
                                     value={paid}
