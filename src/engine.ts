@@ -98,6 +98,8 @@ export type Tx = {
 
   savingMonth?: string;
 
+  budgetMonth?: string;
+
 };
 
 export type Trip = {
@@ -125,6 +127,8 @@ export type Trip = {
   }[];
 
   projectId?: string;
+
+  closedAt?: string;
 
 };
 
@@ -182,6 +186,16 @@ export type State = {
 
   income: number;
 
+  salaryDay?: number;
+
+  salaryBudget?: "current" | "next";
+
+  salaryReminder?: boolean;
+
+  salaryReceivedMonths?: string[];
+
+  savingDoneMonths?: string[];
+
   hidden: string[];
 
   cancelled: string[];
@@ -207,6 +221,16 @@ export const emptyState = (): State => ({
   loans: [],
 
   income: 0,
+
+  salaryDay: 27,
+
+  salaryBudget: "next",
+
+  salaryReminder: true,
+
+  salaryReceivedMonths: [],
+
+  savingDoneMonths: [],
 
   hidden: [],
 
@@ -243,11 +267,18 @@ export function incomeBudgetMonth(t: Tx) {
 
   const actualMonth = month(t.date);
 
-  if (
-    t.type === "income" &&
-    t.incomeType === "Salaire" &&
-    Number(t.date.slice(8, 10)) >= 27
-  ) {
+  if (t.type !== "income" || t.incomeType !== "Salaire") {
+    return actualMonth;
+  }
+
+  // Les nouveaux salaires mémorisent explicitement le mois budgétaire
+  // afin qu'un changement futur de réglage ne modifie pas l'historique.
+  if (t.budgetMonth) {
+    return t.budgetMonth;
+  }
+
+  // Compatibilité avec les anciens salaires déjà enregistrés.
+  if (Number(t.date.slice(8, 10)) >= 27) {
     return shiftMonth(actualMonth, 1);
   }
 
@@ -786,6 +817,8 @@ export function project(s: State, years: number) {
 
   let deficit = 0;
 
+  let deficitSince = "";
+
   const points: {
 
     date: string;
@@ -799,6 +832,8 @@ export function project(s: State, years: number) {
     total: number;
 
     deficit: number;
+
+    deficitSince?: string;
 
   }[] = [];
 
@@ -834,7 +869,19 @@ export function project(s: State, years: number) {
 
       deficit,
 
+      deficitSince: deficitSince || undefined,
+
     });
+
+  };
+
+  const addDeficit = (amount: number, date: string) => {
+
+    if (amount <= 0) return;
+
+    deficit += amount;
+
+    if (!deficitSince) deficitSince = date;
 
   };
 
@@ -874,7 +921,7 @@ export function project(s: State, years: number) {
 
     } else if (s.income > 0) {
 
-      deficit += s.income;
+      addDeficit(s.income, m);
 
     }
 
@@ -908,13 +955,13 @@ export function project(s: State, years: number) {
 
       if (expenses > paid) {
 
-        deficit += expenses - paid;
+        addDeficit(expenses - paid, m);
 
       }
 
     } else if (expenses > 0) {
 
-      deficit += expenses;
+      addDeficit(expenses, m);
 
     }
 
@@ -1046,7 +1093,7 @@ export function project(s: State, years: number) {
 
       b[p.account] = available - paid;
 
-      deficit += Math.max(0, amount - paid);
+      addDeficit(Math.max(0, amount - paid), m);
 
     }
 
@@ -1186,7 +1233,16 @@ export function validate(s: State) {
 
     const a = s.accounts.find((a) => a.id === t.account);
 
-    if (!a || t.date < a.date)
+    if (!a)
+
+      throw Error("Compte inconnu.");
+
+    // Une dépense ou un revenu antérieur au solde de départ peut être
+    // conservé dans l'historique, mais balance() ne le comptabilise pas.
+    if (
+      t.date < a.date &&
+      !["expense", "income"].includes(t.type)
+    )
 
       throw Error("La date précède le solde de départ du compte.");
 

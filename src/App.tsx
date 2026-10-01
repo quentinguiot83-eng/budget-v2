@@ -31,6 +31,27 @@ import {
   Download,
   Menu,
   X,
+  Car,
+  Coffee,
+  HeartPulse,
+  Dumbbell,
+  Shirt,
+  Gift,
+  PawPrint,
+  Baby,
+  GraduationCap,
+  Briefcase,
+  Wrench,
+  Smartphone,
+  Wifi,
+  Zap,
+  Bus,
+  Fuel,
+  Gamepad2,
+  Music,
+  BookOpen,
+  Stethoscope,
+  ShoppingCart,
 } from "lucide-react";
 import {
   ResponsiveContainer,
@@ -62,6 +83,7 @@ import {
   month,
   incomeBudgetMonth,
   shiftMonth,
+  dateAt,
   dateLabel,
   monthLabel,
   money,
@@ -107,6 +129,28 @@ const icons: Record<string, ReactNode> = {
   food: <ShoppingBasket size={20} />,
   out: <Utensils size={20} />,
   other: <Wallet size={20} />,
+  car: <Car size={20} />,
+  coffee: <Coffee size={20} />,
+  health: <HeartPulse size={20} />,
+  sport: <Dumbbell size={20} />,
+  clothes: <Shirt size={20} />,
+  gift: <Gift size={20} />,
+  pets: <PawPrint size={20} />,
+  baby: <Baby size={20} />,
+  education: <GraduationCap size={20} />,
+  work: <Briefcase size={20} />,
+  repair: <Wrench size={20} />,
+  phone: <Smartphone size={20} />,
+  internet: <Wifi size={20} />,
+  energy: <Zap size={20} />,
+  transport: <Bus size={20} />,
+  fuel: <Fuel size={20} />,
+  games: <Gamepad2 size={20} />,
+  music: <Music size={20} />,
+  books: <BookOpen size={20} />,
+  doctor: <Stethoscope size={20} />,
+  shopping: <ShoppingCart size={20} />,
+  travel: <Plane size={20} />,
 };
 const field = (
   name: string,
@@ -319,7 +363,12 @@ export default function App() {
   const totals = stats(s, selectedMonth);
   const savingsCapacity =
     totals.income > 0 ? totals.actualCapacity : totals.capacity;
-  const savingsRemaining = Math.max(0, savingsCapacity - totals.saved);
+  const savingMonthMarkedDone =
+    (s.savingDoneMonths ?? []).includes(selectedMonth);
+
+  const savingsRemaining = savingMonthMarkedDone
+    ? 0
+    : Math.max(0, savingsCapacity - totals.saved);
   const isOwner = demoEnabled || doc?.household?.owner === session?.user.id;
   async function load() {
     const d = await rpc("budget_load");
@@ -486,10 +535,32 @@ export default function App() {
           "icon",
           "Icône",
           [
-            ["home", "Maison"],
-            ["food", "Courses"],
-            ["out", "Sorties"],
-            ["other", "Autre"],
+            ["home", "🏠 Maison"],
+            ["food", "🥕 Courses / alimentation"],
+            ["out", "🍽️ Restaurant / sorties"],
+            ["shopping", "🛒 Achats"],
+            ["car", "🚗 Voiture"],
+            ["transport", "🚌 Transports"],
+            ["fuel", "⛽ Carburant"],
+            ["travel", "✈️ Voyage"],
+            ["coffee", "☕ Café"],
+            ["health", "❤️ Santé"],
+            ["doctor", "🩺 Médecin"],
+            ["sport", "🏋️ Sport"],
+            ["clothes", "👕 Vêtements"],
+            ["gift", "🎁 Cadeaux"],
+            ["pets", "🐾 Animaux"],
+            ["baby", "👶 Enfants"],
+            ["education", "🎓 Études"],
+            ["work", "💼 Travail"],
+            ["repair", "🔧 Entretien / bricolage"],
+            ["phone", "📱 Téléphone"],
+            ["internet", "📶 Internet"],
+            ["energy", "⚡ Énergie"],
+            ["games", "🎮 Jeux"],
+            ["music", "🎵 Musique"],
+            ["books", "📚 Livres"],
+            ["other", "💳 Autre"],
           ],
           c?.icon || "other",
         ),
@@ -547,6 +618,28 @@ export default function App() {
                 today(),
                 "date",
                 "N’ajoutez ensuite que les opérations non incluses dans ce solde.",
+              ),
+            ]
+          : []),
+        ...(!a && !current
+          ? [
+              choice(
+                "salaryReceived",
+                "Salaire de ce mois déjà reçu ?",
+                [
+                  ["no", "Non"],
+                  ["yes", "Oui"],
+                ],
+                "no",
+              ),
+              choice(
+                "savingDone",
+                "Épargne de ce mois déjà effectuée ?",
+                [
+                  ["no", "Non"],
+                  ["yes", "Oui"],
+                ],
+                "no",
               ),
             ]
           : []),
@@ -613,6 +706,27 @@ export default function App() {
           if (a)
             d.accounts = d.accounts.map((x) => (x.id === a.id ? entry : x));
           else d.accounts.push(entry);
+
+          if (!a && !current) {
+            const currentMonth = month();
+
+            d.salaryReceivedMonths ??= [];
+            d.savingDoneMonths ??= [];
+
+            if (
+              v.salaryReceived === "yes" &&
+              !d.salaryReceivedMonths.includes(currentMonth)
+            ) {
+              d.salaryReceivedMonths.push(currentMonth);
+            }
+
+            if (
+              v.savingDone === "yes" &&
+              !d.savingDoneMonths.includes(currentMonth)
+            ) {
+              d.savingDoneMonths.push(currentMonth);
+            }
+          }
         }, "Compte enregistré");
       },
     );
@@ -925,7 +1039,7 @@ export default function App() {
         existing?.date || today(),
         "date",
         type === "income"
-          ? "Un salaire reçu à partir du 27 est rattaché au mois suivant pour le budget."
+          ? "La date bancaire reste réelle. Le mois budgétaire du salaire dépend du réglage choisi dans Réglages."
           : "",
       ),
       field("description", "Description", existing?.description),
@@ -988,6 +1102,12 @@ export default function App() {
             account: v.account,
             category: v.category || undefined,
             incomeType: v.incomeType || undefined,
+            budgetMonth:
+              type === "income" && v.incomeType === "Salaire"
+                ? (s.salaryBudget ?? "next") === "next"
+                  ? shiftMonth(month(v.date), 1)
+                  : month(v.date)
+                : undefined,
             trip: trip?.id || existing?.trip,
             tripCategory: v.tripCategory || undefined,
           };
@@ -1000,6 +1120,64 @@ export default function App() {
       },
     );
   }
+  function confirmSalary() {
+    if (!current) {
+      editAccount();
+      return;
+    }
+
+    const plannedDate = dateAt(month(), s.salaryDay ?? 27);
+
+    openForm(
+      "Confirmer le salaire reçu",
+      [
+        amountField(
+          "amount",
+          "Montant réellement reçu (€)",
+          s.income,
+          "Vous pouvez remplacer l'estimation par le montant exact reçu.",
+        ),
+        field(
+          "date",
+          "Date réelle de réception",
+          plannedDate,
+          "date",
+        ),
+        field(
+          "description",
+          "Description",
+          "Salaire",
+        ),
+        choice(
+          "account",
+          "Compte crédité",
+          accountOptions(),
+          current.id,
+        ),
+      ],
+      async (v) => {
+        await change((d) => {
+          const realMonth = month(v.date);
+
+          d.transactions.push({
+            id: uid(),
+            type: "income",
+            amount: euro(v.amount),
+            date: v.date,
+            description: v.description || "Salaire",
+            account: v.account,
+            incomeType: "Salaire",
+            budgetMonth:
+              (d.salaryBudget ?? "next") === "next"
+                ? shiftMonth(realMonth, 1)
+                : realMonth,
+          });
+        }, "Salaire confirmé");
+      },
+      "Confirmer le salaire",
+    );
+  }
+
   function newLoan() {
     if (!current) {
       editAccount();
@@ -1144,6 +1322,7 @@ export default function App() {
               { id: uid(), name: "Sur place", budget: 0 },
             ],
             projectId,
+            closedAt: t?.closedAt,
           };
 
           if (
@@ -1176,7 +1355,7 @@ export default function App() {
           const newBudget = euro(v.budget);
 
           const otherBudgets = trip.categories
-            .filter((x) => x.id !== c?.id)
+            .filter((x) => !x.archived && x.id !== c?.id)
             .reduce((sum, x) => sum + x.budget, 0);
 
           const totalAfterChange = otherBudgets + newBudget;
@@ -1409,8 +1588,7 @@ export default function App() {
         <p>
           Les charges fixes ne sont déduites qu’une seule fois. Les virements et
           dépenses voyage ne sont pas considérés comme des revenus ou des
-          enveloppes ordinaires. Un salaire reçu à partir du 27 est affecté au
-          mois budgétaire suivant.
+          enveloppes ordinaires. Les salaires suivent le réglage choisi dans Réglages.
         </p>
 
         {useActualIncome ? (
@@ -1611,6 +1789,28 @@ export default function App() {
   );
 
   function savingsPanel(location: "home" | "wealth") {
+    if (location === "home" && totals.income <= 0) {
+      return (
+        <section className="card">
+          <div className="section-head">
+            <h2>Votre épargne du mois</h2>
+          </div>
+
+          <p className="muted">
+            La répartition de l’épargne sera calculée lorsque les revenus du mois auront été saisis.
+          </p>
+
+          <button
+            className="secondary"
+            type="button"
+            onClick={() => operation("income")}
+          >
+            Ajouter un revenu
+          </button>
+        </section>
+      );
+    }
+
     return (
       <section className="card">
         <div className="section-head">
@@ -1620,10 +1820,19 @@ export default function App() {
           </button>
         </div>
         <div className="split">
-          <strong className="large">{money(totals.saved)}</strong>
-          <span className="muted">sur {money(savingsTarget)}</span>
+          <strong className="large">
+            {savingMonthMarkedDone ? "Fait" : money(totals.saved)}
+          </strong>
+          <span className="muted">
+            {savingMonthMarkedDone
+              ? "déjà effectué avant Wimm"
+              : `sur ${money(savingsTarget)}`}
+          </span>
         </div>
-        <Progress value={totals.saved} max={savingsTarget} />
+        <Progress
+          value={savingMonthMarkedDone ? savingsTarget : totals.saved}
+          max={savingsTarget}
+        />
         {s.accounts
           .filter((a) => a.group !== "current" && !a.archived)
           .map((a) => {
@@ -1645,7 +1854,9 @@ export default function App() {
                 title={a.name}
                 sub={`${a.allocation} % · Objectif ${money(target)} · ${money(paid)} déjà versés · ${money(remaining)} restants`}
                 value={
-                  remaining <= 0 ? (
+                  savingMonthMarkedDone ? (
+                    <span className="muted">Déjà fait</span>
+                  ) : remaining <= 0 ? (
                     <span className="muted">Fait</span>
                   ) : savingsRemaining <= 0 ? (
                     <span className="muted">Capacité atteinte</span>
@@ -1728,7 +1939,7 @@ export default function App() {
       <main className="auth-page">
         <section className="auth-story">
           <div className="brand">
-            <span>N</span> Notre budget
+            <img src="/wimm-icon.png" alt="" className="brand-logo" /> Wimm
           </div>
           <h1>
             Une vue claire.
@@ -1756,7 +1967,7 @@ export default function App() {
         </section>
         <section className="auth-panel">
           <div className="mobile-brand brand">
-            <span>N</span> Notre budget
+            <img src="/wimm-icon.png" alt="" className="brand-logo" /> Wimm
           </div>
           <p className="eyebrow">BIENVENUE CHEZ VOUS</p>
           <h2>
@@ -1875,7 +2086,7 @@ export default function App() {
     return (
       <main className="onboarding">
         <div className="brand">
-          <span>N</span> Notre budget
+          <img src="/wimm-icon.png" alt="" className="brand-logo" /> Wimm
         </div>
         <h1>Bienvenue dans votre budget.</h1>
         <p className="muted">
@@ -1921,6 +2132,26 @@ export default function App() {
   const alerts = overdue(s).filter(
     (d) => d.rule.kind !== "repay" || loanRemaining(s, d.rule.loanId || "") > 0,
   );
+
+  const salaryDay = Math.min(31, Math.max(1, s.salaryDay ?? 27));
+  const salaryBudget = s.salaryBudget ?? "next";
+  const salaryReminder = s.salaryReminder ?? true;
+  const salaryPlannedDate = dateAt(month(), salaryDay);
+
+  const salaryReceivedThisMonth =
+    (s.salaryReceivedMonths ?? []).includes(month()) ||
+    s.transactions.some(
+      (t) =>
+        t.type === "income" &&
+        t.incomeType === "Salaire" &&
+        month(t.date) === month() &&
+        t.date <= today(),
+    );
+
+  const salaryAlert =
+    salaryReminder &&
+    today() >= salaryPlannedDate &&
+    !salaryReceivedThisMonth;
   const wealth = s.accounts
       .filter((a) => a.group === "wealth")
       .reduce((n, a) => n + balance(s, a.id), 0),
@@ -1945,7 +2176,7 @@ export default function App() {
     <div className="app">
       <aside className="sidebar">
         <button className="brand" onClick={() => navigate("home")}>
-          <span>N</span> Notre budget
+          <img src="/wimm-icon.png" alt="" className="brand-logo" /> Wimm
         </button>
         <p className="eyebrow">{doc.household.name}</p>
         <nav>
@@ -2001,7 +2232,6 @@ export default function App() {
               >
                 <Menu size={23} />
               </button>
-              <span>Notre budget</span>
             </div>
             <span className="eyebrow">{doc.household.name}</span>
           </div>
@@ -2048,9 +2278,9 @@ export default function App() {
         )}
         <div className="page-heading">
           <div>
-            <p className="eyebrow">
-              {route === "home" ? "LE QUOTIDIEN, EN CLAIR" : "NOTRE BUDGET"}
-            </p>
+            {route === "home" && (
+              <p className="eyebrow">LE QUOTIDIEN, EN CLAIR</p>
+            )}
             <h1>{titles[route]}</h1>
           </div>
           {[
@@ -2062,6 +2292,16 @@ export default function App() {
             "fixed",
           ].includes(route) && (
             <div className="month-picker">
+              {selectedMonth !== month() && (
+                <button
+                  className="secondary current-month-button"
+                  type="button"
+                  onClick={() => setMonth(month())}
+                >
+                  Mois actuel
+                </button>
+              )}
+
               <button
                 className="icon"
                 aria-label="Mois précédent"
@@ -2069,12 +2309,14 @@ export default function App() {
               >
                 <ChevronLeft size={18} />
               </button>
+
               <input
                 type="month"
                 aria-label="Mois affiché"
                 value={selectedMonth}
                 onChange={(e) => e.target.value && setMonth(e.target.value)}
               />
+
               <button
                 className="icon"
                 aria-label="Mois suivant"
@@ -2102,6 +2344,21 @@ export default function App() {
           )}
           {route === "home" && (
             <>
+              {salaryAlert && (
+                <button
+                  type="button"
+                  className="alert-bar"
+                  onClick={confirmSalary}
+                >
+                  <Bell size={19} />
+                  <strong>Salaire à confirmer</strong>
+                  <span>
+                    Prévu le {dateLabel(salaryPlannedDate)} · indiquez le montant réellement reçu
+                  </span>
+                  <ChevronRight size={18} />
+                </button>
+              )}
+
               <div className="overview">
                 <section className="balance-card">
                   <div className="split">
@@ -2680,21 +2937,7 @@ export default function App() {
                         {n} an{n > 1 ? "s" : ""}
                       </button>
                     ))}
-                    <input
-                      aria-label="Nombre d’années"
-                      type="number"
-                      min="1"
-                      max="50"
-                      value={years}
-                      onChange={(e) =>
-                        setYears(
-                          Math.max(
-                            1,
-                            Math.min(50, Number(e.target.value) || 1),
-                          ),
-                        )
-                      }
-                    />
+
                   </div>
                 </div>
                 <div className="chart">
@@ -2755,9 +2998,16 @@ export default function App() {
                 </div>
                 {project(s, years).at(-1)!.deficit > 0 && (
                   <p className="warning">
-                    Financement manquant cumulé :{" "}
-                    {money(project(s, years).at(-1)!.deficit)}. Les déficits ne
-                    sont pas automatiquement retirés de vos comptes d’épargne.
+                    Financement manquant
+                    {project(s, years).at(-1)!.deficitSince
+                      ? ` à partir de ${monthLabel(
+                          project(s, years).at(-1)!.deficitSince!,
+                        )}`
+                      : ""}
+                    {" · "}
+                    Cumul : {money(project(s, years).at(-1)!.deficit)}.
+                    {" "}Les déficits ne sont pas automatiquement retirés de
+                    vos comptes d’épargne.
                   </p>
                 )}
                 <details>
@@ -2912,10 +3162,12 @@ export default function App() {
                   </button>
                 ))}
               </div>
-              {s.trips.length > 0 && (
+              {s.trips.some((t) => !t.closedAt) && (
                 <section className="card">
                   <h2>Une dépense de voyage</h2>
-                  {s.trips.map((t) => (
+                  {s.trips
+                    .filter((t) => !t.closedAt)
+                    .map((t) => (
                     <Row
                       key={t.id}
                       icon={<Plane />}
@@ -2954,25 +3206,73 @@ export default function App() {
                 </Empty>
               ) : (
                 <>
-                  <div className="trip-tabs">
-                    {s.trips.map((t) => (
-                      <button
-                        className={
-                          (activeTrip || s.trips[0]?.id) === t.id
-                            ? "selected"
-                            : ""
-                        }
-                        key={t.id}
-                        onClick={() => setActiveTrip(t.id)}
-                      >
-                        <Plane size={16} />
-                        {t.name}
-                      </button>
-                    ))}
-                  </div>
+                  {s.trips.some((t) => !t.closedAt) && (
+                    <>
+                      <p className="eyebrow">VOYAGES ACTIFS</p>
+                      <div className="trip-tabs">
+                        {s.trips
+                          .filter((t) => !t.closedAt)
+                          .map((t) => (
+                            <button
+                              className={
+                                (
+                                  activeTrip ||
+                                  s.trips.find((x) => !x.closedAt)?.id ||
+                                  s.trips[0]?.id
+                                ) === t.id
+                                  ? "selected"
+                                  : ""
+                              }
+                              key={t.id}
+                              onClick={() => setActiveTrip(t.id)}
+                            >
+                              <Plane size={16} />
+                              {t.name}
+                            </button>
+                          ))}
+                      </div>
+                    </>
+                  )}
+
+                  {s.trips.some((t) => !!t.closedAt) && (
+                    <>
+                      <p className="eyebrow">VOYAGES TERMINÉS</p>
+
+                      <div className="trip-tabs">
+                        {s.trips
+                          .filter((t) => !!t.closedAt)
+                          .map((t) => {
+                            const total = s.transactions
+                              .filter(
+                                (x) =>
+                                  x.trip === t.id &&
+                                  x.type === "expense",
+                              )
+                              .reduce((n, x) => n + x.amount, 0);
+
+                            return (
+                              <button
+                                className={
+                                  activeTrip === t.id
+                                    ? "selected"
+                                    : ""
+                                }
+                                key={t.id}
+                                onClick={() => setActiveTrip(t.id)}
+                              >
+                                <Plane size={16} />
+                                {t.name} · {money(total)}
+                              </button>
+                            );
+                          })}
+                      </div>
+                    </>
+                  )}
                   {(() => {
                     const t =
-                      s.trips.find((t) => t.id === activeTrip) || s.trips[0];
+                      s.trips.find((t) => t.id === activeTrip) ||
+                      s.trips.find((t) => !t.closedAt) ||
+                      s.trips[0];
                     const tx = s.transactions.filter((x) => x.trip === t.id);
                     const spent = tx
                       .filter((x) => x.type === "expense")
@@ -3002,14 +3302,80 @@ export default function App() {
                               {dateLabel(t.start)} — {dateLabel(t.end)}
                             </p>
                           </div>
-                          <button
-                            className="icon"
-                            aria-label="Modifier le voyage"
-                            onClick={() => editTrip(t)}
-                          >
-                            <Pencil size={19} />
-                          </button>
+                          {!t.closedAt && (
+                            <button
+                              className="icon"
+                              aria-label="Modifier le voyage"
+                              onClick={() => editTrip(t)}
+                            >
+                              <Pencil size={19} />
+                            </button>
+                          )}
                         </section>
+
+                        {t.closedAt ? (
+                          <section className="card">
+                            <div className="section-head">
+                              <div>
+                                <h2>Voyage clôturé</h2>
+                                <p className="muted">
+                                  Clôturé le {dateLabel(t.closedAt)} · Coût total : {money(spent)}
+                                </p>
+                              </div>
+
+                              <button
+                                type="button"
+                                className="secondary"
+                                onClick={() =>
+                                  confirmAction(
+                                    "Réouvrir ce voyage ?",
+                                    "Vous pourrez de nouveau ajouter des dépenses et modifier ses enveloppes.",
+                                    async () =>
+                                      change((d) => {
+                                        const trip = d.trips.find(
+                                          (x) => x.id === t.id,
+                                        )!;
+                                        trip.closedAt = undefined;
+                                      }, "Voyage réouvert"),
+                                  )
+                                }
+                              >
+                                Réouvrir
+                              </button>
+                            </div>
+                          </section>
+                        ) : (
+                          <section className="card">
+                            <div className="section-head">
+                              <div>
+                                <h2>Clôturer le voyage</h2>
+                                <p className="muted">
+                                  Vous pouvez le clôturer à tout moment, même avant sa date de fin prévue.
+                                </p>
+                              </div>
+
+                              <button
+                                type="button"
+                                className="secondary"
+                                onClick={() =>
+                                  confirmAction(
+                                    "Clôturer ce voyage ?",
+                                    "Il sera déplacé dans Voyages terminés. Son historique et son coût total resteront accessibles.",
+                                    async () =>
+                                      change((d) => {
+                                        const trip = d.trips.find(
+                                          (x) => x.id === t.id,
+                                        )!;
+                                        trip.closedAt = today();
+                                      }, "Voyage clôturé"),
+                                  )
+                                }
+                              >
+                                Clôturer
+                              </button>
+                            </div>
+                          </section>
+                        )}
                         <div className="two-col">
                           <section className="card">
                             <h2>Budget du voyage</h2>
@@ -3027,13 +3393,15 @@ export default function App() {
                                 ? "Dépassement : " + money(spent - t.budget)
                                 : money(t.budget - spent) + " restants"}
                             </p>
-                            <button
-                              className="primary"
-                              onClick={() => operation("expense", t)}
-                            >
-                              <Plus size={17} />
-                              Ajouter une dépense
-                            </button>
+                            {!t.closedAt && (
+                              <button
+                                className="primary"
+                                onClick={() => operation("expense", t)}
+                              >
+                                <Plus size={17} />
+                                Ajouter une dépense
+                              </button>
+                            )}
                           </section>
                           <section className="card">
                             <h2>Financement</h2>
@@ -3047,29 +3415,33 @@ export default function App() {
                                 : "Dépenses non compensées : " +
                                   money(spent - funded)}
                             </p>
-                            <button
-                              className="secondary"
-                              onClick={() =>
-                                transfer(
-                                  undefined,
-                                  t,
-                                  s.accounts.find((a) => a.group === "travel"),
-                                )
-                              }
-                            >
-                              Financer le voyage
-                            </button>
+                            {!t.closedAt && (
+                              <button
+                                className="secondary"
+                                onClick={() =>
+                                  transfer(
+                                    undefined,
+                                    t,
+                                    s.accounts.find((a) => a.group === "travel"),
+                                  )
+                                }
+                              >
+                                Financer le voyage
+                              </button>
+                            )}
                           </section>
                         </div>
                         <section className="card">
                           <div className="section-head">
                             <h2>Les enveloppes du voyage</h2>
-                            <button
-                              className="text"
-                              onClick={() => tripCategory(t)}
-                            >
-                              Ajouter une catégorie
-                            </button>
+                            {!t.closedAt && (
+                              <button
+                                className="text"
+                                onClick={() => tripCategory(t)}
+                              >
+                                Ajouter une catégorie
+                              </button>
+                            )}
                           </div>
                           {t.categories
                             .filter(
@@ -3095,13 +3467,16 @@ export default function App() {
                                     <span>
                                       {money(paid)} / {money(c.budget)}
                                     </span>
-                                    <button
-                                      className="icon"
-                                      aria-label="Modifier la catégorie"
-                                      onClick={() => tripCategory(t, c)}
-                                    >
-                                      <Pencil size={15} />
-                                    </button>
+                                    {!t.closedAt && (
+                                      <button
+                                        className="icon"
+                                        aria-label="Modifier la catégorie"
+                                        onClick={() => tripCategory(t, c)}
+                                      >
+                                        <Pencil size={15} />
+                                      </button>
+                                    )}
+                                    {!t.closedAt && (
                                     <button
                                       className="icon"
                                       aria-label="Archiver la catégorie"
@@ -3122,6 +3497,7 @@ export default function App() {
                                     >
                                       <Trash2 size={15} />
                                     </button>
+                                    )}
                                   </div>
                                   <Progress
                                     value={paid}
@@ -3668,6 +4044,96 @@ export default function App() {
                 )}
               </section>
               <section className="card">
+                <div className="section-head">
+                  <div>
+                    <h2>Salaire</h2>
+                    <p className="muted">
+                      Choisissez la date prévue et le mois auquel votre salaire
+                      doit être affecté dans le budget.
+                    </p>
+                  </div>
+
+                  <button
+                    type="button"
+                    className="secondary"
+                    onClick={() =>
+                      openForm(
+                        "Réglages du salaire",
+                        [
+                          {
+                            ...field(
+                              "day",
+                              "Jour prévu de réception",
+                              salaryDay,
+                              "number",
+                              "Si le mois est plus court, Wimm utilisera automatiquement le dernier jour du mois.",
+                            ),
+                            min: 1,
+                            max: 31,
+                            step: "1",
+                          },
+                          choice(
+                            "budget",
+                            "Affecter le salaire au",
+                            [
+                              ["current", "Mois de réception"],
+                              ["next", "Mois suivant"],
+                            ],
+                            salaryBudget,
+                          ),
+                          choice(
+                            "reminder",
+                            "Rappel à la date prévue",
+                            [
+                              ["yes", "Activé"],
+                              ["no", "Désactivé"],
+                            ],
+                            salaryReminder ? "yes" : "no",
+                          ),
+                        ],
+                        async (v) => {
+                          const day = Number(v.day);
+
+                          if (!Number.isInteger(day) || day < 1 || day > 31) {
+                            throw Error("Le jour doit être compris entre 1 et 31.");
+                          }
+
+                          await change((d) => {
+                            d.salaryDay = day;
+                            d.salaryBudget =
+                              v.budget === "current" ? "current" : "next";
+                            d.salaryReminder = v.reminder === "yes";
+                          }, "Réglages du salaire modifiés");
+                        },
+                        "Enregistrer",
+                      )
+                    }
+                  >
+                    Modifier
+                  </button>
+                </div>
+
+                <Row
+                  title="Date prévue"
+                  value={`Le ${salaryDay} de chaque mois`}
+                />
+
+                <Row
+                  title="Affectation budgétaire"
+                  value={
+                    salaryBudget === "next"
+                      ? "Mois suivant"
+                      : "Mois de réception"
+                  }
+                />
+
+                <Row
+                  title="Rappel"
+                  value={salaryReminder ? "Activé" : "Désactivé"}
+                />
+              </section>
+
+              <section className="card">
                 <h2>Modules affichés</h2>
                 <p className="muted">
                   Masquer un module conserve toutes ses données.
@@ -3768,7 +4234,22 @@ export default function App() {
           )}
         </main>
         <footer className="page-footer">
-          Notre budget <span>·</span> Vos saisies, vos repères.
+          <span>
+            Wimm <span>·</span> Where is my money?
+          </span>
+
+          <button
+            type="button"
+            className="back-to-top"
+            onClick={() =>
+              window.scrollTo({
+                top: 0,
+                behavior: "smooth",
+              })
+            }
+          >
+            ↑ Retour en haut
+          </button>
         </footer>
       </div>
       {mobileMenuOpen && (
@@ -3787,7 +4268,7 @@ export default function App() {
           >
             <div className="mobile-drawer-head">
               <button className="brand" onClick={() => navigate("home")}>
-                <span>N</span> Notre budget
+                <img src="/wimm-icon.png" alt="" className="brand-logo" /> Wimm
               </button>
               <button
                 type="button"

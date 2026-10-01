@@ -159,7 +159,7 @@ test("refus double validation échéance et référence inconnue", () => {
   assert.throws(() => validate(s), /déjà/);
   s.transactions.pop();
   s.transactions[0].account = "other-household";
-  assert.throws(() => validate(s), /date/);
+  assert.throws(() => validate(s), /Compte inconnu/);
 });
 test("plafond de solde, de versements, relais et reliquat", () => {
   const s = fixture();
@@ -272,4 +272,70 @@ test("projet financé non déduit, projet impossible explicite", () => {
   assert.equal(project(s, 1).at(-1)!.deficit, 5000);
   s.projects[0].settled = true;
   assert.equal(project(s, 1).at(-1)!.wealth, 10000);
+});
+
+
+test("mois budgétaire explicite du salaire", () => {
+  const s = fixture();
+
+  s.transactions.push({
+    id: "salary-budget-month",
+    type: "income",
+    account: "current",
+    amount: 200000,
+    date: "2020-01-27",
+    description: "Salaire",
+    incomeType: "Salaire",
+    budgetMonth: "2020-02",
+  });
+
+  assert.equal(stats(s, "2020-01").income, 0);
+  assert.equal(stats(s, "2020-02").income, 200000);
+
+  // Le solde bancaire utilise toujours la vraie date du 27 janvier.
+  assert.equal(balance(s, "current", "2020-01-31"), 300000);
+});
+
+
+test("opérations antérieures au solde de départ : historique sans impact sur le solde", () => {
+  const s = fixture();
+
+  s.accounts[0].date = "2025-01-15";
+
+  s.transactions = [
+    {
+      id: "old-expense",
+      type: "expense",
+      account: "current",
+      amount: 5000,
+      date: "2025-01-10",
+      description: "Ancienne dépense",
+      category: "food",
+    },
+    {
+      id: "old-income",
+      type: "income",
+      account: "current",
+      amount: 7000,
+      date: "2025-01-12",
+      description: "Ancien revenu",
+      incomeType: "Autre",
+    },
+    {
+      id: "new-expense",
+      type: "expense",
+      account: "current",
+      amount: 10000,
+      date: "2025-01-20",
+      description: "Dépense après le solde",
+      category: "food",
+    },
+  ];
+
+  assert.doesNotThrow(() => validate(s));
+
+  // Solde de départ 1000 €.
+  // Les deux mouvements avant le 15 janvier sont ignorés.
+  // Seule la dépense de 100 € du 20 janvier est déduite.
+  assert.equal(balance(s, "current", "2025-01-31"), 90000);
 });
