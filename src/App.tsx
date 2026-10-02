@@ -6824,7 +6824,7 @@ export default function App() {
 
                   </div>
                 </div>
-                <div className="chart">
+                <div className="chart projection-chart">
                   <ResponsiveContainer width="100%" height="100%">
                     <LineChart
                       data={projectionData.map((p) => ({
@@ -6852,8 +6852,32 @@ export default function App() {
                         tick={{ fontSize: 12 }}
                       />
                       <Tooltip
-                        formatter={(v) => money(Number(v))}
-                        labelFormatter={(d) => monthLabel(String(d))}
+                        formatter={(v) => {
+                          const value =
+                            Number(v);
+
+                          if (
+                            window.matchMedia(
+                              "(max-width: 560px)",
+                            ).matches
+                          ) {
+                            return (
+                              new Intl.NumberFormat(
+                                "fr-FR",
+                                {
+                                  maximumFractionDigits: 0,
+                                },
+                              ).format(
+                                value / 100000,
+                              ) + " k€"
+                            );
+                          }
+
+                          return money(value);
+                        }}
+                        labelFormatter={(d) =>
+                          monthLabel(String(d))
+                        }
                       />
                       <Legend />
                       <Line
