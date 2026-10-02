@@ -5304,7 +5304,7 @@ export default function App() {
                   {categoryCards(
                     true,
                     true,
-                  ).slice(0, 4)}
+                  )}
                 </section>
               </div>
               <section className="card">
