@@ -426,6 +426,20 @@ export default function App() {
   const savingsRemaining = savingMonthMarkedDone
     ? 0
     : Math.max(0, savingsCapacity - totals.saved);
+
+  const fixedRemaining = Math.max(
+    0,
+    totals.fixed - totals.fixedPaid,
+  );
+
+  const variableSpent = Math.max(
+    0,
+    totals.spending - totals.fixedPaid,
+  );
+
+  const variableRemaining =
+    totals.variable - variableSpent;
+
   const isOwner = demoEnabled || doc?.household?.owner === session?.user.id;
   async function load() {
 
@@ -3829,6 +3843,119 @@ export default function App() {
 
   }
 
+  function categoryVariableSpent(
+    c: Category,
+  ) {
+
+    const legacyPersonal =
+      s.accounts.find(
+        (a) =>
+          !a.archived &&
+          a.group === "personal" &&
+          a.personalCategory === c.id,
+      );
+
+    const envelope =
+      c.personalOwner
+        ? personalBudgetEnvelope(
+            s,
+            c.personalOwner,
+            c.id,
+            selectedMonth,
+            c.personalSince,
+          )
+        : legacyPersonal
+          ? personalEnvelope(
+              s,
+              legacyPersonal.id,
+              selectedMonth,
+            )
+          : null;
+
+    /*
+     * Pour un budget personnel, envelope.committed
+     * contient à la fois les échéances fixes et la
+     * partie variable engagée.
+     */
+    if (envelope) {
+
+      const fixedCommitted =
+        totals.scheduled
+          .filter(
+            (d) =>
+              d.rule.category === c.id,
+          )
+          .reduce(
+            (n, d) =>
+              n +
+              (
+                d.paid?.amount ??
+                d.rule.amount
+              ),
+            0,
+          );
+
+      return Math.max(
+        0,
+        envelope.committed -
+          fixedCommitted,
+      );
+
+    }
+
+    /*
+     * Pour une catégorie classique :
+     * dépenses totales - charges fixes payées.
+     */
+    const spent =
+      totals.tx
+        .filter(
+          (t) =>
+            t.type === "expense" &&
+            t.category === c.id &&
+            !t.trip,
+        )
+        .reduce(
+          (n, t) =>
+            n + t.amount,
+          0,
+        );
+
+    const fixedPaid =
+      totals.tx
+        .filter(
+          (t) =>
+            t.type === "expense" &&
+            t.category === c.id &&
+            t.fixed &&
+            !t.trip,
+        )
+        .reduce(
+          (n, t) =>
+            n + t.amount,
+          0,
+        );
+
+    return Math.max(
+      0,
+      spent - fixedPaid,
+    );
+
+  }
+
+  const variableSpentTotal =
+    s.categories
+      .filter(
+        (c) =>
+          categoryVariableBudget(c) > 0,
+      )
+      .reduce(
+        (n, c) =>
+          n +
+          categoryVariableSpent(c),
+        0,
+      );
+
   function calc() {
     const useActualIncome = totals.income > 0;
     const incomeUsed = useActualIncome ? totals.income : s.income;
@@ -4004,16 +4131,23 @@ export default function App() {
   );
   const categoryCards = (
     simple = false,
+    variableOnly = false,
   ) =>
     s.categories
       .filter(
         (c) =>
-          !c.archived ||
-          c.archived >
-            selectedMonth ||
-          totals.tx.some(
-            (t) =>
-              t.category === c.id,
+          (
+            !c.archived ||
+            c.archived >
+              selectedMonth ||
+            totals.tx.some(
+              (t) =>
+                t.category === c.id,
+            )
+          ) &&
+          (
+            !variableOnly ||
+            categoryVariableBudget(c) > 0
           ),
       )
       .map((c, index) => {
@@ -4114,6 +4248,16 @@ export default function App() {
               0,
             );
 
+        const displaySpent =
+          variableOnly
+            ? categoryVariableSpent(c)
+            : spent;
+
+        const displayBudget =
+          variableOnly
+            ? variable
+            : totalBudget;
+
         return (
           <article
             className="category"
@@ -4146,11 +4290,11 @@ export default function App() {
                 </strong>
 
                 <p>
-                  {money(spent)}{" "}
+                  {money(displaySpent)}{" "}
                   <span className="muted">
                     /{" "}
                     {money(
-                      totalBudget,
+                      displayBudget,
                     )}
                   </span>
                 </p>
@@ -4187,10 +4331,10 @@ export default function App() {
             </div>
 
             <Progress
-              value={spent}
+              value={displaySpent}
               max={Math.max(
                 1,
-                totalBudget,
+                displayBudget,
               )}
             />
 
@@ -4421,7 +4565,14 @@ export default function App() {
           max={savingsTarget}
         />
         {s.accounts
-          .filter((a) => !["current", "personal"].includes(a.group) && !a.archived)
+          .filter(
+            (a) =>
+              !["current", "personal"].includes(
+                a.group,
+              ) &&
+              !a.archived &&
+              a.allocation > 0,
+          )
           .map((a) => {
             const paid = s.transactions
               .filter(
@@ -5013,32 +5164,66 @@ export default function App() {
                     </button>
                   </div>
                 </section>
-                <section className="metric">
-                  <span className="metric-icon">
-                    <ArrowDownLeft />
-                  </span>
-                  <small>Revenus affectés à ce mois</small>
-                  <strong>{money(totals.income)}</strong>
-                  <button
-                    className="text"
-                    onClick={() => {
-                      navigate("transactions");
-                      setTxFilter("income");
-                    }}
-                  >
-                    Voir les revenus
-                  </button>
+                <section className="metric metric-income">
+                  <div className="metric-top">
+                    <span className="metric-icon">
+                      <ArrowDownLeft />
+                    </span>
+
+                    <small>
+                      Revenus affectés à ce mois
+                    </small>
+                  </div>
+
+                  <strong>
+                    {money(totals.income)}
+                  </strong>
+
+                  <div className="metric-bottom">
+                    <button
+                      className="text text-link"
+                      onClick={() => {
+                        navigate("transactions");
+                        setTxFilter("income");
+                      }}
+                    >
+                      Voir les revenus
+                    </button>
+                  </div>
                 </section>
-                <section className="metric">
-                  <span className="metric-icon">
-                    <CalendarDays />
-                  </span>
-                  <small>Charges fixes payées</small>
-                  <strong>{money(totals.fixedPaid)}</strong>
-                  <span className="muted">
-                    sur {money(totals.fixed)} prévus
-                  </span>
-                  <Progress value={totals.fixedPaid} max={totals.fixed} />
+                <section className="metric metric-expense">
+                  <div className="metric-top">
+                    <span className="metric-icon">
+                      <ArrowUpRight />
+                    </span>
+
+                    <small>
+                      Dépenses du mois
+                    </small>
+                  </div>
+
+                  <strong>
+                    {money(totals.spending)}
+                  </strong>
+
+                  <div className="metric-bottom">
+                    <span className="muted">
+                      sur{" "}
+                      {money(
+                        totals.fixed +
+                          totals.variable,
+                      )}{" "}
+                      de budget prévu
+                    </span>
+
+                    <Progress
+                      value={totals.spending}
+                      max={
+                        totals.fixed +
+                        totals.variable
+                      }
+                    />
+                  </div>
                 </section>
               </div>
               {alerts.length > 0 && (
@@ -5055,6 +5240,43 @@ export default function App() {
                   <ChevronRight size={18} />
                 </button>
               )}
+
+              <div className="home-remaining-grid">
+                <section className="home-remaining-card">
+                  <span className="muted">
+                    Charges fixes restantes
+                  </span>
+
+                  <strong>
+                    {money(fixedRemaining)}
+                  </strong>
+
+                  <small>
+                    sur {money(totals.fixed)} prévues
+                  </small>
+                </section>
+
+                <section className="home-remaining-card">
+                  <span className="muted">
+                    Budget variable restant
+                  </span>
+
+                  <strong
+                    className={
+                      variableRemaining < 0
+                        ? "negative"
+                        : ""
+                    }
+                  >
+                    {money(variableRemaining)}
+                  </strong>
+
+                  <small>
+                    sur {money(totals.variable)} disponibles
+                  </small>
+                </section>
+              </div>
+
               <div className="two-col">
                 {savingsPanel("home")}
                 <section className="card">
@@ -5065,16 +5287,24 @@ export default function App() {
                     </button>
                   </div>
                   <div className="split">
-                    <strong className="large">{money(totals.spending)}</strong>
+                    <strong className="large">
+                      {money(variableSpentTotal)}
+                    </strong>
+
                     <span className="muted">
-                      sur {money(totals.fixed + totals.variable)}
+                      sur {money(totals.variable)}
                     </span>
                   </div>
+
                   <Progress
-                    value={totals.spending}
-                    max={totals.fixed + totals.variable}
+                    value={variableSpentTotal}
+                    max={totals.variable}
                   />
-                  {categoryCards(true).slice(0, 4)}
+
+                  {categoryCards(
+                    true,
+                    true,
+                  ).slice(0, 4)}
                 </section>
               </div>
               <section className="card">

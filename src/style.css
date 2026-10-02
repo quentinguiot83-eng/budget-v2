@@ -2094,3 +2094,112 @@ dialog::backdrop {
   }
 
 }
+
+
+/* Wimm — résumé des montants restants sur l'accueil */
+.home-remaining-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.home-remaining-card {
+  min-width: 0;
+  padding: 19px 22px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.home-remaining-card strong {
+  font-family: Manrope, sans-serif;
+  font-size: 1.45rem;
+  letter-spacing: -0.5px;
+}
+
+.home-remaining-card small {
+  margin-top: 2px;
+}
+
+@media (max-width: 560px) {
+  .home-remaining-grid {
+    gap: 12px;
+  }
+
+  .home-remaining-card {
+    padding: 16px 14px;
+  }
+
+  .home-remaining-card .muted,
+  .home-remaining-card small {
+    font-size: 0.72rem;
+  }
+
+  .home-remaining-card strong {
+    font-size: 1.15rem;
+  }
+}
+.metric {
+  min-height: 240px;
+  display: flex;
+  flex-direction: column;
+}
+
+.metric-top {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.metric-bottom {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 54px;
+}
+
+.metric strong {
+  margin: 18px 0 0;
+}
+
+/* Revenus */
+.metric-income {
+  background: #edf8f1;
+  border: 1px solid #d8ebde;
+}
+
+.metric-income .metric-icon {
+  background: #dff1e5;
+  color: #4f8a68;
+}
+
+.metric-income small,
+.metric-income strong,
+.metric-income .text-link {
+  color: #35634b;
+}
+
+/* Dépenses */
+.metric-expense {
+  background: #fdf0f0;
+  border: 1px solid #f3dddd;
+}
+
+.metric-expense .metric-icon {
+  background: #f8dede;
+  color: #b76565;
+}
+
+.metric-expense small,
+.metric-expense strong {
+  color: #7f4949;
+}
+
+.metric-expense .muted {
+  color: #a06c6c;
+}
+
