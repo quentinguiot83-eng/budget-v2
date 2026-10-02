@@ -1,4 +1,6 @@
 import {
+  lazy,
+  Suspense,
   useEffect,
   useMemo,
   useRef,
@@ -60,19 +62,6 @@ import {
   Stethoscope,
   ShoppingCart,
 } from "lucide-react";
-import {
-  ResponsiveContainer,
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  Tooltip,
-  CartesianGrid,
-  Legend,
-  PieChart,
-  Pie,
-  Cell,
-} from "recharts";
 import { api, rpc } from "./api";
 import { Modal, Form, Progress, Empty, Row, type Field } from "./ui";
 import {
@@ -123,6 +112,10 @@ import {
   personalProjection,
   validatePersonal,
 } from "./personal";
+
+const LazyChart = lazy(
+  () => import("./Charts"),
+);
 
 type PersonalDoc = {
   state: PersonalState;
@@ -6592,68 +6585,16 @@ export default function App() {
                         return (
                           <>
                             <div className="chart">
-                              <ResponsiveContainer
-                                width="100%"
-                                height="100%"
+                              <Suspense
+                                fallback={
+                                  <div className="chart-loading" />
+                                }
                               >
-                                <LineChart
-                                  data={
-                                    data
-                                  }
-                                >
-                                  <CartesianGrid
-                                    vertical={
-                                      false
-                                    }
-                                  />
-
-                                  <XAxis
-                                    dataKey="name"
-                                    tick={{
-                                      fontSize: 11,
-                                    }}
-                                  />
-
-                                  <YAxis
-                                    tickFormatter={(
-                                      v,
-                                    ) =>
-                                      Math.round(
-                                        Number(
-                                          v,
-                                        ) /
-                                          100,
-                                      ) +
-                                      " €"
-                                    }
-                                    width={70}
-                                  />
-
-                                  <Tooltip
-                                    formatter={(
-                                      v,
-                                    ) =>
-                                      money(
-                                        Number(
-                                          v,
-                                        ),
-                                      )
-                                    }
-                                  />
-
-                                  <Line
-                                    type="monotone"
-                                    dataKey="balance"
-                                    name="Solde projeté"
-                                    strokeWidth={
-                                      3
-                                    }
-                                    dot={
-                                      false
-                                    }
-                                  />
-                                </LineChart>
-                              </ResponsiveContainer>
+                                <LazyChart
+                                  kind="personal"
+                                  data={data}
+                                />
+                              </Suspense>
                             </div>
 
                             {last && (
@@ -7055,87 +6996,16 @@ export default function App() {
                   </div>
                 </div>
                 <div className="chart projection-chart">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <LineChart
-                      data={projectionData.map((p) => ({
-                        ...p,
-
-                        patrimoineTotal:
-                          p.current +
-                          p.wealth,
-
-                        patrimoineNet:
-                          p.current +
-                          p.wealthNet,
-                      }))}
-                      margin={{ left: 0, right: 12, top: 20, bottom: 10 }}
-                    >
-                      <CartesianGrid vertical={false} stroke="#e9edf2" />
-                      <XAxis
-                        dataKey="date"
-                        tickFormatter={(d) => d.slice(0, 4)}
-                        tick={{ fontSize: 12 }}
-                      />
-                      <YAxis
-                        tickFormatter={(n) => (n / 100000).toFixed(0) + " k€"}
-                        width={60}
-                        tick={{ fontSize: 12 }}
-                      />
-                      <Tooltip
-                        formatter={(v) => {
-                          const value =
-                            Number(v);
-
-                          if (
-                            window.matchMedia(
-                              "(max-width: 560px)",
-                            ).matches
-                          ) {
-                            return (
-                              new Intl.NumberFormat(
-                                "fr-FR",
-                                {
-                                  maximumFractionDigits: 0,
-                                },
-                              ).format(
-                                value / 100000,
-                              ) + " k€"
-                            );
-                          }
-
-                          return money(value);
-                        }}
-                        labelFormatter={(d) =>
-                          monthLabel(String(d))
-                        }
-                      />
-                      <Legend />
-                      <Line
-                        name="Patrimoine total"
-                        dataKey="patrimoineTotal"
-                        stroke="var(--chart)"
-                        strokeWidth={3}
-                        dot={false}
-                      />
-
-                      <Line
-                        name="Patrimoine après fiscalité"
-                        dataKey="patrimoineNet"
-                        stroke="#8d98a8"
-                        strokeWidth={2}
-                        strokeDasharray="7 6"
-                        dot={false}
-                      />
-
-                      <Line
-                        name="Voyages"
-                        dataKey="travel"
-                        stroke="#76aa9e"
-                        strokeWidth={3}
-                        dot={false}
-                      />
-                    </LineChart>
-                  </ResponsiveContainer>
+                  <Suspense
+                    fallback={
+                      <div className="chart-loading" />
+                    }
+                  >
+                    <LazyChart
+                      kind="projection"
+                      data={projectionData}
+                    />
+                  </Suspense>
                 </div>
                 <div className="forecast-totals">
                   <span>À {years} ans</span>
@@ -7905,23 +7775,17 @@ export default function App() {
                         <h2>Répartition du mois</h2>
                         {sums.length ? (
                           <div className="chart">
-                            <ResponsiveContainer width="100%" height="100%">
-                              <PieChart>
-                                <Pie
-                                  data={sums}
-                                  dataKey="value"
-                                  nameKey="name"
-                                  innerRadius="55%"
-                                  outerRadius="80%"
-                                  paddingAngle={3}
-                                >
-                                  {sums.map((_, i) => (
-                                    <Cell key={i} fill={palette[i % 6]} />
-                                  ))}
-                                </Pie>
-                                <Tooltip formatter={(v) => money(Number(v))} />
-                              </PieChart>
-                            </ResponsiveContainer>
+                            <Suspense
+                              fallback={
+                                <div className="chart-loading" />
+                              }
+                            >
+                              <LazyChart
+                                kind="pie"
+                                data={sums}
+                                palette={palette}
+                              />
+                            </Suspense>
                           </div>
                         ) : (
                           <p className="muted">
@@ -7986,38 +7850,19 @@ export default function App() {
                         ))}
                       </div>
                       <div className="chart">
-                        <ResponsiveContainer width="100%" height="100%">
-                          <LineChart data={data}>
-                            <CartesianGrid vertical={false} stroke="#e9edf2" />
-                            <XAxis dataKey="name" tick={{ fontSize: 11 }} />
-                            <YAxis
-                              tickFormatter={(v) => Math.round(v / 100) + " €"}
-                              width={65}
-                              tick={{ fontSize: 12 }}
-                            />
-                            <Tooltip formatter={(v) => money(Number(v))} />
-                            {cats
-                              .filter(
-                                (c) =>
-                                  analysisCats === null ||
-                                  analysisCats.includes(c.id),
-                              )
-                              .map((c) => (
-                                <Line
-                                  key={c.id}
-                                  name={c.name}
-                                  dataKey={c.id}
-                                  stroke={
-                                    palette[
-                                      cats.findIndex((x) => x.id === c.id) % 6
-                                    ]
-                                  }
-                                  strokeWidth={2}
-                                  dot={false}
-                                />
-                              ))}
-                          </LineChart>
-                        </ResponsiveContainer>
+                        <Suspense
+                          fallback={
+                            <div className="chart-loading" />
+                          }
+                        >
+                          <LazyChart
+                            kind="analysis"
+                            data={data}
+                            cats={cats}
+                            analysisCats={analysisCats}
+                            palette={palette}
+                          />
+                        </Suspense>
                       </div>
                     </section>
                   </>
