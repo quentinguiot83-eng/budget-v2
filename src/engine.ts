@@ -1318,6 +1318,18 @@ export function project(s: State, years: number) {
       s.accounts.map((a) => [a.id, 0]),
     );
 
+  /*
+   * Rendement brut généré par année civile.
+   *
+   * Exemple :
+   * janvier 2028 affichera les gains réellement
+   * générés entre janvier et décembre 2027.
+   */
+  const interestByYear: Record<string, number> = {};
+
+  const projectionStartYear =
+    Number(month().slice(0, 4));
+
   let deficit = 0;
 
   let deficitSince = "";
@@ -1338,6 +1350,10 @@ export function project(s: State, years: number) {
 
     taxEstimate: number;
 
+    interest: number;
+
+    savedTotal: number;
+
     deficit: number;
 
     deficitSince?: string;
@@ -1357,6 +1373,30 @@ export function project(s: State, years: number) {
   const push = (date: string) => {
 
     const current = sumGroup("current");
+
+    /*
+     * Une ligne de janvier affiche les gains
+     * de l'année civile précédente.
+     *
+     * La première année éventuellement incomplète
+     * depuis aujourd'hui n'est pas affichée.
+     */
+    const pointYear =
+      Number(date.slice(0, 4));
+
+    const pointMonth =
+      date.slice(5, 7);
+
+    const previousYear =
+      pointYear - 1;
+
+    const annualInterest =
+      pointMonth === "01" &&
+      previousYear > projectionStartYear
+        ? interestByYear[
+            String(previousYear)
+          ] || 0
+        : 0;
 
     const wealth = sumGroup("wealth");
 
@@ -1447,6 +1487,27 @@ export function project(s: State, years: number) {
         wealth - wealthNet,
       );
 
+    /*
+     * Versements cumulés sur les comptes patrimoine.
+     * Les intérêts ne sont pas inclus.
+     * L'épargne voyage reste affichée séparément.
+     */
+    const savedTotal =
+      activeAccounts()
+        .filter(
+          (a) =>
+            a.group === "wealth",
+        )
+        .reduce(
+          (sum, a) =>
+            sum +
+            Math.max(
+              0,
+              d[a.id] || 0,
+            ),
+          0,
+        );
+
     points.push({
 
       date,
@@ -1458,6 +1519,11 @@ export function project(s: State, years: number) {
       wealthNet,
 
       taxEstimate,
+
+      interest:
+        annualInterest,
+
+      savedTotal,
 
       travel,
 
@@ -1775,12 +1841,24 @@ export function project(s: State, years: number) {
         const monthlySimpleRate =
           a.rate / 100 / 12;
 
-        pendingGrossInterest[a.id] =
-          (pendingGrossInterest[a.id] || 0) +
+        const grossInterest =
           Math.round(
             (b[a.id] || 0) *
               monthlySimpleRate,
           );
+
+        pendingGrossInterest[a.id] =
+          (pendingGrossInterest[a.id] || 0) +
+          grossInterest;
+
+        if (a.group === "wealth") {
+          const interestYear =
+            m.slice(0, 4);
+
+          interestByYear[interestYear] =
+            (interestByYear[interestYear] || 0) +
+            grossInterest;
+        }
 
         pendingNetGrossInterest[a.id] =
           (pendingNetGrossInterest[a.id] || 0) +
@@ -1845,6 +1923,15 @@ export function project(s: State, years: number) {
             monthlyRate,
         );
 
+      if (a.group === "wealth") {
+        const interestYear =
+          m.slice(0, 4);
+
+        interestByYear[interestYear] =
+          (interestByYear[interestYear] || 0) +
+          interest;
+      }
+
       b[a.id] =
         (b[a.id] || 0) +
         interest;
@@ -1864,10 +1951,23 @@ export function project(s: State, years: number) {
 
      */
 
-    if (i % 12 === 0 || i === years * 12) {
+    /*
+     * Points annuels au mois de janvier.
+     *
+     * On conserve également le dernier mois exact de l'horizon
+     * pour que le graphique et le résumé "À X ans" restent exacts.
+     */
+    const januaryPoint =
+      m.endsWith("-01");
 
+    const finalPoint =
+      i === years * 12;
+
+    if (
+      januaryPoint ||
+      finalPoint
+    ) {
       push(m);
-
     }
 
   }

@@ -7120,7 +7120,7 @@ export default function App() {
                           Patrimoine total
                         </th>
                         <th>
-                          Fiscalité
+                          Gains année précédente
                         </th>
                         <th>
                           Après fiscalité
@@ -7129,28 +7129,48 @@ export default function App() {
                       </tr>
                     </thead>
                     <tbody>
-                      {projectionData.map((p) => (
+                      {projectionData
+                        .filter(
+                          (p) =>
+                            p.date.endsWith("-01"),
+                        )
+                        .map((p) => (
                         <tr key={p.date}>
                           <td>{monthLabel(p.date)}</td>
                           <td>
-                            {money(
-                              p.wealth +
-                                p.current,
-                            )}
+                            <strong className="projection-table-main">
+                              {money(
+                                p.wealth +
+                                  p.current,
+                              )}
+                            </strong>
+                            <small className="projection-table-sub">
+                              Épargné : {money(
+                                p.savedTotal,
+                              )}
+                            </small>
                           </td>
 
                           <td>
-                            −{" "}
-                            {money(
-                              p.taxEstimate,
-                            )}
+                            {p.interest > 0
+                              ? `+ ${money(
+                                  p.interest,
+                                )}`
+                              : "—"}
                           </td>
 
                           <td>
-                            {money(
-                              p.wealthNet +
-                                p.current,
-                            )}
+                            <strong className="projection-table-main">
+                              {money(
+                                p.wealthNet +
+                                  p.current,
+                              )}
+                            </strong>
+                            <small className="projection-table-sub">
+                              Impact fiscal : − {money(
+                                p.taxEstimate,
+                              )}
+                            </small>
                           </td>
 
                           <td>

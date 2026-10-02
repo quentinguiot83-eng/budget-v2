@@ -2478,3 +2478,16 @@ dialog::backdrop {
     margin: 0;
   }
 }
+
+.projection-table-main {
+  display: block;
+  font-weight: 700;
+}
+
+.projection-table-sub {
+  display: block;
+  margin-top: 4px;
+  font-size: 0.72rem;
+  font-weight: 400;
+  color: var(--muted);
+}
