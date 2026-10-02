@@ -2456,3 +2456,25 @@ dialog::backdrop {
   }
 
 }
+/* Projections — cartes résumé plus compactes sur ordinateur */
+@media (min-width: 561px) {
+  .projection-summary .metric {
+    min-height: 150px;
+    padding: 20px 24px;
+    justify-content: center;
+    gap: 6px;
+  }
+
+  .projection-summary .metric > span {
+    margin: 0;
+  }
+
+  .projection-summary .metric strong {
+    margin: 2px 0;
+    font-size: 1.65rem;
+  }
+
+  .projection-summary .metric small {
+    margin: 0;
+  }
+}

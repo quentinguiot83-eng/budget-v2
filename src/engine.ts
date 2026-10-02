@@ -1301,6 +1301,23 @@ export function project(s: State, years: number) {
       ),
     );
 
+  /*
+   * Pour les comptes dont les intérêts sont fiscalisés au versement
+   * (ex. livret fiscalisé type Bourso+), les intérêts ne sont pas
+   * capitalisés chaque mois.
+   *
+   * On les accumule pendant l'année puis on les crédite en une fois.
+   */
+  const pendingGrossInterest: Record<string, number> =
+    Object.fromEntries(
+      s.accounts.map((a) => [a.id, 0]),
+    );
+
+  const pendingNetGrossInterest: Record<string, number> =
+    Object.fromEntries(
+      s.accounts.map((a) => [a.id, 0]),
+    );
+
   let deficit = 0;
 
   let deficitSince = "";
@@ -1740,54 +1757,104 @@ export function project(s: State, years: number) {
 
     )) {
 
-      const monthlyRate =
-
-        Math.pow(
-          1 + a.rate / 100,
-          1 / 12,
-        ) - 1;
-
       /*
-       * Courbe brute :
-       * rendement complet.
+       * Livret fiscalisé type Bourso+ :
+       *
+       * - le taux annuel est approximé mois par mois ;
+       * - les intérêts restent en attente pendant l'année ;
+       * - ils ne produisent donc pas eux-mêmes d'intérêts avant
+       *   leur versement annuel ;
+       * - la fiscalité est appliquée une seule fois sur le total
+       *   annuel avant crédit.
+       *
+       * Le crédit en décembre représente ici le versement effectué
+       * au passage à la nouvelle année.
        */
-      b[a.id] += Math.round(
-        (b[a.id] || 0) *
-          monthlyRate,
-      );
+      if (a.taxMode === "yield") {
 
-      /*
-       * Courbe nette :
-       *
-       * - yield : fiscalité appliquée au rendement
-       *   au fil de l'eau (Bourso+, CSL...)
-       *
-       * - exit : aucune retenue pendant la capitalisation,
-       *   la taxe sera calculée dans push() sur la plus-value.
-       *
-       * - none : rendement identique au brut.
-       */
-      const tax =
-        a.taxMode === "yield"
-          ? Math.max(
+        const monthlySimpleRate =
+          a.rate / 100 / 12;
+
+        pendingGrossInterest[a.id] =
+          (pendingGrossInterest[a.id] || 0) +
+          Math.round(
+            (b[a.id] || 0) *
+              monthlySimpleRate,
+          );
+
+        pendingNetGrossInterest[a.id] =
+          (pendingNetGrossInterest[a.id] || 0) +
+          Math.round(
+            (netB[a.id] || 0) *
+              monthlySimpleRate,
+          );
+
+        if (m.endsWith("-12")) {
+
+          b[a.id] =
+            (b[a.id] || 0) +
+            pendingGrossInterest[a.id];
+
+          const tax =
+            Math.max(
               0,
               Math.min(
                 100,
                 a.taxRate ?? 0,
               ),
-            )
-          : 0;
+            );
 
-      const netInterest =
+          const annualNetInterest =
+            Math.round(
+              pendingNetGrossInterest[a.id] *
+                (1 - tax / 100),
+            );
+
+          netB[a.id] =
+            (netB[a.id] || 0) +
+            annualNetInterest;
+
+          pendingGrossInterest[a.id] = 0;
+          pendingNetGrossInterest[a.id] = 0;
+
+        }
+
+        continue;
+
+      }
+
+
+      /*
+       * Autres placements :
+       * rendement annuel converti en rendement mensuel composé.
+       *
+       * - exit : aucune retenue pendant la capitalisation ;
+       *   la fiscalité est seulement estimée dans push().
+       *
+       * - none : rendement brut.
+       */
+      const monthlyRate =
+        Math.pow(
+          1 + a.rate / 100,
+          1 / 12,
+        ) - 1;
+
+      const interest =
         Math.round(
-          (netB[a.id] || 0) *
-            monthlyRate *
-            (1 - tax / 100),
+          (b[a.id] || 0) *
+            monthlyRate,
         );
+
+      b[a.id] =
+        (b[a.id] || 0) +
+        interest;
 
       netB[a.id] =
         (netB[a.id] || 0) +
-        netInterest;
+        Math.round(
+          (netB[a.id] || 0) *
+            monthlyRate,
+        );
 
     }
 
