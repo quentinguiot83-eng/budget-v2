@@ -5541,7 +5541,7 @@ export default function App() {
                           <strong>{i + 1}</strong>
                           {ds.length > 0 && (
                             <small>
-                              {ds.length} paiement{ds.length > 1 ? "s" : ""}
+                              {ds.length}
                             </small>
                           )}
                         </button>
@@ -6021,7 +6021,7 @@ export default function App() {
 
                     </div>
 
-                    <section className="card">
+                    <section className="card personal-advances-card">
                       <div className="section-head">
                         <div>
                           <h2>
@@ -6181,7 +6181,7 @@ export default function App() {
                     </section>
 
 
-                    <section className="card">
+                    <section className="card personal-installments-card">
                       <div className="section-head">
                         <div>
                           <h2>
@@ -6376,7 +6376,7 @@ export default function App() {
                     </section>
 
 
-                    <section className="card">
+                    <section className="card personal-budgets-card">
                       <div className="section-head">
                         <div>
                           <h2>
@@ -6684,7 +6684,7 @@ export default function App() {
                     </section>
 
 
-                    <section className="card">
+                    <section className="card personal-history-card">
                       <div className="section-head">
                         <h2>
                           Historique privé
@@ -7027,7 +7027,7 @@ export default function App() {
                   Voir le calcul
                 </button>
               </div>
-              <div className="two-col">
+              <div className="two-col projection-summary">
                 <section className="metric">
                   <span>Revenus mensuels estimés</span>
                   <strong>{money(s.income)}</strong>
@@ -7239,10 +7239,11 @@ export default function App() {
                     projet lié à un voyage est réduit des virements de
                     financement déjà effectués.
                   </p>
-                  <table>
-                    <thead>
-                      <tr>
-                        <th>Date</th>
+                  <div className="projection-table-scroll">
+                    <table>
+                      <thead>
+                        <tr>
+                          <th>Date</th>
                         <th>
                           Patrimoine total
                         </th>
@@ -7287,8 +7288,9 @@ export default function App() {
                           </td>
                         </tr>
                       ))}
-                    </tbody>
-                  </table>
+                      </tbody>
+                    </table>
+                  </div>
                 </details>
               </section>
               <section className="card">
@@ -7574,7 +7576,7 @@ export default function App() {
                             </div>
                           </section>
                         ) : (
-                          <section className="card">
+                          <section className="card trip-close-card">
                             <div className="section-head">
                               <div>
                                 <h2>Clôturer le voyage</h2>
@@ -7660,7 +7662,7 @@ export default function App() {
                             )}
                           </section>
                         </div>
-                        <section className="card">
+                        <section className="card trip-envelopes-card">
                           <div className="section-head">
                             <h2>Les enveloppes du voyage</h2>
                             {!t.closedAt && (
@@ -8272,7 +8274,7 @@ export default function App() {
                   </div>
                 )}
               </section>
-              <section className="card">
+              <section className="card settings-salary-card">
                 <div className="section-head">
                   <div>
                     <h2>Salaire</h2>

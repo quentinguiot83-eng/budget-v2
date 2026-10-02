@@ -2202,4 +2202,257 @@ dialog::backdrop {
 .metric-expense .muted {
   color: #a06c6c;
 }
+/* Très petits écrans */
+@media (max-width: 360px) {
+  .overview {
+    grid-template-columns: 1fr;
+  }
 
+  .balance-card {
+    grid-column: 1;
+  }
+
+  .metric {
+    min-height: auto;
+  }
+
+  .metric-income,
+  .metric-expense {
+    min-height: 175px;
+  }
+}
+/* Alignement des cartes Revenus / Dépenses */
+@media (min-width: 361px) and (max-width: 560px) {
+  .metric-income .metric-top,
+  .metric-expense .metric-top {
+    min-height: 92px;
+  }
+}
+
+
+/* Compte perso — Avances en cours sur mobile */
+@media (max-width: 560px) {
+  .personal-advances-card .section-head {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 16px;
+  }
+
+  .personal-advances-card .section-head > div {
+    width: 100%;
+  }
+
+  .personal-advances-card .section-head > button {
+    width: 100%;
+    justify-content: center;
+    min-height: 44px;
+  }
+}
+
+
+/* Compte perso — sections avec action sur mobile */
+@media (max-width: 560px) {
+
+  .personal-installments-card .section-head,
+  .personal-budgets-card .section-head {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 16px;
+  }
+
+  .personal-installments-card .section-head > div,
+  .personal-budgets-card .section-head > div {
+    width: 100%;
+  }
+
+  .personal-installments-card .section-head > button,
+  .personal-budgets-card .section-head > button {
+    width: 100%;
+    min-height: 44px;
+    justify-content: center;
+  }
+
+}
+
+
+/* Compte perso — historique mobile */
+@media (max-width: 560px) {
+
+  .personal-history-card .row {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .personal-history-card .row-label {
+    flex: 1 1 calc(100% - 32px);
+  }
+
+  .personal-history-card .row-value {
+    flex: 0 0 calc(100% - 31px);
+    width: auto;
+    max-width: none;
+    margin-left: 31px;
+    text-align: left;
+  }
+
+  .personal-history-card .row-value > .flex {
+    width: 100%;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    gap: 10px;
+  }
+
+}
+
+
+/* Voyages — actions des cartes sur mobile */
+@media (max-width: 560px) {
+
+  .trip-close-card .section-head,
+  .trip-envelopes-card .section-head {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 14px;
+  }
+
+  .trip-close-card .section-head > div {
+    width: 100%;
+  }
+
+  .trip-close-card .section-head > button,
+  .trip-envelopes-card .section-head > button {
+    width: 100%;
+    min-height: 44px;
+    justify-content: center;
+  }
+
+}
+
+
+/* Projection — résumé compact sur mobile */
+@media (max-width: 560px) {
+
+  .projection-summary {
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .projection-summary .metric {
+    min-height: 0;
+    padding: 17px 15px;
+    justify-content: flex-start;
+    gap: 8px;
+    border-radius: 15px;
+  }
+
+  .projection-summary .metric > span {
+    font-size: 0.78rem;
+    line-height: 1.35;
+  }
+
+  .projection-summary .metric strong {
+    margin: 4px 0 0;
+    font-size: 1.25rem;
+  }
+
+  .projection-summary .metric small {
+    font-size: 0.7rem;
+    line-height: 1.4;
+  }
+
+}
+
+@media (max-width: 360px) {
+
+  .projection-summary {
+    grid-template-columns: 1fr;
+  }
+
+}
+
+
+/* Projection — tableau annuel mobile */
+.projection-table-scroll {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+@media (max-width: 560px) {
+
+  .projection-table-scroll {
+    margin-top: 14px;
+    padding-bottom: 6px;
+  }
+
+  .projection-table-scroll table {
+    min-width: 620px;
+  }
+
+  .projection-table-scroll th,
+  .projection-table-scroll td {
+    white-space: nowrap;
+    padding: 10px 12px;
+  }
+
+  .projection-table-scroll th:first-child,
+  .projection-table-scroll td:first-child {
+    position: sticky;
+    left: 0;
+    background: white;
+    z-index: 1;
+  }
+
+}
+/* Calendrier — correction mobile */
+@media (max-width: 560px) {
+  .calendar-grid {
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    width: 100%;
+    gap: 4px;
+  }
+
+  .calendar-grid > * {
+    min-width: 0;
+  }
+
+  .day {
+    width: 100%;
+    min-width: 0;
+    padding: 6px 3px;
+    overflow: hidden;
+  }
+
+  .day small {
+    width: 100%;
+    font-size: 0.58rem;
+    line-height: 1.2;
+    text-align: center;
+    overflow-wrap: anywhere;
+  }
+
+  .day strong {
+    font-size: 0.78rem;
+  }
+}
+
+/* Réglages — Salaire sur mobile */
+@media (max-width: 560px) {
+
+  .settings-salary-card .section-head {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 14px;
+  }
+
+  .settings-salary-card .section-head > div {
+    width: 100%;
+  }
+
+  .settings-salary-card .section-head > button {
+    width: 100%;
+    min-height: 44px;
+    justify-content: center;
+  }
+
+}
