@@ -2035,3 +2035,14 @@ dialog::backdrop {
   object-fit: cover;
   flex-shrink: 0;
 }
+
+
+/* Navigation secondaire */
+.page-back-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 0;
+  margin-bottom: 8px;
+  font-weight: 600;
+}

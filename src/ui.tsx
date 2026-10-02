@@ -11,6 +11,19 @@ export type Field = {
   min?: number;
   max?: number;
   step?: string;
+  showWhen?:
+    | {
+        field: string;
+        values?: string[];
+        nonZero?: boolean;
+      }
+    | {
+        any: {
+          field: string;
+          values?: string[];
+          nonZero?: boolean;
+        }[];
+      };
 };
 export function Modal({
   title,
@@ -57,6 +70,61 @@ export function Form({
 }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+
+  const [values, setValues] = useState<Record<string, string>>(
+    () =>
+      Object.fromEntries(
+        fields.map((f) => [
+          f.name,
+          String(f.value ?? ""),
+        ]),
+      ),
+  );
+
+  const matchesVisibility = (
+    rule: {
+      field: string;
+      values?: string[];
+      nonZero?: boolean;
+    },
+  ) => {
+    const value =
+      values[rule.field] ?? "";
+
+    if (rule.nonZero) {
+      const n = Number(
+        value.replace(",", "."),
+      );
+
+      return (
+        Number.isFinite(n) &&
+        n > 0
+      );
+    }
+
+    if (rule.values)
+      return rule.values.includes(
+        value,
+      );
+
+    return true;
+  };
+
+  const visibleFields =
+    fields.filter((f) => {
+      if (!f.showWhen)
+        return true;
+
+      if ("any" in f.showWhen)
+        return f.showWhen.any.some(
+          matchesVisibility,
+        );
+
+      return matchesVisibility(
+        f.showWhen,
+      );
+    });
+
   return (
     <form
       onSubmit={async (e) => {
@@ -81,7 +149,7 @@ export function Form({
       }}
     >
       <fieldset disabled={busy}>
-        {fields.map((f) => (
+        {visibleFields.map((f) => (
           <label key={f.name} className="field">
             <span>{f.label}</span>
             {f.options ? (
@@ -89,6 +157,12 @@ export function Form({
                 name={f.name}
                 defaultValue={f.value ?? ""}
                 required={f.required !== false}
+                onChange={(e) =>
+                  setValues((current) => ({
+                    ...current,
+                    [f.name]: e.target.value,
+                  }))
+                }
               >
                 {f.options.map(([v, l]) => (
                   <option key={v} value={v}>
@@ -106,7 +180,16 @@ export function Form({
                 max={f.max}
                 step={f.step ?? (f.type === "number" ? "0.01" : undefined)}
                 autoComplete={
-                  f.type === "password" ? "current-password" : undefined
+                  f.type === "password"
+                    ? "current-password"
+                    : undefined
+                }
+                onChange={(e) =>
+                  setValues((current) => ({
+                    ...current,
+                    [f.name]:
+                      e.target.value,
+                  }))
                 }
               />
             )}{" "}

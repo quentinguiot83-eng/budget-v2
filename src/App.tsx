@@ -1,4 +1,10 @@
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import type { Session } from "@supabase/supabase-js";
 import {
   Home,
@@ -366,6 +372,7 @@ export default function App() {
     [error, setError] = useState(""),
     [notice, setNotice] = useState(""),
     [route, setRoute] = useState("home"),
+    [backRoute, setBackRoute] = useState<string | null>(null),
     [selectedMonth, setMonth] = useState(month()),
     [sheet, setSheet] = useState<Sheet>(null),
     [theme, setTheme] = useState("blue"),
@@ -390,6 +397,19 @@ export default function App() {
   sessionRef.current = session;
   const s = doc?.state || emptyState();
   const ps = personalDoc?.state || emptyPersonalState();
+
+  /*
+   * La projection est coûteuse, surtout sur 10 ou 30 ans.
+   * On ne la calcule qu'une seule fois lorsque les données
+   * ou l'horizon changent, puis on réutilise le résultat.
+   */
+  const projectionData = useMemo(
+    () =>
+      route === "projection"
+        ? project(s, years)
+        : [],
+    [route, s, years],
+  );
 
   const personalOwnerId =
     session?.user.id || (demoEnabled ? "demo" : "");
@@ -483,10 +503,61 @@ export default function App() {
     const t = setTimeout(() => setNotice(""), 4500);
     return () => clearTimeout(t);
   }, [notice]);
+  const subRoutes = [
+    "fixed",
+    "calendar",
+    "transactions",
+    "analysis",
+  ];
+
   function navigate(r: string) {
+
+    const targetIsSubPage =
+      subRoutes.includes(r);
+
+    const currentIsSubPage =
+      subRoutes.includes(route);
+
+    if (targetIsSubPage) {
+
+      /*
+       * Si on arrive depuis un onglet principal,
+       * on mémorise exactement cet onglet.
+       *
+       * Si on passe d'une sous-page à une autre,
+       * on conserve la page d'origine.
+       */
+      setBackRoute((previous) =>
+        currentIsSubPage
+          ? previous || "budget"
+          : route,
+      );
+
+    } else {
+
+      /*
+       * Une navigation vers un onglet principal
+       * termine la navigation secondaire.
+       */
+      setBackRoute(null);
+
+    }
+
     setRoute(r);
     setMobileMenuOpen(false);
     window.scrollTo(0, 0);
+  }
+
+  function goBack() {
+
+    const target =
+      backRoute || "budget";
+
+    setBackRoute(null);
+    setRoute(target);
+    setMobileMenuOpen(false);
+    window.scrollTo(0, 0);
+
   }
   function showError(e: unknown) {
     setError(e instanceof Error ? e.message : "Une erreur est survenue.");
@@ -794,37 +865,195 @@ export default function App() {
               ),
             ]
           : []),
-        field("rate", "Rendement annuel estimé (%)", a?.rate || 0, "number"),
+        field(
+          "rate",
+          "Rendement annuel estimé (%)",
+          a?.rate || 0,
+          "number",
+        ),
+
+        choice(
+          "taxMode",
+          "Fiscalité dans les projections",
+          [
+            [
+              "none",
+              "Exonéré / aucune fiscalité",
+            ],
+            [
+              "yield",
+              "Prélevée sur les intérêts",
+            ],
+            [
+              "exit",
+              "Prélevée à la sortie sur les gains",
+            ],
+          ],
+          a?.taxMode ||
+            "none",
+        ),
+
+        {
+          ...field(
+            "taxRate",
+            "Taux de fiscalité sur les gains (%)",
+            a?.taxRate ?? 0,
+            "number",
+            "Exemples : 18,6 % pour un PEA après 5 ans · 31,4 % pour Bourso+.",
+          ),
+          min: 0,
+          max: 100,
+          showWhen: {
+            field: "taxMode",
+            values: [
+              "yield",
+              "exit",
+            ],
+          },
+        },
+
         amountField("cap", "Plafond (€) — 0 = sans plafond", a?.cap || 0),
-        choice(
-          "capType",
-          "Type de plafond",
-          [
-            ["balance", "Solde du compte"],
-            ["deposits", "Versements cumulés"],
-          ],
-          a?.capType || "balance",
-        ),
-        amountField(
-          "contributed",
-          "Versements cumulés avant le démarrage (€)",
-          a?.contributed || 0,
-        ),
-        choice(
-          "relay",
-          "À plafond atteint, verser vers",
-          [
-            ["current", "Laisser sur le compte courant"],
-            ...accountOptions().filter(
-              ([id]) =>
-                id !== a?.id &&
-                s.accounts.find((x) => x.id === id)?.group !== "current",
-            ),
-          ],
-          a?.relay || "",
-        ),
+        {
+          ...choice(
+            "capType",
+            "Type de plafond",
+            [
+              [
+                "balance",
+                "Solde du compte",
+              ],
+              [
+                "deposits",
+                "Versements cumulés",
+              ],
+            ],
+            a?.capType ||
+              "balance",
+          ),
+          showWhen: {
+            field: "cap",
+            nonZero: true,
+          },
+        },
+
+        {
+          ...amountField(
+            "contributed",
+            "Versements cumulés avant le démarrage (€)",
+            a?.contributed || 0,
+            "Utile pour un plafond de versements ou pour calculer une plus-value imposable.",
+          ),
+          showWhen: {
+            any: [
+              {
+                field: "cap",
+                nonZero: true,
+              },
+              {
+                field: "taxMode",
+                values: ["exit"],
+              },
+            ],
+          },
+        },
+
+        {
+          ...choice(
+            "relay",
+            "À plafond atteint, verser vers",
+            [
+              [
+                "current",
+                "Laisser sur le compte courant",
+              ],
+              ...accountOptions().filter(
+                ([id]) =>
+                  id !== a?.id &&
+                  s.accounts.find(
+                    (x) => x.id === id,
+                  )?.group !==
+                    "current",
+              ),
+            ],
+            a?.relay || "",
+          ),
+          showWhen: {
+            field: "cap",
+            nonZero: true,
+          },
+        },
       ],
       async (v) => {
+
+        const taxMode =
+          v.taxMode as
+            | "none"
+            | "yield"
+            | "exit";
+
+        const taxRate =
+          taxMode === "none"
+            ? 0
+            : Number(
+                String(
+                  v.taxRate ?? "",
+                ).replace(",", "."),
+              );
+
+        if (
+          taxMode !== "none" &&
+          (
+            !Number.isFinite(taxRate) ||
+            taxRate <= 0 ||
+            taxRate > 100
+          )
+        ) {
+          throw Error(
+            "Indiquez un taux de fiscalité compris entre 0 et 100 %.",
+          );
+        }
+
+        const cap =
+          euro(v.cap);
+
+        const hasCap =
+          cap > 0;
+
+        const capType =
+          hasCap
+            ? (
+                v.capType ||
+                a?.capType ||
+                "balance"
+              ) as Account["capType"]
+            : "balance";
+
+        /*
+         * Les versements cumulés servent aussi de base
+         * au calcul de la plus-value pour une fiscalité
+         * à la sortie.
+         */
+        const contributed =
+          hasCap ||
+          taxMode === "exit"
+            ? euro(
+                v.contributed ??
+                  String(
+                    (a?.contributed ??
+                      0) / 100,
+                  ),
+              )
+            : a?.contributed ??
+              0;
+
+        const relay =
+          hasCap
+            ? v.relay ===
+              "current"
+              ? ""
+              : v.relay || ""
+            : "";
+
         await change((d) => {
           const entry = {
             ...a,
@@ -833,11 +1062,17 @@ export default function App() {
             group: v.group as Account["group"],
             opening: a?.opening ?? euro(v.opening),
             date: a?.date ?? v.date,
-            rate: Number(v.rate),
-            cap: euro(v.cap),
-            capType: v.capType as Account["capType"],
-            contributed: euro(v.contributed),
-            relay: v.relay === "current" ? "" : v.relay,
+            rate:
+              Number(v.rate),
+
+            taxMode,
+
+            taxRate,
+
+            cap,
+            capType,
+            contributed,
+            relay,
             allocation: a?.allocation || 0,
           };
           if (entry.date > today())
@@ -2513,108 +2748,620 @@ export default function App() {
       "Valider le paiement",
     );
   }
-  function operation(type: Tx["type"] = "expense", trip?: Trip, existing?: Tx) {
+  function operation(
+    type: Tx["type"] = "expense",
+    trip?: Trip,
+    existing?: Tx,
+  ) {
+
     if (type === "transfer") {
       transfer();
       return;
     }
+
     if (!current) {
       editAccount();
       return;
     }
-    if (type === "expense" && !trip && !categoryOptions.length) {
+
+    if (
+      type === "expense" &&
+      !trip &&
+      !categoryOptions.length
+    ) {
       editCategory();
       return;
     }
-    const fields: Field[] = [
-      amountField("amount", "Montant (€)", existing?.amount || 0),
-      field(
-        "date",
-        "Date",
-        existing?.date || today(),
-        "date",
-        type === "income"
-          ? "La date bancaire reste réelle. Le mois budgétaire du salaire dépend du réglage choisi dans Réglages."
-          : "",
-      ),
-      field("description", "Description", existing?.description),
-      choice(
-        "account",
-        "Compte",
-        accountOptions(),
-        existing?.account || current.id,
-      ),
-    ];
-    if (type === "expense")
-      fields.push(
+
+
+    /*
+     * ========================================================
+     * REVENU
+     * ========================================================
+     */
+    if (type === "income") {
+
+      const fields: Field[] = [
+        amountField(
+          "amount",
+          "Montant (€)",
+          existing?.amount || 0,
+        ),
+
+        field(
+          "date",
+          "Date",
+          existing?.date || today(),
+          "date",
+          "La date bancaire reste réelle. Le mois budgétaire du salaire dépend du réglage choisi dans Réglages.",
+        ),
+
+        field(
+          "description",
+          "Description",
+          existing?.description,
+        ),
+
+        choice(
+          "account",
+          "Compte",
+          accountOptions(),
+          existing?.account ||
+            current.id,
+        ),
+
+        choice(
+          "incomeType",
+          "Type de revenu",
+          [
+            [
+              "Salaire",
+              "Salaire",
+            ],
+            [
+              "Prime",
+              "Prime",
+            ],
+            [
+              "Remboursement",
+              "Remboursement de dépense",
+            ],
+            [
+              "Vente",
+              "Vente",
+            ],
+            [
+              "Autre",
+              "Autre",
+            ],
+          ],
+          existing?.incomeType ||
+            "Salaire",
+        ),
+      ];
+
+      openForm(
+        existing
+          ? "Modifier le revenu"
+          : "Ajouter un revenu",
+        fields,
+        async (v) => {
+
+          await change(
+            (d) => {
+
+              const tx: Tx = {
+                ...existing,
+                id:
+                  existing?.id ||
+                  uid(),
+                type: "income",
+                amount:
+                  euro(v.amount),
+                date:
+                  v.date,
+                description:
+                  v.description,
+                account:
+                  v.account,
+                incomeType:
+                  v.incomeType,
+                budgetMonth:
+                  v.incomeType ===
+                  "Salaire"
+                    ? (
+                        s.salaryBudget ??
+                        "next"
+                      ) === "next"
+                      ? shiftMonth(
+                          month(v.date),
+                          1,
+                        )
+                      : month(v.date)
+                    : undefined,
+              };
+
+              if (existing)
+                d.transactions =
+                  d.transactions.map(
+                    (t) =>
+                      t.id ===
+                      existing.id
+                        ? tx
+                        : t,
+                  );
+              else
+                d.transactions.push(
+                  tx,
+                );
+
+            },
+            "Revenu enregistré",
+          );
+
+        },
+      );
+
+      return;
+    }
+
+
+    /*
+     * ========================================================
+     * DÉPENSE DE VOYAGE OU MODIFICATION D'UNE DÉPENSE
+     *
+     * Elles restent ponctuelles.
+     * ========================================================
+     */
+    if (trip || existing) {
+
+      const fields: Field[] = [
+        amountField(
+          "amount",
+          "Montant (€)",
+          existing?.amount || 0,
+        ),
+
+        field(
+          "date",
+          "Date",
+          existing?.date || today(),
+          "date",
+        ),
+
+        field(
+          "description",
+          "Description",
+          existing?.description,
+        ),
+
+        choice(
+          "account",
+          "Compte",
+          accountOptions(),
+          existing?.account ||
+            current.id,
+        ),
+
         trip
           ? choice(
               "tripCategory",
               "Catégorie du voyage",
               trip.categories
-                .filter((c) => !c.archived)
-                .map((c) => [c.id, c.name]),
-              existing?.tripCategory || trip.categories[0]?.id,
+                .filter(
+                  (c) =>
+                    !c.archived,
+                )
+                .map(
+                  (c) => [
+                    c.id,
+                    c.name,
+                  ],
+                ),
+              existing
+                ?.tripCategory ||
+                trip.categories
+                  .find(
+                    (c) =>
+                      !c.archived,
+                  )
+                  ?.id,
             )
           : choice(
               "category",
               "Catégorie",
               categoryOptions,
-              existing?.category || categoryOptions[0]?.[0],
+              existing?.category ||
+                categoryOptions[0]?.[0],
             ),
+      ];
+
+      openForm(
+        existing
+          ? "Modifier la dépense"
+          : "Ajouter une dépense de voyage",
+        fields,
+        async (v) => {
+
+          await change(
+            (d) => {
+
+              const tx: Tx = {
+                ...existing,
+                id:
+                  existing?.id ||
+                  uid(),
+                type: "expense",
+                amount:
+                  euro(v.amount),
+                date:
+                  v.date,
+                description:
+                  v.description,
+                account:
+                  v.account,
+                category:
+                  v.category ||
+                  undefined,
+                trip:
+                  trip?.id ||
+                  existing?.trip,
+                tripCategory:
+                  v.tripCategory ||
+                  undefined,
+              };
+
+              if (existing)
+                d.transactions =
+                  d.transactions.map(
+                    (t) =>
+                      t.id ===
+                      existing.id
+                        ? tx
+                        : t,
+                  );
+              else
+                d.transactions.push(
+                  tx,
+                );
+
+            },
+            "Dépense enregistrée",
+          );
+
+        },
       );
-    if (type === "income")
-      fields.push(
-        choice(
-          "incomeType",
-          "Type de revenu",
+
+      return;
+    }
+
+
+    /*
+     * ========================================================
+     * NOUVELLE DÉPENSE DU FOYER
+     *
+     * Un seul formulaire :
+     * - ponctuelle
+     * - fixe
+     * - plusieurs fois
+     * ========================================================
+     */
+
+    const fields: Field[] = [
+
+      choice(
+        "expenseKind",
+        "Type de dépense",
+        [
           [
-            ["Salaire", "Salaire"],
-            ["Prime", "Prime"],
-            ["Remboursement", "Remboursement de dépense"],
-            ["Vente", "Vente"],
-            ["Autre", "Autre"],
+            "once",
+            "Ponctuelle",
           ],
-          existing?.incomeType || "Salaire",
+          [
+            "fixed",
+            "Fixe / récurrente",
+          ],
+          [
+            "credit",
+            "En plusieurs fois",
+          ],
+        ],
+        "once",
+      ),
+
+
+      /*
+       * Montant ponctuel
+       */
+      {
+        ...amountField(
+          "amount",
+          "Montant (€)",
+          0,
         ),
-      );
+        showWhen: {
+          field:
+            "expenseKind",
+          values: ["once"],
+        },
+      },
+
+
+      /*
+       * Montant récurrent
+       */
+      {
+        ...amountField(
+          "ruleAmount",
+          "Montant de chaque paiement (€)",
+          0,
+        ),
+        showWhen: {
+          field:
+            "expenseKind",
+          values: [
+            "fixed",
+            "credit",
+          ],
+        },
+      },
+
+
+      field(
+        "description",
+        "Description",
+      ),
+
+
+      choice(
+        "account",
+        "Compte débité",
+        accountOptions(),
+        current.id,
+      ),
+
+
+      choice(
+        "category",
+        "Catégorie",
+        categoryOptions,
+        categoryOptions[0]?.[0],
+      ),
+
+
+      /*
+       * Date ponctuelle
+       */
+      {
+        ...field(
+          "date",
+          "Date",
+          today(),
+          "date",
+        ),
+        showWhen: {
+          field:
+            "expenseKind",
+          values: ["once"],
+        },
+      },
+
+
+      /*
+       * Première échéance
+       */
+      {
+        ...field(
+          "start",
+          "Première échéance",
+          today(),
+          "date",
+        ),
+        showWhen: {
+          field:
+            "expenseKind",
+          values: [
+            "fixed",
+            "credit",
+          ],
+        },
+      },
+
+
+      /*
+       * Fréquence
+       */
+      {
+        ...choice(
+          "interval",
+          "Fréquence",
+          [
+            [
+              "1",
+              "Mensuelle",
+            ],
+            [
+              "3",
+              "Trimestrielle",
+            ],
+            [
+              "12",
+              "Annuelle",
+            ],
+          ],
+          "1",
+        ),
+        showWhen: {
+          field:
+            "expenseKind",
+          values: [
+            "fixed",
+            "credit",
+          ],
+        },
+      },
+
+
+      /*
+       * Nombre de paiements uniquement
+       * pour plusieurs fois.
+       */
+      {
+        ...field(
+          "count",
+          "Nombre de paiements",
+          3,
+          "number",
+        ),
+        min: 2,
+        max: 1200,
+        step: "1",
+        showWhen: {
+          field:
+            "expenseKind",
+          values: [
+            "credit",
+          ],
+        },
+      },
+    ];
+
+
     openForm(
-      existing
-        ? "Modifier la transaction"
-        : type === "expense"
-          ? "Ajouter une dépense"
-          : "Ajouter un revenu",
+      "Ajouter une dépense",
       fields,
       async (v) => {
-        await change((d) => {
-          const tx: Tx = {
-            ...existing,
-            id: existing?.id || uid(),
-            type,
-            amount: euro(v.amount),
-            date: v.date,
-            description: v.description,
-            account: v.account,
-            category: v.category || undefined,
-            incomeType: v.incomeType || undefined,
-            budgetMonth:
-              type === "income" && v.incomeType === "Salaire"
-                ? (s.salaryBudget ?? "next") === "next"
-                  ? shiftMonth(month(v.date), 1)
-                  : month(v.date)
-                : undefined,
-            trip: trip?.id || existing?.trip,
-            tripCategory: v.tripCategory || undefined,
-          };
-          if (existing)
-            d.transactions = d.transactions.map((t) =>
-              t.id === existing.id ? tx : t,
+
+        const kind =
+          v.expenseKind;
+
+        /*
+         * ------------------------------
+         * Dépense ponctuelle
+         * ------------------------------
+         */
+        if (kind === "once") {
+
+          const amount =
+            euro(v.amount);
+
+          if (amount <= 0)
+            throw Error(
+              "Le montant doit être supérieur à zéro.",
             );
-          else d.transactions.push(tx);
-        }, "Transaction enregistrée");
+
+          await change(
+            (d) =>
+              d.transactions.push({
+                id: uid(),
+                type: "expense",
+                amount,
+                date: v.date,
+                description:
+                  v.description,
+                account:
+                  v.account,
+                category:
+                  v.category,
+              }),
+            "Dépense enregistrée",
+          );
+
+          return;
+        }
+
+
+        /*
+         * ------------------------------
+         * Fixe / plusieurs fois
+         * ------------------------------
+         */
+        const amount =
+          euro(v.ruleAmount);
+
+        const interval =
+          Number(v.interval);
+
+        if (amount <= 0)
+          throw Error(
+            "Le montant doit être supérieur à zéro.",
+          );
+
+        if (
+          ![1, 3, 12].includes(
+            interval,
+          )
+        )
+          throw Error(
+            "Fréquence invalide.",
+          );
+
+
+        let count = 0;
+
+        if (kind === "credit") {
+
+          count =
+            Number(v.count);
+
+          if (
+            !Number.isInteger(
+              count,
+            ) ||
+            count < 2 ||
+            count > 1200
+          )
+            throw Error(
+              "Le nombre de paiements doit être compris entre 2 et 1200.",
+            );
+
+        }
+
+
+        await change(
+          (d) =>
+            d.rules.push({
+              id: uid(),
+
+              name:
+                v.description,
+
+              amount,
+
+              account:
+                v.account,
+
+              category:
+                v.category,
+
+              start:
+                v.start,
+
+              interval,
+
+              count:
+                kind ===
+                "credit"
+                  ? count
+                  : 0,
+
+              kind:
+                kind ===
+                "credit"
+                  ? "credit"
+                  : "fixed",
+            }),
+
+          kind === "credit"
+            ? "Paiement en plusieurs fois créé"
+            : "Dépense fixe créée",
+        );
+
       },
     );
+
   }
+
   function confirmSalary() {
     if (!current) {
       editAccount();
@@ -3523,27 +4270,38 @@ export default function App() {
             ) : !simple ? (
               <>
 
-                <div className="split meta">
-                  <span>
-                    Fixe :{" "}
-                    {money(
-                      fixedPaid,
-                    )}{" "}
-                    / {money(fixed)}
-                  </span>
+                {(fixed > 0 || variable > 0) && (
+                  <div className="split meta">
 
-                  <span>
-                    Variable :{" "}
-                    {money(
-                      spent -
-                        fixedPaid,
-                    )}{" "}
-                    /{" "}
-                    {money(
-                      variable,
+                    {fixed > 0 && (
+                      <span>
+                        Fixe :{" "}
+                        {money(
+                          fixedPaid,
+                        )}{" "}
+                        / {money(fixed)}
+                      </span>
                     )}
-                  </span>
-                </div>
+
+                    {variable > 0 && (
+                      <span>
+                        Variable :{" "}
+                        {money(
+                          Math.max(
+                            0,
+                            spent -
+                              fixedPaid,
+                          ),
+                        )}{" "}
+                        /{" "}
+                        {money(
+                          variable,
+                        )}
+                      </span>
+                    )}
+
+                  </div>
+                )}
 
                 <div className="split">
 
@@ -4106,10 +4864,24 @@ export default function App() {
         )}
         <div className="page-heading">
           <div>
+
+            {subRoutes.includes(route) && (
+              <button
+                type="button"
+                className="text page-back-button"
+                onClick={goBack}
+              >
+                <ChevronLeft size={17} />
+                Retour
+              </button>
+            )}
+
             {route === "home" && (
               <p className="eyebrow">LE QUOTIDIEN, EN CLAIR</p>
             )}
+
             <h1>{titles[route]}</h1>
+
           </div>
           {[
             "home",
@@ -5907,6 +6679,24 @@ export default function App() {
                           ? "Compte courant"
                           : `${a.rate} % estimés par an`}
                       </p>
+
+                      {a.group ===
+                        "wealth" &&
+                        a.taxMode &&
+                        a.taxMode !==
+                          "none" &&
+                        (
+                          <small>
+                            Fiscalité projetée :{" "}
+                            {a.taxRate ??
+                              0}{" "}
+                            % ·{" "}
+                            {a.taxMode ===
+                            "yield"
+                              ? "sur les intérêts"
+                              : "à la sortie"}
+                          </small>
+                        )}
                       {a.cap > 0 && (
                         <>
                           <Progress
@@ -6037,9 +6827,16 @@ export default function App() {
                 <div className="chart">
                   <ResponsiveContainer width="100%" height="100%">
                     <LineChart
-                      data={project(s, years).map((p) => ({
+                      data={projectionData.map((p) => ({
                         ...p,
-                        patrimoine: p.current + p.wealth,
+
+                        patrimoineTotal:
+                          p.current +
+                          p.wealth,
+
+                        patrimoineNet:
+                          p.current +
+                          p.wealthNet,
                       }))}
                       margin={{ left: 0, right: 12, top: 20, bottom: 10 }}
                     >
@@ -6060,12 +6857,22 @@ export default function App() {
                       />
                       <Legend />
                       <Line
-                        name="Patrimoine"
-                        dataKey="patrimoine"
+                        name="Patrimoine total"
+                        dataKey="patrimoineTotal"
                         stroke="var(--chart)"
                         strokeWidth={3}
                         dot={false}
                       />
+
+                      <Line
+                        name="Patrimoine après fiscalité"
+                        dataKey="patrimoineNet"
+                        stroke="#8d98a8"
+                        strokeWidth={2}
+                        strokeDasharray="7 6"
+                        dot={false}
+                      />
+
                       <Line
                         name="Voyages"
                         dataKey="travel"
@@ -6080,26 +6887,75 @@ export default function App() {
                   <span>À {years} ans</span>
                   <strong>
                     {money(
-                      project(s, years).at(-1)!.wealth +
-                        project(s, years).at(-1)!.current,
+                      project(
+                        s,
+                        years,
+                      ).at(-1)!
+                        .wealth +
+                        project(
+                          s,
+                          years,
+                        ).at(-1)!
+                          .current,
                     )}
-                    <small>Patrimoine</small>
+                    <small>
+                      Patrimoine total
+                    </small>
                   </strong>
+
                   <strong>
-                    {money(project(s, years).at(-1)!.travel)}
+                    {money(
+                      project(
+                        s,
+                        years,
+                      ).at(-1)!
+                        .wealthNet +
+                        project(
+                          s,
+                          years,
+                        ).at(-1)!
+                          .current,
+                    )}
+                    <small>
+                      Après fiscalité
+                    </small>
+                  </strong>
+
+                  <strong>
+                    −{" "}
+                    {money(
+                      project(
+                        s,
+                        years,
+                      ).at(-1)!
+                        .taxEstimate,
+                    )}
+                    <small>
+                      Fiscalité estimée
+                    </small>
+                  </strong>
+
+                  <strong>
+                    {money(
+                      project(
+                        s,
+                        years,
+                      ).at(-1)!
+                        .travel,
+                    )}
                     <small>Voyages</small>
                   </strong>
                 </div>
-                {project(s, years).at(-1)!.deficit > 0 && (
+                {projectionData.at(-1)!.deficit > 0 && (
                   <p className="warning">
                     Financement manquant
-                    {project(s, years).at(-1)!.deficitSince
+                    {projectionData.at(-1)!.deficitSince
                       ? ` à partir de ${monthLabel(
-                          project(s, years).at(-1)!.deficitSince!,
+                          projectionData.at(-1)!.deficitSince!,
                         )}`
                       : ""}
                     {" · "}
-                    Cumul : {money(project(s, years).at(-1)!.deficit)}.
+                    Cumul : {money(projectionData.at(-1)!.deficit)}.
                     {" "}Les déficits ne sont pas automatiquement retirés de
                     vos comptes d’épargne.
                   </p>
@@ -6112,8 +6968,13 @@ export default function App() {
                     leurs dates réelles, fin des crédits respectée. Rendements
                     annuels effectifs convertis en taux mensuels. Intérêts sur
                     le solde d’ouverture, versements et projets en fin de mois.
-                    Fiscalité, inflation et remboursements de prêts à recevoir
-                    non simulés. Les projets datés du mois courant ou en retard
+                    La fiscalité configurée pour chaque compte patrimoine
+                    est intégrée à la courbe nette. Les livrets fiscalisés
+                    peuvent appliquer la fiscalité directement aux intérêts,
+                    tandis que les placements comme le PEA peuvent appliquer
+                    une taxation estimée sur la plus-value à la sortie.
+                    L’inflation et les remboursements de prêts à recevoir
+                    ne sont pas simulés. Les projets datés du mois courant ou en retard
                     sont placés au premier mois simulé.
                   </p>
                   <p>
@@ -6128,16 +6989,48 @@ export default function App() {
                     <thead>
                       <tr>
                         <th>Date</th>
-                        <th>Patrimoine</th>
+                        <th>
+                          Patrimoine total
+                        </th>
+                        <th>
+                          Fiscalité
+                        </th>
+                        <th>
+                          Après fiscalité
+                        </th>
                         <th>Voyages</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {project(s, years).map((p) => (
+                      {projectionData.map((p) => (
                         <tr key={p.date}>
                           <td>{monthLabel(p.date)}</td>
-                          <td>{money(p.wealth + p.current)}</td>
-                          <td>{money(p.travel)}</td>
+                          <td>
+                            {money(
+                              p.wealth +
+                                p.current,
+                            )}
+                          </td>
+
+                          <td>
+                            −{" "}
+                            {money(
+                              p.taxEstimate,
+                            )}
+                          </td>
+
+                          <td>
+                            {money(
+                              p.wealthNet +
+                                p.current,
+                            )}
+                          </td>
+
+                          <td>
+                            {money(
+                              p.travel,
+                            )}
+                          </td>
                         </tr>
                       ))}
                     </tbody>
@@ -6209,7 +7102,7 @@ export default function App() {
                 {[
                   {
                     title: "Une dépense",
-                    desc: "Un achat dans votre budget habituel",
+                    desc: "Ponctuelle, fixe ou en plusieurs fois",
                     icon: <ArrowUpRight />,
                     fn: () => operation(),
                   },
@@ -6224,18 +7117,6 @@ export default function App() {
                     desc: "Déplacer de l’argent entre vos comptes",
                     icon: <ArrowLeftRight />,
                     fn: () => transfer(),
-                  },
-                  {
-                    title: "Une dépense fixe",
-                    desc: "Mensuelle, trimestrielle ou annuelle",
-                    icon: <CalendarDays />,
-                    fn: () => editRule(),
-                  },
-                  {
-                    title: "Un achat en plusieurs fois",
-                    desc: "Créer les mensualités à valider",
-                    icon: <Coins />,
-                    fn: () => editRule(undefined, "credit"),
                   },
                   {
                     title: "Un prêt d’argent",
