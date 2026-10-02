@@ -64,6 +64,8 @@ import {
 } from "lucide-react";
 import { api, rpc } from "./api";
 import { Modal, Form, Progress, Empty, Row, type Field } from "./ui";
+import AddPage from "./pages/AddPage";
+import LoansPage from "./pages/LoansPage";
 import {
   type State,
   type Account,
@@ -7222,68 +7224,13 @@ export default function App() {
             </>
           )}
           {route === "add" && (
-            <>
-              <div className="section-head"><p className="lead">Que souhaitez-vous enregistrer ?</p><button className="text" onClick={()=>navigate("loans")}>Voir mes crédits et prêts</button></div>
-              <div className="add-grid">
-                {[
-                  {
-                    title: "Une dépense",
-                    desc: "Ponctuelle, fixe ou en plusieurs fois",
-                    icon: <ArrowUpRight />,
-                    fn: () => operation(),
-                  },
-                  {
-                    title: "Un revenu",
-                    desc: "Salaire, prime, vente ou remboursement",
-                    icon: <ArrowDownLeft />,
-                    fn: () => operation("income"),
-                  },
-                  {
-                    title: "Un virement",
-                    desc: "Déplacer de l’argent entre vos comptes",
-                    icon: <ArrowLeftRight />,
-                    fn: () => transfer(),
-                  },
-                  {
-                    title: "Un prêt d’argent",
-                    desc: "Suivre l’argent prêté et récupéré",
-                    icon: <Users />,
-                    fn: () => newLoan(),
-                  },
-                ].map((item) => (
-                  <button
-                    className="add-card"
-                    key={item.title}
-                    onClick={item.fn}
-                  >
-                    <span>{item.icon}</span>
-                    <h3>{item.title}</h3>
-                    <p>{item.desc}</p>
-                    <ChevronRight className="add-arrow" size={18} />
-                  </button>
-                ))}
-              </div>
-              {s.trips.some((t) => !t.closedAt) && (
-                <section className="card">
-                  <h2>Une dépense de voyage</h2>
-                  {s.trips
-                    .filter((t) => !t.closedAt)
-                    .map((t) => (
-                    <Row
-                      key={t.id}
-                      icon={<Plane />}
-                      title={t.name}
-                      sub="Compte courant et budget voyage uniquement"
-                      onClick={() => operation("expense", t)}
-                    />
-                  ))}
-                </section>
-              )}
-              <p className="footnote">
-                Pour une charge déjà planifiée, utilisez « Valider » dans le
-                calendrier afin d’éviter un doublon.
-              </p>
-            </>
+            <AddPage
+              trips={s.trips}
+              navigate={navigate}
+              operation={operation}
+              transfer={transfer}
+              newLoan={newLoan}
+            />
           )}
           {route === "trips" && (
             <>
@@ -7871,87 +7818,12 @@ export default function App() {
             </>
           )}
           {route === "loans" && (
-            <>
-              <div className="toolbar">
-                <button
-                  className="primary"
-                  onClick={() => editRule(undefined, "credit")}
-                >
-                  Achat en plusieurs fois
-                </button>
-                <button className="secondary" onClick={newLoan}>
-                  Prêter de l’argent
-                </button>
-              </div>
-              <section className="card">
-                <h2>Mensualités de crédits</h2>
-                {s.rules
-                  .filter(
-                    (r) => r.kind === "credit" && (!r.end || r.end >= today()),
-                  )
-                  .map((r) => {
-                    let remaining = 0,
-                      count = 0;
-                    for (let i = 0; i < (r.count || 0); i++) {
-                      const date = addMonths(r.start, i * r.interval);
-                      const key = r.id + ":" + date;
-                      if (
-                        (!r.end || date <= r.end) &&
-                        !s.transactions.some((t) => t.dueKey === key) &&
-                        !s.cancelled.includes(key)
-                      ) {
-                        remaining += r.amount;
-                        count++;
-                      }
-                    }
-                    return (
-                      <div className="rule-row" key={r.id}>
-                        <div className="grow">
-                          <strong>{r.name}</strong>
-                          <small>
-                            {money(r.amount)} par mensualité · {count} restantes
-                          </small>
-                          <small>Restant prévu : {money(remaining)}</small>
-                        </div>
-                        <button
-                          className="secondary compact"
-                          onClick={() => editRule(r, "credit")}
-                        >
-                          Modifier
-                        </button>
-                      </div>
-                    );
-                  })}
-                <p className="footnote">
-                  Ces achats ne débitent le compte qu’à validation des
-                  mensualités. Les alertes apparaissent dans le calendrier.
-                </p>
-              </section>
-              <section className="card">
-                <h2>Argent prêté</h2>
-                {s.loans.map((l) => (
-                  <Row
-                    key={l.id}
-                    title={l.name}
-                    sub={`Prêt initial ${money(l.amount)} · ${dateLabel(l.date)}`}
-                    value={
-                      <>
-                        <strong>{money(loanRemaining(s, l.id))}</strong>
-                        <small>à récupérer</small>
-                        {loanRemaining(s, l.id) > 0 && (
-                          <button className="text" onClick={() => repay(l.id)}>
-                            Remboursement reçu
-                          </button>
-                        )}
-                      </>
-                    }
-                  />
-                ))}
-                {!s.loans.length && (
-                  <p className="muted">Aucun prêt en cours.</p>
-                )}
-              </section>
-            </>
+            <LoansPage
+              state={s}
+              editRule={editRule}
+              newLoan={newLoan}
+              repay={repay}
+            />
           )}
           {route === "settings" && (
             <>
