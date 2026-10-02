@@ -627,3 +627,86 @@ test("mensualité perso catégorisée incluse dans le budget perso sans double c
   );
 
 });
+
+
+test("fiscalité à la sortie du PEA sur la plus-value", () => {
+
+  const s = fixture();
+
+  s.categories = [];
+  s.income = 0;
+
+  const a =
+    s.accounts.find(
+      (x) => x.id === "save",
+    )!;
+
+  a.opening = 120000;
+  a.contributed = 100000;
+  a.rate = 0;
+  a.allocation = 0;
+
+  a.taxMode = "exit";
+  a.taxRate = 18.6;
+
+  const p =
+    project(
+      s,
+      1,
+    ).at(-1)!;
+
+  // Valeur : 1 200 €
+  // Versements : 1 000 €
+  // Gains : 200 €
+  // 18,6 % = 37,20 €
+  assert.equal(
+    p.taxEstimate,
+    3720,
+  );
+
+  assert.equal(
+    p.wealthNet,
+    116280,
+  );
+
+});
+
+
+test("livret fiscalisé capitalise après fiscalité", () => {
+
+  const s = fixture();
+
+  s.categories = [];
+  s.income = 0;
+
+  const a =
+    s.accounts.find(
+      (x) => x.id === "save",
+    )!;
+
+  a.opening = 100000;
+  a.contributed = 100000;
+  a.rate = 5;
+  a.allocation = 0;
+
+  a.taxMode = "yield";
+  a.taxRate = 31.4;
+
+  const p =
+    project(
+      s,
+      10,
+    ).at(-1)!;
+
+  assert.ok(
+    p.wealth >
+      p.wealthNet,
+  );
+
+  assert.equal(
+    p.taxEstimate,
+    p.wealth -
+      p.wealthNet,
+  );
+
+});

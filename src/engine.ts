@@ -22,6 +22,15 @@ export type Account = {
 
   allocation: number;
 
+  // Fiscalité estimée sur les gains.
+  // Exemples :
+  // 0 % = Livret A / LDDS / LEP
+  // 18,6 % à la sortie = PEA > 5 ans
+  // 31,4 % sur les intérêts = livret fiscalisé type Bourso+
+  taxRate?: number;
+
+  taxMode?: "none" | "yield" | "exit";
+
   personalCategory?: string;
 
   archived?: boolean;
@@ -523,12 +532,25 @@ function personalCommittedForMonth(
 
 }
 
+type PersonalEnvelopeResult = {
+  base: number;
+  carryIn: number;
+  available: number;
+  committed: number;
+  remaining: number;
+  carryOut: number;
+};
+
+type PersonalEnvelopeCache =
+  Map<string, PersonalEnvelopeResult>;
+
 export function personalBudgetEnvelope(
   s: State,
   ownerId: string,
   categoryId: string,
   m: string,
   startOverride?: string,
+  cache?: PersonalEnvelopeCache,
 ) {
 
   const category = s.categories.find(
@@ -554,8 +576,20 @@ export function personalBudgetEnvelope(
     budgetKeys[0] ||
     m;
 
+  const cachePrefix =
+    `personal:${ownerId}:${categoryId}:${start}`;
+
+  const requestedKey =
+    `${cachePrefix}:${m}`;
+
+  const alreadyCalculated =
+    cache?.get(requestedKey);
+
+  if (alreadyCalculated)
+    return alreadyCalculated;
+
   if (m < start) {
-    return {
+    const emptyResult = {
       base: 0,
       carryIn: 0,
       available: 0,
@@ -563,10 +597,38 @@ export function personalBudgetEnvelope(
       remaining: 0,
       carryOut: 0,
     };
+
+    cache?.set(
+      requestedKey,
+      emptyResult,
+    );
+
+    return emptyResult;
   }
 
-  let currentMonth = start;
-  let carry = 0;
+  /*
+   * En projection, les mois sont demandés dans l'ordre.
+   * Si le mois précédent existe déjà dans le cache,
+   * inutile de repartir du début du budget personnel.
+   */
+  const previousMonth =
+    shiftMonth(m, -1);
+
+  const previousResult =
+    m > start
+      ? cache?.get(
+          `${cachePrefix}:${previousMonth}`,
+        )
+      : undefined;
+
+  let currentMonth =
+    previousResult ? m : start;
+
+  let carry =
+    previousResult
+      ? previousResult.carryOut
+      : 0;
+
   let guard = 0;
 
   while (currentMonth <= m && guard++ < 1200) {
@@ -595,15 +657,22 @@ export function personalBudgetEnvelope(
       committed - available,
     );
 
+    const result = {
+      base,
+      carryIn: carry,
+      available,
+      committed,
+      remaining,
+      carryOut,
+    };
+
+    cache?.set(
+      `${cachePrefix}:${currentMonth}`,
+      result,
+    );
+
     if (currentMonth === m) {
-      return {
-        base,
-        carryIn: carry,
-        available,
-        committed,
-        remaining,
-        carryOut,
-      };
+      return result;
     }
 
     carry = carryOut;
@@ -881,7 +950,11 @@ export function overdue(s: State) {
 
 }
 
-export function stats(s: State, m: string) {
+export function stats(
+  s: State,
+  m: string,
+  personalCache?: PersonalEnvelopeCache,
+) {
 
   // Les opérations du compte personnel restent dans son historique,
   // mais ne sont pas mélangées aux dépenses du foyer.
@@ -919,6 +992,8 @@ export function stats(s: State, m: string) {
           c.personalOwner,
           c.id,
           m,
+          undefined,
+          personalCache,
         )
       : personalEnvelope(
           s,
@@ -1207,6 +1282,25 @@ export function project(s: State, years: number) {
 
   );
 
+  /*
+   * Solde parallèle utilisé uniquement pour afficher
+   * la valeur après fiscalité.
+   *
+   * Pour un livret fiscalisé, les intérêts sont capitalisés
+   * après prélèvement.
+   *
+   * Pour un PEA, la fiscalité reste latente jusqu'à la sortie.
+   */
+  const netB: Record<string, number> =
+    Object.fromEntries(
+      s.accounts.map(
+        (a) => [
+          a.id,
+          balance(s, a.id),
+        ],
+      ),
+    );
+
   let deficit = 0;
 
   let deficitSince = "";
@@ -1222,6 +1316,10 @@ export function project(s: State, years: number) {
     current: number;
 
     total: number;
+
+    wealthNet: number;
+
+    taxEstimate: number;
 
     deficit: number;
 
@@ -1247,6 +1345,91 @@ export function project(s: State, years: number) {
 
     const travel = sumGroup("travel");
 
+    const wealthNet =
+      activeAccounts()
+        .filter(
+          (a) =>
+            a.group === "wealth",
+        )
+        .reduce(
+          (sum, a) => {
+
+            const gross =
+              Math.max(
+                0,
+                b[a.id] || 0,
+              );
+
+            const rate =
+              Math.max(
+                0,
+                a.taxRate ?? 0,
+              );
+
+            if (
+              !rate ||
+              a.taxMode === "none" ||
+              !a.taxMode
+            )
+              return sum + gross;
+
+            /*
+             * Livret fiscalisé :
+             * netB a déjà capitalisé les intérêts
+             * après fiscalité chaque mois.
+             */
+            if (
+              a.taxMode === "yield"
+            )
+              return (
+                sum +
+                Math.max(
+                  0,
+                  netB[a.id] || 0,
+                )
+              );
+
+            /*
+             * PEA / fiscalité à la sortie :
+             * la performance brute continue à capitaliser.
+             * On estime seulement ici la taxation
+             * de la plus-value.
+             */
+            const contributed =
+              Math.max(
+                0,
+                d[a.id] || 0,
+              );
+
+            const gain =
+              Math.max(
+                0,
+                gross - contributed,
+              );
+
+            return (
+              sum +
+              Math.max(
+                0,
+                gross -
+                  Math.round(
+                    gain *
+                      rate /
+                      100,
+                  ),
+              )
+            );
+
+          },
+          0,
+        );
+
+    const taxEstimate =
+      Math.max(
+        0,
+        wealth - wealthNet,
+      );
+
     points.push({
 
       date,
@@ -1255,13 +1438,22 @@ export function project(s: State, years: number) {
 
       wealth,
 
+      wealthNet,
+
+      taxEstimate,
+
       travel,
 
-      total: current + wealth + travel,
+      total:
+        current +
+        wealth +
+        travel,
 
       deficit,
 
-      deficitSince: deficitSince || undefined,
+      deficitSince:
+        deficitSince ||
+        undefined,
 
     });
 
@@ -1280,6 +1472,15 @@ export function project(s: State, years: number) {
   // Situation réelle aujourd'hui.
 
   push(month());
+
+  /*
+   * Cache valable uniquement pendant cette simulation.
+   * Il évite de recalculer l'historique du budget perso
+   * depuis son origine pour chacun des 360 mois.
+   */
+  const projectionPersonalCache:
+    PersonalEnvelopeCache =
+      new Map();
 
   for (let i = 1; i <= years * 12; i++) {
 
@@ -1329,7 +1530,12 @@ export function project(s: State, years: number) {
 
      */
 
-    const monthStats = stats(s, m);
+    const monthStats =
+      stats(
+        s,
+        m,
+        projectionPersonalCache,
+      );
 
     const fixed = monthStats.fixed;
 
@@ -1391,9 +1597,15 @@ export function project(s: State, years: number) {
 
       if (amount <= 0) continue;
 
-      b[id] = (b[id] || 0) + amount;
+      b[id] =
+        (b[id] || 0) + amount;
 
-      d[id] = (d[id] || 0) + amount;
+      netB[id] =
+        (netB[id] || 0) +
+        amount;
+
+      d[id] =
+        (d[id] || 0) + amount;
 
       actuallySaved += amount;
 
@@ -1441,6 +1653,13 @@ export function project(s: State, years: number) {
 
           b[id] -= amount;
 
+          netB[id] =
+            Math.max(
+              0,
+              (netB[id] || 0) -
+                amount,
+            );
+
           d[id] -= amount;
 
           excess -= amount;
@@ -1483,9 +1702,23 @@ export function project(s: State, years: number) {
 
       const paid = Math.min(available, amount);
 
-      b[p.account] = available - paid;
+      b[p.account] =
+        available - paid;
 
-      addDeficit(Math.max(0, amount - paid), m);
+      netB[p.account] =
+        Math.max(
+          0,
+          (netB[p.account] || 0) -
+            paid,
+        );
+
+      addDeficit(
+        Math.max(
+          0,
+          amount - paid,
+        ),
+        m,
+      );
 
     }
 
@@ -1509,9 +1742,52 @@ export function project(s: State, years: number) {
 
       const monthlyRate =
 
-        Math.pow(1 + a.rate / 100, 1 / 12) - 1;
+        Math.pow(
+          1 + a.rate / 100,
+          1 / 12,
+        ) - 1;
 
-      b[a.id] += Math.round((b[a.id] || 0) * monthlyRate);
+      /*
+       * Courbe brute :
+       * rendement complet.
+       */
+      b[a.id] += Math.round(
+        (b[a.id] || 0) *
+          monthlyRate,
+      );
+
+      /*
+       * Courbe nette :
+       *
+       * - yield : fiscalité appliquée au rendement
+       *   au fil de l'eau (Bourso+, CSL...)
+       *
+       * - exit : aucune retenue pendant la capitalisation,
+       *   la taxe sera calculée dans push() sur la plus-value.
+       *
+       * - none : rendement identique au brut.
+       */
+      const tax =
+        a.taxMode === "yield"
+          ? Math.max(
+              0,
+              Math.min(
+                100,
+                a.taxRate ?? 0,
+              ),
+            )
+          : 0;
+
+      const netInterest =
+        Math.round(
+          (netB[a.id] || 0) *
+            monthlyRate *
+            (1 - tax / 100),
+        );
+
+      netB[a.id] =
+        (netB[a.id] || 0) +
+        netInterest;
 
     }
 
@@ -1566,6 +1842,25 @@ export function validate(s: State) {
       a.rate <= -100 ||
 
       !Number.isFinite(a.rate) ||
+
+      !Number.isFinite(
+        a.taxRate ?? 0,
+      ) ||
+
+      (a.taxRate ?? 0) < 0 ||
+
+      (a.taxRate ?? 0) > 100 ||
+
+      (
+        a.taxMode &&
+        ![
+          "none",
+          "yield",
+          "exit",
+        ].includes(
+          a.taxMode,
+        )
+      ) ||
 
       a.cap < 0 ||
 
