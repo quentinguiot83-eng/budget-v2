@@ -8197,7 +8197,6 @@ export default function App() {
                         const next = event.target.checked;
                         await rpc("budget_pro_toggle", { p_enabled: next });
                         setProEnabled(next);
-                        if (!next && route === "pro") navigate("home");
                         setNotice(
                           next
                             ? "Rubrique Professionnel affichée."
