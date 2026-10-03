@@ -96,7 +96,7 @@ export default function ProSettingsBridge() {
         const heading = displayCard.querySelector("h2");
         const description = displayCard.querySelector<HTMLElement>("p.muted");
 
-        if (heading?.textContent !== "Rubriques affichées") {
+        if (heading && heading.textContent !== "Rubriques affichées") {
           heading.textContent = "Rubriques affichées";
         }
 
