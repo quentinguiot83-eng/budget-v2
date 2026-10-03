@@ -73,6 +73,137 @@ begin
   return public.budget_pro_load();
 end $$;
 
+-- Un paiement de cotisations ou d'impôt réduit bien la trésorerie réellement
+-- disponible pour un virement vers le budget personnel.
+create or replace function public.budget_pro_transfer_personal(p_transfer jsonb)
+returns jsonb
+language plpgsql
+security definer
+set search_path=''
+as $$
+declare
+  amount_value bigint := coalesce((p_transfer->>'amount')::bigint,0);
+  date_value date := coalesce((p_transfer->>'date')::date,(now() at time zone 'Europe/Paris')::date);
+  label_value text := trim(coalesce(p_transfer->>'label','Virement activité pro'));
+  sync_personal boolean := coalesce((p_transfer->>'syncToHousehold')::boolean,false);
+  target_account text := nullif(trim(coalesce(p_transfer->>'targetAccountId','')),'');
+  pro_account uuid;
+  mirror_id uuid;
+  household uuid;
+  document_body jsonb;
+  new_body jsonb;
+  new_revision int;
+  available_cash bigint;
+begin
+  if auth.uid() is null then raise exception 'Connexion requise'; end if;
+  if amount_value <= 0 or amount_value > 1000000000000 then raise exception 'Montant invalide'; end if;
+  if length(label_value) < 1 or length(label_value) > 200 then raise exception 'Libellé invalide'; end if;
+  if date_value > (now() at time zone 'Europe/Paris')::date then
+    raise exception 'Un virement vers le perso ne peut pas être daté dans le futur';
+  end if;
+
+  if not exists(
+    select 1 from budget_private.pro_modules
+    where user_id=auth.uid() and enabled=true
+  ) then raise exception 'Module professionnel désactivé'; end if;
+
+  select id into pro_account
+  from budget_private.pro_accounts
+  where user_id=auth.uid();
+
+  if pro_account is null then
+    insert into budget_private.pro_accounts(user_id)
+    values(auth.uid())
+    returning id into pro_account;
+  end if;
+
+  select
+    a.opening_balance
+    + coalesce(sum(case
+        when t.paid and t.kind='income' then t.amount
+        when t.paid and t.kind in ('expense','transfer_personal','contribution_payment','tax_payment') then -t.amount
+        else 0
+      end),0)
+  into available_cash
+  from budget_private.pro_accounts a
+  left join budget_private.pro_transactions t
+    on t.account_id=a.id and t.user_id=auth.uid()
+  where a.id=pro_account
+  group by a.id, a.opening_balance;
+
+  if amount_value > coalesce(available_cash,0) then
+    raise exception 'Trésorerie Pro insuffisante pour ce virement';
+  end if;
+
+  if sync_personal then
+    if target_account is null then raise exception 'Choisissez le compte personnel destinataire'; end if;
+
+    select household_id into household
+    from budget_private.members
+    where user_id=auth.uid();
+
+    if household is null then raise exception 'Aucun foyer personnel disponible'; end if;
+
+    perform pg_advisory_xact_lock(hashtextextended(household::text,0));
+
+    select body into document_body
+    from budget_private.documents
+    where household_id=household
+    for update;
+
+    if document_body is null then raise exception 'Budget personnel introuvable'; end if;
+
+    if not exists(
+      select 1
+      from jsonb_array_elements(document_body->'accounts') a
+      where a->>'id'=target_account
+        and coalesce((a->>'archived')::boolean,false)=false
+        and (a->>'date')::date <= date_value
+    ) then raise exception 'Compte personnel destinataire invalide'; end if;
+
+    mirror_id := gen_random_uuid();
+
+    new_body := jsonb_set(
+      document_body,
+      '{transactions}',
+      (document_body->'transactions') || jsonb_build_array(jsonb_build_object(
+        'id', mirror_id::text,
+        'type', 'income',
+        'amount', amount_value,
+        'date', date_value::text,
+        'description', label_value,
+        'account', target_account,
+        'incomeType', 'autre',
+        'budgetMonth', to_char(date_value,'YYYY-MM')
+      ))
+    );
+
+    perform budget_private.check_document(new_body);
+
+    update budget_private.documents
+    set body=new_body,
+        revision=revision+1,
+        updated_at=now()
+    where household_id=household
+    returning revision into new_revision;
+
+    insert into budget_private.audit(household_id,user_id,revision,action)
+    values(household,auth.uid(),new_revision,'Virement activité pro vers budget personnel');
+  end if;
+
+  insert into budget_private.pro_transactions(
+    user_id,kind,label,amount,transaction_date,category,client_id,
+    account_id,vat_amount,paid,notes,personal_transaction_id
+  ) values(
+    auth.uid(),'transfer_personal',label_value,amount_value,date_value,
+    'Virement personnel',null,pro_account,0,true,
+    case when sync_personal then 'Ajouté au budget personnel' else null end,
+    mirror_id
+  );
+
+  return public.budget_pro_load();
+end $$;
+
 -- Charge les deux types de paiements depuis une source unique : pro_transactions.
 create or replace function public.budget_pro_load()
 returns jsonb
@@ -269,8 +400,6 @@ begin
     raise exception 'CONFLICT: données modifiées par un autre appareil. Actualisez avant de réessayer.';
   end if;
 
-  -- Si le miroir personnel d'un virement a disparu du nouvel état, le mouvement
-  -- Pro lié disparaît également. Limité aux utilisateurs membres de ce foyer.
   delete from budget_private.pro_transactions pt
   where pt.kind='transfer_personal'
     and pt.personal_transaction_id is not null
@@ -297,12 +426,14 @@ begin
 end $$;
 
 revoke execute on function public.budget_pro_tax_payment_save(jsonb) from public, anon, authenticated;
+revoke execute on function public.budget_pro_transfer_personal(jsonb) from public, anon, authenticated;
 revoke execute on function public.budget_pro_load() from public, anon, authenticated;
 revoke execute on function public.budget_pro_transaction_delete(uuid) from public, anon, authenticated;
 revoke execute on function public.budget_save(jsonb,int,text) from public, anon, authenticated;
 
 grant usage on schema public to authenticated;
 grant execute on function public.budget_pro_tax_payment_save(jsonb) to authenticated;
+grant execute on function public.budget_pro_transfer_personal(jsonb) to authenticated;
 grant execute on function public.budget_pro_load() to authenticated;
 grant execute on function public.budget_pro_transaction_delete(uuid) to authenticated;
 grant execute on function public.budget_save(jsonb,int,text) to authenticated;
