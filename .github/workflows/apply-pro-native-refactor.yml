@@ -49,10 +49,16 @@ jobs:
       - name: Apply controlled refactor
         run: node scripts/apply-pro-native-refactor.mjs
 
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
       - name: Commit generated changes
         run: |
-          if git diff --quiet; then
-            echo "No changes to commit"
+          if git diff --quiet -- src/App.tsx src/ProWorkspace.tsx src/main.tsx src/pro-suite.css; then
+            echo "No generated source changes to commit"
             exit 0
           fi
           git config user.name "github-actions[bot]"
