@@ -4,6 +4,7 @@ import App from "./App";
 import ProShell from "./ProShell";
 import ProSettingsBridge from "./ProSettingsBridge";
 import "./style.css";
+import "./pro-v2.css";
 
 createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
