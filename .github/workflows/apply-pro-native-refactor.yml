@@ -1,0 +1,35 @@
+name: Apply Pro native refactor
+
+on:
+  push:
+    branches:
+      - refactor/pro-native-navigation
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: refactor/pro-native-navigation
+          fetch-depth: 0
+
+      - name: Apply controlled refactor
+        run: node scripts/apply-pro-native-refactor.mjs
+
+      - name: Commit generated changes
+        run: |
+          if git diff --quiet; then
+            echo "No changes to commit"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/App.tsx src/ProWorkspace.tsx src/main.tsx src/pro-suite.css
+          git commit -m "Intégrer Professionnel nativement dans Wimm"
+          git push origin HEAD:refactor/pro-native-navigation
