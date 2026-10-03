@@ -2724,37 +2724,79 @@ export default function App() {
     );
   }
   function payDue(due: Due) {
+
+    const isFuture =
+      due.date > today();
+
     openForm(
-      "Valider : " + due.rule.name,
+      (isFuture
+        ? "Programmer : "
+        : "Valider : ") +
+        due.rule.name,
       [
-        amountField("amount", "Montant réellement payé (€)", due.rule.amount),
+        amountField(
+          "amount",
+          isFuture
+            ? "Montant prévu (€)"
+            : "Montant réellement payé (€)",
+          due.rule.amount,
+        ),
         field(
           "date",
-          "Date du paiement",
+          isFuture
+            ? "Date prévue du paiement"
+            : "Date du paiement",
           due.date,
           "date",
+          isFuture
+            ? "Le montant ne sera déduit du solde qu'à cette date."
+            : "",
         ),
-        field("description", "Description", due.rule.name),
+        field(
+          "description",
+          "Description",
+          due.rule.name,
+        ),
       ],
       async (v) => {
         await change((d) => {
-          if (d.transactions.some((t) => t.dueKey === due.key))
-            throw Error("Ce paiement a déjà été validé.");
+          if (
+            d.transactions.some(
+              (t) =>
+                t.dueKey === due.key,
+            )
+          )
+            throw Error(
+              "Ce paiement a déjà été validé.",
+            );
+
           d.transactions.push({
             id: uid(),
-            type: due.rule.kind === "repay" ? "repay" : "expense",
+            type:
+              due.rule.kind === "repay"
+                ? "repay"
+                : "expense",
             amount: euro(v.amount),
             date: v.date,
             description: v.description,
             account: due.rule.account,
-            category: due.rule.category || undefined,
-            fixed: due.rule.kind !== "repay",
+            category:
+              due.rule.category ||
+              undefined,
+            fixed:
+              due.rule.kind !== "repay",
             dueKey: due.key,
             loanId: due.rule.loanId,
           });
-        }, "Paiement confirmé");
+        },
+        isFuture
+          ? "Paiement programmé"
+          : "Paiement confirmé",
+        );
       },
-      "Valider le paiement",
+      isFuture
+        ? "Programmer le paiement"
+        : "Valider le paiement",
     );
   }
   function operation(
