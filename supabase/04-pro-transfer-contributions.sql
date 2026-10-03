@@ -1,4 +1,4 @@
--- Wimm / budget-v2 — Module Pro V2.1 : virements perso + paiements de cotisations
+-- Wimm / budget-v2 — Module Pro V2.1 : virements perso + cotisations payées
 -- À exécuter APRÈS 03-pro-treasury.sql.
 -- Script réexécutable : il conserve toutes les données existantes.
 -- Après succès, OUI : le texte de la requête peut être supprimé du SQL Editor.
@@ -6,27 +6,17 @@
 
 begin;
 
-create table if not exists budget_private.pro_contribution_payments (
-  id uuid primary key default gen_random_uuid(),
-  user_id uuid not null references auth.users(id) on delete cascade,
-  amount bigint not null check (amount > 0 and amount <= 1000000000000),
-  paid_date date not null default current_date,
-  period_key text not null check (period_key ~ '^[0-9]{4}(-[0-9]{2})?$'),
-  notes text,
-  created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now()
-);
+alter table budget_private.pro_transactions
+  add column if not exists contribution_period_key text;
 
-create index if not exists pro_contribution_payments_user_date_idx
-  on budget_private.pro_contribution_payments(user_id, paid_date desc);
-create index if not exists pro_contribution_payments_user_period_idx
-  on budget_private.pro_contribution_payments(user_id, period_key);
+alter table budget_private.pro_transactions
+  drop constraint if exists pro_transactions_kind_check;
 
-alter table budget_private.pro_contribution_payments enable row level security;
-revoke all on budget_private.pro_contribution_payments from public, anon, authenticated;
+alter table budget_private.pro_transactions
+  add constraint pro_transactions_kind_check
+  check (kind in ('income','expense','transfer_personal','contribution_payment'));
 
 -- Liste dédiée des comptes personnels accessibles à l'utilisateur.
--- Cela évite de dépendre de budget_load() uniquement pour alimenter le formulaire de virement.
 create or replace function public.budget_pro_personal_accounts()
 returns jsonb
 language plpgsql
@@ -62,8 +52,8 @@ begin
   ), '[]'::jsonb);
 end $$;
 
--- Recréation explicite du RPC de virement pour corriger les environnements où
--- PostgREST ne l'avait pas correctement exposé après la migration précédente.
+-- Recréation explicite du RPC de virement pour corriger son exposition PostgREST
+-- et sécuriser le calcul de trésorerie disponible.
 create or replace function public.budget_pro_transfer_personal(p_transfer jsonb)
 returns jsonb
 language plpgsql
@@ -110,14 +100,9 @@ begin
     a.opening_balance
     + coalesce(sum(case
         when t.paid and t.kind='income' then t.amount
-        when t.paid and t.kind in ('expense','transfer_personal') then -t.amount
+        when t.paid and t.kind in ('expense','transfer_personal','contribution_payment') then -t.amount
         else 0
       end),0)
-    - coalesce((
-        select sum(cp.amount)
-        from budget_private.pro_contribution_payments cp
-        where cp.user_id=auth.uid()
-      ),0)
   into available_cash
   from budget_private.pro_accounts a
   left join budget_private.pro_transactions t
@@ -205,52 +190,55 @@ security definer
 set search_path=''
 as $$
 declare
-  payment_id uuid;
+  transaction_id uuid;
   raw_id text := nullif(p_payment->>'id','');
   amount_value bigint := coalesce((p_payment->>'amount')::bigint,0);
   paid_value date := coalesce((p_payment->>'paidDate')::date,(now() at time zone 'Europe/Paris')::date);
   period_value text := trim(coalesce(p_payment->>'periodKey',''));
   notes_value text := nullif(trim(coalesce(p_payment->>'notes','')),'');
+  pro_account uuid;
 begin
   if auth.uid() is null then raise exception 'Connexion requise'; end if;
   if amount_value <= 0 or amount_value > 1000000000000 then raise exception 'Montant invalide'; end if;
   if paid_value > (now() at time zone 'Europe/Paris')::date then raise exception 'La date de paiement ne peut pas être dans le futur'; end if;
   if period_value !~ '^[0-9]{4}(-[0-9]{2})?$' then raise exception 'Période invalide'; end if;
 
+  select id into pro_account
+  from budget_private.pro_accounts
+  where user_id=auth.uid();
+
+  if pro_account is null then
+    insert into budget_private.pro_accounts(user_id)
+    values(auth.uid())
+    returning id into pro_account;
+  end if;
+
   if raw_id is null then
-    insert into budget_private.pro_contribution_payments(user_id,amount,paid_date,period_key,notes)
-    values(auth.uid(),amount_value,paid_value,period_value,notes_value)
-    returning id into payment_id;
+    insert into budget_private.pro_transactions(
+      user_id,kind,label,amount,transaction_date,category,client_id,
+      account_id,vat_amount,paid,notes,contribution_period_key
+    ) values(
+      auth.uid(),'contribution_payment','Cotisations sociales',amount_value,paid_value,
+      'Cotisations sociales',null,pro_account,0,true,notes_value,period_value
+    ) returning id into transaction_id;
   else
-    payment_id := raw_id::uuid;
-    update budget_private.pro_contribution_payments set
+    transaction_id := raw_id::uuid;
+    update budget_private.pro_transactions set
       amount=amount_value,
-      paid_date=paid_value,
-      period_key=period_value,
+      transaction_date=paid_value,
       notes=notes_value,
+      contribution_period_key=period_value,
       updated_at=now()
-    where id=payment_id and user_id=auth.uid();
+    where id=transaction_id
+      and user_id=auth.uid()
+      and kind='contribution_payment';
     if not found then raise exception 'Paiement de cotisations introuvable'; end if;
   end if;
 
   return public.budget_pro_load();
 end $$;
 
-create or replace function public.budget_pro_contribution_payment_delete(p_id uuid)
-returns jsonb
-language plpgsql
-security definer
-set search_path=''
-as $$
-begin
-  if auth.uid() is null then raise exception 'Connexion requise'; end if;
-  delete from budget_private.pro_contribution_payments
-  where id=p_id and user_id=auth.uid();
-  if not found then raise exception 'Paiement de cotisations introuvable'; end if;
-  return public.budget_pro_load();
-end $$;
-
--- Étend la charge Pro avec l'historique des paiements de cotisations.
+-- Étend la charge Pro pour exposer la période de cotisations des mouvements dédiés.
 create or replace function public.budget_pro_load()
 returns jsonb
 language plpgsql
@@ -324,21 +312,11 @@ begin
         'vatAmount', t.vat_amount,
         'paid', t.paid,
         'notes', coalesce(t.notes,''),
-        'personalTransactionId', t.personal_transaction_id
+        'personalTransactionId', t.personal_transaction_id,
+        'contributionPeriodKey', t.contribution_period_key
       ) order by t.transaction_date desc, t.created_at desc)
       from budget_private.pro_transactions t
       where t.user_id=auth.uid()
-    ), '[]'::jsonb),
-    'contributionPayments', coalesce((
-      select jsonb_agg(jsonb_build_object(
-        'id', cp.id,
-        'amount', cp.amount,
-        'paidDate', cp.paid_date,
-        'periodKey', cp.period_key,
-        'notes', coalesce(cp.notes,'')
-      ) order by cp.paid_date desc, cp.created_at desc)
-      from budget_private.pro_contribution_payments cp
-      where cp.user_id=auth.uid()
     ), '[]'::jsonb)
   ) into result
   from budget_private.pro_profiles p
@@ -350,14 +328,12 @@ end $$;
 revoke execute on function public.budget_pro_personal_accounts() from public, anon, authenticated;
 revoke execute on function public.budget_pro_transfer_personal(jsonb) from public, anon, authenticated;
 revoke execute on function public.budget_pro_contribution_payment_save(jsonb) from public, anon, authenticated;
-revoke execute on function public.budget_pro_contribution_payment_delete(uuid) from public, anon, authenticated;
 revoke execute on function public.budget_pro_load() from public, anon, authenticated;
 
 grant usage on schema public to authenticated;
 grant execute on function public.budget_pro_personal_accounts() to authenticated;
 grant execute on function public.budget_pro_transfer_personal(jsonb) to authenticated;
 grant execute on function public.budget_pro_contribution_payment_save(jsonb) to authenticated;
-grant execute on function public.budget_pro_contribution_payment_delete(uuid) to authenticated;
 grant execute on function public.budget_pro_load() to authenticated;
 
 notify pgrst,'reload schema';
