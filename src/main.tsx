@@ -3,6 +3,7 @@ import { createRoot } from "react-dom/client";
 import App from "./App";
 import ProShell from "./ProShell";
 import ProSettingsBridge from "./ProSettingsBridge";
+import ProContributionsBridge from "./ProContributionsBridge";
 import "./style.css";
 import "./pro-v2.css";
 
@@ -11,5 +12,6 @@ createRoot(document.getElementById("root")!).render(
     <App />
     <ProShell />
     <ProSettingsBridge />
+    <ProContributionsBridge />
   </React.StrictMode>,
 );
