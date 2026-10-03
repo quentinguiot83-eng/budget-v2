@@ -19,6 +19,33 @@ jobs:
           ref: refactor/pro-native-navigation
           fetch-depth: 0
 
+      - name: Make route insertion matcher unique
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('scripts/apply-pro-native-refactor.mjs')
+          s = p.read_text()
+          old = '''if (!app.includes('{route === "pro" && <ProWorkspace native />}')) {
+            app = replaceOne(
+              app,
+              '          {route === "home" && (',
+              '          {route === "pro" && <ProWorkspace native />}\\n          {route === "home" && (',
+              "rendu route Pro",
+            );
+          }'''
+          new = '''if (!app.includes('{route === "pro" && <ProWorkspace native />}')) {
+            app = replaceOne(
+              app,
+              '                Configurer mon compte\\n              </button>\\n            </section>\\n          )}\\n          {route === "home" && (',
+              '                Configurer mon compte\\n              </button>\\n            </section>\\n          )}\\n          {route === "pro" && <ProWorkspace native />}\\n          {route === "home" && (',
+              "rendu route Pro",
+            );
+          }'''
+          if old not in s:
+              raise SystemExit('Bloc de matcher route Pro introuvable')
+          p.write_text(s.replace(old, new))
+          PY
+
       - name: Apply controlled refactor
         run: node scripts/apply-pro-native-refactor.mjs
 
