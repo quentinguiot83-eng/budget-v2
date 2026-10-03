@@ -23,7 +23,7 @@ export default function ProSettingsBridge() {
         const status = (await rpc("budget_pro_status")) as ProStatus;
         if (!cancelled) setEnabled(status.enabled);
       } catch {
-        // Le module Pro peut ne pas être installé sur un ancien environnement.
+        // La rubrique Professionnel peut ne pas être disponible sur un ancien environnement.
       }
     }
 
@@ -41,6 +41,27 @@ export default function ProSettingsBridge() {
   }, []);
 
   useEffect(() => {
+    const placeProfessionalBeforeProjections = (selector: string) => {
+      const nav = document.querySelector<HTMLElement>(selector);
+      if (!nav) return;
+
+      const buttons = Array.from(nav.querySelectorAll<HTMLButtonElement>("button"));
+      const professional = buttons.find(
+        (button) => button.textContent?.trim() === "Professionnel",
+      );
+      const projections = buttons.find(
+        (button) => button.textContent?.trim() === "Projections",
+      );
+
+      if (
+        professional &&
+        projections &&
+        professional.nextElementSibling !== projections
+      ) {
+        nav.insertBefore(professional, projections);
+      }
+    };
+
     const syncDom = () => {
       document
         .querySelectorAll<HTMLButtonElement>(
@@ -54,15 +75,39 @@ export default function ProSettingsBridge() {
           }
         });
 
-      const modulesCard = Array.from(
-        document.querySelectorAll<HTMLElement>(".content section.card"),
-      ).find(
-        (card) =>
-          card.querySelector("h2")?.textContent?.trim() === "Modules affichés",
+      placeProfessionalBeforeProjections(".sidebar nav");
+      placeProfessionalBeforeProjections(".mobile-drawer-nav");
+
+      const proLabel = document.querySelector<HTMLElement>(
+        ".prosuite-topbar small",
       );
+      if (proLabel && proLabel.textContent?.trim() === "WIMM PRO") {
+        proLabel.textContent = "PROFESSIONNEL";
+      }
+
+      const displayCard = Array.from(
+        document.querySelectorAll<HTMLElement>(".content section.card"),
+      ).find((card) => {
+        const title = card.querySelector("h2")?.textContent?.trim();
+        return title === "Modules affichés" || title === "Rubriques affichées";
+      });
+
+      if (displayCard) {
+        const heading = displayCard.querySelector("h2");
+        const description = displayCard.querySelector<HTMLElement>("p.muted");
+
+        if (heading?.textContent !== "Rubriques affichées") {
+          heading.textContent = "Rubriques affichées";
+        }
+
+        if (description) {
+          description.textContent =
+            "Affichez ou masquez les rubriques facultatives. Masquer une rubrique conserve toutes ses données.";
+        }
+      }
 
       setTarget((current) =>
-        current === modulesCard ? current : modulesCard ?? null,
+        current === displayCard ? current : displayCard ?? null,
       );
     };
 
