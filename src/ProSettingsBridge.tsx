@@ -41,50 +41,7 @@ export default function ProSettingsBridge() {
   }, []);
 
   useEffect(() => {
-    const placeProfessionalBeforeProjections = (selector: string) => {
-      const nav = document.querySelector<HTMLElement>(selector);
-      if (!nav) return;
-
-      const buttons = Array.from(nav.querySelectorAll<HTMLButtonElement>("button"));
-      const professional = buttons.find(
-        (button) => button.textContent?.trim() === "Professionnel",
-      );
-      const projections = buttons.find(
-        (button) => button.textContent?.trim() === "Projections",
-      );
-
-      if (
-        professional &&
-        projections &&
-        professional.nextElementSibling !== projections
-      ) {
-        nav.insertBefore(professional, projections);
-      }
-    };
-
-    const syncDom = () => {
-      document
-        .querySelectorAll<HTMLButtonElement>(
-          ".sidebar nav button, .mobile-drawer-nav button",
-        )
-        .forEach((button) => {
-          if (button.textContent?.trim() === "Modules") {
-            button.style.display = "none";
-            button.setAttribute("aria-hidden", "true");
-            button.tabIndex = -1;
-          }
-        });
-
-      placeProfessionalBeforeProjections(".sidebar nav");
-      placeProfessionalBeforeProjections(".mobile-drawer-nav");
-
-      const proLabel = document.querySelector<HTMLElement>(
-        ".prosuite-topbar small",
-      );
-      if (proLabel && proLabel.textContent?.trim() === "WIMM PRO") {
-        proLabel.textContent = "PROFESSIONNEL";
-      }
-
+    const syncTarget = () => {
       const displayCard = Array.from(
         document.querySelectorAll<HTMLElement>(".content section.card"),
       ).find((card) => {
@@ -92,27 +49,14 @@ export default function ProSettingsBridge() {
         return title === "Modules affichés" || title === "Rubriques affichées";
       });
 
-      if (displayCard) {
-        const heading = displayCard.querySelector("h2");
-        const description = displayCard.querySelector<HTMLElement>("p.muted");
-
-        if (heading && heading.textContent !== "Rubriques affichées") {
-          heading.textContent = "Rubriques affichées";
-        }
-
-        if (description) {
-          description.textContent =
-            "Affichez ou masquez les rubriques facultatives. Masquer une rubrique conserve toutes ses données.";
-        }
-      }
-
       setTarget((current) =>
         current === displayCard ? current : displayCard ?? null,
       );
     };
 
-    syncDom();
-    const observer = new MutationObserver(syncDom);
+    syncTarget();
+
+    const observer = new MutationObserver(syncTarget);
     observer.observe(document.body, { childList: true, subtree: true });
 
     return () => observer.disconnect();
