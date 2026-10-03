@@ -19,93 +19,8 @@ jobs:
           ref: refactor/pro-native-navigation
           fetch-depth: 0
 
-      - name: Make route insertion matcher unique
-        run: |
-          python3 - <<'PY'
-          from pathlib import Path
-          p = Path('scripts/apply-pro-native-refactor.mjs')
-          s = p.read_text()
-          old = '''if (!app.includes('{route === "pro" && <ProWorkspace native />}')) {
-            app = replaceOne(
-              app,
-              '          {route === "home" && (',
-              '          {route === "pro" && <ProWorkspace native />}\\n          {route === "home" && (',
-              "rendu route Pro",
-            );
-          }'''
-          new = '''if (!app.includes('{route === "pro" && <ProWorkspace native />}')) {
-            app = replaceOne(
-              app,
-              '                Configurer mon compte\\n              </button>\\n            </section>\\n          )}\\n          {route === "home" && (',
-              '                Configurer mon compte\\n              </button>\\n            </section>\\n          )}\\n          {route === "pro" && <ProWorkspace native />}\\n          {route === "home" && (',
-              "rendu route Pro",
-            );
-          }'''
-          if old not in s:
-              raise SystemExit('Bloc de matcher route Pro introuvable')
-          p.write_text(s.replace(old, new))
-          PY
-
-      - name: Apply controlled refactor
-        run: node scripts/apply-pro-native-refactor.mjs
-
-      - name: Fix narrowed settings route typing
-        run: |
-          python3 - <<'PY'
-          from pathlib import Path
-          p = Path('src/App.tsx')
-          s = p.read_text()
-          s = s.replace('                        if (!next && route === "pro") navigate("home");\n', '')
-          p.write_text(s)
-          PY
-
-      - name: Integrate agenda deletion into Pro workspace
-        run: |
-          python3 - <<'PY'
-          from pathlib import Path
-
-          main = Path('src/main.tsx')
-          s = main.read_text()
-          s = s.replace('import ProAgendaBridge from "./ProAgendaBridge";\n', '')
-          s = s.replace('    <ProAgendaBridge />\n', '')
-          main.write_text(s)
-
-          pro = Path('src/ProWorkspace.tsx')
-          s = pro.read_text()
-          old_call = '{modal.type==="event"&&<EventForm value={modal.event} clients={suite.clients} submit={v=>call("budget_pro_event_save",{p_event:v},"Agenda mis à jour")}/>} '
-          new_call = '{modal.type==="event"&&<EventForm value={modal.event} clients={suite.clients} submit={v=>call("budget_pro_event_save",{p_event:v},"Agenda mis à jour")} remove={modal.event?()=>removeEvent(modal.event!):undefined}/>} '
-          if old_call in s:
-              s = s.replace(old_call, new_call)
-
-          start = s.index('function EventForm(')
-          end = s.index('\n\nfunction TransactionForm', start)
-          new_event = '''function EventForm({value,clients,submit,remove}:{value?:EventItem;clients:Client[];submit:(v:Record<string,unknown>)=>Promise<boolean>;remove?:()=>Promise<void>}){
-  const start=value?value.startsAt.slice(0,16):new Date(Date.now()+3600000).toISOString().slice(0,16);
-  const end=value?value.endsAt.slice(0,16):new Date(Date.now()+7200000).toISOString().slice(0,16);
-  const [v,setV]=useState({id:value?.id,title:value?.title??"",eventType:value?.eventType??"appointment",clientId:value?.clientId??"",startsAt:start,endsAt:end,location:value?.location??"",notes:value?.notes??""});
-  return <form className="prosuite-form" onSubmit={e=>{e.preventDefault();void submit({...v,clientId:v.clientId||null,startsAt:new Date(v.startsAt).toISOString(),endsAt:new Date(v.endsAt).toISOString()})}}>
-    <FormTitle eyebrow="AGENDA" title={value?"Modifier l’événement":"Nouvel événement"}/>
-    <label>Titre<input required value={v.title} onChange={e=>setV({...v,title:e.target.value})}/></label>
-    <div className="prosuite-form2"><label>Type<select value={v.eventType} onChange={e=>setV({...v,eventType:e.target.value})}>{Object.entries(eventLabel).map(([k,l])=><option key={k} value={k}>{l}</option>)}</select></label><label>Client<select value={v.clientId} onChange={e=>setV({...v,clientId:e.target.value})}><option value="">Aucun</option>{clients.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}</select></label></div>
-    <div className="prosuite-form2"><label>Début<input type="datetime-local" required value={v.startsAt} onChange={e=>setV({...v,startsAt:e.target.value})}/></label><label>Fin<input type="datetime-local" required value={v.endsAt} onChange={e=>setV({...v,endsAt:e.target.value})}/></label></div>
-    <label>Lieu<input value={v.location} onChange={e=>setV({...v,location:e.target.value})}/></label>
-    <label>Notes<textarea rows={3} value={v.notes} onChange={e=>setV({...v,notes:e.target.value})}/></label>
-    <div className="prosuite-event-actions">
-      {value&&remove&&<button type="button" className="prosuite-delete-action" onClick={()=>void remove()}><Trash2 size={16}/>{v.eventType==="appointment"?"Supprimer le rendez-vous":"Supprimer l’événement"}</button>}
-      <button className="prosuite-btn">Enregistrer</button>
-    </div>
-  </form>
-}'''
-          s = s[:start] + new_event + s[end:]
-          pro.write_text(s)
-
-          css = Path('src/pro-suite.css')
-          c = css.read_text()
-          marker = '/* Native agenda actions */'
-          if marker not in c:
-              c += '''\n\n/* Native agenda actions */\n.prosuite-event-actions{display:flex;gap:12px;justify-content:flex-end;align-items:center;flex-wrap:wrap}.prosuite-delete-action{display:inline-flex;align-items:center;gap:8px;padding:12px 15px;border-radius:12px;border:1px solid #f0caca;background:#fff7f7;color:#a33;font-weight:650}.prosuite-delete-action:hover{background:#fff0f0}\n'''
-          css.write_text(c)
-          PY
+      - name: Integrate agenda deletion
+        run: node scripts/integrate-agenda-native.mjs
 
       - name: Install dependencies
         run: npm ci
@@ -115,12 +30,12 @@ jobs:
 
       - name: Commit generated changes
         run: |
-          if git diff --quiet -- src/App.tsx src/ProWorkspace.tsx src/main.tsx src/pro-suite.css; then
+          if git diff --quiet -- src/ProWorkspace.tsx src/main.tsx src/pro-suite.css; then
             echo "No generated source changes to commit"
             exit 0
           fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add src/App.tsx src/ProWorkspace.tsx src/main.tsx src/pro-suite.css
+          git add src/ProWorkspace.tsx src/main.tsx src/pro-suite.css
           git commit -m "Intégrer la suppression des rendez-vous au workspace Pro"
           git push origin HEAD:refactor/pro-native-navigation
