@@ -66,6 +66,7 @@ import { api, rpc } from "./api";
 import { Modal, Form, Progress, Empty, Row, type Field } from "./ui";
 import AddPage from "./pages/AddPage";
 import LoansPage from "./pages/LoansPage";
+import ProWorkspace from "./ProWorkspace";
 import {
   type State,
   type Account,
@@ -380,6 +381,7 @@ export default function App() {
     [txFilter, setTxFilter] = useState(""),
     [analysisCats, setAnalysisCats] = useState<string[] | null>(null),
     [includeTravel, setIncludeTravel] = useState(false),
+    [proEnabled, setProEnabled] = useState(false),
     [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const busy = useRef(false),
     docRef = useRef(doc),
@@ -442,6 +444,13 @@ export default function App() {
 
     setDoc(d);
 
+    try {
+      const proStatus = await rpc("budget_pro_status") as { enabled: boolean };
+      setProEnabled(!!proStatus.enabled);
+    } catch {
+      setProEnabled(false);
+    }
+
     if (d.theme)
       setTheme(d.theme);
 
@@ -468,6 +477,7 @@ export default function App() {
       if (!next) {
         setDoc(null);
         setPersonalDoc(null);
+        setProEnabled(false);
         setLoading(false);
       }
     });
@@ -4086,6 +4096,9 @@ export default function App() {
     { id: "add", label: "Ajouter", icon: <Plus /> },
     { id: "wealth", label: "Patrimoine", icon: <Wallet /> },
     { id: "trips", label: "Voyages", icon: <Plane /> },
+    ...(proEnabled
+      ? [{ id: "pro", label: "Professionnel", icon: <Briefcase /> }]
+      : []),
   ];
   const mobileNav = [
     { id: "home", label: "Accueil", icon: <Home /> },
@@ -4109,6 +4122,11 @@ export default function App() {
       id: "trips",
       label: "Voyages",
       icon: <Plane size={20} />,
+    },
+    proEnabled && {
+      id: "pro",
+      label: "Professionnel",
+      icon: <Briefcase size={20} />,
     },
     {
       id: "projection",
@@ -4937,6 +4955,7 @@ export default function App() {
     personal: "Compte perso",
     wealth: "Votre patrimoine",
     trips: "Vos voyages",
+    pro: "Professionnel",
     projection: "Demain se prépare ici",
     add: "Ajouter une opération",
     settings: "Réglages",
@@ -5117,7 +5136,7 @@ export default function App() {
           )}
         </div>
         <main className="content">
-          {!current && !["settings", "wealth"].includes(route) && (
+          {!current && !["settings", "wealth", "pro"].includes(route) && (
             <section className="card setup-card">
               <div>
                 <h2>Commençons par votre compte courant.</h2>
@@ -5131,6 +5150,7 @@ export default function App() {
               </button>
             </section>
           )}
+          {route === "pro" && <ProWorkspace native />}
           {route === "home" && (
             <>
               {salaryAlert && (
@@ -8144,9 +8164,9 @@ export default function App() {
               </section>
 
               <section className="card">
-                <h2>Modules affichés</h2>
+                <h2>Rubriques affichées</h2>
                 <p className="muted">
-                  Masquer un module conserve toutes ses données.
+                  Masquer une rubrique conserve toutes ses données.
                 </p>
                 {[
                   ["trips", "Voyages"],
@@ -8167,6 +8187,29 @@ export default function App() {
                     {label}
                   </label>
                 ))}
+                <label className="toggle">
+                  <input
+                    type="checkbox"
+                    checked={proEnabled}
+                    disabled={demoEnabled}
+                    onChange={async (event) => {
+                      try {
+                        const next = event.target.checked;
+                        await rpc("budget_pro_toggle", { p_enabled: next });
+                        setProEnabled(next);
+                        if (!next && route === "pro") navigate("home");
+                        setNotice(
+                          next
+                            ? "Rubrique Professionnel affichée."
+                            : "Rubrique Professionnel masquée.",
+                        );
+                      } catch (e) {
+                        showError(e);
+                      }
+                    }}
+                  />
+                  Professionnel
+                </label>
               </section>
               <section className="card danger-zone">
                 <h2>Réinitialisation</h2>

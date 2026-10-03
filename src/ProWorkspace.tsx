@@ -62,9 +62,9 @@ const payLabel:Record<string,string>={card:"CB",check:"Chèque",cash:"Espèces",
 const eventLabel:Record<string,string>={appointment:"Rendez-vous",shooting:"Prestation",deadline:"Échéance",admin:"Administratif",other:"Autre"};
 const invoiceStatus:Record<string,string>={draft:"Brouillon",sent:"Envoyée",paid:"Payée",cancelled:"Annulée"};
 
-export default function ProWorkspace(){
-  const [enabled,setEnabled]=useState(false);
-  const [open,setOpen]=useState(false);
+export default function ProWorkspace({ native = false }: { native?: boolean } = {}){
+  const [enabled,setEnabled]=useState(native);
+  const [open,setOpen]=useState(native);
   const [section,setSection]=useState<Section>("dashboard");
   const [suite,setSuite]=useState<Suite|null>(null);
   const [modal,setModal]=useState<Modal>({type:"none"});
@@ -74,20 +74,22 @@ export default function ProWorkspace(){
   const [personalAccounts,setPersonalAccounts]=useState<PersonalAccount[]>([]);
   const [printInvoice,setPrintInvoice]=useState<Invoice|null>(null);
   const [,tick]=useState(0);
-  const sidebar=document.querySelector(".sidebar nav");
-  const drawer=document.querySelector(".mobile-drawer-nav");
+  const sidebar=native?null:document.querySelector(".sidebar nav");
+  const drawer=native?null:document.querySelector(".mobile-drawer-nav");
 
   useEffect(()=>{
+    if(native)return;
     const obs=new MutationObserver(()=>tick(v=>v+1)); obs.observe(document.body,{subtree:true,childList:true});
     return()=>obs.disconnect();
-  },[]);
+  },[native]);
   useEffect(()=>{
+    if(native){setEnabled(true);setOpen(true);void load();return;}
     let off=false;
     const refresh=async()=>{ try{ const s=await api.auth.getSession(); if(!s.data.session||off)return; const st=await rpc("budget_pro_status") as {enabled:boolean}; if(!off)setEnabled(st.enabled); }catch{} };
     void refresh();
     const l=api.auth.onAuthStateChange((_e,s)=>{ if(s)void refresh(); else {setEnabled(false);setOpen(false);} });
     return()=>{off=true;l.data.subscription.unsubscribe();};
-  },[]);
+  },[native]);
 
   async function load(){
     setBusy(true); setError("");
@@ -123,12 +125,12 @@ export default function ProWorkspace(){
   const nav=(mobile=false)=>enabled?<button type="button" className={open?"active":""} onClick={()=>void enter()}><Briefcase size={mobile?20:24}/><span>Professionnel</span></button>:null;
 
   return <>
-    {sidebar&&createPortal(nav(false),sidebar)}{drawer&&createPortal(nav(true),drawer)}
-    {open&&enabled&&<div className="prosuite-layer">
+    {!native&&sidebar&&createPortal(nav(false),sidebar)}{!native&&drawer&&createPortal(nav(true),drawer)}
+    {(native||(open&&enabled))&&<div className={native?"prosuite-layer prosuite-native":"prosuite-layer"}>
       <header className="prosuite-topbar">
-        <button className="prosuite-icon" onClick={()=>setOpen(false)}><ChevronLeft size={20}/></button>
-        <div><small>WIMM PRO</small><strong>{suite?.profile.businessName||"Espace professionnel"}</strong></div>
-        <button className="prosuite-icon" onClick={()=>setOpen(false)}><X size={20}/></button>
+        {!native&&<button className="prosuite-icon" onClick={()=>setOpen(false)}><ChevronLeft size={20}/></button>}
+        <div><small>PROFESSIONNEL</small><strong>{suite?.profile.businessName||"Espace professionnel"}</strong></div>
+        {!native&&<button className="prosuite-icon" onClick={()=>setOpen(false)}><X size={20}/></button>}
       </header>
       <div className="prosuite-shell">
         <nav className="prosuite-nav">

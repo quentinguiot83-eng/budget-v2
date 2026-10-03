@@ -5,3 +5,22 @@
 @media(max-width:1100px){.prosuite-layer{left:0}.prosuite-clientgrid,.prosuite-productgrid{grid-template-columns:repeat(2,1fr)}.prosuite-metrics{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:800px){.prosuite-shell{grid-template-columns:1fr}.prosuite-nav{display:flex;flex-direction:row;overflow:auto;border-right:0;border-bottom:1px solid #e9ebef;padding:8px}.prosuite-nav button{flex:0 0 auto;padding:9px 10px}.prosuite-main{padding:20px 14px 50px}.prosuite-pagehead{flex-direction:column}.prosuite-actions{justify-content:flex-start}.prosuite-grid2,.prosuite-clientgrid,.prosuite-productgrid,.prosuite-shortcuts{grid-template-columns:1fr}.prosuite-form2,.prosuite-form3{grid-template-columns:1fr}.prosuite-invoice-line{grid-template-columns:1fr 1fr}.prosuite-invoice-line input:nth-of-type(1){grid-column:1/-1}.prosuite-week strong{font-size:9px;padding:7px}.prosuite-day{min-height:82px;padding:5px}.prosuite-day button{font-size:9px}.invoice-preview{padding:0}.invoice-sheet{width:100%;min-height:100vh;padding:24px}.prosuite-topbar{padding:0 12px}}
 @media(max-width:540px){.prosuite-metrics{grid-template-columns:1fr}.prosuite-nav button span{display:none}.prosuite-nav button{justify-content:center}.prosuite-pagehead h1{font-size:25px}.prosuite-client{grid-template-columns:auto 1fr}.prosuite-client .prosuite-rowactions{grid-column:1/-1}.prosuite-invoice-line{grid-template-columns:1fr}.prosuite-invoice-total{justify-content:flex-start;flex-wrap:wrap}.prosuite-days{min-width:680px}.prosuite-calendar{overflow-x:auto}}
+
+
+/* Native Wimm route */
+.prosuite-layer.prosuite-native{
+  position:relative;
+  inset:auto;
+  z-index:auto;
+  min-height:0;
+  width:100%;
+  background:transparent;
+  overflow:visible;
+}
+.prosuite-native .prosuite-topbar{
+  position:relative;
+  top:auto;
+}
+.prosuite-native .prosuite-shell{
+  min-height:0;
+}
