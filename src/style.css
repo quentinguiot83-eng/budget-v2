@@ -2491,3 +2491,14 @@ dialog::backdrop {
   font-weight: 400;
   color: var(--muted);
 }
+
+
+/* Visibility settings */
+.visibility-list{display:grid;margin-top:18px;border-top:1px solid var(--border)}
+.visibility-item{display:flex;align-items:center;justify-content:space-between;gap:24px;padding:16px 0;border-bottom:1px solid var(--border);cursor:pointer}
+.visibility-copy{display:flex;flex-direction:column;gap:4px;min-width:0}
+.visibility-copy strong{font-size:.9rem}
+.visibility-copy span{color:var(--muted);font-size:.8125rem;line-height:1.45}
+.visibility-item input{width:19px;height:19px;accent-color:var(--accent-deep);flex:0 0 auto}
+.visibility-item:has(input:disabled){cursor:not-allowed;opacity:.65}
+@media(max-width:640px){.visibility-item{align-items:flex-start;gap:16px}.visibility-item input{margin-top:2px}}

@@ -4111,7 +4111,7 @@ export default function App() {
   const mobileDrawerItems = [
     { id: "home", label: "Accueil", icon: <Home size={20} /> },
     { id: "budget", label: "Budget", icon: <ChartNoAxesCombined size={20} /> },
-    {
+    !s.hidden.includes("personal") && {
       id: "personal",
       label: "Compte perso",
       icon: <UserRound size={20} />,
@@ -8166,49 +8166,78 @@ export default function App() {
               <section className="card">
                 <h2>Rubriques affichées</h2>
                 <p className="muted">
-                  Masquer une rubrique conserve toutes ses données.
+                  Choisissez les espaces utiles à votre quotidien. Masquer une
+                  rubrique ne supprime aucune donnée : vous pourrez la réactiver
+                  à tout moment.
                 </p>
-                {[
-                  ["trips", "Voyages"],
-                  ["loans", "Crédits et prêts"],
-                ].map(([id, label]) => (
-                  <label className="toggle" key={id}>
+                <div className="visibility-list">
+                  {[
+                    {
+                      id: "personal",
+                      label: "Compte perso",
+                      description:
+                        "Gérez vos comptes et dépenses privés séparément du budget du foyer.",
+                    },
+                    {
+                      id: "trips",
+                      label: "Voyages",
+                      description:
+                        "Préparez vos voyages, leurs budgets par catégorie et les dépenses associées.",
+                    },
+                    {
+                      id: "loans",
+                      label: "Crédits et prêts",
+                      description:
+                        "Suivez vos crédits, prêts à un tiers, mensualités et montants restant à rembourser.",
+                    },
+                  ].map(({ id, label, description }) => (
+                    <label className="visibility-item" key={id}>
+                      <span className="visibility-copy">
+                        <strong>{label}</strong>
+                        <span>{description}</span>
+                      </span>
+                      <input
+                        type="checkbox"
+                        checked={!s.hidden.includes(id)}
+                        onChange={() =>
+                          change((d) => {
+                            d.hidden = d.hidden.includes(id)
+                              ? d.hidden.filter((x) => x !== id)
+                              : [...d.hidden, id];
+                          }, "Affichage des rubriques modifié").catch(showError)
+                        }
+                      />
+                    </label>
+                  ))}
+                  <label className="visibility-item">
+                    <span className="visibility-copy">
+                      <strong>Professionnel</strong>
+                      <span>
+                        Gérez vos entreprises, clients, factures, encaissements,
+                        rendez-vous et trésorerie.
+                      </span>
+                    </span>
                     <input
                       type="checkbox"
-                      checked={!s.hidden.includes(id)}
-                      onChange={() =>
-                        change((d) => {
-                          d.hidden = d.hidden.includes(id)
-                            ? d.hidden.filter((x) => x !== id)
-                            : [...d.hidden, id];
-                        }, "Affichage des modules modifié").catch(showError)
-                      }
+                      checked={proEnabled}
+                      disabled={demoEnabled}
+                      onChange={async (event) => {
+                        try {
+                          const next = event.target.checked;
+                          await rpc("budget_pro_toggle", { p_enabled: next });
+                          setProEnabled(next);
+                          setNotice(
+                            next
+                              ? "Rubrique Professionnel affichée."
+                              : "Rubrique Professionnel masquée.",
+                          );
+                        } catch (e) {
+                          showError(e);
+                        }
+                      }}
                     />
-                    {label}
                   </label>
-                ))}
-                <label className="toggle">
-                  <input
-                    type="checkbox"
-                    checked={proEnabled}
-                    disabled={demoEnabled}
-                    onChange={async (event) => {
-                      try {
-                        const next = event.target.checked;
-                        await rpc("budget_pro_toggle", { p_enabled: next });
-                        setProEnabled(next);
-                        setNotice(
-                          next
-                            ? "Rubrique Professionnel affichée."
-                            : "Rubrique Professionnel masquée.",
-                        );
-                      } catch (e) {
-                        showError(e);
-                      }
-                    }}
-                  />
-                  Professionnel
-                </label>
+                </div>
               </section>
               <section className="card danger-zone">
                 <h2>Réinitialisation</h2>
