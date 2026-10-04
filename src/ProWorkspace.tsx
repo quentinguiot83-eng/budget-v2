@@ -62,9 +62,9 @@ const payLabel:Record<string,string>={card:"CB",check:"Chèque",cash:"Espèces",
 const eventLabel:Record<string,string>={appointment:"Rendez-vous",shooting:"Prestation",deadline:"Échéance",admin:"Administratif",other:"Autre"};
 const invoiceStatus:Record<string,string>={draft:"Brouillon",sent:"Envoyée",paid:"Payée",cancelled:"Annulée"};
 
-export default function ProWorkspace(){
-  const [enabled,setEnabled]=useState(false);
-  const [open,setOpen]=useState(false);
+export default function ProWorkspace({ native = false }: { native?: boolean } = {}){
+  const [enabled,setEnabled]=useState(native);
+  const [open,setOpen]=useState(native);
   const [section,setSection]=useState<Section>("dashboard");
   const [suite,setSuite]=useState<Suite|null>(null);
   const [modal,setModal]=useState<Modal>({type:"none"});
@@ -74,20 +74,22 @@ export default function ProWorkspace(){
   const [personalAccounts,setPersonalAccounts]=useState<PersonalAccount[]>([]);
   const [printInvoice,setPrintInvoice]=useState<Invoice|null>(null);
   const [,tick]=useState(0);
-  const sidebar=document.querySelector(".sidebar nav");
-  const drawer=document.querySelector(".mobile-drawer-nav");
+  const sidebar=native?null:document.querySelector(".sidebar nav");
+  const drawer=native?null:document.querySelector(".mobile-drawer-nav");
 
   useEffect(()=>{
+    if(native)return;
     const obs=new MutationObserver(()=>tick(v=>v+1)); obs.observe(document.body,{subtree:true,childList:true});
     return()=>obs.disconnect();
-  },[]);
+  },[native]);
   useEffect(()=>{
+    if(native){setEnabled(true);setOpen(true);void load();return;}
     let off=false;
     const refresh=async()=>{ try{ const s=await api.auth.getSession(); if(!s.data.session||off)return; const st=await rpc("budget_pro_status") as {enabled:boolean}; if(!off)setEnabled(st.enabled); }catch{} };
     void refresh();
     const l=api.auth.onAuthStateChange((_e,s)=>{ if(s)void refresh(); else {setEnabled(false);setOpen(false);} });
     return()=>{off=true;l.data.subscription.unsubscribe();};
-  },[]);
+  },[native]);
 
   async function load(){
     setBusy(true); setError("");
@@ -123,12 +125,12 @@ export default function ProWorkspace(){
   const nav=(mobile=false)=>enabled?<button type="button" className={open?"active":""} onClick={()=>void enter()}><Briefcase size={mobile?20:24}/><span>Professionnel</span></button>:null;
 
   return <>
-    {sidebar&&createPortal(nav(false),sidebar)}{drawer&&createPortal(nav(true),drawer)}
-    {open&&enabled&&<div className="prosuite-layer">
+    {!native&&sidebar&&createPortal(nav(false),sidebar)}{!native&&drawer&&createPortal(nav(true),drawer)}
+    {(native||(open&&enabled))&&<div className={native?"prosuite-layer prosuite-native":"prosuite-layer"}>
       <header className="prosuite-topbar">
-        <button className="prosuite-icon" onClick={()=>setOpen(false)}><ChevronLeft size={20}/></button>
-        <div><small>WIMM PRO</small><strong>{suite?.profile.businessName||"Espace professionnel"}</strong></div>
-        <button className="prosuite-icon" onClick={()=>setOpen(false)}><X size={20}/></button>
+        {!native&&<button className="prosuite-icon" onClick={()=>setOpen(false)}><ChevronLeft size={20}/></button>}
+        <div><small>PROFESSIONNEL</small><strong>{suite?.profile.businessName||"Espace professionnel"}</strong></div>
+        {!native&&<button className="prosuite-icon" onClick={()=>setOpen(false)}><X size={20}/></button>}
       </header>
       <div className="prosuite-shell">
         <nav className="prosuite-nav">
@@ -155,7 +157,7 @@ export default function ProWorkspace(){
         {modal.type==="client"&&<ClientForm value={modal.client} submit={v=>call("budget_pro_client_save",{p_client:v},"Client enregistré")}/>} 
         {modal.type==="product"&&<ProductForm value={modal.product} defaultVat={suite.profile.vatEnabled?suite.profile.vatRate:0} submit={v=>call("budget_pro_product_save",{p_product:v},"Catalogue mis à jour")}/>} 
         {modal.type==="invoice"&&<InvoiceForm value={modal.invoice} clients={suite.clients} products={suite.products} vatEnabled={suite.profile.vatEnabled} submit={v=>call("budget_pro_invoice_save",{p_invoice:v},"Facture enregistrée")}/>} 
-        {modal.type==="event"&&<EventForm value={modal.event} clients={suite.clients} submit={v=>call("budget_pro_event_save",{p_event:v},"Agenda mis à jour")}/>} 
+        {modal.type==="event"&&<EventForm value={modal.event} clients={suite.clients} submit={v=>call("budget_pro_event_save",{p_event:v},"Agenda mis à jour")} remove={modal.event?()=>removeEvent(modal.event!):undefined}/>} 
         {modal.type==="income"&&<TransactionForm kind="income" clients={suite.clients} products={suite.products} vatEnabled={suite.profile.vatEnabled} defaultVat={suite.profile.vatRate} submit={v=>call("budget_pro_transaction_save",{p_transaction:v},"Encaissement enregistré")}/>} 
         {modal.type==="expense"&&<TransactionForm kind="expense" clients={suite.clients} products={[]} vatEnabled={suite.profile.vatEnabled} defaultVat={suite.profile.vatRate} submit={v=>call("budget_pro_transaction_save",{p_transaction:v},"Dépense enregistrée")}/>} 
         {modal.type==="transfer"&&<TransferForm accounts={personalAccounts} balance={accountBalance} submit={async v=>{const ok=await call("budget_pro_transfer_personal",{p_transfer:v},"Virement enregistré");if(ok)await load();return ok;}}/>} 
@@ -210,7 +212,23 @@ function ProductForm({value,defaultVat,submit}:{value?:Product;defaultVat:number
 
 function InvoiceForm({value,clients,products,vatEnabled,submit}:{value?:Invoice;clients:Client[];products:Product[];vatEnabled:boolean;submit:(v:Record<string,unknown>)=>Promise<boolean>}){const [clientId,setClientId]=useState(value?.clientId??clients[0]?.id??"");const [issueDate,setIssueDate]=useState(value?.issueDate??today());const [dueDate,setDueDate]=useState(value?.dueDate??"");const [status,setStatus]=useState<"draft"|"sent">((value?.status==="sent"?"sent":"draft"));const [notes,setNotes]=useState(value?.notes??"");const [items,setItems]=useState<InvoiceItem[]>(value?.items?.length?value.items:[{description:"",quantity:1,unitPrice:0,vatRate:vatEnabled?20:0}]);const setItem=(i:number,p:Partial<InvoiceItem>)=>setItems(rows=>rows.map((r,n)=>n===i?{...r,...p}:r));const chooseProduct=(i:number,id:string)=>{const p=products.find(x=>x.id===id);if(p)setItem(i,{productId:p.id,description:p.name,unitPrice:p.unitPrice,vatRate:vatEnabled?p.vatRate:0});};const ht=items.reduce((s,x)=>s+Math.round(x.quantity*x.unitPrice),0);const vat=items.reduce((s,x)=>s+Math.round(x.quantity*x.unitPrice*x.vatRate/100),0);return <form className="prosuite-form wide" onSubmit={e=>{e.preventDefault();void submit({id:value?.id,clientId,issueDate,dueDate,status,notes,items})}}><FormTitle eyebrow="FACTURATION" title={value?`Modifier ${value.number}`:"Nouvelle facture"} text="Les coordonnées client sont copiées sur la facture pour conserver son historique."/><label>Client<select required value={clientId} onChange={e=>setClientId(e.target.value)}><option value="">Choisir…</option>{clients.map(c=><option key={c.id} value={c.id}>{c.companyName||c.name}</option>)}</select></label><div className="prosuite-form3"><label>Date d’émission<input type="date" value={issueDate} onChange={e=>setIssueDate(e.target.value)}/></label><label>Échéance<input type="date" value={dueDate} onChange={e=>setDueDate(e.target.value)}/></label><label>Statut<select value={status} onChange={e=>setStatus(e.target.value as "draft"|"sent")}><option value="draft">Brouillon</option><option value="sent">Envoyée</option></select></label></div><div className="prosuite-invoice-lines"><strong>Lignes de facture</strong>{items.map((it,i)=><div className="prosuite-invoice-line" key={i}><select value={it.productId??""} onChange={e=>chooseProduct(i,e.target.value)}><option value="">Ligne libre</option>{products.filter(p=>p.active).map(p=><option key={p.id} value={p.id}>{p.name}</option>)}</select><input placeholder="Description" required value={it.description} onChange={e=>setItem(i,{description:e.target.value,productId:null})}/><input type="number" min="0.001" step="0.001" value={it.quantity} onChange={e=>setItem(i,{quantity:Number(e.target.value)})}/><input type="number" min="0" step="0.01" value={euros(it.unitPrice)} onChange={e=>setItem(i,{unitPrice:cents(e.target.value)})}/><input type="number" min="0" max="100" step="0.01" value={it.vatRate} onChange={e=>setItem(i,{vatRate:Number(e.target.value)})}/><button type="button" onClick={()=>setItems(x=>x.filter((_,n)=>n!==i))}><Trash2 size={15}/></button></div>)}<button type="button" className="prosuite-addline" onClick={()=>setItems(x=>[...x,{description:"",quantity:1,unitPrice:0,vatRate:vatEnabled?20:0}])}><Plus size={15}/> Ajouter une ligne</button></div><div className="prosuite-invoice-total"><span>HT <strong>{euro(ht)}</strong></span><span>TVA <strong>{euro(vat)}</strong></span><span>TTC <strong>{euro(ht+vat)}</strong></span></div><label>Notes<textarea rows={2} value={notes} onChange={e=>setNotes(e.target.value)}/></label><button className="prosuite-btn">Enregistrer la facture</button></form>}
 
-function EventForm({value,clients,submit}:{value?:EventItem;clients:Client[];submit:(v:Record<string,unknown>)=>Promise<boolean>}){const start=value?value.startsAt.slice(0,16):new Date(Date.now()+3600000).toISOString().slice(0,16);const end=value?value.endsAt.slice(0,16):new Date(Date.now()+7200000).toISOString().slice(0,16);const [v,setV]=useState({id:value?.id,title:value?.title??"",eventType:value?.eventType??"appointment",clientId:value?.clientId??"",startsAt:start,endsAt:end,location:value?.location??"",notes:value?.notes??""});return <form className="prosuite-form" onSubmit={e=>{e.preventDefault();void submit({...v,clientId:v.clientId||null,startsAt:new Date(v.startsAt).toISOString(),endsAt:new Date(v.endsAt).toISOString()})}}><FormTitle eyebrow="AGENDA" title={value?"Modifier l’événement":"Nouvel événement"}/><label>Titre<input required value={v.title} onChange={e=>setV({...v,title:e.target.value})}/></label><div className="prosuite-form2"><label>Type<select value={v.eventType} onChange={e=>setV({...v,eventType:e.target.value})}>{Object.entries(eventLabel).map(([k,l])=><option key={k} value={k}>{l}</option>)}</select></label><label>Client<select value={v.clientId} onChange={e=>setV({...v,clientId:e.target.value})}><option value="">Aucun</option>{clients.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}</select></label></div><div className="prosuite-form2"><label>Début<input type="datetime-local" required value={v.startsAt} onChange={e=>setV({...v,startsAt:e.target.value})}/></label><label>Fin<input type="datetime-local" required value={v.endsAt} onChange={e=>setV({...v,endsAt:e.target.value})}/></label></div><label>Lieu<input value={v.location} onChange={e=>setV({...v,location:e.target.value})}/></label><label>Notes<textarea rows={3} value={v.notes} onChange={e=>setV({...v,notes:e.target.value})}/></label><button className="prosuite-btn">Enregistrer</button></form>}
+function EventForm({value,clients,submit,remove}:{value?:EventItem;clients:Client[];submit:(v:Record<string,unknown>)=>Promise<boolean>;remove?:()=>Promise<void>}){
+  const start=value?value.startsAt.slice(0,16):new Date(Date.now()+3600000).toISOString().slice(0,16);
+  const end=value?value.endsAt.slice(0,16):new Date(Date.now()+7200000).toISOString().slice(0,16);
+  const [v,setV]=useState({id:value?.id,title:value?.title??"",eventType:value?.eventType??"appointment",clientId:value?.clientId??"",startsAt:start,endsAt:end,location:value?.location??"",notes:value?.notes??""});
+  return <form className="prosuite-form" onSubmit={e=>{e.preventDefault();void submit({...v,clientId:v.clientId||null,startsAt:new Date(v.startsAt).toISOString(),endsAt:new Date(v.endsAt).toISOString()})}}>
+    <FormTitle eyebrow="AGENDA" title={value?"Modifier l’événement":"Nouvel événement"}/>
+    <label>Titre<input required value={v.title} onChange={e=>setV({...v,title:e.target.value})}/></label>
+    <div className="prosuite-form2"><label>Type<select value={v.eventType} onChange={e=>setV({...v,eventType:e.target.value})}>{Object.entries(eventLabel).map(([k,l])=><option key={k} value={k}>{l}</option>)}</select></label><label>Client<select value={v.clientId} onChange={e=>setV({...v,clientId:e.target.value})}><option value="">Aucun</option>{clients.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}</select></label></div>
+    <div className="prosuite-form2"><label>Début<input type="datetime-local" required value={v.startsAt} onChange={e=>setV({...v,startsAt:e.target.value})}/></label><label>Fin<input type="datetime-local" required value={v.endsAt} onChange={e=>setV({...v,endsAt:e.target.value})}/></label></div>
+    <label>Lieu<input value={v.location} onChange={e=>setV({...v,location:e.target.value})}/></label>
+    <label>Notes<textarea rows={3} value={v.notes} onChange={e=>setV({...v,notes:e.target.value})}/></label>
+    <div className="prosuite-event-actions">
+      {value&&remove&&<button type="button" className="prosuite-delete-action" onClick={()=>void remove()}><Trash2 size={16}/>{v.eventType==="appointment"?"Supprimer le rendez-vous":"Supprimer l’événement"}</button>}
+      <button className="prosuite-btn">Enregistrer</button>
+    </div>
+  </form>
+}
 
 function TransactionForm({kind,clients,products,vatEnabled,defaultVat,submit}:{kind:"income"|"expense";clients:Client[];products:Product[];vatEnabled:boolean;defaultVat:number;submit:(v:Record<string,unknown>)=>Promise<boolean>}){const [label,setLabel]=useState("");const [amount,setAmount]=useState("");const [date,setDate]=useState(today());const [clientId,setClientId]=useState("");const [productId,setProductId]=useState("");const [method,setMethod]=useState<PaymentMethod>("transfer");const [includeVat,setIncludeVat]=useState(vatEnabled);const [vatRate,setVatRate]=useState(defaultVat);const choose=(id:string)=>{setProductId(id);const p=products.find(x=>x.id===id);if(p){setLabel(p.name);setAmount(euros(p.unitPrice+Math.round(p.unitPrice*p.vatRate/100)));setVatRate(p.vatRate);setIncludeVat(vatEnabled&&p.vatRate>0);}};const amountC=cents(amount);const vatAmount=includeVat?Math.round(amountC-amountC/(1+vatRate/100)):0;return <form className="prosuite-form" onSubmit={e=>{e.preventDefault();void submit({kind,label,amount:amountC,date,category:kind==="income"?(productId?"Vente":"Encaissement"):"Dépense",clientId:clientId||null,productId:productId||null,vatAmount,paid:true,notes:"",paymentMethod:kind==="income"?method:null})}}><FormTitle eyebrow={kind==="income"?"ENCAISSEMENT":"DÉPENSE"} title={kind==="income"?"Ajouter un encaissement":"Ajouter une dépense"}/>{kind==="income"&&products.length>0&&<label>Produit / service vendu<select value={productId} onChange={e=>choose(e.target.value)}><option value="">Saisie libre</option>{products.filter(p=>p.active).map(p=><option key={p.id} value={p.id}>{p.name}</option>)}</select></label>}<label>Libellé<input required value={label} onChange={e=>setLabel(e.target.value)}/></label><div className="prosuite-form2"><label>Montant TTC (€)<input type="number" min="0.01" step="0.01" required value={amount} onChange={e=>setAmount(e.target.value)}/></label><label>Date<input type="date" required value={date} onChange={e=>setDate(e.target.value)}/></label></div>{kind==="income"&&<><label>Client<select value={clientId} onChange={e=>setClientId(e.target.value)}><option value="">Aucun</option>{clients.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}</select></label><label>Mode de règlement<select value={method} onChange={e=>setMethod(e.target.value as PaymentMethod)}><option value="card">CB</option><option value="check">Chèque</option><option value="cash">Espèces</option><option value="transfer">Virement</option><option value="other">Autre</option></select></label></>}{vatEnabled&&<label className="prosuite-check"><input type="checkbox" checked={includeVat} onChange={e=>setIncludeVat(e.target.checked)}/> TVA incluse ({vatRate}% · {euro(vatAmount)})</label>}<button className="prosuite-btn">Enregistrer</button></form>}
 
