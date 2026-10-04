@@ -21,6 +21,7 @@ import {
   X,
 } from "lucide-react";
 import { api, rpc } from "./api";
+import ProBillingV2 from "./ProBillingV2";
 import "./pro-suite.css";
 
 type Section = "dashboard" | "clients" | "billing" | "catalog" | "agenda" | "treasury";
@@ -29,11 +30,11 @@ type PaymentMethod = "card" | "check" | "cash" | "transfer" | "other";
 type Profile = { businessName:string; legalStatus:string; activityType:string; siret:string; contributionRate:number; taxRate:number; vatEnabled:boolean; vatRate:number };
 type Account = { id:string; name:string; openingBalance:number };
 type BillingSettings = { address:string; postalCode:string; city:string; email:string; phone:string; iban:string; invoicePrefix:string; footerNote:string };
-type Client = { id:string; name:string; companyName:string; email:string; phone:string; address:string; postalCode:string; city:string; siret:string; notes:string };
+type Client = { id:string; name:string; companyName:string; email:string; phone:string; address:string; postalCode:string; city:string; siret:string; notes:string; clientType?:"individual"|"professional"; billingAddress?:string; billingPostalCode?:string; billingCity?:string; vatNumber?:string };
 type Product = { id:string; kind:"product"|"service"; name:string; description:string; unitPrice:number; vatRate:number; active:boolean };
 type Transaction = { id:string; kind:string; label:string; amount:number; date:string; category:string; clientId:string|null; vatAmount:number; paid:boolean; notes:string; personalTransactionId?:string|null; contributionPeriodKey?:string|null; taxPeriodKey?:string|null; paymentMethod?:PaymentMethod|null; productId?:string|null; invoiceId?:string|null };
 type InvoiceItem = { id?:string; productId?:string|null; description:string; quantity:number; unitPrice:number; vatRate:number };
-type Invoice = { id:string; number:string; clientId:string|null; clientSnapshot:Record<string,string>; sellerSnapshot:Record<string,string>; issueDate:string; dueDate:string|null; status:"draft"|"sent"|"paid"|"cancelled"; paymentMethod?:PaymentMethod|null; paidDate?:string|null; notes:string; totalHt:number; totalVat:number; totalTtc:number; items:InvoiceItem[] };
+type Invoice = { id:string; number:string; clientId:string|null; clientSnapshot:Record<string,string>; sellerSnapshot:Record<string,string>; issueDate:string; dueDate:string|null; status:"draft"|"sent"|"partially_paid"|"paid"|"cancelled"; paymentMethod?:PaymentMethod|null; paidDate?:string|null; notes:string; totalHt:number; totalVat:number; totalTtc:number; paidAmount?:number; remainingAmount?:number; sourceQuoteId?:string|null; items:InvoiceItem[] };
 type EventItem = { id:string; clientId:string|null; title:string; eventType:string; startsAt:string; endsAt:string; location:string; notes:string };
 type Suite = { enabled:boolean; profile:Profile; account:Account; billing:BillingSettings; clients:Client[]; products:Product[]; transactions:Transaction[]; invoices:Invoice[]; events:EventItem[] };
 type PersonalAccount = { id:string; name:string; archived?:boolean };
@@ -60,7 +61,7 @@ const today=()=>new Date().toISOString().slice(0,10);
 const monthKey=()=>today().slice(0,7);
 const payLabel:Record<string,string>={card:"CB",check:"Chèque",cash:"Espèces",transfer:"Virement",other:"Autre"};
 const eventLabel:Record<string,string>={appointment:"Rendez-vous",shooting:"Prestation",deadline:"Échéance",admin:"Administratif",other:"Autre"};
-const invoiceStatus:Record<string,string>={draft:"Brouillon",sent:"Envoyée",paid:"Payée",cancelled:"Annulée"};
+const invoiceStatus:Record<string,string>={draft:"Brouillon",sent:"Envoyée",partially_paid:"Paiement partiel",paid:"Payée",cancelled:"Annulée"};
 
 export default function ProWorkspace({ native = false }: { native?: boolean } = {}){
   const [enabled,setEnabled]=useState(native);
@@ -116,7 +117,7 @@ export default function ProWorkspace({ native = false }: { native?: boolean } = 
     for(const t of suite.transactions){if(!t.paid)continue;v+=t.kind==="income"?t.amount:-t.amount;} return v;
   },[suite]);
   const nextEvents=(suite?.events??[]).filter(e=>new Date(e.endsAt)>=new Date()).slice(0,5);
-  const openInvoices=(suite?.invoices??[]).filter(i=>i.status==="draft"||i.status==="sent");
+  const openInvoices=(suite?.invoices??[]).filter(i=>i.status==="draft"||i.status==="sent"||i.status==="partially_paid");
   const currentContribution=Math.round(monthIncome*((suite?.profile.contributionRate??0)/100));
   const currentTax=Math.round(monthIncome*((suite?.profile.taxRate??0)/100));
   const paidContrib=current.filter(t=>t.kind==="contribution_payment"&&(t.contributionPeriodKey??t.date.slice(0,7))===monthKey()).reduce((s,t)=>s+t.amount,0);
@@ -144,9 +145,9 @@ export default function ProWorkspace({ native = false }: { native?: boolean } = 
         <main className="prosuite-main">
           {error&&<div className="prosuite-error">{error}</div>}{notice&&<div className="prosuite-notice">{notice}</div>}
           {busy&&!suite?<div className="prosuite-loading">Chargement…</div>:suite&&<>
-            {section==="dashboard"&&<Dashboard suite={suite} income={monthIncome} expense={monthExpense} balance={accountBalance} openInvoices={openInvoices} nextEvents={nextEvents} go={setSection} incomeAction={()=>setModal({type:"income"})} invoiceAction={()=>setModal({type:"invoice"})} eventAction={()=>setModal({type:"event"})}/>} 
+            {section==="dashboard"&&<Dashboard suite={suite} income={monthIncome} expense={monthExpense} balance={accountBalance} openInvoices={openInvoices} nextEvents={nextEvents} go={setSection} incomeAction={()=>setModal({type:"income"})} invoiceAction={()=>setSection("billing")} eventAction={()=>setModal({type:"event"})}/>} 
             {section==="clients"&&<ClientsPage clients={suite.clients} add={()=>setModal({type:"client"})} edit={c=>setModal({type:"client",client:c})} remove={c=>void removeClient(c)}/>} 
-            {section==="billing"&&<BillingPage invoices={suite.invoices} billing={suite.billing} create={()=>setModal({type:"invoice"})} settings={()=>setModal({type:"billing-settings"})} edit={i=>setModal({type:"invoice",invoice:i})} print={setPrintInvoice} paid={i=>setModal({type:"invoice-paid",invoice:i})} remove={i=>void removeInvoice(i)}/>} 
+            {section==="billing"&&<ProBillingV2 suite={suite} onSuite={next=>setSuite(next as Suite)} setError={setError} setNotice={setNotice}/>} 
             {section==="catalog"&&<CatalogPage products={suite.products} add={()=>setModal({type:"product"})} edit={p=>setModal({type:"product",product:p})} remove={p=>void removeProduct(p)}/>} 
             {section==="agenda"&&<AgendaPage events={suite.events} clients={suite.clients} add={()=>setModal({type:"event"})} edit={e=>setModal({type:"event",event:e})} remove={e=>void removeEvent(e)}/>} 
             {section==="treasury"&&<TreasuryPage suite={suite} balance={accountBalance} contribution={{estimated:currentContribution,paid:paidContrib}} tax={{estimated:currentTax,paid:paidTax}} income={()=>setModal({type:"income"})} expense={()=>setModal({type:"expense"})} transfer={()=>setModal({type:"transfer"})} contributionPay={()=>setModal({type:"payment",paymentType:"contribution"})} taxPay={()=>setModal({type:"payment",paymentType:"tax"})} account={()=>setModal({type:"account"})} profile={()=>setModal({type:"profile"})} removeTx={id=>void removeTx(id)}/>} 
@@ -206,7 +207,24 @@ function ReserveLine({label,estimated,paid,action}:{label:string;estimated:numbe
 function Modal({children,close}:{children:ReactNode;close:()=>void}){return <div className="prosuite-modal-layer"><button className="prosuite-backdrop" onClick={close}/><section className="prosuite-modal"><button className="prosuite-modalclose" onClick={close}><X/></button>{children}</section></div>}
 function FormTitle({eyebrow,title,text}:{eyebrow:string;title:string;text?:string}){return <div className="prosuite-formtitle"><span>{eyebrow}</span><h2>{title}</h2>{text&&<p>{text}</p>}</div>}
 
-function ClientForm({value,submit}:{value?:Client;submit:(v:Record<string,unknown>)=>Promise<boolean>}){const [v,setV]=useState({id:value?.id,name:value?.name??"",companyName:value?.companyName??"",email:value?.email??"",phone:value?.phone??"",address:value?.address??"",postalCode:value?.postalCode??"",city:value?.city??"",siret:value?.siret??"",notes:value?.notes??""});return <form className="prosuite-form" onSubmit={e=>{e.preventDefault();void submit(v)}}><FormTitle eyebrow="CLIENT" title={value?"Modifier le client":"Nouveau client"}/><label>Nom / contact<input required value={v.name} onChange={e=>setV({...v,name:e.target.value})}/></label><label>Entreprise<input value={v.companyName} onChange={e=>setV({...v,companyName:e.target.value})}/></label><div className="prosuite-form2"><label>E-mail<input type="email" value={v.email} onChange={e=>setV({...v,email:e.target.value})}/></label><label>Téléphone<input value={v.phone} onChange={e=>setV({...v,phone:e.target.value})}/></label></div><label>Adresse<input value={v.address} onChange={e=>setV({...v,address:e.target.value})}/></label><div className="prosuite-form2"><label>Code postal<input value={v.postalCode} onChange={e=>setV({...v,postalCode:e.target.value})}/></label><label>Ville<input value={v.city} onChange={e=>setV({...v,city:e.target.value})}/></label></div><label>SIRET<input value={v.siret} onChange={e=>setV({...v,siret:e.target.value})}/></label><label>Notes<textarea rows={3} value={v.notes} onChange={e=>setV({...v,notes:e.target.value})}/></label><button className="prosuite-btn">Enregistrer</button></form>}
+function ClientForm({value,submit}:{value?:Client;submit:(v:Record<string,unknown>)=>Promise<boolean>}){
+  const [v,setV]=useState({
+    id:value?.id,name:value?.name??"",companyName:value?.companyName??"",clientType:value?.clientType??((value?.companyName||value?.siret)?"professional":"individual"),
+    email:value?.email??"",phone:value?.phone??"",address:value?.address??"",postalCode:value?.postalCode??"",city:value?.city??"",siret:value?.siret??"",vatNumber:value?.vatNumber??"",
+    billingAddress:value?.billingAddress??"",billingPostalCode:value?.billingPostalCode??"",billingCity:value?.billingCity??"",notes:value?.notes??""
+  });
+  return <form className="prosuite-form" onSubmit={e=>{e.preventDefault();void submit(v)}}>
+    <FormTitle eyebrow="CLIENT" title={value?"Modifier le client":"Nouveau client"}/>
+    <label>Type de client<select value={v.clientType} onChange={e=>setV({...v,clientType:e.target.value as "individual"|"professional"})}><option value="individual">Particulier</option><option value="professional">Professionnel</option></select></label>
+    <label>Nom / contact<input required value={v.name} onChange={e=>setV({...v,name:e.target.value})}/></label>
+    <label>Entreprise<input value={v.companyName} onChange={e=>setV({...v,companyName:e.target.value})}/></label>
+    <div className="prosuite-form2"><label>E-mail<input type="email" value={v.email} onChange={e=>setV({...v,email:e.target.value})}/></label><label>Téléphone<input value={v.phone} onChange={e=>setV({...v,phone:e.target.value})}/></label></div>
+    <label>Adresse<input value={v.address} onChange={e=>setV({...v,address:e.target.value})}/></label>
+    <div className="prosuite-form2"><label>Code postal<input value={v.postalCode} onChange={e=>setV({...v,postalCode:e.target.value})}/></label><label>Ville<input value={v.city} onChange={e=>setV({...v,city:e.target.value})}/></label></div>
+    {v.clientType==="professional"&&<><div className="prosuite-form2"><label>SIRET<input value={v.siret} onChange={e=>setV({...v,siret:e.target.value})}/></label><label>N° TVA<input value={v.vatNumber} onChange={e=>setV({...v,vatNumber:e.target.value})}/></label></div><label>Adresse de facturation si différente<input value={v.billingAddress} onChange={e=>setV({...v,billingAddress:e.target.value})}/></label><div className="prosuite-form2"><label>CP facturation<input value={v.billingPostalCode} onChange={e=>setV({...v,billingPostalCode:e.target.value})}/></label><label>Ville facturation<input value={v.billingCity} onChange={e=>setV({...v,billingCity:e.target.value})}/></label></div></>}
+    <label>Notes<textarea rows={3} value={v.notes} onChange={e=>setV({...v,notes:e.target.value})}/></label><button className="prosuite-btn">Enregistrer</button>
+  </form>
+}
 
 function ProductForm({value,defaultVat,submit}:{value?:Product;defaultVat:number;submit:(v:Record<string,unknown>)=>Promise<boolean>}){const [kind,setKind]=useState(value?.kind??"service");const [name,setName]=useState(value?.name??"");const [description,setDescription]=useState(value?.description??"");const [price,setPrice]=useState(euros(value?.unitPrice??0));const [vat,setVat]=useState(String(value?.vatRate??defaultVat));const [active,setActive]=useState(value?.active??true);return <form className="prosuite-form" onSubmit={e=>{e.preventDefault();void submit({id:value?.id,kind,name,description,unitPrice:cents(price),vatRate:Number(vat)||0,active})}}><FormTitle eyebrow="CATALOGUE" title={value?"Modifier":"Ajouter un produit ou service"}/><label>Type<select value={kind} onChange={e=>setKind(e.target.value as "product"|"service")}><option value="service">Service</option><option value="product">Produit</option></select></label><label>Nom<input required value={name} onChange={e=>setName(e.target.value)}/></label><label>Description<textarea rows={3} value={description} onChange={e=>setDescription(e.target.value)}/></label><div className="prosuite-form2"><label>Prix unitaire HT (€)<input type="number" min="0" step="0.01" required value={price} onChange={e=>setPrice(e.target.value)}/></label><label>TVA (%)<input type="number" min="0" max="100" step="0.01" value={vat} onChange={e=>setVat(e.target.value)}/></label></div><label className="prosuite-check"><input type="checkbox" checked={active} onChange={e=>setActive(e.target.checked)}/> Actif dans le catalogue</label><button className="prosuite-btn">Enregistrer</button></form>}
 
