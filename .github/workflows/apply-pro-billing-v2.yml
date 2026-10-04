@@ -1,0 +1,41 @@
+name: Apply Pro billing V2
+
+on:
+  push:
+    branches:
+      - feature/pro-billing-v2
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: feature/pro-billing-v2
+          fetch-depth: 0
+
+      - name: Apply source changes
+        run: node scripts/apply-pro-billing-v2.mjs
+
+      - name: Install jsPDF
+        run: npm install jspdf --save
+
+      - name: Build
+        run: npm run build
+
+      - name: Commit generated changes
+        run: |
+          if git diff --quiet -- src/ProWorkspace.tsx package.json package-lock.json; then
+            echo "No generated changes to commit"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/ProWorkspace.tsx package.json package-lock.json
+          git commit -m "Raccorder la Facturation Pro V2 et jsPDF"
+          git push origin HEAD:feature/pro-billing-v2
