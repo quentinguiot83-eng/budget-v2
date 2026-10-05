@@ -30,3 +30,55 @@
 .prosuite-event-actions{display:flex;gap:12px;justify-content:flex-end;align-items:center;flex-wrap:wrap}
 .prosuite-delete-action{display:inline-flex;align-items:center;gap:8px;padding:12px 15px;border-radius:12px;border:1px solid #f0caca;background:#fff7f7;color:#a33;font-weight:650}
 .prosuite-delete-action:hover{background:#fff0f0}
+
+
+/* Mobile Pro fixes + night mode */
+
+.prosuite-business-title{display:flex;align-items:center;gap:3px;min-width:0}.prosuite-business-title strong{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.prosuite-list-title{display:block;min-width:0;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+@media(max-width:540px){
+  .prosuite-calendar{overflow:hidden}.prosuite-week,.prosuite-days{grid-template-columns:repeat(7,minmax(0,1fr));min-width:0!important;width:100%}.prosuite-week strong{padding:7px 1px;font-size:8px}.prosuite-day{min-width:0;min-height:62px;padding:4px 3px}.prosuite-day>span{font-size:10px}.prosuite-day button{width:100%;height:6px;min-height:6px;padding:0;border-radius:999px;font-size:0;line-height:0}.prosuite-list{grid-template-columns:auto minmax(0,1fr) auto}.prosuite-cardhead{align-items:flex-start}.prosuite-cardhead button{max-width:46%;font-size:.78rem;text-align:right;line-height:1.25}
+}
+:root[data-mode="dark"] .prosuite-layer{background:#0e151c;color:#e5edf5}:root[data-mode="dark"] .prosuite-topbar,:root[data-mode="dark"] .prosuite-nav,:root[data-mode="dark"] .prosuite-card,:root[data-mode="dark"] .prosuite-metric,:root[data-mode="dark"] .prosuite-client,:root[data-mode="dark"] .prosuite-product,:root[data-mode="dark"] .prosuite-calendar,:root[data-mode="dark"] .prosuite-modal{background:#17212b;color:#e5edf5;border-color:#2a3744}
+:root[data-mode="dark"] .prosuite-week,:root[data-mode="dark"] .prosuite-day.empty,:root[data-mode="dark"] .prosuite-table th{background:#121b24}:root[data-mode="dark"] .prosuite-day,:root[data-mode="dark"] .prosuite-list,:root[data-mode="dark"] .prosuite-table td,:root[data-mode="dark"] .prosuite-reserve{border-color:#273542}
+:root[data-mode="dark"] .prosuite-pagehead p,:root[data-mode="dark"] .prosuite-client p,:root[data-mode="dark"] .prosuite-form label,:root[data-mode="dark"] .prosuite-invoice-total span{color:#99a8b7}:root[data-mode="dark"] .prosuite-invoice-total strong{color:#e5edf5}
+:root[data-mode="dark"] .prosuite-form input,:root[data-mode="dark"] .prosuite-form select,:root[data-mode="dark"] .prosuite-form textarea,:root[data-mode="dark"] .prosuite-search{background:#101922;color:#e5edf5;border-color:#2a3744}
+:root[data-mode="dark"] .prosuite-btn.secondary,:root[data-mode="dark"] .prosuite-rowactions button,:root[data-mode="dark"] .prosuite-trash,:root[data-mode="dark"] .prosuite-addline,:root[data-mode="dark"] .prosuite-icon{background:#17212b;color:#d8e2ec;border-color:#334250}
+
+
+
+/* Budget-style Pro calendar + mobile containment */
+
+.prosuite-shell,.prosuite-main{min-width:0}
+.prosuite-agenda-calendar-card{min-width:0;overflow:hidden}
+.prosuite-payment-calendar{width:100%;min-width:0}
+.prosuite-payment-calendar .day{min-width:0}
+.prosuite-payment-calendar .day.selected{outline:2px solid var(--accent-deep);outline-offset:1px}
+@media(max-width:540px){
+  .prosuite-payment-calendar{grid-template-columns:repeat(7,minmax(0,1fr));gap:5px;margin:14px 0}
+  .prosuite-payment-calendar .day-name{padding:5px 1px;font-size:.7rem}
+  .prosuite-payment-calendar .day{min-height:58px;padding:7px 5px;border-radius:9px;gap:4px}
+  .prosuite-payment-calendar .day strong{font-size:.78rem}
+  .prosuite-payment-calendar .day small{font-size:.65rem}
+  .prosuite-main{overflow-x:hidden}
+}
+:root[data-mode="dark"] .prosuite-payment-calendar .day{background:#17212b;border-color:#2a3744;color:#e5edf5}
+:root[data-mode="dark"] .prosuite-payment-calendar .day.has-due{background:var(--accent-soft);border-color:var(--accent)}
+
+
+
+/* Uniform mobile Pro nav buttons */
+@media(max-width:540px){
+  .prosuite-nav{align-items:center!important;min-height:0!important;height:auto!important}
+  .prosuite-nav button{flex:0 0 48px!important;width:48px!important;height:48px!important;min-width:48px!important;min-height:48px!important;max-width:48px!important;max-height:48px!important;padding:0!important;align-self:center!important;justify-content:center!important}
+  .prosuite-nav button.active{flex:0 0 48px!important;width:48px!important;height:48px!important;min-width:48px!important;min-height:48px!important;max-width:48px!important;max-height:48px!important}
+  .prosuite-nav button svg{width:20px!important;height:20px!important;flex:0 0 20px!important}
+}
+
+
+/* Compact native Pro shell on mobile */
+@media(max-width:800px){
+  .prosuite-native .prosuite-shell{display:block!important;height:auto!important;min-height:0!important;grid-template-rows:none!important}
+  .prosuite-native .prosuite-nav{height:auto!important;min-height:64px!important;max-height:64px!important;align-self:start!important;align-items:center!important;overflow-x:auto!important;overflow-y:hidden!important}
+  .prosuite-native .prosuite-main{height:auto!important;min-height:0!important;overflow:visible!important}
+}

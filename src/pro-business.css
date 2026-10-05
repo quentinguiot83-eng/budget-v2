@@ -11,3 +11,58 @@
 }
 
 @media(max-width:800px){.pro-business-switcher{max-width:55%;margin-left:auto}.pro-business-switcher select{max-width:120px}.pro-business-modal{padding:20px 16px}.pro-business-head{flex-direction:column}.pro-business-formgrid{grid-template-columns:1fr}.pro-business-formgrid label.wide{grid-column:auto}.pro-business-list article{grid-template-columns:1fr auto}.pro-business-list article>span{justify-self:end}.pro-business-list article>button{grid-column:auto}.pro-business-list article>button.danger{grid-column:auto}.pro-business-formactions{display:grid;grid-template-columns:1fr 1fr}.pro-business-formactions button{width:100%}}
+
+
+/* Inline business menu */
+
+.pro-business-menu{position:relative;display:inline-flex;align-items:center;flex:0 0 auto}.pro-business-menu-trigger{width:26px;height:26px;padding:0;border:0;background:transparent;color:#8b96a5;display:grid;place-items:center;border-radius:7px}.pro-business-menu-trigger:hover{background:var(--accent-soft);color:var(--accent-deep)}.pro-business-menu-backdrop{position:fixed;inset:0;z-index:178;background:transparent;border:0}.pro-business-dropdown{position:absolute;z-index:179;top:32px;left:-8px;width:min(270px,calc(100vw - 32px));padding:7px;background:#fff;border:1px solid #e4e7ec;border-radius:13px;box-shadow:0 16px 40px rgba(22,35,48,.16);display:grid;gap:2px}.pro-business-dropdown>small{padding:7px 9px 5px;font-size:9px;font-weight:800;letter-spacing:.13em;color:#98a2b3}.pro-business-dropdown>button{display:flex;align-items:center;gap:9px;width:100%;padding:9px;border:0;border-radius:9px;background:transparent;color:#475467;text-align:left;font-weight:650}.pro-business-dropdown>button>span{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.pro-business-dropdown>button:hover,.pro-business-dropdown>button.active{background:#f5f1fa;color:#6f5898}.pro-business-dropdown-separator{height:1px;background:#eaecf0;margin:5px 3px}
+:root[data-mode="dark"] .pro-business-dropdown,:root[data-mode="dark"] .pro-business-modal{background:#17212b;color:#e5edf5;border-color:#2a3744}:root[data-mode="dark"] .pro-business-dropdown>button,:root[data-mode="dark"] .pro-business-list article>button{color:#dbe5ee}:root[data-mode="dark"] .pro-business-dropdown>button:hover,:root[data-mode="dark"] .pro-business-dropdown>button.active,:root[data-mode="dark"] .pro-business-list article.active{background:#241f31}:root[data-mode="dark"] .pro-business-dropdown-separator,:root[data-mode="dark"] .pro-business-form{border-color:#2a3744}:root[data-mode="dark"] .pro-business-list article{border-color:#2a3744}:root[data-mode="dark"] .pro-business-list article>button,:root[data-mode="dark"] .pro-business-close,:root[data-mode="dark"] .pro-business-formactions button{background:#17212b;border-color:#334250}:root[data-mode="dark"] .pro-business-formgrid input,:root[data-mode="dark"] .pro-business-formgrid select,:root[data-mode="dark"] .pro-business-formgrid textarea{background:#101922;color:#e5edf5;border-color:#2a3744}
+@media(max-width:800px){.pro-business-dropdown{left:auto;right:-8px}}
+
+
+
+/* Business dropdown mobile containment */
+
+@media(max-width:800px){
+  .pro-business-dropdown{left:auto!important;right:-4px!important;width:220px!important;max-width:calc(100vw - 32px)!important}
+  .pro-business-dropdown>button{font-size:.88rem;white-space:normal;line-height:1.25}
+  .pro-business-dropdown>button>span{white-space:normal;overflow:visible;text-overflow:clip}
+}
+
+/* iPhone: le sélecteur devient une bottom sheet, indépendante du header Pro. */
+@media(max-width:800px){
+  .pro-business-menu-backdrop{
+    z-index:309!important;
+    background:rgba(15,23,42,.18)!important;
+  }
+  .pro-business-dropdown{
+    position:fixed!important;
+    z-index:310!important;
+    left:16px!important;
+    right:16px!important;
+    top:auto!important;
+    bottom:calc(96px + env(safe-area-inset-bottom))!important;
+    width:auto!important;
+    max-width:none!important;
+    max-height:min(56vh,430px)!important;
+    overflow-y:auto!important;
+    padding:10px!important;
+    border-radius:18px!important;
+    box-shadow:0 24px 70px rgba(15,23,42,.28)!important;
+  }
+  .pro-business-dropdown>small{
+    padding:9px 10px 7px!important;
+    font-size:10px!important;
+  }
+  .pro-business-dropdown>button{
+    min-height:46px!important;
+    padding:11px 12px!important;
+    font-size:.95rem!important;
+    border-radius:11px!important;
+  }
+  .pro-business-dropdown>button>span{
+    white-space:normal!important;
+    overflow:visible!important;
+    text-overflow:clip!important;
+  }
+}

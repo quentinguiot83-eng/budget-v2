@@ -372,6 +372,7 @@ export default function App() {
     [selectedMonth, setMonth] = useState(month()),
     [sheet, setSheet] = useState<Sheet>(null),
     [theme, setTheme] = useState("blue"),
+    [nightMode, setNightMode] = useState(() => localStorage.getItem("wimm-night-mode") === "1"),
     [authMode, setAuthMode] = useState("login"),
     [saving, setSaving] = useState(false),
     [invite, setInvite] = useState(""),
@@ -517,6 +518,10 @@ export default function App() {
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
   }, [theme]);
+  useEffect(() => {
+    document.documentElement.dataset.mode = nightMode ? "dark" : "light";
+    localStorage.setItem("wimm-night-mode", nightMode ? "1" : "0");
+  }, [nightMode]);
   useEffect(() => {
     if (!notice) return;
     const t = setTimeout(() => setNotice(""), 4500);
@@ -7911,6 +7916,16 @@ export default function App() {
             <>
               <div className="two-col">
                 <section className="card">
+                  <div className="appearance-mode-row">
+                    <div>
+                      <strong>Mode nuit</strong>
+                      <small>Assombrit Wimm pour une utilisation plus confortable le soir.</small>
+                    </div>
+                    <label className="night-switch">
+                      <input type="checkbox" checked={nightMode} onChange={(event) => setNightMode(event.target.checked)} />
+                      <span aria-hidden="true" />
+                    </label>
+                  </div>
                   <h2>Votre couleur</h2>
                   <p className="muted">
                     Un thème personnel, même dans un foyer partagé.
