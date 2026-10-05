@@ -16,6 +16,7 @@ import {
   month,
   monthEndAvailable,
   monthlyReview,
+  budgetOverruns,
   shiftMonth,
   dateAt,
   type Account,
@@ -197,6 +198,38 @@ test("bilan mensuel : comparaison à durée comparable et mois terminés complet
   assert.equal(r.previousCutoff, comparable);
   assert.equal(monthlyReview(s, previous).spending, comparable === dateAt(previous, 31) ? 1000 : 10000);
   assert.equal(monthlyReview(s, shiftMonth(previous, -1)).hasPreviousExpenses, false);
+});
+test("alerte budget : seuil strict et montant du dépassement actualisé", () => {
+  const s = fixture();
+  const tx = { id: "food", type: "expense" as const, amount: 40000, date: today(), account: "current", category: "food", description: "Courses" };
+  s.transactions.push(tx);
+  assert.deepEqual(budgetOverruns(s, month()), []);
+  tx.amount = 42800;
+  assert.equal(budgetOverruns(s, month())[0].excess, 2800);
+  tx.amount = 46000;
+  assert.equal(budgetOverruns(s, month())[0].excess, 6000);
+  s.categories[0].budgets[month()] = 50000;
+  assert.deepEqual(budgetOverruns(s, month()), []);
+});
+test("alerte budget : charges fixes, voyages, dates futures et comptes personnels exclus", () => {
+  const s = fixture();
+  s.accounts.push({ ...s.accounts[0], id: "personal", group: "personal" });
+  const tx = { type: "expense" as const, amount: 90000, date: today(), account: "current", category: "food", description: "Dépense" };
+  s.transactions.push({ ...tx, id: "fixed", fixed: true }, { ...tx, id: "trip", trip: "trip" },
+    { ...tx, id: "personal", account: "personal" },
+    { ...tx, id: "future", date: dateAt(shiftMonth(month(), 1), 1) });
+  assert.deepEqual(budgetOverruns(s, month()), []);
+});
+test("alerte budget : budget zéro, suppression et catégories archivées", () => {
+  const s = fixture();
+  s.categories[0].budgets[month()] = 0;
+  s.transactions.push({ id: "food", type: "expense", amount: 100, date: today(), account: "current", category: "food", description: "Courses" });
+  assert.equal(budgetOverruns(s, month())[0].excess, 100);
+  s.categories[0].archived = month();
+  assert.deepEqual(budgetOverruns(s, month()), []);
+  delete s.categories[0].archived;
+  s.transactions = [];
+  assert.deepEqual(budgetOverruns(s, month()), []);
 });
 test("31 janvier, février, mars et année bissextile", () => {
   assert.equal(addMonths("2024-01-31", 1), "2024-02-29");

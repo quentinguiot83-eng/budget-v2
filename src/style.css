@@ -2549,3 +2549,7 @@ dialog::backdrop {
   .monthly-review-metrics > div { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
   .monthly-review-metrics strong { margin-top: 0; font-size: 1.15rem; }
 }
+.budget-overrun-alert { margin-bottom: 20px; border: 1px solid #e5ad73; background: #fff5e8; color: #633e1c; }
+.budget-overrun-alert .section-head { flex-wrap: wrap; gap: 12px; }
+.budget-overrun-alert h2 { display: flex; align-items: center; gap: 8px; }
+.budget-overrun-alert p { margin-bottom: 0; font-size: .85rem; }
