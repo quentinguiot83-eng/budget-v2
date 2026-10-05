@@ -65,3 +65,12 @@
 :root[data-mode="dark"] .prosuite-payment-calendar .day{background:#17212b;border-color:#2a3744;color:#e5edf5}
 :root[data-mode="dark"] .prosuite-payment-calendar .day.has-due{background:var(--accent-soft);border-color:var(--accent)}
 
+
+
+/* Uniform mobile Pro nav buttons */
+@media(max-width:540px){
+  .prosuite-nav{align-items:center!important;min-height:0!important;height:auto!important}
+  .prosuite-nav button{flex:0 0 48px!important;width:48px!important;height:48px!important;min-width:48px!important;min-height:48px!important;max-width:48px!important;max-height:48px!important;padding:0!important;align-self:center!important;justify-content:center!important}
+  .prosuite-nav button.active{flex:0 0 48px!important;width:48px!important;height:48px!important;min-width:48px!important;min-height:48px!important;max-width:48px!important;max-height:48px!important}
+  .prosuite-nav button svg{width:20px!important;height:20px!important;flex:0 0 20px!important}
+}
