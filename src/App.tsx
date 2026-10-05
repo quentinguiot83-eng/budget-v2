@@ -90,6 +90,7 @@ import {
   balance,
   monthEndAvailable,
   monthlyReview,
+  budgetOverruns,
   budget,
   personalEnvelope,
   personalBudgetEnvelope,
@@ -421,6 +422,7 @@ export default function App() {
   const availableDate = today();
   const availableThisMonth = useMemo(() => monthEndAvailable(s), [s, availableDate]);
   const review = useMemo(() => monthlyReview(s, selectedMonth), [s, selectedMonth, availableDate]);
+  const exceededBudgets = useMemo(() => budgetOverruns(s, selectedMonth), [s, selectedMonth, availableDate]);
   const savingsCapacity =
     totals.income > 0 ? totals.actualCapacity : totals.capacity;
   const savingMonthMarkedDone =
@@ -606,9 +608,13 @@ export default function App() {
               p_action: action,
             })
           ).revision;
+      const before = new Map(budgetOverruns(docRef.current!.state, selectedMonth).map((b) => [b.id, b.excess]));
+      const increased = budgetOverruns(next, selectedMonth).filter((b) => b.excess > (before.get(b.id) || 0));
       setDoc((d) => (d ? { ...d, state: next, revision } : d));
       setNotice(
-        demoEnabled ? "Aperçu mis à jour, sans sauvegarde." : "Enregistré",
+        increased.length > 0
+          ? "Alerte budget : " + increased.map((b) => `${b.name}, dépassement de ${money(b.excess)} (${money(b.spent)} / ${money(b.limit)}).`).join(" ")
+          : demoEnabled ? "Aperçu mis à jour, sans sauvegarde." : "Enregistré",
       );
     } catch (e) {
       if (e instanceof Error && e.message.includes("CONFLICT")) await load();
@@ -5212,6 +5218,19 @@ export default function App() {
           )}
         </div>
         <main className="content">
+          {exceededBudgets.length > 0 && !["pro", "personal"].includes(route) && (
+            <section className="card budget-overrun-alert" role="alert" aria-label="Budgets dépassés">
+              <div className="section-head">
+                <h2><Bell size={18} /> {exceededBudgets.length === 1 ? "Budget dépassé" : "Budgets dépassés"}</h2>
+                {route !== "budget" && <button type="button" className="text" onClick={() => navigate("budget")}>Voir les budgets</button>}
+              </div>
+              <small>{monthLabel(selectedMonth)}</small>
+              {exceededBudgets.map((b) => <Row key={b.id} title={b.name}
+                sub={`${money(b.spent)} utilisés sur ${money(b.limit)} de budget`}
+                value={`+ ${money(b.excess)}`} />)}
+              <p>Le dépassement se met à jour avec vos dépenses et vos budgets.</p>
+            </section>
+          )}
           {!current && !["settings", "wealth", "pro"].includes(route) && (
             <section className="card setup-card">
               <div>
@@ -8495,8 +8514,8 @@ export default function App() {
         </Modal>
       )}
       {notice && (
-        <div className="toast" role="status">
-          <Check size={17} />
+        <div className="toast" role={notice.startsWith("Alerte budget :") ? "alert" : "status"}>
+          {notice.startsWith("Alerte budget :") ? <Bell size={17} /> : <Check size={17} />}
           {notice}
         </div>
       )}

@@ -1148,6 +1148,22 @@ export function stats(
 
 }
 
+export function budgetOverruns(s: State, m: string) {
+  const monthly = stats(s, m);
+  return s.categories.flatMap((c) => {
+    if (c.archived && c.archived <= m) return [];
+    const legacy = personalAccountForCategory(s, c.id);
+    const envelope = c.personalOwner
+      ? personalBudgetEnvelope(s, c.personalOwner, c.id, m, c.personalSince)
+      : legacy ? personalEnvelope(s, legacy.id, m) : null;
+    const limit = envelope ? envelope.available : budget(c, m);
+    const spent = envelope ? envelope.committed : monthly.tx.filter(
+      (t) => t.type === "expense" && t.category === c.id && !t.fixed && !t.trip,
+    ).reduce((sum, t) => sum + t.amount, 0);
+    return spent > limit ? [{ id: c.id, name: c.name, limit, spent, excess: spent - limit }] : [];
+  });
+}
+
 export function monthlyReview(s: State, m: string) {
   const now = today();
   const currentMonth = month(now);
