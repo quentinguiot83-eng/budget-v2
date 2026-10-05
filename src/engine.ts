@@ -840,6 +840,80 @@ export function balance(s: State, id: string, until = today()) {
 
 }
 
+// Trésorerie réellement utilisable pour les dépenses variables du mois courant.
+// Les réserves ne créent aucun mouvement bancaire.
+export function monthEndAvailable(s: State) {
+  const now = today();
+  const m = month(now);
+  const end = dateAt(m, 31);
+  const accounts = s.accounts.filter(
+    (a) => a.group === "current" && !a.archived && a.date <= now,
+  );
+  const ids = new Set(accounts.map((a) => a.id));
+  const cash = accounts.reduce((sum, a) => sum + balance(s, a.id, now), 0);
+
+  const pending: Due[] = [];
+  let cursor = s.rules.map((r) => month(r.start)).sort()[0] || m;
+  while (cursor <= m) {
+    pending.push(...dues(s, cursor).filter(
+      (d) => ids.has(d.rule.account) && d.rule.kind !== "repay" &&
+        !d.cancelled && (!d.paid || d.paid.date > end),
+    ));
+    cursor = shiftMonth(cursor, 1);
+  }
+  const fixed = pending.reduce((sum, d) => sum + d.rule.amount, 0);
+
+  // Un paiement enregistré avec une date future n'est pas encore dans le solde.
+  // Réserver sa sortie nette ; un virement entre comptes courants est neutre.
+  const future = s.transactions.filter((t) => t.date > now && t.date <= end);
+  const committed = future.reduce((sum, t) => {
+    if (!ids.has(t.account) || ids.has(t.to || "")) return sum;
+    if (t.type === "income" || t.type === "repay") return sum;
+    return sum + (t.type === "adjust" ? Math.max(0, -t.amount) : t.amount);
+  }, 0);
+
+  const reservedIncome = s.transactions.filter((t) => {
+    const a = accounts.find((a) => a.id === t.account);
+    return a && t.type === "income" && t.date >= a.date && t.date <= now &&
+      incomeBudgetMonth(t) > m;
+  }).reduce((sum, t) => sum + t.amount, 0);
+
+  // Une épargne ou échéance du mois suivant prépayée consomme déjà sa réserve.
+  const prepaid = s.transactions.filter((t) => {
+    const a = accounts.find((a) => a.id === t.account);
+    if (!a || t.date < a.date || t.date > end || ids.has(t.to || "")) return false;
+    return (t.type === "transfer" && !!t.savingMonth && t.savingMonth > m) ||
+      (t.type === "expense" && !!t.dueKey && month(t.dueKey.slice(-10)) > m);
+  }).reduce((sum, t) => sum + t.amount, 0);
+  const futureIncome = Math.max(0, reservedIncome - prepaid);
+
+  const monthly = stats(s, m);
+  const target = monthly.income > 0
+    ? Object.values(monthlyPlan(s, m).amounts).reduce((sum, n) => sum + n, 0)
+    : 0;
+  const plannedSavings = future.filter((t) => t.type === "transfer" &&
+    t.savingMonth === m && ids.has(t.account) && !ids.has(t.to || ""),
+  ).reduce((sum, t) => sum + t.amount, 0);
+  const savings = (s.savingDoneMonths ?? []).includes(m)
+    ? 0 : Math.max(0, target - monthly.saved - plannedSavings);
+
+  const projects = s.projects.filter((p) => {
+    const trip = s.trips.find((t) => t.projectId === p.id);
+    return p.active && !p.settled && ids.has(p.account) && month(p.date) === m && !trip?.closedAt;
+  }).map((p) => {
+    const trip = s.trips.find((t) => t.projectId === p.id);
+    const fundingAlreadyReserved = trip ? future.filter(
+      (t) => t.type === "transfer" && t.trip === trip.id && ids.has(t.account),
+    ).reduce((sum, t) => sum + t.amount, 0) : 0;
+    return { project: p, amount: Math.max(0, projectRemaining(s, p) - fundingAlreadyReserved) };
+  });
+  const projectReserve = projects.reduce((sum, p) => sum + p.amount, 0);
+
+  const available = cash - fixed - committed - futureIncome - savings - projectReserve;
+  return { cash, fixed, pending, committed, futureIncome, savings,
+    projects, projectReserve, available, end, hasRealIncome: monthly.income > 0 };
+}
+
 export function deposits(s: State, id: string) {
 
   const a = s.accounts.find((a) => a.id === id)!;

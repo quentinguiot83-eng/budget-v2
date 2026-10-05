@@ -88,6 +88,7 @@ import {
   money,
   euro,
   balance,
+  monthEndAvailable,
   budget,
   personalEnvelope,
   personalBudgetEnvelope,
@@ -416,6 +417,8 @@ export default function App() {
     (a) => a.group === "current" && !a.archived,
   );
   const totals = stats(s, selectedMonth);
+  const availableDate = today();
+  const availableThisMonth = useMemo(() => monthEndAvailable(s), [s, availableDate]);
   const savingsCapacity =
     totals.income > 0 ? totals.actualCapacity : totals.capacity;
   const savingMonthMarkedDone =
@@ -4008,6 +4011,47 @@ export default function App() {
         0,
       );
 
+  function availablePanel() {
+    const a = availableThisMonth;
+    if (selectedMonth !== month() || !current) return null;
+    return (
+      <section className="card available-card">
+        <div className="section-head">
+          <h2>Disponible jusqu’à la fin du mois</h2>
+          <button type="button" className="text" onClick={() => explain(
+            "Calcul du disponible jusqu’à la fin du mois",
+            <>
+              <Row title="Solde actuel des comptes courants" value={money(a.cash)} />
+              <Row title="Charges et mensualités encore à payer" value={"− " + money(a.fixed)} />
+              {a.pending.map((d) => <Row key={d.key} title={d.rule.name}
+                sub={`${dateLabel(d.date)}${d.date < today() ? " · en retard" : ""}`}
+                value={money(d.rule.amount)} />)}
+              <Row title="Sorties déjà saisies avec une date future" value={"− " + money(a.committed)} />
+              <Row title="Revenus réservés aux mois suivants" value={"− " + money(a.futureIncome)} />
+              <Row title="Épargne restant à verser" value={"− " + money(a.savings)} />
+              <Row title="Projets à financer ce mois sur le compte courant" value={"− " + money(a.projectReserve)} />
+              {a.projects.filter((p) => p.amount > 0).map((p) => <Row key={p.project.id}
+                title={p.project.name} sub={dateLabel(p.project.date)} value={money(p.amount)} />)}
+              <Row title="Disponible jusqu’à la fin du mois" value={money(a.available)} />
+              <p>Les opérations déjà payées sont dans le solde et ne sont pas déduites une deuxième fois.
+                Les revenus futurs et remboursements attendus ne sont pas ajoutés tant qu’ils ne sont pas reçus.
+                Les échéances annuelles et trimestrielles sont réservées uniquement à leur échéance.</p>
+              <p>Ce montant sert à vos dépenses variables, comme les courses et les sorties :
+                leurs enveloppes ne sont pas déduites à nouveau. Les dépenses non saisies ne peuvent pas être anticipées.
+                Le solde dépend de vos saisies dans Wimm.</p>
+              {!a.hasRealIncome && <p>L’épargne sera réservée après la saisie des revenus affectés à ce mois.</p>}
+            </>,
+          )}>Voir le calcul <CircleHelp size={14} /></button>
+        </div>
+        <strong className={`large${a.available < 0 ? " negative" : ""}`}>{money(a.available)}</strong>
+        <p className="muted">Après les paiements à venir, les projets du mois et l’épargne à effectuer.</p>
+        {a.available < 0 && <p role="status" className="negative">Il manque {money(-a.available)} pour couvrir les sommes réservées.</p>}
+        {!a.hasRealIncome && <p className="muted">Épargne non encore réservée : aucun revenu affecté à ce mois n’a été saisi.</p>}
+        <small className="muted">Calcul au {dateLabel(today())} · jusqu’au {dateLabel(a.end)}</small>
+      </section>
+    );
+  }
+
   function calc() {
     const incomeUsed = s.income;
     const capacityUsed = totals.capacity;
@@ -5285,6 +5329,7 @@ export default function App() {
                 </button>
               )}
 
+              {availablePanel()}
               <div className="home-remaining-grid">
                 <section className="home-remaining-card">
                   <span className="muted">
@@ -5370,6 +5415,7 @@ export default function App() {
           )}
           {route === "budget" && (
             <>
+              {availablePanel()}
               <div className="toolbar">
                 <button className="secondary" onClick={() => navigate("fixed")}>
                   <List size={17} />
