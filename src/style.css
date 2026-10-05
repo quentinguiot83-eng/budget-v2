@@ -2521,3 +2521,13 @@ dialog::backdrop {
 :root[data-mode="dark"] .auth-story{background:#111b24}:root[data-mode="dark"] .auth-visual{box-shadow:none}
 @media(max-width:850px){.appearance-mode-row{align-items:flex-start}.night-switch{margin-top:2px}}
 
+
+
+/* Wimm loading logo */
+.loading-brand-logo {
+  width: 68px;
+  height: 68px;
+  border-radius: 20px;
+  object-fit: cover;
+  box-shadow: 0 10px 28px rgba(38, 54, 71, 0.10);
+}

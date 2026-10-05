@@ -4874,7 +4874,7 @@ export default function App() {
   if (loading)
     return (
       <div className="loading">
-        <span className="brandmark">N</span>
+        <img src="/wimm-icon.png" alt="Wimm" className="loading-brand-logo" />
         <p>Ouverture de votre foyer…</p>
       </div>
     );
