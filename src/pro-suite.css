@@ -74,3 +74,11 @@
   .prosuite-nav button.active{flex:0 0 48px!important;width:48px!important;height:48px!important;min-width:48px!important;min-height:48px!important;max-width:48px!important;max-height:48px!important}
   .prosuite-nav button svg{width:20px!important;height:20px!important;flex:0 0 20px!important}
 }
+
+
+/* Compact native Pro shell on mobile */
+@media(max-width:800px){
+  .prosuite-native .prosuite-shell{display:block!important;height:auto!important;min-height:0!important;grid-template-rows:none!important}
+  .prosuite-native .prosuite-nav{height:auto!important;min-height:64px!important;max-height:64px!important;align-self:start!important;align-items:center!important;overflow-x:auto!important;overflow-y:hidden!important}
+  .prosuite-native .prosuite-main{height:auto!important;min-height:0!important;overflow:visible!important}
+}
