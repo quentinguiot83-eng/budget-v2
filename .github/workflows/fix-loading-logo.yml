@@ -1,0 +1,37 @@
+name: Fix Wimm loading logo
+
+on:
+  push:
+    branches:
+      - fix/wimm-loading-logo
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: fix/wimm-loading-logo
+          fetch-depth: 0
+      - name: Apply fix
+        run: node scripts/fix-loading-logo.mjs
+      - name: Install dependencies
+        run: npm ci
+      - name: Build
+        run: npm run build
+      - name: Commit generated changes
+        run: |
+          if git diff --quiet -- src/App.tsx src/style.css; then
+            echo "No generated changes to commit"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/App.tsx src/style.css
+          git commit -m "Remplacer l'ancien logo de chargement par Wimm"
+          git push origin HEAD:fix/wimm-loading-logo
