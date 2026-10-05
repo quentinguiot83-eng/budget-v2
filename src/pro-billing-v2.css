@@ -7,3 +7,21 @@
 
 :root[data-mode="dark"] .billing-v2-card,:root[data-mode="dark"] .billing-v2-modal{background:#17212b;color:#e5edf5;border-color:#2a3744}:root[data-mode="dark"] .billing-v2-table th,:root[data-mode="dark"] .billing-v2-table td{border-color:#2a3744}:root[data-mode="dark"] .billing-v2-form input,:root[data-mode="dark"] .billing-v2-form select,:root[data-mode="dark"] .billing-v2-form textarea{background:#101922;color:#e5edf5;border-color:#2a3744}:root[data-mode="dark"] .billing-v2-tabs span,:root[data-mode="dark"] .billing-v2-info{background:#202c37}:root[data-mode="dark"] .overdue-row{background:#2a211d}:root[data-mode="dark"] .billing-v2-close:hover,:root[data-mode="dark"] .billing-v2-actions button:hover{background:#24313d}:root[data-mode="dark"] .billing-v2-payment{border-color:#2a3744}
 
+
+
+/* Mobile billing containment */
+
+.billing-v2,.billing-v2-card,.billing-v2-tablewrap{min-width:0;max-width:100%}
+.billing-v2{width:100%;overflow-x:hidden}
+.billing-v2-card{overflow:hidden}
+.billing-v2-tablewrap{width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;overscroll-behavior-inline:contain}
+@media(max-width:650px){
+  .billing-v2{overflow-x:hidden}
+  .billing-v2-card{padding:16px}
+  .billing-v2-tablewrap{margin:0;width:100%;max-width:100%;overflow-x:auto}
+  .billing-v2-table{min-width:720px}
+  .billing-v2-head,.billing-v2-cardhead{min-width:0;max-width:100%}
+  .billing-v2-head>div:first-child,.billing-v2-cardhead>div:first-child{min-width:0;max-width:100%}
+  .billing-v2-head h1,.billing-v2-head p,.billing-v2-cardhead h2,.billing-v2-cardhead p{max-width:100%;overflow-wrap:anywhere}
+}
+

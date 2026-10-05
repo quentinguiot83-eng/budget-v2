@@ -45,3 +45,23 @@
 :root[data-mode="dark"] .prosuite-form input,:root[data-mode="dark"] .prosuite-form select,:root[data-mode="dark"] .prosuite-form textarea,:root[data-mode="dark"] .prosuite-search{background:#101922;color:#e5edf5;border-color:#2a3744}
 :root[data-mode="dark"] .prosuite-btn.secondary,:root[data-mode="dark"] .prosuite-rowactions button,:root[data-mode="dark"] .prosuite-trash,:root[data-mode="dark"] .prosuite-addline,:root[data-mode="dark"] .prosuite-icon{background:#17212b;color:#d8e2ec;border-color:#334250}
 
+
+
+/* Budget-style Pro calendar + mobile containment */
+
+.prosuite-shell,.prosuite-main{min-width:0}
+.prosuite-agenda-calendar-card{min-width:0;overflow:hidden}
+.prosuite-payment-calendar{width:100%;min-width:0}
+.prosuite-payment-calendar .day{min-width:0}
+.prosuite-payment-calendar .day.selected{outline:2px solid var(--accent-deep);outline-offset:1px}
+@media(max-width:540px){
+  .prosuite-payment-calendar{grid-template-columns:repeat(7,minmax(0,1fr));gap:5px;margin:14px 0}
+  .prosuite-payment-calendar .day-name{padding:5px 1px;font-size:.7rem}
+  .prosuite-payment-calendar .day{min-height:58px;padding:7px 5px;border-radius:9px;gap:4px}
+  .prosuite-payment-calendar .day strong{font-size:.78rem}
+  .prosuite-payment-calendar .day small{font-size:.65rem}
+  .prosuite-main{overflow-x:hidden}
+}
+:root[data-mode="dark"] .prosuite-payment-calendar .day{background:#17212b;border-color:#2a3744;color:#e5edf5}
+:root[data-mode="dark"] .prosuite-payment-calendar .day.has-due{background:var(--accent-soft);border-color:var(--accent)}
+
