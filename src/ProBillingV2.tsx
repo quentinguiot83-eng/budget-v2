@@ -146,13 +146,12 @@ export default function ProBillingV2({suite,onSuite,setError,setNotice}:Props){
       </tbody></table></div>}
     </section>}
 
-    {modal.type!=="none"&&<BillingModal close={()=>setModal({type:"none"})}>
+    {modal.type==="preview" ? <DocumentPreview kind={modal.kind} value={modal.value} close={()=>setModal({type:"none"})}/> : modal.type!=="none"&&<BillingModal close={()=>setModal({type:"none"})}>
       {modal.type==="quote"&&<QuoteForm value={modal.value} clients={data.clients} products={data.products} vatEnabled={data.profile.vatEnabled} defaultVat={data.profile.vatRate} submit={v=>call("budget_pro_quote_save",{p_quote:v},"Devis enregistré")}/>} 
       {modal.type==="invoice"&&<InvoiceFormV2 value={modal.value} clients={data.clients} products={data.products} vatEnabled={data.profile.vatEnabled} defaultVat={data.profile.vatRate} defaultPaymentDays={data.billing.defaultPaymentDays??30} submit={v=>call("budget_pro_invoice_save",{p_invoice:v},"Facture brouillon enregistrée")}/>} 
       {modal.type==="payment"&&<PaymentForm invoice={modal.invoice} busy={busy} submit={v=>call("budget_pro_invoice_payment_save",{p_payment:v},"Paiement enregistré et ajouté à la trésorerie")}/>} 
       {modal.type==="payments"&&<PaymentHistory invoice={modal.invoice} payments={payments.filter(p=>p.invoiceId===modal.invoice.id)} remove={p=>confirm("Supprimer ce paiement et son encaissement de trésorerie ?")&&void call("budget_pro_invoice_payment_delete",{p_id:p.id},"Paiement supprimé")}/>} 
       {modal.type==="settings"&&<BillingSettingsFormV2 value={data.billing} submit={v=>call("budget_pro_billing_save",{p_settings:v},"Paramètres de facturation enregistrés")}/>} 
-      {modal.type==="preview"&&<DocumentPreview kind={modal.kind} value={modal.value} close={()=>setModal({type:"none"})}/>} 
     </BillingModal>}
   </div>;
 }
