@@ -9,6 +9,7 @@ import {
   ChevronRight,
   CreditCard,
   LayoutDashboard,
+  Link2,
   Package,
   Pencil,
   Plus,
@@ -23,6 +24,7 @@ import {
 import { api, rpc } from "./api";
 import ProBillingV2 from "./ProBillingV2";
 import ProBusinessMenu from "./ProBusinessMenu";
+import ProCalendarSubscription from "./ProCalendarSubscription";
 import "./pro-suite.css";
 
 type Section = "dashboard" | "clients" | "billing" | "catalog" | "agenda" | "treasury";
@@ -42,6 +44,7 @@ type PersonalAccount = { id:string; name:string; archived?:boolean };
 
 type Modal =
   | {type:"none"}
+  | {type:"calendar";businessId:string}
   | {type:"client"; client?:Client}
   | {type:"product"; product?:Product}
   | {type:"invoice"; invoice?:Invoice}
@@ -150,12 +153,13 @@ export default function ProWorkspace({ native = false }: { native?: boolean } = 
             {section==="clients"&&<ClientsPage clients={suite.clients} add={()=>setModal({type:"client"})} edit={c=>setModal({type:"client",client:c})} remove={c=>void removeClient(c)}/>} 
             {section==="billing"&&<ProBillingV2 suite={suite} onSuite={next=>setSuite(next as Suite)} setError={setError} setNotice={setNotice}/>} 
             {section==="catalog"&&<CatalogPage products={suite.products} add={()=>setModal({type:"product"})} edit={p=>setModal({type:"product",product:p})} remove={p=>void removeProduct(p)}/>} 
-            {section==="agenda"&&<AgendaPage events={suite.events} clients={suite.clients} add={date=>setModal({type:"event",initialDate:date})} edit={e=>setModal({type:"event",event:e})} remove={e=>void removeEvent(e)}/>} 
+            {section==="agenda"&&<AgendaPage connect={suite.activeBusinessId?()=>setModal({type:"calendar",businessId:suite.activeBusinessId!}):undefined} events={suite.events} clients={suite.clients} add={date=>setModal({type:"event",initialDate:date})} edit={e=>setModal({type:"event",event:e})} remove={e=>void removeEvent(e)}/>}
             {section==="treasury"&&<TreasuryPage suite={suite} balance={accountBalance} contribution={{estimated:currentContribution,paid:paidContrib}} tax={{estimated:currentTax,paid:paidTax}} income={()=>setModal({type:"income"})} expense={()=>setModal({type:"expense"})} transfer={()=>setModal({type:"transfer"})} contributionPay={()=>setModal({type:"payment",paymentType:"contribution"})} taxPay={()=>setModal({type:"payment",paymentType:"tax"})} account={()=>setModal({type:"account"})} profile={()=>setModal({type:"profile"})} removeTx={id=>void removeTx(id)}/>} 
           </>}
         </main>
       </div>
       {modal.type!=="none"&&suite&&<Modal close={()=>setModal({type:"none"})}>
+        {modal.type==="calendar"&&<ProCalendarSubscription key={modal.businessId} businessId={modal.businessId}/>}
         {modal.type==="client"&&<ClientForm value={modal.client} submit={v=>call("budget_pro_client_save",{p_client:v},"Client enregistré")}/>} 
         {modal.type==="product"&&<ProductForm value={modal.product} defaultVat={suite.profile.vatEnabled?suite.profile.vatRate:0} submit={v=>call("budget_pro_product_save",{p_product:v},"Catalogue mis à jour")}/>} 
         {modal.type==="invoice"&&<InvoiceForm value={modal.invoice} clients={suite.clients} products={suite.products} vatEnabled={suite.profile.vatEnabled} submit={v=>call("budget_pro_invoice_save",{p_invoice:v},"Facture enregistrée")}/>} 
@@ -200,7 +204,7 @@ function BillingPage({invoices,billing,create,settings,edit,print,paid,remove}:{
 
 function CatalogPage({products,add,edit,remove}:{products:Product[];add:()=>void;edit:(p:Product)=>void;remove:(p:Product)=>void}){return <><PageHead eyebrow="CATALOGUE" title="Produits & services" text="Enregistrez ce que vous vendez pour accélérer les encaissements et la facturation." actions={<Btn onClick={add}><Plus size={16}/> Ajouter</Btn>}/><div className="prosuite-productgrid">{products.map(p=><article className="prosuite-product" key={p.id}><span>{p.kind==="product"?"Produit":"Service"}</span><h3>{p.name}</h3><p>{p.description||"Aucune description"}</p><strong>{euro(p.unitPrice)} HT</strong><small>TVA {p.vatRate}% {p.active?"· Actif":"· Archivé"}</small><div className="prosuite-rowactions"><button onClick={()=>edit(p)}><Pencil size={15}/></button><button onClick={()=>remove(p)}><Trash2 size={15}/></button></div></article>)}</div>{!products.length&&<Empty text="Votre catalogue est vide."/>}</>}
 
-function AgendaPage({events,clients,add,edit,remove}:{events:EventItem[];clients:Client[];add:(date?:string)=>void;edit:(e:EventItem)=>void;remove:(e:EventItem)=>void}){
+function AgendaPage({events,clients,add,edit,remove,connect}:{connect?:()=>void;events:EventItem[];clients:Client[];add:(date?:string)=>void;edit:(e:EventItem)=>void;remove:(e:EventItem)=>void}){
   const [cursor,setCursor]=useState(()=>new Date());
   const [selectedDay,setSelectedDay]=useState<number|null>(null);
   const y=cursor.getFullYear(),m=cursor.getMonth();
@@ -216,7 +220,7 @@ function AgendaPage({events,clients,add,edit,remove}:{events:EventItem[];clients
   const changeMonth=(delta:number)=>{setCursor(new Date(y,m+delta,1));setSelectedDay(null)};
   const goCurrentMonth=()=>{const d=new Date();setCursor(new Date(d.getFullYear(),d.getMonth(),1));setSelectedDay(null)};
   return <>
-    <PageHead eyebrow="AGENDA" title="Agenda" text="Rendez-vous, prestations, échéances et tâches administratives." actions={<Btn onClick={add}><Plus size={16}/> Événement</Btn>}/>
+    <PageHead eyebrow="AGENDA" title="Agenda" text="Rendez-vous, prestations, échéances et tâches administratives." actions={<>{connect&&<Btn secondary onClick={connect}><Link2 size={16}/> Relier mon calendrier</Btn>}<Btn onClick={add}><Plus size={16}/> Événement</Btn></>}/>
     <div className="prosuite-agenda-monthnav" aria-label="Navigation du calendrier">
       <button type="button" className="prosuite-agenda-montharrow" onClick={()=>changeMonth(-1)} aria-label="Mois précédent"><ChevronLeft size={22}/></button>
       <strong>{cursor.toLocaleDateString("fr-FR",{month:"long",year:"numeric"})}</strong>
