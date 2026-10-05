@@ -2531,3 +2531,10 @@ dialog::backdrop {
   object-fit: cover;
   box-shadow: 0 10px 28px rgba(38, 54, 71, 0.10);
 }
+.available-card {
+  margin-bottom: 20px;
+  border: 1px solid var(--accent, #c6c9ed);
+}
+.available-card .section-head { flex-wrap: wrap; gap: 12px; }
+.available-card > strong { display: block; font-variant-numeric: tabular-nums; }
+.available-card > p { margin: 12px 0; }

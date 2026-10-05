@@ -14,6 +14,9 @@ import {
   loanRemaining,
   today,
   month,
+  monthEndAvailable,
+  shiftMonth,
+  dateAt,
   type Account,
   type State,
 } from "./engine";
@@ -62,6 +65,97 @@ function fixture() {
   s.income = 400000;
   return s;
 }
+test("disponible : payer une échéance ou l'épargne ne les déduit pas deux fois", () => {
+  const s = fixture();
+  const date = today();
+  const m = month();
+  s.rules = [{ id: "rent", name: "Loyer", account: "current", category: "food",
+    amount: 10000, start: date, interval: 1, count: 1, kind: "fixed" }];
+  s.transactions.push({ id: "salary", type: "income", amount: 400000,
+    date, budgetMonth: m, description: "Salaire", account: "current" });
+  const before = monthEndAvailable(s);
+  assert.equal(before.fixed, 10000);
+  assert.equal(before.savings, 350000);
+  assert.equal(before.available, 140000);
+  s.transactions.push({ id: "rent-paid", type: "expense", amount: 10000,
+    date, description: "Loyer", account: "current", fixed: true,
+    dueKey: dues(s, m)[0].key });
+  assert.equal(monthEndAvailable(s).available, before.available);
+  s.transactions.push({ id: "saving", type: "transfer", amount: 100000,
+    date, description: "Épargne", account: "current", to: "save", savingMonth: m });
+  assert.equal(monthEndAvailable(s).savings, 250000);
+  assert.equal(monthEndAvailable(s).available, before.available);
+});
+test("disponible : salaire du mois suivant réservé, estimation exclue, déficit visible", () => {
+  const s = fixture();
+  s.transactions.push({ id: "next-salary", type: "income", amount: 400000,
+    date: today(), budgetMonth: shiftMonth(month(), 1), incomeType: "Salaire",
+    description: "Salaire suivant", account: "current" });
+  const a = monthEndAvailable(s);
+  assert.equal(a.futureIncome, 400000);
+  assert.equal(a.savings, 0);
+  assert.equal(a.available, 100000);
+  s.transactions.push({ id: "next-saving", type: "transfer", amount: 50000,
+    date: today(), savingMonth: shiftMonth(month(), 1), account: "current",
+    to: "save", description: "Épargne du mois suivant" });
+  assert.equal(monthEndAvailable(s).futureIncome, 350000);
+  assert.equal(monthEndAvailable(s).available, a.available);
+  s.projects.push({ id: "p", name: "Projet", type: "other", date: today(),
+    amount: 120000, account: "current", active: true, settled: false });
+  assert.equal(monthEndAvailable(s).available, -20000);
+  s.projects[0].settled = true;
+  assert.equal(monthEndAvailable(s).available, a.available);
+});
+test("disponible : retards réservés, échéances annulées et comptes séparés exclus", () => {
+  const s = fixture();
+  const old = dateAt(shiftMonth(month(), -1), 1);
+  s.rules = [{ id: "late", name: "Retard", account: "current", category: "food",
+    amount: 20000, start: old, interval: 12, count: 1, kind: "credit" },
+    { id: "wealth", name: "Épargne", account: "save", category: "food",
+      amount: 30000, start: today(), interval: 12, count: 1, kind: "fixed" }];
+  assert.equal(monthEndAvailable(s).fixed, 20000);
+  s.cancelled.push(dues(s, month(old))[0].key);
+  assert.equal(monthEndAvailable(s).fixed, 0);
+  s.accounts.push({ ...s.accounts[0], id: "archive", opening: 900000, archived: true });
+  assert.equal(monthEndAvailable(s).cash, 100000);
+});
+test("disponible : projet voyage déjà financé et épargne marquée faite", () => {
+  const s = fixture();
+  s.projects.push({ id: "p", name: "Voyage", type: "travel", date: today(),
+    amount: 20000, account: "current", active: true, settled: false });
+  s.trips.push({ id: "trip", name: "Voyage", start: today(), end: today(),
+    budget: 20000, categories: [], projectId: "p" });
+  s.transactions.push({ id: "fund", type: "transfer", date: today(), amount: 20000,
+    account: "current", to: "save", trip: "trip", description: "Financement" });
+  assert.equal(monthEndAvailable(s).projectReserve, 0);
+  s.transactions.push({ id: "income", type: "income", date: today(), amount: 400000,
+    account: "current", budgetMonth: month(), description: "Salaire" });
+  s.savingDoneMonths = [month()];
+  assert.equal(monthEndAvailable(s).savings, 0);
+});
+test("disponible : paiement futur réservé une seule fois et virement interne neutre", (t) => {
+  const s = fixture();
+  const futureDate = dateAt(month(), 31);
+  if (futureDate === today()) { t.skip("dernier jour du mois"); return; }
+  s.rules = [{ id: "due", name: "Charge", account: "current", category: "food",
+    amount: 20000, start: futureDate, interval: 12, count: 1, kind: "fixed" }];
+  const before = monthEndAvailable(s).available;
+  s.transactions.push({ id: "future", type: "expense", date: futureDate, amount: 20000,
+    account: "current", description: "Charge", dueKey: dues(s, month())[0].key });
+  assert.equal(monthEndAvailable(s).fixed, 0);
+  assert.equal(monthEndAvailable(s).committed, 20000);
+  assert.equal(monthEndAvailable(s).available, before);
+  s.accounts.push({ ...s.accounts[0], id: "second", opening: 0 });
+  s.transactions.push({ id: "internal", type: "transfer", date: futureDate, amount: 10000,
+    account: "current", to: "second", description: "Interne" });
+  assert.equal(monthEndAvailable(s).available, before);
+  s.transactions.push({ id: "salary", type: "income", date: today(), amount: 400000,
+    account: "current", description: "Salaire" });
+  const beforeSaving = monthEndAvailable(s).available;
+  s.transactions.push({ id: "planned-saving", type: "transfer", date: futureDate, amount: 100000,
+    account: "current", to: "save", savingMonth: month(), description: "Épargne programmée" });
+  assert.equal(monthEndAvailable(s).available, beforeSaving);
+});
 test("31 janvier, février, mars et année bissextile", () => {
   assert.equal(addMonths("2024-01-31", 1), "2024-02-29");
   assert.equal(addMonths("2024-01-31", 2), "2024-03-31");
