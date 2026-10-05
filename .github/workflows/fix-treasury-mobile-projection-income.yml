@@ -1,0 +1,37 @@
+name: Fix treasury mobile and projection income
+
+on:
+  push:
+    branches:
+      - fix/treasury-mobile-projection-income
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: fix/treasury-mobile-projection-income
+          fetch-depth: 0
+      - name: Apply fix
+        run: node scripts/fix-treasury-mobile-projection-income.mjs
+      - name: Install dependencies
+        run: npm ci
+      - name: Build
+        run: npm run build
+      - name: Commit generated changes
+        run: |
+          if git diff --quiet -- src/App.tsx src/ProWorkspace.tsx src/pro-suite.css; then
+            echo "No generated changes to commit"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/App.tsx src/ProWorkspace.tsx src/pro-suite.css
+          git commit -m "Optimiser la trésorerie mobile et le calcul de projection"
+          git push origin HEAD:fix/treasury-mobile-projection-income
