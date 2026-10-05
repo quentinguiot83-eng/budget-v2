@@ -37,8 +37,8 @@ import fs from "node:fs";
         })}
       </div>
     </section>
-    <Card title={selectedDay?`Événements du ${selectedDay} ${cursor.toLocaleDateString("fr-FR",{month:"long"})}`:"Événements du mois"} action={selectedDay?<button onClick={()=>setSelectedDay(null)}>Tout le mois</button>:undefined}>
-      {shownEvents.map(e=><div className="prosuite-list" key={e.id}><CalendarDays size={17}/><div><strong>{e.title}</strong><small>{new Date(e.startsAt).toLocaleString("fr-FR",{dateStyle:"medium",timeStyle:"short"})}{clientName(e.clientId)?` · ${clientName(e.clientId)}`:""}</small></div><div className="prosuite-rowactions"><button onClick={()=>edit(e)}><Pencil size={15}/></button><button onClick={()=>remove(e)}><Trash2 size={15}/></button></div></div>)}
+    <Card title={selectedDay?("Événements du "+selectedDay+" "+cursor.toLocaleDateString("fr-FR",{month:"long"})):"Événements du mois"} action={selectedDay?<button onClick={()=>setSelectedDay(null)}>Tout le mois</button>:undefined}>
+      {shownEvents.map(e=><div className="prosuite-list" key={e.id}><CalendarDays size={17}/><div><strong>{e.title}</strong><small>{new Date(e.startsAt).toLocaleString("fr-FR",{dateStyle:"medium",timeStyle:"short"})}{clientName(e.clientId)?(" · "+clientName(e.clientId)):""}</small></div><div className="prosuite-rowactions"><button onClick={()=>edit(e)}><Pencil size={15}/></button><button onClick={()=>remove(e)}><Trash2 size={15}/></button></div></div>)}
       {!shownEvents.length&&<Empty text={selectedDay?"Aucun événement ce jour-là.":"Aucun événement ce mois-ci."}/>} 
     </Card>
   </>;
