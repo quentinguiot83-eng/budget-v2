@@ -5224,11 +5224,9 @@ export default function App() {
                 <h2><Bell size={18} /> {exceededBudgets.length === 1 ? "Budget dépassé" : "Budgets dépassés"}</h2>
                 {route !== "budget" && <button type="button" className="text" onClick={() => navigate("budget")}>Voir les budgets</button>}
               </div>
-              <small>{monthLabel(selectedMonth)}</small>
               {exceededBudgets.map((b) => <Row key={b.id} title={b.name}
                 sub={`${money(b.spent)} utilisés sur ${money(b.limit)} de budget`}
                 value={`+ ${money(b.excess)}`} />)}
-              <p>Le dépassement se met à jour avec vos dépenses et vos budgets.</p>
             </section>
           )}
           {!current && !["settings", "wealth", "pro"].includes(route) && (
