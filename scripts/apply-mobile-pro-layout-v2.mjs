@@ -1,6 +1,5 @@
 import fs from "node:fs";
 
-// 1) Remplacer l'agenda Pro par le même modèle visuel que le calendrier des paiements Budget.
 {
   const path = "src/ProWorkspace.tsx";
   let s = fs.readFileSync(path, "utf8");
@@ -15,7 +14,7 @@ import fs from "node:fs";
   const first=new Date(y,m,1);
   const offset=(first.getDay()+6)%7;
   const count=new Date(y,m+1,0).getDate();
-  const key=(d:number)=>\`${y}-\${String(m+1).padStart(2,"0")}-\${String(d).padStart(2,"0")}\`;
+  const key=(d:number)=>String(y)+"-"+String(m+1).padStart(2,"0")+"-"+String(d).padStart(2,"0");
   const monthEvents=events.filter(e=>{const d=new Date(e.startsAt);return d.getFullYear()===y&&d.getMonth()===m});
   const clientName=(id:string|null)=>clients.find(c=>c.id===id)?.name;
   const shownEvents=selectedDay?monthEvents.filter(e=>e.startsAt.slice(0,10)===key(selectedDay)):monthEvents;
@@ -25,12 +24,13 @@ import fs from "node:fs";
     <section className="prosuite-card prosuite-agenda-calendar-card">
       <h2>{cursor.toLocaleDateString("fr-FR",{month:"long",year:"numeric"})}</h2>
       <div className="calendar-grid prosuite-payment-calendar">
-        {["L","M","M","J","V","S","D"].map((n,i)=><span className="day-name" key={\`n\${i}\`}>{n}</span>)}
-        {Array.from({length:offset},(_,i)=><div key={\`empty\${i}\`}/>) }
+        {["L","M","M","J","V","S","D"].map((n,i)=><span className="day-name" key={"n"+i}>{n}</span>)}
+        {Array.from({length:offset},(_,i)=><div key={"empty"+i}/>) }
         {Array.from({length:count},(_,i)=>{
           const day=i+1;
           const dayEvents=monthEvents.filter(e=>e.startsAt.slice(0,10)===key(day));
-          return <button type="button" key={day} className={\`day \${dayEvents.length?"has-due":""} \${selectedDay===day?"selected":""}\`} onClick={()=>dayEvents.length&&setSelectedDay(selectedDay===day?null:day)}>
+          const className="day "+(dayEvents.length?"has-due ":"")+(selectedDay===day?"selected":"");
+          return <button type="button" key={day} className={className} onClick={()=>dayEvents.length&&setSelectedDay(selectedDay===day?null:day)}>
             <strong>{day}</strong>
             {dayEvents.length>0&&<small>{dayEvents.length}</small>}
           </button>;
@@ -54,7 +54,6 @@ function appendOnce(path,marker,css){
   fs.writeFileSync(path,s);
 }
 
-// 2) Le calendrier Pro utilise exactement la grammaire visuelle du calendrier Budget.
 appendOnce("src/pro-suite.css","/* Budget-style Pro calendar + mobile containment */",`
 .prosuite-shell,.prosuite-main{min-width:0}
 .prosuite-agenda-calendar-card{min-width:0;overflow:hidden}
@@ -73,7 +72,6 @@ appendOnce("src/pro-suite.css","/* Budget-style Pro calendar + mobile containmen
 :root[data-mode="dark"] .prosuite-payment-calendar .day.has-due{background:var(--accent-soft);border-color:var(--accent)}
 `);
 
-// 3) Empêcher la Facturation V2 d'élargir toute la page sur iPhone.
 appendOnce("src/pro-billing-v2.css","/* Mobile billing containment */",`
 .billing-v2,.billing-v2-card,.billing-v2-tablewrap{min-width:0;max-width:100%}
 .billing-v2{width:100%;overflow-x:hidden}
@@ -90,7 +88,6 @@ appendOnce("src/pro-billing-v2.css","/* Mobile billing containment */",`
 }
 `);
 
-// 4) Menu entreprise : largeur mobile contenue dans l'écran.
 appendOnce("src/pro-business.css","/* Business dropdown mobile containment */",`
 @media(max-width:800px){
   .pro-business-dropdown{left:auto!important;right:-4px!important;width:220px!important;max-width:calc(100vw - 32px)!important}
