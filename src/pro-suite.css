@@ -116,3 +116,11 @@
 .prosuite-agenda-monthnav{display:grid;grid-template-columns:52px minmax(0,1fr) 52px;align-items:center;gap:14px;margin:0 0 10px}.prosuite-agenda-monthnav>strong{text-align:center;font-size:18px;font-weight:700}.prosuite-agenda-montharrow{width:52px;height:52px;border:1px solid #dfe3e8;border-radius:14px;background:#fff;color:#344054;display:grid;place-items:center}.prosuite-agenda-today{display:block;margin:0 auto 18px;border:0;background:transparent;color:#3f735d;font-weight:800;padding:8px 12px;border-radius:10px}.prosuite-agenda-today:disabled{opacity:.42;cursor:default}
 @media(max-width:650px){.prosuite-agenda-monthnav{grid-template-columns:58px minmax(0,1fr) 58px;gap:10px;margin-top:2px}.prosuite-agenda-montharrow{width:58px;height:58px;border-radius:15px}.prosuite-agenda-monthnav>strong{font-size:17px}.prosuite-agenda-today{margin-bottom:14px}}
 :root[data-mode="dark"] .prosuite-agenda-montharrow{background:#17212b;border-color:#2a3744;color:#e5edf5}
+
+.prosuite-calendar-subscription p{margin:0;color:#667085;font-size:13px;line-height:1.6}
+.prosuite-calendar-subscription .prosuite-actions{display:flex;flex-wrap:wrap;gap:8px}
+.prosuite-calendar-subscription a.prosuite-btn{text-decoration:none}
+.prosuite-calendar-help{padding:14px;border:1px solid #e4e7ec;border-radius:12px;display:grid;gap:7px}
+.prosuite-calendar-subscription .prosuite-calendar-private{font-size:12px}
+:root[data-mode="dark"] .prosuite-calendar-subscription p{color:#b5c1cf}
+:root[data-mode="dark"] .prosuite-calendar-help{border-color:#334250}
