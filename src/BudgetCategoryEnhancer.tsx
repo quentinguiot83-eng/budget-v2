@@ -1,54 +1,65 @@
 import { useEffect } from "react";
 
-function findButton(root: ParentNode, label: string) {
-  return Array.from(root.querySelectorAll<HTMLButtonElement>("button")).find(
+function buttonWithText(label: string) {
+  return Array.from(document.querySelectorAll<HTMLButtonElement>("button")).find(
     (button) => (button.textContent || "").replace(/\s+/g, " ").trim() === label,
   );
 }
 
-function waitFor<T extends Element>(selector: string, timeout = 1800): Promise<T | null> {
-  return new Promise((resolve) => {
-    const existing = document.querySelector<T>(selector);
-    if (existing) {
-      resolve(existing);
-      return;
-    }
+function sleep(ms: number) {
+  return new Promise((resolve) => window.setTimeout(resolve, ms));
+}
 
-    const started = Date.now();
-    const timer = window.setInterval(() => {
-      const node = document.querySelector<T>(selector);
-      if (node || Date.now() - started >= timeout) {
-        window.clearInterval(timer);
-        resolve(node);
-      }
-    }, 40);
-  });
+async function waitForButton(label: string, timeout = 2000) {
+  const started = Date.now();
+  while (Date.now() - started < timeout) {
+    const button = buttonWithText(label);
+    if (button) return button;
+    await sleep(50);
+  }
+  return null;
+}
+
+async function waitForFilter(timeout = 2000) {
+  const started = Date.now();
+  while (Date.now() - started < timeout) {
+    const select = document.querySelector<HTMLSelectElement>(
+      'select[aria-label="Filtrer les transactions"]',
+    );
+    if (select) return select;
+    await sleep(50);
+  }
+  return null;
 }
 
 async function openTransactionsForCategory(categoryName: string) {
-  const heading = document.querySelector(".page-heading h1")?.textContent?.trim();
-
-  if (heading === "Accueil") {
-    const budgetCard = Array.from(document.querySelectorAll<HTMLElement>("section.card")).find(
-      (section) => section.querySelector("h2")?.textContent?.trim() === "Budget du mois",
-    );
-    findButton(budgetCard || document, "Tout voir")?.click();
-    await waitFor(".toolbar");
+  // Si le bouton Transactions n'est pas présent (notamment depuis Accueil),
+  // on passe d'abord par Budget. On ne dépend volontairement d'aucun titre
+  // ou nom de classe de page.
+  let transactionsButton = buttonWithText("Transactions");
+  if (!transactionsButton) {
+    const budgetButton = buttonWithText("Budget");
+    budgetButton?.click();
+    transactionsButton = await waitForButton("Transactions");
   }
 
-  const transactionsButton = findButton(document, "Transactions");
   if (!transactionsButton) return;
   transactionsButton.click();
 
-  const select = await waitFor<HTMLSelectElement>('select[aria-label="Filtrer les transactions"]');
+  const select = await waitForFilter();
   if (!select) return;
 
-  const option = Array.from(select.options).find((item) =>
-    item.textContent?.replace(" (archivée)", "").trim() === categoryName,
+  const option = Array.from(select.options).find(
+    (item) => item.textContent?.replace(" (archivée)", "").trim() === categoryName,
   );
   if (!option) return;
 
-  select.value = option.value;
+  // React écoute l'événement change et met txFilter à jour.
+  const setter = Object.getOwnPropertyDescriptor(
+    HTMLSelectElement.prototype,
+    "value",
+  )?.set;
+  setter?.call(select, option.value);
   select.dispatchEvent(new Event("change", { bubbles: true }));
 }
 
@@ -59,15 +70,11 @@ export default function BudgetCategoryEnhancer() {
       const card = target?.closest<HTMLElement>("article.category");
       if (!card) return;
 
-      // Les actions propres à la carte (modifier, archiver, virement perso…)
-      // gardent leur comportement normal.
+      // Les boutons Modifier / Archiver / Virement conservent leur action.
       if (target?.closest("button, a, input, select, textarea")) return;
 
-      const categoryName = card.querySelector(".grow > strong")?.textContent?.trim();
+      const categoryName = card.querySelector(".grow strong")?.textContent?.trim();
       if (!categoryName) return;
-
-      const heading = document.querySelector(".page-heading h1")?.textContent?.trim();
-      if (heading !== "Accueil" && heading !== "Budget") return;
 
       void openTransactionsForCategory(categoryName);
     };
