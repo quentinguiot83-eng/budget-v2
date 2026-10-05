@@ -25,3 +25,56 @@
   .billing-v2-head h1,.billing-v2-head p,.billing-v2-cardhead h2,.billing-v2-cardhead p{max-width:100%;overflow-wrap:anywhere}
 }
 
+
+
+/* Mobile invoice preview fullscreen */
+@media(max-width:650px){
+  .billing-v2-preview{
+    position:fixed!important;
+    inset:0!important;
+    z-index:3000!important;
+    width:100vw!important;
+    height:100dvh!important;
+    max-width:none!important;
+    max-height:none!important;
+    padding:calc(env(safe-area-inset-top) + 66px) 0 calc(env(safe-area-inset-bottom) + 20px)!important;
+    margin:0!important;
+    overflow-y:auto!important;
+    overflow-x:hidden!important;
+    -webkit-overflow-scrolling:touch;
+    background:#eef1f5;
+  }
+  .billing-v2-preview-actions{
+    position:fixed!important;
+    top:calc(env(safe-area-inset-top) + 8px)!important;
+    left:10px!important;
+    right:10px!important;
+    transform:none!important;
+    width:auto!important;
+    max-width:none!important;
+    justify-content:space-between!important;
+    z-index:3002!important;
+  }
+  .billing-v2-preview-actions button{
+    flex:1;
+    justify-content:center;
+    min-width:0;
+    white-space:nowrap;
+  }
+  .billing-v2-sheet{
+    width:100%!important;
+    max-width:none!important;
+    min-height:calc(100dvh - 66px)!important;
+    margin:0!important;
+    padding:24px 18px 40px!important;
+    border-radius:0!important;
+    box-shadow:none!important;
+  }
+  .billing-v2-document-table{table-layout:fixed}
+  .billing-v2-document-table th,.billing-v2-document-table td{padding:8px 4px;font-size:.68rem;overflow-wrap:anywhere}
+  .billing-v2-document-table th:first-child,.billing-v2-document-table td:first-child{width:36%}
+  .billing-v2-document-table th:nth-child(2),.billing-v2-document-table td:nth-child(2){width:10%}
+  .billing-v2-document-table th:nth-child(3),.billing-v2-document-table td:nth-child(3){width:20%}
+  .billing-v2-document-table th:nth-child(4),.billing-v2-document-table td:nth-child(4){width:12%}
+  .billing-v2-document-table th:nth-child(5),.billing-v2-document-table td:nth-child(5){width:22%}
+}
