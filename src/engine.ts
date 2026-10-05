@@ -1148,6 +1148,42 @@ export function stats(
 
 }
 
+export function monthlyReview(s: State, m: string) {
+  const now = today();
+  const currentMonth = month(now);
+  const previousMonth = shiftMonth(m, -1);
+  const inProgress = m === currentMonth;
+  const cutoff = inProgress ? now : dateAt(m, 31);
+  const previousCutoff = dateAt(previousMonth, inProgress ? Number(now.slice(8)) : 31);
+  const household = (t: Tx) => s.accounts.find((a) => a.id === t.account)?.group !== "personal";
+  const expenses = (period: string, until: string) => s.transactions.filter(
+    (t) => t.type === "expense" && month(t.date) === period &&
+      t.date <= until && t.date <= now && household(t),
+  );
+  const all = expenses(m, cutoff);
+  const ordinary = all.filter((t) => !t.trip);
+  const previous = expenses(previousMonth, previousCutoff).filter((t) => !t.trip);
+  const spending = ordinary.reduce((sum, t) => sum + t.amount, 0);
+  const previousSpending = previous.reduce((sum, t) => sum + t.amount, 0);
+  const grouped = new Map<string, number>();
+  for (const t of ordinary) {
+    const id = t.category || "";
+    grouped.set(id, (grouped.get(id) || 0) + t.amount);
+  }
+  const categories = Array.from(grouped, ([id, amount]) => ({
+    id, name: s.categories.find((c) => c.id === id)?.name || "Sans catégorie", amount,
+  })).sort((a, b) => b.amount - a.amount || a.name.localeCompare(b.name));
+  const savings = s.transactions.filter((t) => t.type === "transfer" &&
+    month(t.date) === m && t.date <= cutoff && t.date <= now &&
+    s.accounts.find((a) => a.id === t.account)?.group === "current" &&
+    ["wealth", "travel"].includes(s.accounts.find((a) => a.id === t.to)?.group || ""),
+  ).reduce((sum, t) => sum + t.amount, 0);
+  return { spending, previousSpending, difference: spending - previousSpending,
+    hasPreviousExpenses: previous.length > 0, categories, savings,
+    travelSpending: all.filter((t) => t.trip).reduce((sum, t) => sum + t.amount, 0),
+    previousMonth, previousCutoff, cutoff, inProgress };
+}
+
 export function loanRemaining(s: State, id: string) {
 
   const l = s.loans.find((l) => l.id === id);

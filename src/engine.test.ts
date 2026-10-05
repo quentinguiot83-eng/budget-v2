@@ -15,6 +15,7 @@ import {
   today,
   month,
   monthEndAvailable,
+  monthlyReview,
   shiftMonth,
   dateAt,
   type Account,
@@ -155,6 +156,47 @@ test("disponible : paiement futur réservé une seule fois et virement interne n
   s.transactions.push({ id: "planned-saving", type: "transfer", date: futureDate, amount: 100000,
     account: "current", to: "save", savingMonth: month(), description: "Épargne programmée" });
   assert.equal(monthEndAvailable(s).available, beforeSaving);
+});
+test("bilan mensuel : dépenses payées, voyages et comptes personnels séparés", () => {
+  const s = fixture();
+  s.accounts.push({ ...s.accounts[0], id: "personal", group: "personal" });
+  s.categories[0].archived = month();
+  s.transactions.push(
+    { id: "food", type: "expense", amount: 4200, date: today(), account: "current", category: "food", description: "Courses" },
+    { id: "fixed", type: "expense", amount: 5000, date: today(), account: "current", fixed: true, description: "Charge" },
+    { id: "trip", type: "expense", amount: 10000, date: today(), account: "current", trip: "trip", description: "Voyage" },
+    { id: "personal", type: "expense", amount: 3000, date: today(), account: "personal", category: "food", description: "Perso" },
+  );
+  const r = monthlyReview(s, month());
+  assert.equal(r.spending, 9200);
+  assert.equal(r.travelSpending, 10000);
+  assert.deepEqual(r.categories.map((c) => [c.name, c.amount]), [["Sans catégorie", 5000], ["Courses", 4200]]);
+});
+test("bilan mensuel : épargne à la date bancaire, transferts internes exclus", () => {
+  const s = fixture();
+  s.transactions.push(
+    { id: "saving", type: "transfer", amount: 15000, date: today(), account: "current", to: "save", savingMonth: shiftMonth(month(), 1), description: "Épargne" },
+    { id: "internal", type: "transfer", amount: 4000, date: today(), account: "save", to: "current", description: "Retrait" },
+    { id: "future", type: "transfer", amount: 10000, date: dateAt(shiftMonth(month(), 1), 1), account: "current", to: "save", description: "Futur" },
+  );
+  s.savingDoneMonths = [month()];
+  assert.equal(monthlyReview(s, month()).savings, 15000);
+});
+test("bilan mensuel : comparaison à durée comparable et mois terminés complets", () => {
+  const s = fixture();
+  const previous = shiftMonth(month(), -1);
+  const comparable = dateAt(previous, Number(today().slice(8)));
+  s.transactions.push(
+    { id: "now", type: "expense", amount: 2000, date: today(), account: "current", description: "Actuel" },
+    { id: "previous", type: "expense", amount: 1000, date: comparable, account: "current", description: "Comparable" },
+  );
+  if (comparable !== dateAt(previous, 31)) s.transactions.push({ id: "late", type: "expense", amount: 9000, date: dateAt(previous, 31), account: "current", description: "Fin de mois" });
+  const r = monthlyReview(s, month());
+  assert.equal(r.previousSpending, 1000);
+  assert.equal(r.difference, 1000);
+  assert.equal(r.previousCutoff, comparable);
+  assert.equal(monthlyReview(s, previous).spending, comparable === dateAt(previous, 31) ? 1000 : 10000);
+  assert.equal(monthlyReview(s, shiftMonth(previous, -1)).hasPreviousExpenses, false);
 });
 test("31 janvier, février, mars et année bissextile", () => {
   assert.equal(addMonths("2024-01-31", 1), "2024-02-29");

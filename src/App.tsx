@@ -89,6 +89,7 @@ import {
   euro,
   balance,
   monthEndAvailable,
+  monthlyReview,
   budget,
   personalEnvelope,
   personalBudgetEnvelope,
@@ -419,6 +420,7 @@ export default function App() {
   const totals = stats(s, selectedMonth);
   const availableDate = today();
   const availableThisMonth = useMemo(() => monthEndAvailable(s), [s, availableDate]);
+  const review = useMemo(() => monthlyReview(s, selectedMonth), [s, selectedMonth, availableDate]);
   const savingsCapacity =
     totals.income > 0 ? totals.actualCapacity : totals.capacity;
   const savingMonthMarkedDone =
@@ -4011,6 +4013,49 @@ export default function App() {
         0,
       );
 
+  function monthlyReviewPanel() {
+    if (!current || selectedMonth > month()) return null;
+    const comparison = !review.hasPreviousExpenses
+      ? `Aucune dépense enregistrée sur la période comparable de ${monthLabel(review.previousMonth)}.`
+      : review.difference === 0
+        ? `Même montant que ${monthLabel(review.previousMonth)} sur la période comparable.`
+        : `${money(Math.abs(review.difference))} de ${review.difference > 0 ? "plus" : "moins"} qu’en ${monthLabel(review.previousMonth)}${review.previousSpending > 0 ? ` (${Math.round(Math.abs(review.difference) / review.previousSpending * 100)} %)` : ""}.`;
+    return <section className="card monthly-review-card">
+      <div className="section-head">
+        <div><h2>Bilan mensuel</h2><small className="muted">{monthLabel(selectedMonth)} · {review.inProgress ? "En cours" : "Mois terminé"}</small></div>
+        <button type="button" className="text" onClick={() => explain(
+          `Bilan de ${monthLabel(selectedMonth)}`,
+          <>
+            <Row title="Dépenses du foyer" value={money(review.spending)} />
+            {review.categories.map((c) => <Row key={c.id} title={c.name} value={money(c.amount)} />)}
+            <Row title="Épargne réellement versée" value={money(review.savings)} />
+            <Row title="Dépenses de voyage" value={money(review.travelSpending)} />
+            <p>{comparison}</p>
+            <p className="muted">{review.inProgress
+              ? `Comparaison du 1er au ${review.cutoff.slice(8)} de ce mois avec le 1er au ${review.previousCutoff.slice(8)} du mois précédent.`
+              : "Comparaison des deux mois complets."}</p>
+            <p>Les dépenses du foyer incluent les charges fixes payées et les dépenses variables enregistrées,
+              hors voyages et comptes personnels. Les catégories archivées conservent leur historique.
+              L’épargne correspond aux virements des comptes courants vers les placements et le livret Voyage,
+              à leur date bancaire, quel que soit leur mois budgétaire. Les transferts entre placements et les
+              objectifs d’épargne ne sont pas comptés comme des versements.</p>
+          </>,
+        )}>Voir le détail <CircleHelp size={14} /></button>
+      </div>
+      <div className="monthly-review-metrics">
+        <div><span className="muted">Dépenses du foyer</span><strong>{money(review.spending)}</strong></div>
+        <div><span className="muted">Épargne versée</span><strong>{money(review.savings)}</strong></div>
+        <div><span className="muted">Dépenses de voyage</span><strong>{money(review.travelSpending)}</strong></div>
+      </div>
+      <p>{comparison}</p>
+      {review.inProgress && <p className="muted">Comparaison sur les mêmes jours du mois précédent.</p>}
+      {review.categories.length > 0
+        ? <><h3>Principales catégories</h3>{review.categories.slice(0, 3).map((c) => <Row key={c.id} title={c.name} value={money(c.amount)} />)}</>
+        : <p className="muted">Aucune dépense du foyer enregistrée pour ce mois.</p>}
+      <small className="muted">Bilan basé sur les opérations saisies dans Wimm.</small>
+    </section>;
+  }
+
   function availablePanel() {
     const a = availableThisMonth;
     if (selectedMonth !== month() || !current) return null;
@@ -5330,6 +5375,7 @@ export default function App() {
               )}
 
               {availablePanel()}
+              {monthlyReviewPanel()}
               <div className="home-remaining-grid">
                 <section className="home-remaining-card">
                   <span className="muted">
@@ -5416,6 +5462,7 @@ export default function App() {
           {route === "budget" && (
             <>
               {availablePanel()}
+              {monthlyReviewPanel()}
               <div className="toolbar">
                 <button className="secondary" onClick={() => navigate("fixed")}>
                   <List size={17} />
