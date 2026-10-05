@@ -5218,11 +5218,11 @@ export default function App() {
           )}
         </div>
         <main className="content">
-          {exceededBudgets.length > 0 && !["pro", "personal"].includes(route) && (
+          {exceededBudgets.length > 0 && route === "home" && (
             <section className="card budget-overrun-alert" role="alert" aria-label="Budgets dépassés">
               <div className="section-head">
                 <h2><Bell size={18} /> {exceededBudgets.length === 1 ? "Budget dépassé" : "Budgets dépassés"}</h2>
-                {route !== "budget" && <button type="button" className="text" onClick={() => navigate("budget")}>Voir les budgets</button>}
+                <button type="button" className="text" onClick={() => navigate("budget")}>Voir les budgets</button>
               </div>
               {exceededBudgets.map((b) => <Row key={b.id} title={b.name}
                 sub={`${money(b.spent)} utilisés sur ${money(b.limit)} de budget`}
