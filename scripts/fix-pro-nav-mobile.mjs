@@ -7,3 +7,4 @@ if(!s.includes(marker)){
   fs.writeFileSync(path,s);
 }
 console.log("Correctif menu Pro mobile appliqué");
+// workflow trigger
