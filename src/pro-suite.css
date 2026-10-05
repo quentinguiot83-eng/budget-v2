@@ -82,3 +82,31 @@
   .prosuite-native .prosuite-nav{height:auto!important;min-height:64px!important;max-height:64px!important;align-self:start!important;align-items:center!important;overflow-x:auto!important;overflow-y:hidden!important}
   .prosuite-native .prosuite-main{height:auto!important;min-height:0!important;overflow:visible!important}
 }
+
+
+/* Treasury mobile cards + native containment */
+@media(max-width:650px){
+  .prosuite-native,
+  .prosuite-native .prosuite-shell,
+  .prosuite-native .prosuite-main,
+  .prosuite-native .prosuite-card,
+  .prosuite-native .prosuite-grid2,
+  .prosuite-native .prosuite-tablewrap{min-width:0!important;max-width:100%!important;width:100%!important;box-sizing:border-box!important}
+  .prosuite-native,.prosuite-native .prosuite-shell,.prosuite-native .prosuite-main{overflow-x:hidden!important}
+  .prosuite-native .prosuite-tablewrap{overflow-x:auto!important;-webkit-overflow-scrolling:touch}
+  .prosuite-treasury-table{display:block!important;min-width:0!important;width:100%!important}
+  .prosuite-treasury-table thead{display:none!important}
+  .prosuite-treasury-table tbody{display:grid!important;gap:10px!important}
+  .prosuite-treasury-table tr{display:grid!important;grid-template-columns:minmax(0,1fr) auto!important;grid-template-areas:"operation amount" "date payment" "actions actions"!important;gap:5px 12px!important;padding:13px!important;border:1px solid #e9ebef!important;border-radius:14px!important;background:#fff!important}
+  .prosuite-treasury-table td{display:block!important;border:0!important;padding:0!important;min-width:0!important}
+  .prosuite-treasury-table td:nth-child(1){grid-area:date;color:#98a2b3;font-size:12px!important}
+  .prosuite-treasury-table td:nth-child(2){grid-area:operation;font-weight:800;overflow-wrap:anywhere}
+  .prosuite-treasury-table td:nth-child(3){grid-area:payment;color:#667085;font-size:12px!important;text-align:right!important}
+  .prosuite-treasury-table td:nth-child(4){grid-area:amount;text-align:right!important;font-weight:800;font-size:15px!important;white-space:nowrap}
+  .prosuite-treasury-table td:nth-child(5){grid-area:actions;display:flex!important;justify-content:flex-end!important;padding-top:4px!important}
+  .prosuite-treasury-table .prosuite-block{font-weight:400;font-size:11px}
+  .prosuite-native .prosuite-pagehead .prosuite-actions{width:100%!important;display:grid!important;grid-template-columns:1fr!important;gap:8px!important}
+  .prosuite-native .prosuite-pagehead .prosuite-actions .prosuite-btn{width:100%!important}
+  .prosuite-native .prosuite-grid2{grid-template-columns:1fr!important}
+}
+:root[data-mode="dark"] .prosuite-treasury-table tr{background:#17212b!important;border-color:#2a3744!important}

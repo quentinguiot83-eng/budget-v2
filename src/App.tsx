@@ -4009,30 +4009,20 @@ export default function App() {
       );
 
   function calc() {
-    const useActualIncome = totals.income > 0;
-    const incomeUsed = useActualIncome ? totals.income : s.income;
-    const capacityUsed = useActualIncome
-      ? totals.actualCapacity
-      : totals.capacity;
+    const incomeUsed = s.income;
+    const capacityUsed = totals.capacity;
 
     explain(
       "Calcul de la capacité d’épargne",
       <>
         <Row
-          title={
-            useActualIncome
-              ? "Revenus affectés à ce mois"
-              : "Revenus mensuels estimés"
-          }
+          title="Revenus mensuels estimés"
           value={money(incomeUsed)}
         />
 
-        {!useActualIncome && (
-          <p className="muted">
-            Aucun revenu réel n’a encore été enregistré pour ce mois.
-            L’estimation mensuelle est donc utilisée provisoirement.
-          </p>
-        )}
+        <p className="muted">
+          Cette projection utilise votre revenu mensuel estimé, indépendamment des revenus déjà enregistrés ou affectés au mois.
+        </p>
 
         <Row
           title="Charges et mensualités dues"
@@ -4074,17 +4064,9 @@ export default function App() {
           enveloppes ordinaires. Les salaires suivent le réglage choisi dans Réglages.
         </p>
 
-        {useActualIncome ? (
-          <p>
-            Le plan d’épargne de ce mois est calculé à partir des revenus
-            réellement enregistrés, soit {money(totals.income)}.
-          </p>
-        ) : (
-          <p>
-            Le plan d’épargne utilise pour le moment votre estimation mensuelle
-            de {money(s.income)}.
-          </p>
-        )}
+        <p>
+          Le plan d’épargne prévisionnel est calculé à partir de votre revenu mensuel estimé, soit {money(s.income)}.
+        </p>
 
         <p>
           Cette capacité ne garantit pas la disponibilité sur le compte courant.
