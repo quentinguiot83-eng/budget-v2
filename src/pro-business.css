@@ -29,3 +29,40 @@
   .pro-business-dropdown>button>span{white-space:normal;overflow:visible;text-overflow:clip}
 }
 
+/* iPhone: le sélecteur devient une bottom sheet, indépendante du header Pro. */
+@media(max-width:800px){
+  .pro-business-menu-backdrop{
+    z-index:309!important;
+    background:rgba(15,23,42,.18)!important;
+  }
+  .pro-business-dropdown{
+    position:fixed!important;
+    z-index:310!important;
+    left:16px!important;
+    right:16px!important;
+    top:auto!important;
+    bottom:calc(96px + env(safe-area-inset-bottom))!important;
+    width:auto!important;
+    max-width:none!important;
+    max-height:min(56vh,430px)!important;
+    overflow-y:auto!important;
+    padding:10px!important;
+    border-radius:18px!important;
+    box-shadow:0 24px 70px rgba(15,23,42,.28)!important;
+  }
+  .pro-business-dropdown>small{
+    padding:9px 10px 7px!important;
+    font-size:10px!important;
+  }
+  .pro-business-dropdown>button{
+    min-height:46px!important;
+    padding:11px 12px!important;
+    font-size:.95rem!important;
+    border-radius:11px!important;
+  }
+  .pro-business-dropdown>button>span{
+    white-space:normal!important;
+    overflow:visible!important;
+    text-overflow:clip!important;
+  }
+}
