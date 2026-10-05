@@ -45,7 +45,7 @@ type Modal =
   | {type:"client"; client?:Client}
   | {type:"product"; product?:Product}
   | {type:"invoice"; invoice?:Invoice}
-  | {type:"event"; event?:EventItem}
+  | {type:"event"; event?:EventItem; initialDate?:string}
   | {type:"income"}
   | {type:"expense"}
   | {type:"transfer"}
@@ -150,7 +150,7 @@ export default function ProWorkspace({ native = false }: { native?: boolean } = 
             {section==="clients"&&<ClientsPage clients={suite.clients} add={()=>setModal({type:"client"})} edit={c=>setModal({type:"client",client:c})} remove={c=>void removeClient(c)}/>} 
             {section==="billing"&&<ProBillingV2 suite={suite} onSuite={next=>setSuite(next as Suite)} setError={setError} setNotice={setNotice}/>} 
             {section==="catalog"&&<CatalogPage products={suite.products} add={()=>setModal({type:"product"})} edit={p=>setModal({type:"product",product:p})} remove={p=>void removeProduct(p)}/>} 
-            {section==="agenda"&&<AgendaPage events={suite.events} clients={suite.clients} add={()=>setModal({type:"event"})} edit={e=>setModal({type:"event",event:e})} remove={e=>void removeEvent(e)}/>} 
+            {section==="agenda"&&<AgendaPage events={suite.events} clients={suite.clients} add={date=>setModal({type:"event",initialDate:date})} edit={e=>setModal({type:"event",event:e})} remove={e=>void removeEvent(e)}/>} 
             {section==="treasury"&&<TreasuryPage suite={suite} balance={accountBalance} contribution={{estimated:currentContribution,paid:paidContrib}} tax={{estimated:currentTax,paid:paidTax}} income={()=>setModal({type:"income"})} expense={()=>setModal({type:"expense"})} transfer={()=>setModal({type:"transfer"})} contributionPay={()=>setModal({type:"payment",paymentType:"contribution"})} taxPay={()=>setModal({type:"payment",paymentType:"tax"})} account={()=>setModal({type:"account"})} profile={()=>setModal({type:"profile"})} removeTx={id=>void removeTx(id)}/>} 
           </>}
         </main>
@@ -159,7 +159,7 @@ export default function ProWorkspace({ native = false }: { native?: boolean } = 
         {modal.type==="client"&&<ClientForm value={modal.client} submit={v=>call("budget_pro_client_save",{p_client:v},"Client enregistré")}/>} 
         {modal.type==="product"&&<ProductForm value={modal.product} defaultVat={suite.profile.vatEnabled?suite.profile.vatRate:0} submit={v=>call("budget_pro_product_save",{p_product:v},"Catalogue mis à jour")}/>} 
         {modal.type==="invoice"&&<InvoiceForm value={modal.invoice} clients={suite.clients} products={suite.products} vatEnabled={suite.profile.vatEnabled} submit={v=>call("budget_pro_invoice_save",{p_invoice:v},"Facture enregistrée")}/>} 
-        {modal.type==="event"&&<EventForm value={modal.event} clients={suite.clients} submit={v=>call("budget_pro_event_save",{p_event:v},"Agenda mis à jour")} remove={modal.event?()=>removeEvent(modal.event!):undefined}/>} 
+        {modal.type==="event"&&<EventForm value={modal.event} initialDate={modal.initialDate} clients={suite.clients} submit={v=>call("budget_pro_event_save",{p_event:v},"Agenda mis à jour")} remove={modal.event?()=>removeEvent(modal.event!):undefined}/>} 
         {modal.type==="income"&&<TransactionForm kind="income" clients={suite.clients} products={suite.products} vatEnabled={suite.profile.vatEnabled} defaultVat={suite.profile.vatRate} submit={v=>call("budget_pro_transaction_save",{p_transaction:v},"Encaissement enregistré")}/>} 
         {modal.type==="expense"&&<TransactionForm kind="expense" clients={suite.clients} products={[]} vatEnabled={suite.profile.vatEnabled} defaultVat={suite.profile.vatRate} submit={v=>call("budget_pro_transaction_save",{p_transaction:v},"Dépense enregistrée")}/>} 
         {modal.type==="transfer"&&<TransferForm accounts={personalAccounts} balance={accountBalance} submit={async v=>{const ok=await call("budget_pro_transfer_personal",{p_transfer:v},"Virement enregistré");if(ok)await load();return ok;}}/>} 
@@ -200,7 +200,7 @@ function BillingPage({invoices,billing,create,settings,edit,print,paid,remove}:{
 
 function CatalogPage({products,add,edit,remove}:{products:Product[];add:()=>void;edit:(p:Product)=>void;remove:(p:Product)=>void}){return <><PageHead eyebrow="CATALOGUE" title="Produits & services" text="Enregistrez ce que vous vendez pour accélérer les encaissements et la facturation." actions={<Btn onClick={add}><Plus size={16}/> Ajouter</Btn>}/><div className="prosuite-productgrid">{products.map(p=><article className="prosuite-product" key={p.id}><span>{p.kind==="product"?"Produit":"Service"}</span><h3>{p.name}</h3><p>{p.description||"Aucune description"}</p><strong>{euro(p.unitPrice)} HT</strong><small>TVA {p.vatRate}% {p.active?"· Actif":"· Archivé"}</small><div className="prosuite-rowactions"><button onClick={()=>edit(p)}><Pencil size={15}/></button><button onClick={()=>remove(p)}><Trash2 size={15}/></button></div></article>)}</div>{!products.length&&<Empty text="Votre catalogue est vide."/>}</>}
 
-function AgendaPage({events,clients,add,edit,remove}:{events:EventItem[];clients:Client[];add:()=>void;edit:(e:EventItem)=>void;remove:(e:EventItem)=>void}){
+function AgendaPage({events,clients,add,edit,remove}:{events:EventItem[];clients:Client[];add:(date?:string)=>void;edit:(e:EventItem)=>void;remove:(e:EventItem)=>void}){
   const [cursor,setCursor]=useState(()=>new Date());
   const [selectedDay,setSelectedDay]=useState<number|null>(null);
   const y=cursor.getFullYear(),m=cursor.getMonth();
@@ -232,7 +232,7 @@ function AgendaPage({events,clients,add,edit,remove}:{events:EventItem[];clients
           const day=i+1;
           const dayEvents=monthEvents.filter(e=>e.startsAt.slice(0,10)===key(day));
           const className="day "+(dayEvents.length?"has-due ":"")+(selectedDay===day?"selected":"");
-          return <button type="button" key={day} className={className} onClick={()=>dayEvents.length&&setSelectedDay(selectedDay===day?null:day)}>
+          return <button type="button" key={day} className={className} onClick={()=>{setSelectedDay(day);add(key(day));}} title={"Ajouter un événement le "+day+" "+cursor.toLocaleDateString("fr-FR",{month:"long"})}>
             <strong>{day}</strong>
             {dayEvents.length>0&&<small>{dayEvents.length}</small>}
           </button>;
@@ -275,9 +275,9 @@ function ProductForm({value,defaultVat,submit}:{value?:Product;defaultVat:number
 
 function InvoiceForm({value,clients,products,vatEnabled,submit}:{value?:Invoice;clients:Client[];products:Product[];vatEnabled:boolean;submit:(v:Record<string,unknown>)=>Promise<boolean>}){const [clientId,setClientId]=useState(value?.clientId??clients[0]?.id??"");const [issueDate,setIssueDate]=useState(value?.issueDate??today());const [dueDate,setDueDate]=useState(value?.dueDate??"");const [status,setStatus]=useState<"draft"|"sent">((value?.status==="sent"?"sent":"draft"));const [notes,setNotes]=useState(value?.notes??"");const [items,setItems]=useState<InvoiceItem[]>(value?.items?.length?value.items:[{description:"",quantity:1,unitPrice:0,vatRate:vatEnabled?20:0}]);const setItem=(i:number,p:Partial<InvoiceItem>)=>setItems(rows=>rows.map((r,n)=>n===i?{...r,...p}:r));const chooseProduct=(i:number,id:string)=>{const p=products.find(x=>x.id===id);if(p)setItem(i,{productId:p.id,description:p.name,unitPrice:p.unitPrice,vatRate:vatEnabled?p.vatRate:0});};const ht=items.reduce((s,x)=>s+Math.round(x.quantity*x.unitPrice),0);const vat=items.reduce((s,x)=>s+Math.round(x.quantity*x.unitPrice*x.vatRate/100),0);return <form className="prosuite-form wide" onSubmit={e=>{e.preventDefault();void submit({id:value?.id,clientId,issueDate,dueDate,status,notes,items})}}><FormTitle eyebrow="FACTURATION" title={value?`Modifier ${value.number}`:"Nouvelle facture"} text="Les coordonnées client sont copiées sur la facture pour conserver son historique."/><label>Client<select required value={clientId} onChange={e=>setClientId(e.target.value)}><option value="">Choisir…</option>{clients.map(c=><option key={c.id} value={c.id}>{c.companyName||c.name}</option>)}</select></label><div className="prosuite-form3"><label>Date d’émission<input type="date" value={issueDate} onChange={e=>setIssueDate(e.target.value)}/></label><label>Échéance<input type="date" value={dueDate} onChange={e=>setDueDate(e.target.value)}/></label><label>Statut<select value={status} onChange={e=>setStatus(e.target.value as "draft"|"sent")}><option value="draft">Brouillon</option><option value="sent">Envoyée</option></select></label></div><div className="prosuite-invoice-lines"><strong>Lignes de facture</strong>{items.map((it,i)=><div className="prosuite-invoice-line" key={i}><select value={it.productId??""} onChange={e=>chooseProduct(i,e.target.value)}><option value="">Ligne libre</option>{products.filter(p=>p.active).map(p=><option key={p.id} value={p.id}>{p.name}</option>)}</select><input placeholder="Description" required value={it.description} onChange={e=>setItem(i,{description:e.target.value,productId:null})}/><input type="number" min="0.001" step="0.001" value={it.quantity} onChange={e=>setItem(i,{quantity:Number(e.target.value)})}/><input type="number" min="0" step="0.01" value={euros(it.unitPrice)} onChange={e=>setItem(i,{unitPrice:cents(e.target.value)})}/><input type="number" min="0" max="100" step="0.01" value={it.vatRate} onChange={e=>setItem(i,{vatRate:Number(e.target.value)})}/><button type="button" onClick={()=>setItems(x=>x.filter((_,n)=>n!==i))}><Trash2 size={15}/></button></div>)}<button type="button" className="prosuite-addline" onClick={()=>setItems(x=>[...x,{description:"",quantity:1,unitPrice:0,vatRate:vatEnabled?20:0}])}><Plus size={15}/> Ajouter une ligne</button></div><div className="prosuite-invoice-total"><span>HT <strong>{euro(ht)}</strong></span><span>TVA <strong>{euro(vat)}</strong></span><span>TTC <strong>{euro(ht+vat)}</strong></span></div><label>Notes<textarea rows={2} value={notes} onChange={e=>setNotes(e.target.value)}/></label><button className="prosuite-btn">Enregistrer la facture</button></form>}
 
-function EventForm({value,clients,submit,remove}:{value?:EventItem;clients:Client[];submit:(v:Record<string,unknown>)=>Promise<boolean>;remove?:()=>Promise<void>}){
-  const start=value?value.startsAt.slice(0,16):new Date(Date.now()+3600000).toISOString().slice(0,16);
-  const end=value?value.endsAt.slice(0,16):new Date(Date.now()+7200000).toISOString().slice(0,16);
+function EventForm({value,initialDate,clients,submit,remove}:{value?:EventItem;initialDate?:string;clients:Client[];submit:(v:Record<string,unknown>)=>Promise<boolean>;remove?:()=>Promise<void>}){
+  const start=value?value.startsAt.slice(0,16):(initialDate?initialDate+"T09:00":new Date(Date.now()+3600000).toISOString().slice(0,16));
+  const end=value?value.endsAt.slice(0,16):(initialDate?initialDate+"T10:00":new Date(Date.now()+7200000).toISOString().slice(0,16));
   const [v,setV]=useState({id:value?.id,title:value?.title??"",eventType:value?.eventType??"appointment",clientId:value?.clientId??"",startsAt:start,endsAt:end,location:value?.location??"",notes:value?.notes??""});
   return <form className="prosuite-form" onSubmit={e=>{e.preventDefault();void submit({...v,clientId:v.clientId||null,startsAt:new Date(v.startsAt).toISOString(),endsAt:new Date(v.endsAt).toISOString()})}}>
     <FormTitle eyebrow="AGENDA" title={value?"Modifier l’événement":"Nouvel événement"}/>
