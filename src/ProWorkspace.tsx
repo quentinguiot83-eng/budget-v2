@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { api, rpc } from "./api";
 import ProBillingV2 from "./ProBillingV2";
+import ProBusinessMenu from "./ProBusinessMenu";
 import "./pro-suite.css";
 
 type Section = "dashboard" | "clients" | "billing" | "catalog" | "agenda" | "treasury";
@@ -36,7 +37,7 @@ type Transaction = { id:string; kind:string; label:string; amount:number; date:s
 type InvoiceItem = { id?:string; productId?:string|null; description:string; quantity:number; unitPrice:number; vatRate:number };
 type Invoice = { id:string; number:string; clientId:string|null; clientSnapshot:Record<string,string>; sellerSnapshot:Record<string,string>; issueDate:string; dueDate:string|null; status:"draft"|"sent"|"partially_paid"|"paid"|"cancelled"; paymentMethod?:PaymentMethod|null; paidDate?:string|null; notes:string; totalHt:number; totalVat:number; totalTtc:number; paidAmount?:number; remainingAmount?:number; sourceQuoteId?:string|null; items:InvoiceItem[] };
 type EventItem = { id:string; clientId:string|null; title:string; eventType:string; startsAt:string; endsAt:string; location:string; notes:string };
-type Suite = { enabled:boolean; profile:Profile; account:Account; billing:BillingSettings; clients:Client[]; products:Product[]; transactions:Transaction[]; invoices:Invoice[]; events:EventItem[] };
+type Suite = { enabled:boolean; activeBusinessId?:string|null; businesses?:{id:string;name:string}[]; profile:Profile; account:Account; billing:BillingSettings; clients:Client[]; products:Product[]; transactions:Transaction[]; invoices:Invoice[]; events:EventItem[] };
 type PersonalAccount = { id:string; name:string; archived?:boolean };
 
 type Modal =
@@ -130,7 +131,7 @@ export default function ProWorkspace({ native = false }: { native?: boolean } = 
     {(native||(open&&enabled))&&<div className={native?"prosuite-layer prosuite-native":"prosuite-layer"}>
       <header className="prosuite-topbar">
         {!native&&<button className="prosuite-icon" onClick={()=>setOpen(false)}><ChevronLeft size={20}/></button>}
-        <div><small>PROFESSIONNEL</small><strong>{suite?.profile.businessName||"Espace professionnel"}</strong></div>
+        <div className="prosuite-titleblock"><small>PROFESSIONNEL</small><div className="prosuite-business-title"><strong>{suite?.profile.businessName||"Espace professionnel"}</strong>{suite&&<ProBusinessMenu activeBusinessId={suite.activeBusinessId} businesses={suite.businesses??[]} onChanged={load}/>}</div></div>
         {!native&&<button className="prosuite-icon" onClick={()=>setOpen(false)}><X size={20}/></button>}
       </header>
       <div className="prosuite-shell">
@@ -186,7 +187,7 @@ function Btn({children,onClick,secondary=false}:{children:ReactNode;onClick:()=>
 function Dashboard({suite,income,expense,balance,openInvoices,nextEvents,go,incomeAction,invoiceAction,eventAction}:{suite:Suite;income:number;expense:number;balance:number;openInvoices:Invoice[];nextEvents:EventItem[];go:(s:Section)=>void;incomeAction:()=>void;invoiceAction:()=>void;eventAction:()=>void}){
   return <><PageHead eyebrow="TABLEAU DE BORD" title={suite.profile.businessName||"Mon activité"} text="L’essentiel de votre activité, sans surcharger la page." actions={<><Btn onClick={incomeAction}><Plus size={16}/> Encaissement</Btn><Btn secondary onClick={invoiceAction}><ReceiptText size={16}/> Facture</Btn><Btn secondary onClick={eventAction}><CalendarDays size={16}/> Rendez-vous</Btn></>}/>
   <div className="prosuite-metrics"><Metric label="CA encaissé ce mois" value={euro(income)}/><Metric label="Dépenses ce mois" value={euro(expense)}/><Metric label="Trésorerie" value={euro(balance)}/><Metric label="Factures à suivre" value={String(openInvoices.length)}/></div>
-  <div className="prosuite-grid2"><Card title="Prochains rendez-vous" action={<button onClick={()=>go("agenda")}>Voir l’agenda</button>}>{nextEvents.length?nextEvents.map(e=><div className="prosuite-list" key={e.id}><CalendarDays size={17}/><div><strong>{e.title}</strong><small>{new Date(e.startsAt).toLocaleString("fr-FR",{dateStyle:"medium",timeStyle:"short"})}</small></div></div>):<Empty text="Aucun événement à venir."/>}</Card><Card title="Factures récentes" action={<button onClick={()=>go("billing")}>Voir la facturation</button>}>{suite.invoices.slice(0,5).map(i=><div className="prosuite-list" key={i.id}><ReceiptText size={17}/><div><strong>{i.number}</strong><small>{invoiceStatus[i.status]} · {euro(i.totalTtc)}</small></div></div>)}{!suite.invoices.length&&<Empty text="Aucune facture."/>}</Card></div>
+  <div className="prosuite-grid2"><Card title="Prochains rendez-vous" action={<button onClick={()=>go("agenda")}>Voir l’agenda</button>}>{nextEvents.length?nextEvents.map(e=><div className="prosuite-list" key={e.id}><CalendarDays size={17}/><div><strong>{e.title}</strong><small>{new Date(e.startsAt).toLocaleString("fr-FR",{dateStyle:"medium",timeStyle:"short"})}</small></div></div>):<Empty text="Aucun événement à venir."/>}</Card><Card title="Factures récentes" action={<button onClick={()=>go("billing")}>Voir la facturation</button>}>{suite.invoices.slice(0,5).map(i=><div className="prosuite-list" key={i.id}><ReceiptText size={17}/><div><strong className="prosuite-list-title" title={i.number}>{i.status==="draft"?"Brouillon":i.number}</strong><small>{invoiceStatus[i.status]} · {euro(i.totalTtc)}</small></div></div>)}{!suite.invoices.length&&<Empty text="Aucune facture."/>}</Card></div>
   <div className="prosuite-shortcuts"><button onClick={()=>go("clients")}><Users/><strong>Clients</strong><span>Fiches et coordonnées</span></button><button onClick={()=>go("catalog")}><Package/><strong>Produits & services</strong><span>Catalogue et tarifs</span></button><button onClick={()=>go("treasury")}><Wallet/><strong>Trésorerie</strong><span>Opérations et réserves</span></button></div></>;
 }
 function Metric({label,value}:{label:string;value:string}){return <div className="prosuite-metric"><span>{label}</span><strong>{value}</strong></div>}
