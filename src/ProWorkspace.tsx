@@ -204,6 +204,8 @@ function AgendaPage({events,clients,add,edit,remove}:{events:EventItem[];clients
   const [cursor,setCursor]=useState(()=>new Date());
   const [selectedDay,setSelectedDay]=useState<number|null>(null);
   const y=cursor.getFullYear(),m=cursor.getMonth();
+  const now=new Date();
+  const isCurrentMonth=y===now.getFullYear()&&m===now.getMonth();
   const first=new Date(y,m,1);
   const offset=(first.getDay()+6)%7;
   const count=new Date(y,m+1,0).getDate();
@@ -212,8 +214,15 @@ function AgendaPage({events,clients,add,edit,remove}:{events:EventItem[];clients
   const clientName=(id:string|null)=>clients.find(c=>c.id===id)?.name;
   const shownEvents=selectedDay?monthEvents.filter(e=>e.startsAt.slice(0,10)===key(selectedDay)):monthEvents;
   const changeMonth=(delta:number)=>{setCursor(new Date(y,m+delta,1));setSelectedDay(null)};
+  const goCurrentMonth=()=>{const d=new Date();setCursor(new Date(d.getFullYear(),d.getMonth(),1));setSelectedDay(null)};
   return <>
-    <PageHead eyebrow="AGENDA" title={cursor.toLocaleDateString("fr-FR",{month:"long",year:"numeric"})} text="Rendez-vous, prestations, échéances et tâches administratives." actions={<><Btn secondary onClick={()=>changeMonth(-1)}><ChevronLeft size={16}/></Btn><Btn secondary onClick={()=>changeMonth(1)}><ChevronRight size={16}/></Btn><Btn onClick={add}><Plus size={16}/> Événement</Btn></>}/>
+    <PageHead eyebrow="AGENDA" title="Agenda" text="Rendez-vous, prestations, échéances et tâches administratives." actions={<Btn onClick={add}><Plus size={16}/> Événement</Btn>}/>
+    <div className="prosuite-agenda-monthnav" aria-label="Navigation du calendrier">
+      <button type="button" className="prosuite-agenda-montharrow" onClick={()=>changeMonth(-1)} aria-label="Mois précédent"><ChevronLeft size={22}/></button>
+      <strong>{cursor.toLocaleDateString("fr-FR",{month:"long",year:"numeric"})}</strong>
+      <button type="button" className="prosuite-agenda-montharrow" onClick={()=>changeMonth(1)} aria-label="Mois suivant"><ChevronRight size={22}/></button>
+    </div>
+    <button type="button" className="prosuite-agenda-today" onClick={goCurrentMonth} disabled={isCurrentMonth}>Mois en cours</button>
     <section className="prosuite-card prosuite-agenda-calendar-card">
       <h2>{cursor.toLocaleDateString("fr-FR",{month:"long",year:"numeric"})}</h2>
       <div className="calendar-grid prosuite-payment-calendar">
