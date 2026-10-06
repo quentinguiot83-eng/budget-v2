@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import {
   ArrowRight,
+  Archive,
+  ArchiveRestore,
   CheckCircle2,
   Copy,
   Download,
@@ -42,12 +44,12 @@ type Invoice = {
   id:string; number:string; clientId:string|null; clientSnapshot:Record<string,unknown>; sellerSnapshot:Record<string,unknown>;
   issueDate:string; dueDate:string|null; serviceDate?:string|null; purchaseOrderNumber?:string; operationType?:"goods"|"services"|"mixed";
   deliveryAddress?:string; status:"draft"|"sent"|"partially_paid"|"paid"|"cancelled"; issuedAt?:string|null;
-  paymentMethod?:PaymentMethod|null; paidDate?:string|null; notes:string; sourceQuoteId?:string|null;
+  archivedAt?:string|null; paymentMethod?:PaymentMethod|null; paidDate?:string|null; notes:string; sourceQuoteId?:string|null;
   totalHt:number; totalVat:number; totalTtc:number; paidAmount?:number; remainingAmount?:number; items:Line[];
 };
 type InvoicePayment = { id:string; invoiceId:string; amount:number; date:string; method:PaymentMethod; transactionId?:string|null; notes:string };
 type BillingSuite = {
-  profile:Profile; billing:BillingSettings; clients:Client[]; products:Product[]; quotes?:Quote[]; invoices:Invoice[]; invoicePayments?:InvoicePayment[];
+  invoiceArchivingEnabled?:boolean; profile:Profile; billing:BillingSettings; clients:Client[]; products:Product[]; quotes?:Quote[]; invoices:Invoice[]; invoicePayments?:InvoicePayment[];
   [key:string]:unknown;
 };
 type Props = {
@@ -83,14 +85,19 @@ export default function ProBillingV2({suite,onSuite,setError,setNotice}:Props){
   const [view,setView]=useState<"quotes"|"invoices">("invoices");
   const [modal,setModal]=useState<Modal>({type:"none"});
   const [busy,setBusy]=useState(false);
+  const [showArchived,setShowArchived]=useState(false);
   useEffect(()=>setData(suite as BillingSuite),[suite]);
 
   const quotes=data.quotes??[];
   const invoices=data.invoices??[];
   const payments=data.invoicePayments??[];
+  const archivedInvoices=invoices.filter(i=>!!i.archivedAt);
+  const activeInvoices=invoices.filter(i=>!i.archivedAt);
+  const visibleInvoices=showArchived?archivedInvoices:activeInvoices;
   const invoiceFromQuote=useMemo(()=>new Set(invoices.map(i=>i.sourceQuoteId).filter(Boolean)),[invoices]);
 
   async function call(name:string,args?:Record<string,unknown>,message?:string,close=true){
+    if(busy)return null;
     setBusy(true);setError("");
     try{
       const next=await rpc(name,args) as BillingSuite;
@@ -111,13 +118,13 @@ export default function ProBillingV2({suite,onSuite,setError,setNotice}:Props){
       <div className="billing-v2-head-actions">
         <button className="billing-v2-secondary" onClick={()=>setModal({type:"settings"})}><Settings2 size={16}/> Paramètres</button>
         <button className="billing-v2-secondary" onClick={()=>{setView("quotes");setModal({type:"quote"})}}><FileText size={16}/> Nouveau devis</button>
-        <button className="billing-v2-primary" onClick={()=>{setView("invoices");setModal({type:"invoice"})}}><Plus size={16}/> Nouvelle facture</button>
+        <button className="billing-v2-primary" onClick={()=>{setView("invoices");setShowArchived(false);setModal({type:"invoice"})}}><Plus size={16}/> Nouvelle facture</button>
       </div>
     </div>
 
     <div className="billing-v2-tabs">
       <button className={view==="quotes"?"active":""} onClick={()=>setView("quotes")}><FileText size={16}/> Devis <span>{quotes.length}</span></button>
-      <button className={view==="invoices"?"active":""} onClick={()=>setView("invoices")}><ReceiptText size={16}/> Factures <span>{invoices.length}</span></button>
+      <button className={view==="invoices"?"active":""} onClick={()=>setView("invoices")}><ReceiptText size={16}/> Factures <span>{activeInvoices.length}</span></button>
     </div>
 
     {view==="quotes"?<section className="billing-v2-card">
@@ -133,15 +140,20 @@ export default function ProBillingV2({suite,onSuite,setError,setNotice}:Props){
         </Actions></td></tr>)}
       </tbody></table></div>}
     </section>:<section className="billing-v2-card">
-      <div className="billing-v2-cardhead"><div><h2>Factures</h2><p>Une facture reste modifiable tant qu’elle est en brouillon. L’émission lui attribue son numéro définitif et la verrouille.</p></div></div>
-      {!invoices.length?<Empty text="Aucune facture pour le moment."/>:<div className="billing-v2-tablewrap"><table className="billing-v2-table"><thead><tr><th>N°</th><th>Date</th><th>Client</th><th>Statut</th><th>Total</th><th>Réglé</th><th></th></tr></thead><tbody>
-        {invoices.map(i=>{const paid=i.paidAmount??0;const remaining=i.remainingAmount??Math.max(0,i.totalTtc-paid);return <tr key={i.id} className={overdue(i)?"overdue-row":""}><td><strong>{i.status==="draft"?"Brouillon":i.number}</strong>{i.sourceQuoteId&&<small>Depuis un devis</small>}</td><td>{dateFr(i.issueDate)}{i.dueDate&&<small>Éch. {dateFr(i.dueDate)}</small>}</td><td>{snap(i.clientSnapshot,"companyName")||snap(i.clientSnapshot,"name")||"Client"}</td><td><Status value={invoiceLabel(i)} kind={overdue(i)?"overdue":i.status}/></td><td>{euro(i.totalTtc)}</td><td>{paid>0?<><strong>{euro(paid)}</strong>{remaining>0&&<small>Reste {euro(remaining)}</small>}</>:"—"}</td><td><Actions>
+      <div className="billing-v2-cardhead"><div><h2>{showArchived?"Factures archivées":"Factures"}</h2><p>{showArchived?"Les documents et paiements sont conservés. Une facture archivée peut être restaurée à tout moment.":"Un brouillon peut être supprimé. Une facture émise peut être archivée en conservant son numéro et ses paiements."}</p></div></div>
+      {data.invoiceArchivingEnabled&&<div className="billing-v2-tabs" role="group" aria-label="Afficher les factures"><button type="button" className={!showArchived?"active":""} aria-pressed={!showArchived} onClick={()=>setShowArchived(false)}>Actives <span>{activeInvoices.length}</span></button><button type="button" className={showArchived?"active":""} aria-pressed={showArchived} onClick={()=>setShowArchived(true)}><Archive size={16}/> Archivées <span>{archivedInvoices.length}</span></button></div>}
+      {!visibleInvoices.length?<Empty text={showArchived?"Aucune facture archivée.":"Aucune facture pour le moment."}/>:<div className="billing-v2-tablewrap"><table className="billing-v2-table"><thead><tr><th>N°</th><th>Date</th><th>Client</th><th>Statut</th><th>Total</th><th>Réglé</th><th></th></tr></thead><tbody>
+        {visibleInvoices.map(i=>{const paid=i.paidAmount??0;const remaining=i.remainingAmount??Math.max(0,i.totalTtc-paid);return <tr key={i.id} className={overdue(i)?"overdue-row":""}><td><strong>{i.status==="draft"?"Brouillon":i.number}</strong>{i.sourceQuoteId&&<small>Depuis un devis</small>}</td><td>{dateFr(i.issueDate)}{i.dueDate&&<small>Éch. {dateFr(i.dueDate)}</small>}</td><td>{snap(i.clientSnapshot,"companyName")||snap(i.clientSnapshot,"name")||"Client"}</td><td><Status value={invoiceLabel(i)} kind={overdue(i)?"overdue":i.status}/></td><td>{euro(i.totalTtc)}</td><td>{paid>0?<><strong>{euro(paid)}</strong>{remaining>0&&<small>Reste {euro(remaining)}</small>}</>:"—"}</td><td><Actions>
           <Icon title="Aperçu" onClick={()=>setModal({type:"preview",kind:"invoice",value:i})}><Eye/></Icon>
           {i.status!=="draft"&&<Icon title="Télécharger PDF" onClick={()=>downloadDocumentPdf("invoice",i)}><Download/></Icon>}
-          {i.status==="draft"&&<><Icon title="Modifier" onClick={()=>setModal({type:"invoice",value:i})}><FileText/></Icon><Icon title="Émettre et verrouiller" onClick={()=>confirm("Émettre cette facture ? Son numéro deviendra définitif et son contenu sera verrouillé.")&&void call("budget_pro_invoice_issue",{p_id:i.id},"Facture émise et verrouillée")}><Send/></Icon><Icon title="Supprimer le brouillon" danger onClick={()=>confirm("Supprimer ce brouillon ?")&&void call("budget_pro_invoice_delete",{p_id:i.id},"Brouillon supprimé")}><Trash2/></Icon></>}
+          {i.status==="draft"&&<><Icon title="Modifier" onClick={()=>setModal({type:"invoice",value:i})}><FileText/></Icon><Icon title="Émettre et verrouiller" onClick={()=>confirm("Émettre cette facture ? Son numéro deviendra définitif et son contenu sera verrouillé.")&&void call("budget_pro_invoice_issue",{p_id:i.id},"Facture émise et verrouillée")}><Send/></Icon><button type="button" className="billing-v2-action-label danger" disabled={busy} onClick={()=>confirm("Supprimer définitivement ce brouillon et ses lignes ?")&&void call("budget_pro_invoice_delete",{p_id:i.id},"Brouillon supprimé")}><Trash2 size={15}/> Supprimer</button></>}
           {i.status!=="cancelled"&&<Icon title="Dupliquer" onClick={()=>void call("budget_pro_invoice_duplicate",{p_id:i.id},"Copie créée en brouillon")}><Copy/></Icon>}
           {(i.status==="sent"||i.status==="partially_paid")&&<Icon title="Ajouter un paiement" onClick={()=>setModal({type:"payment",invoice:i})}><CheckCircle2/></Icon>}
           {paid>0&&<Icon title="Voir les paiements" onClick={()=>setModal({type:"payments",invoice:i})}><FileCheck2/></Icon>}
+          {data.invoiceArchivingEnabled&&<button type="button" className="billing-v2-action-label" disabled={busy} onClick={()=>{
+            if(!i.archivedAt&&!confirm(`Archiver ${i.status==="draft"?"ce brouillon":i.number} ? Le document, ses paiements et les sommes à encaisser seront conservés.`))return;
+            void call("budget_pro_invoice_archive",{p_id:i.id,p_archived:!i.archivedAt},i.archivedAt?"Facture restaurée":"Facture archivée");
+          }}>{i.archivedAt?<ArchiveRestore size={15}/>:<Archive size={15}/>} {i.archivedAt?"Restaurer":"Archiver"}</button>}
         </Actions></td></tr>})}
       </tbody></table></div>}
     </section>}
