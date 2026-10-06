@@ -5482,7 +5482,6 @@ export default function App() {
           )}
           {route === "budget" && (
             <>
-              {availablePanel()}
               <div className="toolbar">
                 <button className="secondary" onClick={() => navigate("fixed")}>
                   <List size={17} />
@@ -5534,6 +5533,7 @@ export default function App() {
                   </strong>
                 </div>
               </section>
+              {availablePanel()}
               <MonthlyComparison state={s} period={selectedMonth}/>
               <div className="section-head">
                 <h2>Vos catégories</h2>
