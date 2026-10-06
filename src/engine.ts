@@ -196,9 +196,20 @@ export type Loan = {
 
 };
 
+export type MonthlyForecast = {
+  capturedAt: string;
+  income: number;
+  fixed: number;
+  variable: number;
+  savings: number;
+  categories: { id: string; name: string; planned: number }[];
+};
+
 export type State = {
 
   schema: 1;
+
+  monthlyForecasts?: Record<string, MonthlyForecast>;
 
   accounts: Account[];
 
