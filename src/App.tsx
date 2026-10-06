@@ -5483,7 +5483,6 @@ export default function App() {
           {route === "budget" && (
             <>
               {availablePanel()}
-              {monthlyReviewPanel()}
               <div className="toolbar">
                 <button className="secondary" onClick={() => navigate("fixed")}>
                   <List size={17} />
