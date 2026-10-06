@@ -1,3 +1,4 @@
+import { categoryUsage, categoryReplacements, deleteArchivedCategory } from "./categoryDeletion";
 import SpendingAnalysis from "./SpendingAnalysis";
 import { freezePastForecasts } from "./monthlyComparison";
 import MonthlyComparison from "./MonthlyComparison";
@@ -787,6 +788,26 @@ export default function App() {
   const categoryOptions: [string, string][] = s.categories
     .filter((c) => !c.archived || c.archived > selectedMonth)
     .map((c) => [c.id, c.name]);
+  function removeArchivedCategory(c: Category) {
+    const usage = categoryUsage(s, c.id);
+    if (usage.linkedPersonal || ps.account?.category === c.id) {
+      explain("Catégorie liée à un compte perso", <p>Réaffectez d’abord le compte personnel à une autre catégorie depuis ses réglages. Son propriétaire doit effectuer ce changement avant la suppression.</p>);
+      return;
+    }
+    if (!usage.transactions && !usage.rules) {
+      confirmAction("Supprimer définitivement « " + c.name + " » ?", "Cette catégorie n’a aucune opération ni échéance liée. Elle sera supprimée du foyer. Les prévisions déjà figées restent conservées.", async () => change(d => deleteArchivedCategory(d, c.id), "Catégorie supprimée"));
+      return;
+    }
+    const targets = categoryReplacements(s, c.id);
+    if (!targets.length) { explain("Choisir une destination", <p>Créez d’abord une catégorie active compatible pour recevoir les dépenses et échéances de « {c.name} ».</p>); return; }
+    openForm("Transférer et supprimer « " + c.name + " »", [
+      choice("target", "Transférer vers", targets.map(target => [target.id, target.name] as [string,string]), targets[0].id),
+      field("confirmation", "Saisissez SUPPRIMER pour confirmer", "", "text", `${usage.transactions} opération(s) et ${usage.rules} échéance(s) seront réaffectées. Leurs montants et dates seront conservés. Le budget actuel de destination reste inchangé. Les prévisions figées seront regroupées sans changer leurs totaux.`),
+    ], async v => {
+      if (v.confirmation !== "SUPPRIMER") throw Error("Saisissez SUPPRIMER pour confirmer.");
+      await change(d => deleteArchivedCategory(d, c.id, v.target), "Historique transféré et catégorie supprimée");
+    }, "Transférer et supprimer");
+  }
   function editCategory(c?: Category) {
     openForm(
       c ? "Modifier la catégorie" : "Nouvelle catégorie",
@@ -8155,6 +8176,15 @@ export default function App() {
                     />
                   </label>
                 </div>
+              </section>
+              <section className="card archived-category-settings">
+                <h2>Catégories archivées</h2>
+                <p className="muted">Supprimez une catégorie inutilisée ou transférez son historique vers une catégorie active.</p>
+                {s.categories.filter(c => c.archived).map(c => {
+                  const usage = categoryUsage(s, c.id);
+                  return <div className="archived-category-row" key={c.id}><div><strong>{c.name}</strong><small className="muted">Archivée depuis {monthLabel(c.archived!)} · {usage.transactions} opération(s) · {usage.rules} échéance(s)</small></div><button type="button" className="text danger-text" onClick={() => removeArchivedCategory(c)}>Supprimer</button></div>;
+                })}
+                {!s.categories.some(c => c.archived) && <p className="muted">Aucune catégorie archivée.</p>}
               </section>
               <section className="card danger-zone">
                 <h2>Réinitialisation</h2>
