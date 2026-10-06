@@ -17,6 +17,8 @@ export function spendingAnalysis(state: State, selectedMonth: string, period: An
     if (!monthly.has(date)) monthly.set(date, new Map());
     const point = monthly.get(date)!; point.set(id, (point.get(id) || 0) + t.amount);
   }
+  for (const category of state.categories) if (!totals.has(category.id)) totals.set(category.id, 0);
+  if (includeTravel && !totals.has("__travel")) { totals.set("__travel", 0); names.set("__travel", "Voyages"); }
   const categories = Array.from(totals, ([id, value]) => ({ id, name: names.get(id)!, value })).sort((a,b) => b.value - a.value || a.name.localeCompare(b.name));
   const data: Record<string, string | number>[] = [];
   for (let cursor = start; cursor <= end; cursor = shiftMonth(cursor, 1)) data.push({ name: cursor, ...Object.fromEntries(categories.map(c => [c.id, monthly.get(cursor)?.get(c.id) || 0])) });

@@ -8,7 +8,11 @@ export default function SpendingAnalysis({ state, selectedMonth }: { state: Stat
   const [includeTravel, setIncludeTravel] = useState(false);
   const [chosen, setChosen] = useState<string[] | null>(null);
   const analysis = useMemo(() => spendingAnalysis(state, selectedMonth, period, includeTravel), [state, selectedMonth, period, includeTravel]);
-  const monthly = useMemo(() => selectedMonth > month() ? { categories: [], total: 0 } : spendingAnalysis(state, selectedMonth, "1", includeTravel), [state, selectedMonth, includeTravel]);
+  const monthly = useMemo(() => {
+    if (selectedMonth > month()) return { categories: [], total: 0 };
+    const result = spendingAnalysis(state, selectedMonth, "1", includeTravel);
+    return { ...result, categories: result.categories.filter(c => c.value > 0) };
+  }, [state, selectedMonth, includeTravel]);
   const monthlyColors = monthly.categories.map((c, i) => {
     const index = analysis.categories.findIndex(x => x.id === c.id);
     return colors[(index < 0 ? i : index) % colors.length];
@@ -29,7 +33,7 @@ export default function SpendingAnalysis({ state, selectedMonth }: { state: Stat
       <label className="toggle"><input type="checkbox" checked={includeTravel} onChange={e => setIncludeTravel(e.target.checked)}/> Inclure les voyages</label>
       <p className="muted">{analysis.start === analysis.end ? monthLabel(analysis.end) : `${monthLabel(analysis.start)} → ${monthLabel(analysis.end)}`}</p>
     </section>
-    {!analysis.total ? <section className="card"><p className="muted">Aucune dépense sur cette période.</p></section> : <>
+    {!analysis.categories.length ? <section className="card"><p className="muted">Aucune catégorie ni dépense sur cette période.</p></section> : <>
       <section className="card spending-analysis-chart">
         <div className="section-head"><h2>Évolution des dépenses</h2><span className="muted">Par mois</span></div>
         <p className="muted">{chosen === null ? "Toutes les catégories sont sélectionnées par défaut." : `${visible.length} catégorie${visible.length > 1 ? "s" : ""} affichée${visible.length > 1 ? "s" : ""}.`}</p>
@@ -38,7 +42,7 @@ export default function SpendingAnalysis({ state, selectedMonth }: { state: Stat
         {visible.length ? <div className="chart"><Suspense fallback={<div className="chart-loading"/>}><Chart kind="analysis" data={analysis.data} cats={analysis.categories} analysisCats={selected} palette={colors}/></Suspense></div> : <p className="muted">Sélectionne au moins une catégorie pour afficher les courbes.</p>}
 
       </section>
-      <section className="card spending-analysis-totals"><h2>Répartition sur la période</h2><p className="muted">Total dépensé : <strong>{money(analysis.total)}</strong></p>{analysis.categories.map((c,i) => <div className="spending-analysis-total" key={c.id}><div><span>{c.name}</span><strong>{money(c.value)} <small>{Math.round(c.value / analysis.total * 100)} %</small></strong></div><div className="spending-analysis-track"><i style={{ width: `${c.value / analysis.total * 100}%`, background: colors[i % colors.length] }}/></div></div>)}<p className="muted">Dépenses enregistrées du foyer. Virements, prêts et achats des comptes personnels exclus. Les catégories choisies filtrent les courbes ; cette répartition conserve toutes les catégories.</p></section>
+      <section className="card spending-analysis-totals"><h2>Répartition sur la période</h2><p className="muted">Total dépensé : <strong>{money(analysis.total)}</strong></p>{analysis.categories.filter(c => c.value > 0).map((c,i) => <div className="spending-analysis-total" key={c.id}><div><span>{c.name}</span><strong>{money(c.value)} <small>{analysis.total ? Math.round(c.value / analysis.total * 100) : 0} %</small></strong></div><div className="spending-analysis-track"><i style={{ width: `${c.value / analysis.total * 100}%`, background: colors[i % colors.length] }}/></div></div>)}<p className="muted">Dépenses enregistrées du foyer. Virements, prêts et achats des comptes personnels exclus. Les catégories choisies filtrent les courbes ; cette répartition conserve toutes les catégories.</p></section>
     </>}
   </>;
 }
