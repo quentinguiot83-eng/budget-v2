@@ -2583,3 +2583,28 @@ dialog::backdrop {
 .monthly-comparison-method p{font-size:.8rem;line-height:1.6}
 .comparison-sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 @media(max-width:640px){.monthly-comparison{padding:16px}.monthly-comparison th,.monthly-comparison td{padding:11px 5px}.monthly-comparison td{font-size:.8rem}}
+
+.spending-analysis-controls{display:flex;gap:16px;align-items:center;flex-wrap:wrap;padding:20px}
+.spending-analysis-controls .field{margin:0;min-width:210px}
+.spending-analysis-controls>p{flex-basis:100%;margin:0;font-size:.85rem}
+.spending-analysis-chart,.spending-analysis-totals{padding:22px}
+.spending-analysis-legend{display:flex;flex-wrap:wrap;gap:8px 16px;font-size:.8rem;margin:14px 0}
+.spending-analysis-legend span{display:flex;align-items:center;gap:6px}
+.spending-analysis-legend i,.spending-analysis-category-options i,.spending-analysis-tooltip i{display:inline-block;width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.spending-analysis-options summary{cursor:pointer;font-size:.875rem;font-weight:600;padding:10px 0}
+.spending-analysis-category-options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:16px}
+.spending-analysis-category-options label{display:flex;align-items:center;gap:7px;font-size:.85rem;min-width:0}
+.spending-analysis-category-options input{accent-color:var(--chart)}
+.spending-analysis-tooltip{background:var(--surface);color:var(--ink);border:1px solid var(--border);border-radius:12px;box-shadow:0 6px 20px #0001;padding:10px;width:230px;max-width:calc(100vw - 150px);font-size:11px}
+.spending-analysis-tooltip>strong{display:block;margin-bottom:5px}
+.spending-analysis-tooltip>div{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:4px 0}
+.spending-analysis-tooltip span{display:flex;align-items:center;gap:5px;min-width:0;overflow-wrap:anywhere}
+.spending-analysis-tooltip b{white-space:nowrap;font-weight:600}
+.spending-analysis-tooltip p{margin:0}
+.spending-analysis-total{margin:18px 0}
+.spending-analysis-total>div:first-child{display:flex;justify-content:space-between;gap:12px;font-size:.875rem}
+.spending-analysis-total strong{white-space:nowrap}
+.spending-analysis-total small{font-weight:400;color:var(--muted);margin-left:6px}
+.spending-analysis-track{background:var(--accent-soft);height:6px;border-radius:6px;margin-top:8px;overflow:hidden}
+.spending-analysis-track i{display:block;height:100%;border-radius:6px}
+@media(max-width:640px){.spending-analysis-chart,.spending-analysis-totals,.spending-analysis-controls{padding:16px}.spending-analysis-controls .field{width:100%}.spending-analysis-chart .chart{height:280px}.spending-analysis-totals>p{font-size:.8rem;line-height:1.5}}

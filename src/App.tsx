@@ -1,3 +1,4 @@
+import SpendingAnalysis from "./SpendingAnalysis";
 import { freezePastForecasts } from "./monthlyComparison";
 import MonthlyComparison from "./MonthlyComparison";
 import TransactionSearch from "./TransactionSearch";
@@ -386,8 +387,6 @@ export default function App() {
     [personalProjectionMonths, setPersonalProjectionMonths] = useState(24),
     [activeTrip, setActiveTrip] = useState(""),
     [txFilter, setTxFilter] = useState(""),
-    [analysisCats, setAnalysisCats] = useState<string[] | null>(null),
-    [includeTravel, setIncludeTravel] = useState(false),
     [proEnabled, setProEnabled] = useState(false),
     [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const busy = useRef(false),
@@ -7805,158 +7804,7 @@ export default function App() {
             <TransactionSearch initialType={txFilter} state={s} month={selectedMonth} setMonth={setMonth} add={() => navigate("add")} rows={txRows}/>
           )}
           {route === "analysis" && (
-            <>
-              <div className="toolbar">
-                <label className="toggle">
-                  <input
-                    type="checkbox"
-                    checked={includeTravel}
-                    onChange={(e) => setIncludeTravel(e.target.checked)}
-                  />{" "}
-                  Inclure les voyages
-                </label>
-              </div>
-              {(() => {
-                const cats = [
-                  ...s.categories.map((c) => ({ id: c.id, name: c.name })),
-                  ...(includeTravel ? [{ id: "travel", name: "Voyages" }] : []),
-                ];
-                const sums = cats
-                  .map((c) => ({
-                    name: c.name,
-                    value: totals.tx
-                      .filter(
-                        (t) =>
-                          t.type === "expense" &&
-                          (c.id === "travel"
-                            ? !!t.trip
-                            : !t.trip && t.category === c.id),
-                      )
-                      .reduce((n, t) => n + t.amount, 0),
-                  }))
-                  .filter((c) => c.value > 0);
-                const data = Array.from({ length: 12 }, (_, i) => {
-                  const m = shiftMonth(selectedMonth, i - 11);
-                  const tx = s.transactions.filter(
-                    (t) => month(t.date) === m && t.type === "expense",
-                  );
-                  return {
-                    name: monthLabel(m),
-                    ...Object.fromEntries(
-                      cats.map((c) => [
-                        c.id,
-                        tx
-                          .filter((t) =>
-                            c.id === "travel"
-                              ? !!t.trip
-                              : !t.trip && t.category === c.id,
-                          )
-                          .reduce((n, t) => n + t.amount, 0),
-                      ]),
-                    ),
-                  };
-                });
-                return (
-                  <>
-                    <div className="two-col">
-                      <section className="card">
-                        <h2>Répartition du mois</h2>
-                        {sums.length ? (
-                          <div className="chart">
-                            <Suspense
-                              fallback={
-                                <div className="chart-loading" />
-                              }
-                            >
-                              <LazyChart
-                                kind="pie"
-                                data={sums}
-                                palette={palette}
-                              />
-                            </Suspense>
-                          </div>
-                        ) : (
-                          <p className="muted">
-                            Aucune dépense sur cette période.
-                          </p>
-                        )}
-                      </section>
-                      <section className="card">
-                        <h2>Montants par catégorie</h2>
-                        {sums.map((c, i) => (
-                          <Row
-                            key={c.name}
-                            icon={
-                              <span
-                                className="color-dot"
-                                style={{ background: palette[i % 6] }}
-                              />
-                            }
-                            title={c.name}
-                            value={money(c.value)}
-                          />
-                        ))}
-                        <Row
-                          title="Total"
-                          value={money(sums.reduce((n, x) => n + x.value, 0))}
-                        />
-                        <p className="muted">
-                          Paiements validés uniquement. Virements et prêts
-                          exclus.
-                        </p>
-                      </section>
-                    </div>
-                    <section className="card">
-                      <h2>Les 12 derniers mois</h2>
-                      <div className="filters">
-                        {cats.map((c, i) => (
-                          <label key={c.id}>
-                            <input
-                              type="checkbox"
-                              checked={
-                                analysisCats === null ||
-                                analysisCats.includes(c.id)
-                              }
-                              onChange={() =>
-                                setAnalysisCats((prev) =>
-                                  prev === null
-                                    ? cats
-                                        .filter((x) => x.id !== c.id)
-                                        .map((x) => x.id)
-                                    : prev.includes(c.id)
-                                      ? prev.filter((x) => x !== c.id)
-                                      : [...prev, c.id],
-                                )
-                              }
-                            />
-                            <span
-                              className="color-dot"
-                              style={{ background: palette[i % 6] }}
-                            />
-                            {c.name}
-                          </label>
-                        ))}
-                      </div>
-                      <div className="chart">
-                        <Suspense
-                          fallback={
-                            <div className="chart-loading" />
-                          }
-                        >
-                          <LazyChart
-                            kind="analysis"
-                            data={data}
-                            cats={cats}
-                            analysisCats={analysisCats}
-                            palette={palette}
-                          />
-                        </Suspense>
-                      </div>
-                    </section>
-                  </>
-                );
-              })()}
-            </>
+            <SpendingAnalysis state={s} selectedMonth={selectedMonth}/>
           )}
           {route === "loans" && (
             <LoansPage
