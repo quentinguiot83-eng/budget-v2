@@ -2618,3 +2618,5 @@ dialog::backdrop {
 .spending-analysis-monthly-legend strong{white-space:nowrap}
 .spending-analysis-monthly-legend small{color:var(--muted);font-weight:400;margin-left:5px}
 @media(max-width:640px){.spending-analysis-monthly{padding:16px}}
+.spending-analysis-options{border:0;padding:0;margin:18px 0}
+.spending-analysis-options legend{padding:0;margin-bottom:8px;font-size:.875rem;font-weight:600}
