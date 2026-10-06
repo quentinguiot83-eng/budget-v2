@@ -326,6 +326,7 @@ export default function Charts(
     >
       <LineChart
         data={props.data}
+        margin={{ top: 12, right: 12, left: 0, bottom: 8 }}
       >
         <CartesianGrid
           vertical={false}
@@ -334,6 +335,9 @@ export default function Charts(
 
         <XAxis
           dataKey="name"
+          tickFormatter={(value) => new Date(String(value) + "-15T12:00:00").toLocaleDateString("fr-FR", { month: "short", year: "2-digit" })}
+          minTickGap={28}
+          interval="preserveStartEnd"
           tick={{
             fontSize: 11,
           }}
@@ -353,9 +357,13 @@ export default function Charts(
         />
 
         <Tooltip
-          formatter={(v) =>
-            money(Number(v))
-          }
+          isAnimationActive={false}
+          position={{ x: 54, y: 0 }}
+          content={({ active, payload, label }) => {
+            if (!active || !payload?.length) return null;
+            const entries = payload.filter(p => Number(p.value) > 0).sort((a,b) => Number(b.value) - Number(a.value));
+            return <div className="spending-analysis-tooltip"><strong>{monthLabel(String(label))}</strong>{entries.length ? entries.slice(0,3).map(entry => <div key={String(entry.dataKey)}><span><i style={{background: entry.color}}/>{String(entry.name)}</span><b>{money(Number(entry.value))}</b></div>) : <p>Aucune dépense</p>}{entries.length > 3 && <div><span>{entries.length - 3} autres catégories</span><b>{money(entries.slice(3).reduce((sum,p) => sum + Number(p.value),0))}</b></div>}</div>;
+          }}
         />
 
         {props.cats
@@ -384,8 +392,11 @@ export default function Charts(
                       .length
                 ]
               }
-              strokeWidth={2}
-              dot={false}
+              type="linear"
+              strokeWidth={2.5}
+              dot={props.data.length <= 12 ? { r: 2 } : false}
+              activeDot={{ r: 4 }}
+              isAnimationActive={props.data.length <= 24}
             />
 
           ))}
