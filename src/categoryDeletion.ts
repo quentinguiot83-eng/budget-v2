@@ -25,6 +25,13 @@ export function deleteArchivedCategory(state: State, id: string, replacementId?:
     // Preserve frozen monthly totals while combining the category labels.
     for (const forecast of Object.values(state.monthlyForecasts || {})) {
       const old = forecast.categories.find(c => c.id === id);
+      const oldFixed = forecast.fixedCategories?.find(c => c.id === id);
+      if (oldFixed && forecast.fixedCategories) {
+        const existingFixed = forecast.fixedCategories.find(c => c.id === target.id);
+        if (existingFixed) existingFixed.planned += oldFixed.planned;
+        else forecast.fixedCategories.push({ ...oldFixed, id: target.id });
+        forecast.fixedCategories = forecast.fixedCategories.filter(c => c.id !== id);
+      }
       if (!old) continue;
       const existing = forecast.categories.find(c => c.id === target.id);
       if (existing) existing.planned += old.planned;

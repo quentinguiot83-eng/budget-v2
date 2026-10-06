@@ -173,7 +173,7 @@ test("bilan mensuel : dépenses payées, voyages et comptes personnels séparés
   assert.equal(r.travelSpending, 10000);
   assert.deepEqual(r.categories.map((c) => [c.name, c.amount]), [["Sans catégorie", 5000], ["Courses", 4200]]);
 });
-test("bilan mensuel : épargne à la date bancaire, transferts internes exclus", () => {
+test("bilan mensuel : épargne au mois affecté, transferts internes exclus", () => {
   const s = fixture();
   s.transactions.push(
     { id: "saving", type: "transfer", amount: 15000, date: today(), account: "current", to: "save", savingMonth: shiftMonth(month(), 1), description: "Épargne" },
@@ -181,7 +181,8 @@ test("bilan mensuel : épargne à la date bancaire, transferts internes exclus",
     { id: "future", type: "transfer", amount: 10000, date: dateAt(shiftMonth(month(), 1), 1), account: "current", to: "save", description: "Futur" },
   );
   s.savingDoneMonths = [month()];
-  assert.equal(monthlyReview(s, month()).savings, 15000);
+  assert.equal(monthlyReview(s, month()).savings, 0);
+  assert.equal(monthlyReview(s, shiftMonth(month(), 1)).savings, 15000);
 });
 test("bilan mensuel : comparaison à durée comparable et mois terminés complets", () => {
   const s = fixture();
