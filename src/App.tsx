@@ -1,3 +1,4 @@
+import TransactionSearch from "./TransactionSearch";
 import {
   lazy,
   Suspense,
@@ -542,6 +543,7 @@ export default function App() {
   ];
 
   function navigate(r: string) {
+    if (r === "transactions") setTxFilter("");
 
     const targetIsSubPage =
       subRoutes.includes(r);
@@ -5177,7 +5179,6 @@ export default function App() {
             "budget",
             "personal",
             "calendar",
-            "transactions",
             "analysis",
             "fixed",
           ].includes(route) && (
@@ -7798,49 +7799,7 @@ export default function App() {
             </>
           )}
           {route === "transactions" && (
-            <>
-              <div className="toolbar">
-                <select
-                  aria-label="Filtrer les transactions"
-                  value={txFilter}
-                  onChange={(e) => setTxFilter(e.target.value)}
-                >
-                  <option value="">Toutes les opérations</option>
-                  <option value="income">Revenus</option>
-                  <option value="expense">Dépenses</option>
-                  <option value="transfer">Virements</option>
-                  <option value="loan">Prêts accordés</option>
-                  <option value="repay">Remboursements de prêts</option>
-                  {s.categories.map((c) => (
-                    <option key={c.id} value={"cat:" + c.id}>
-                      {c.name}
-                      {c.archived ? " (archivée)" : ""}
-                    </option>
-                  ))}
-                </select>
-                <button className="primary" onClick={() => navigate("add")}>
-                  <Plus size={17} />
-                  Opération
-                </button>
-              </div>
-              <section className="card">
-                {txRows(
-                  sortedTx.filter((t) => {
-                    const sameMonth =
-                      txFilter === "income" && t.type === "income"
-                        ? incomeBudgetMonth(t) === selectedMonth
-                        : month(t.date) === selectedMonth;
-                    return (
-                      sameMonth &&
-                      (!txFilter ||
-                        (txFilter.startsWith("cat:")
-                          ? t.category === txFilter.slice(4)
-                          : t.type === txFilter))
-                    );
-                  }),
-                )}
-              </section>
-            </>
+            <TransactionSearch initialType={txFilter} state={s} month={selectedMonth} setMonth={setMonth} add={() => navigate("add")} rows={txRows}/>
           )}
           {route === "analysis" && (
             <>
