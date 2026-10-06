@@ -1,3 +1,4 @@
+import MonthlyComparison from "./MonthlyComparison";
 import TransactionSearch from "./TransactionSearch";
 import {
   lazy,
@@ -5532,6 +5533,7 @@ export default function App() {
                   </strong>
                 </div>
               </section>
+              <MonthlyComparison state={s} period={selectedMonth}/>
               <div className="section-head">
                 <h2>Vos catégories</h2>
                 <button className="primary" onClick={() => editCategory()}>

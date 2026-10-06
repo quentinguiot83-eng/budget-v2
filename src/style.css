@@ -2567,3 +2567,19 @@ dialog::backdrop {
 .transaction-search-results>.secondary{margin:16px}
 @media(max-width:640px){.transaction-search-top{gap:8px}.transaction-search-input{flex-basis:100%;min-width:0}.transaction-search-top>button{flex:1;justify-content:center}.transaction-search-filters{grid-template-columns:repeat(2,minmax(0,1fr))}.transaction-search-period>.field{flex:1;min-width:120px}.transaction-search{padding:16px!important}}
 .transaction-search .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+
+.monthly-comparison{padding:22px}
+.monthly-comparison .section-head{margin-bottom:8px;flex-wrap:wrap;gap:8px}
+.monthly-comparison .section-head h2{margin:0}
+.monthly-comparison-scroll{overflow-x:auto}
+.monthly-comparison table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+.monthly-comparison th,.monthly-comparison td{padding:13px 8px;border-bottom:1px solid var(--border);text-align:right;white-space:nowrap}
+.monthly-comparison th:first-child{text-align:left;white-space:normal;min-width:105px}
+.monthly-comparison thead th{font-size:.8rem;color:var(--muted);font-weight:500}
+.monthly-comparison tbody th{font-size:.9rem;font-weight:600}
+.monthly-comparison td{font-size:.9rem}
+.monthly-comparison-legend{font-size:.8rem;line-height:1.5}
+.monthly-comparison summary{cursor:pointer;padding:12px 0;font-size:.875rem;font-weight:600}
+.monthly-comparison-method p{font-size:.8rem;line-height:1.6}
+.comparison-sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+@media(max-width:640px){.monthly-comparison{padding:16px}.monthly-comparison th,.monthly-comparison td{padding:11px 5px}.monthly-comparison td{font-size:.8rem}}
