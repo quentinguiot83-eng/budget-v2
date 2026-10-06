@@ -2608,3 +2608,13 @@ dialog::backdrop {
 .spending-analysis-track{background:var(--accent-soft);height:6px;border-radius:6px;margin-top:8px;overflow:hidden}
 .spending-analysis-track i{display:block;height:100%;border-radius:6px}
 @media(max-width:640px){.spending-analysis-chart,.spending-analysis-totals,.spending-analysis-controls{padding:16px}.spending-analysis-controls .field{width:100%}.spending-analysis-chart .chart{height:280px}.spending-analysis-totals>p{font-size:.8rem;line-height:1.5}}
+
+.spending-analysis-monthly{padding:22px}
+.spending-analysis-monthly .section-head{flex-wrap:wrap;gap:8px}
+.spending-analysis-monthly-legend{display:flex;flex-direction:column;gap:12px}
+.spending-analysis-monthly-legend>div{display:flex;justify-content:space-between;gap:12px;font-size:.85rem}
+.spending-analysis-monthly-legend span{display:flex;align-items:center;gap:7px}
+.spending-analysis-monthly-legend i{display:inline-block;width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.spending-analysis-monthly-legend strong{white-space:nowrap}
+.spending-analysis-monthly-legend small{color:var(--muted);font-weight:400;margin-left:5px}
+@media(max-width:640px){.spending-analysis-monthly{padding:16px}}
