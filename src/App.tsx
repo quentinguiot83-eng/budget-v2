@@ -95,6 +95,8 @@ import {
   balance,
   monthEndAvailable,
   monthlyReview,
+  savingsBudgetMonth,
+  isSavingsTransfer,
   budgetOverruns,
   budget,
   personalEnvelope,
@@ -2549,7 +2551,7 @@ export default function App() {
     const plan = monthlyPlan(s, selectedMonth);
     const paid = to
       ? s.transactions
-          .filter((t) => t.to === to.id && t.savingMonth === selectedMonth)
+          .filter((t) => isSavingsTransfer(s, t) && t.date <= today() && t.to === to.id && savingsBudgetMonth(t) === selectedMonth)
           .reduce((n, t) => n + t.amount, 0)
       : 0;
     const accountRemaining = to
@@ -3876,6 +3878,9 @@ export default function App() {
   function categoryVariableBudget(
     c: Category,
   ) {
+    if (totals.forecast) {
+      return totals.forecast.categories.find(x => x.id === c.id)?.planned ?? 0;
+    }
 
     const legacyPersonal =
       s.accounts.find(
@@ -4129,7 +4134,7 @@ export default function App() {
   }
 
   function calc() {
-    const incomeUsed = s.income;
+    const incomeUsed = totals.plannedIncome;
     const capacityUsed = totals.capacity;
 
     explain(
@@ -4149,7 +4154,7 @@ export default function App() {
           value={"− " + money(totals.fixed)}
         />
 
-        {totals.scheduled.map((d) => (
+        {!totals.forecast && totals.scheduled.map((d) => (
           <Row
             key={d.key}
             title={d.rule.name}
@@ -4185,7 +4190,7 @@ export default function App() {
         </p>
 
         <p>
-          Le plan d’épargne prévisionnel est calculé à partir de votre revenu mensuel estimé, soit {money(s.income)}.
+          Le plan d’épargne prévisionnel est calculé à partir du revenu estimé pour ce mois, soit {money(incomeUsed)}.
         </p>
 
         <p>
@@ -4291,6 +4296,7 @@ export default function App() {
   const sortedTx = [...s.transactions].reverse().sort((a, b) =>
     b.date.localeCompare(a.date),
   );
+  const historicalVariableOnly = !!totals.forecast && !totals.forecast.fixedCategories;
   const categoryCards = (
     simple = false,
     variableOnly = false,
@@ -4308,7 +4314,7 @@ export default function App() {
             )
           ) &&
           (
-            !variableOnly ||
+            !(variableOnly || historicalVariableOnly) ||
             categoryVariableBudget(c) > 0
           ),
       )
@@ -4350,8 +4356,9 @@ export default function App() {
           c.personalOwner ===
             personalOwnerId;
 
-        const fixed =
-          totals.scheduled
+        const fixed = totals.forecast
+          ? totals.forecast.fixedCategories?.find(x => x.id === c.id)?.planned ?? 0
+          : totals.scheduled
             .filter(
               (d) =>
                 d.rule.category ===
@@ -4388,7 +4395,7 @@ export default function App() {
           categoryVariableBudget(c);
 
         const totalBudget =
-          envelope
+          envelope && !totals.forecast
             ? envelope.available
             : fixed + variable;
 
@@ -4411,12 +4418,12 @@ export default function App() {
             );
 
         const displaySpent =
-          variableOnly
+          (variableOnly || historicalVariableOnly)
             ? categoryVariableSpent(c)
             : spent;
 
         const displayBudget =
-          variableOnly
+          (variableOnly || historicalVariableOnly)
             ? variable
             : totalBudget;
 
@@ -4448,7 +4455,7 @@ export default function App() {
               <div className="grow">
 
                 <strong>
-                  {c.name}
+                  {totals.forecast?.categories.find(x => x.id === c.id)?.name ?? c.name}
                 </strong>
 
                 <p>
@@ -4461,6 +4468,7 @@ export default function App() {
                   </span>
                 </p>
 
+                {totals.forecast && <small className="muted">{totals.forecast.fixedCategories ? "Budget prévu figé" : "Budget variable figé"}</small>}
                 {isPersonal && (
                   <small className="muted">
                     {isMine
@@ -4500,7 +4508,7 @@ export default function App() {
               )}
             />
 
-            {!simple &&
+            {!simple && !totals.forecast &&
             envelope &&
             isPersonal ? (
               <>
@@ -4610,31 +4618,10 @@ export default function App() {
                 )}
 
                 <div className="split">
-
-                  <small
-                    className={
-                      spent >
-                      fixed +
-                        variable
-                        ? "negative"
-                        : ""
-                    }
-                  >
-                    {spent >
-                    fixed +
-                      variable
-                      ? "Dépassé de " +
-                        money(
-                          spent -
-                            fixed -
-                            variable,
-                        )
-                      : money(
-                          fixed +
-                            variable -
-                            spent,
-                        ) +
-                        " restants"}
+                  <small className={displaySpent > displayBudget ? "negative" : ""}>
+                    {displaySpent > displayBudget
+                      ? "Dépassé de " + money(displaySpent - displayBudget)
+                      : money(displayBudget - displaySpent) + " restants"}
                   </small>
 
                   <button
@@ -4682,6 +4669,15 @@ export default function App() {
   );
 
   function savingsPanel(location: "home" | "wealth") {
+    if (totals.forecast) {
+      return <section className="card">
+        <div className="section-head"><h2>Votre épargne du mois</h2><span className="muted">Objectif figé</span></div>
+        <Row title="Objectif prévu" value={money(totals.forecast.savings)} />
+        <Row title="Épargne enregistrée" value={money(totals.saved)} />
+        <p className="muted">Les versements suivent le mois d’épargne choisi, même si leur date bancaire est différente.</p>
+        {savingMonthMarkedDone && <p className="muted">Mois marqué comme déjà effectué avant Wimm.</p>}
+      </section>;
+    }
     if (location === "home" && totals.income <= 0) {
       return (
         <section className="card">
@@ -4739,9 +4735,10 @@ export default function App() {
             const paid = s.transactions
               .filter(
                 (t) =>
-                  t.type === "transfer" &&
+                  isSavingsTransfer(s, t) &&
+                  t.date <= today() &&
                   t.to === a.id &&
-                  t.savingMonth === selectedMonth,
+                  savingsBudgetMonth(t) === selectedMonth,
               )
               .reduce((n, t) => n + t.amount, 0);
             const target = savings.amounts[a.id] || 0;

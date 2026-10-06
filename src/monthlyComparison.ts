@@ -65,6 +65,11 @@ export function freezePastForecasts(state: State) {
         capturedAt: today(), income: planned.income, fixed: planned.fixed,
         variable: planned.variable, savings: planned.savings,
         categories: result.categories.map(({ id, name, planned }) => ({ id, name, planned })),
+        fixedCategories: Array.from(stats(state, period).scheduled.reduce((totals, d) => {
+          const id = d.rule.category || "";
+          totals.set(id, (totals.get(id) || 0) + d.rule.amount);
+          return totals;
+        }, new Map<string, number>()), ([id, planned]) => ({ id, planned })),
       };
     }
     period = shiftMonth(period, 1);

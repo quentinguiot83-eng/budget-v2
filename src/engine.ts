@@ -203,6 +203,7 @@ export type MonthlyForecast = {
   variable: number;
   savings: number;
   categories: { id: string; name: string; planned: number }[];
+  fixedCategories?: { id: string; planned: number }[];
 };
 
 export type State = {
@@ -1035,6 +1036,26 @@ export function overdue(s: State) {
 
 }
 
+export function frozenForecast(s: State, m: string) {
+  return m < month() ? s.monthlyForecasts?.[m] : undefined;
+}
+
+export function savingsBudgetMonth(t: Tx) {
+  return t.savingMonth || month(t.date);
+}
+
+export function isSavingsTransfer(s: State, t: Tx) {
+  return t.type === "transfer" &&
+    s.accounts.find(a => a.id === t.account)?.group === "current" &&
+    ["wealth", "travel"].includes(s.accounts.find(a => a.id === t.to)?.group || "");
+}
+
+export function monthlySavings(s: State, m: string) {
+  return s.transactions.filter(t => isSavingsTransfer(s, t) &&
+    savingsBudgetMonth(t) === m && t.date <= today())
+    .reduce((sum, t) => sum + t.amount, 0);
+}
+
 export function stats(
   s: State,
   m: string,
@@ -1057,13 +1078,15 @@ export function stats(
       s.accounts.find((a) => a.id === d.rule.account)?.group !== "personal",
   );
 
-  const fixed = scheduled.reduce((n, d) => n + d.rule.amount, 0);
+  const forecast = frozenForecast(s, m);
+  const plannedIncome = forecast?.income ?? s.income;
+  const fixed = forecast?.fixed ?? scheduled.reduce((n, d) => n + d.rule.amount, 0);
 
   // Pour une catégorie liée à un compte personnel :
   // budget perso total - mensualités déjà comptées en charges fixes.
   // Ainsi 150 € de budget avec une mensualité de 40 € donne bien
   // 40 € de fixe + 110 € d'enveloppe restante = 150 €.
-  const variable = s.categories.reduce((n, c) => {
+  const variable = forecast?.variable ?? s.categories.reduce((n, c) => {
 
     const legacyPersonal =
       personalAccountForCategory(s, c.id);
@@ -1124,14 +1147,7 @@ export function stats(
     .filter((t) => t.type === "expense" && !t.trip)
     .reduce((n, t) => n + t.amount, 0);
 
-  const saved = s.transactions
-    .filter(
-      (t) =>
-        t.type === "transfer" &&
-        t.savingMonth === m &&
-        t.date <= today(),
-    )
-    .reduce((n, t) => n + t.amount, 0);
+  const saved = monthlySavings(s, m);
 
   return {
 
@@ -1150,8 +1166,10 @@ export function stats(
     spending,
 
     saved,
+    plannedIncome,
+    forecast,
 
-    capacity: s.income - fixed - variable,
+    capacity: plannedIncome - fixed - variable,
 
     actualCapacity: income - fixed - variable,
 
@@ -1200,11 +1218,7 @@ export function monthlyReview(s: State, m: string) {
   const categories = Array.from(grouped, ([id, amount]) => ({
     id, name: s.categories.find((c) => c.id === id)?.name || "Sans catégorie", amount,
   })).sort((a, b) => b.amount - a.amount || a.name.localeCompare(b.name));
-  const savings = s.transactions.filter((t) => t.type === "transfer" &&
-    month(t.date) === m && t.date <= cutoff && t.date <= now &&
-    s.accounts.find((a) => a.id === t.account)?.group === "current" &&
-    ["wealth", "travel"].includes(s.accounts.find((a) => a.id === t.to)?.group || ""),
-  ).reduce((sum, t) => sum + t.amount, 0);
+  const savings = monthlySavings(s, m);
   return { spending, previousSpending, difference: spending - previousSpending,
     hasPreviousExpenses: previous.length > 0, categories, savings,
     travelSpending: all.filter((t) => t.trip).reduce((sum, t) => sum + t.amount, 0),
@@ -1349,9 +1363,9 @@ export function monthlyPlan(s: State, m: string) {
 
     (t) =>
 
-      t.type === "transfer" &&
+      isSavingsTransfer(s, t) &&
 
-      t.savingMonth === m &&
+      savingsBudgetMonth(t) === m &&
 
       t.date <= today(),
 
