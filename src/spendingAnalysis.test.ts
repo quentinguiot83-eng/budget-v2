@@ -40,3 +40,14 @@ test("empty history and uncategorized expenses still produce usable periods",()=
  s.transactions.push({id:"missing",type:"expense",date:"2025-12-01",amount:1234,description:"Sans catégorie",account:"current"});
  const result=spendingAnalysis(s,"2025-12","all",false);assert.equal(result.categories[0].name,"Sans catégorie");assert.equal(result.total,1234);
 });
+
+test("category selection includes zero spending and archived categories",()=>{
+ const s=fixture(); s.categories.push({id:"zero",name:"Santé",icon:"",budgets:{}});
+ const result=spendingAnalysis(s,"2025-12","6",false);
+ assert.equal(result.categories.find(c=>c.id==="zero")?.value,0);
+ assert.equal(result.data[0].zero,0);assert.equal(result.total,7000);
+ s.transactions=[];
+ const empty=spendingAnalysis(s,"2025-12","6",false);
+ assert.equal(empty.categories.length,2);assert.equal(empty.total,0);
+ assert.ok(empty.categories.some(c=>c.id==="food"));
+});
