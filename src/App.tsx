@@ -1,3 +1,4 @@
+import { freezePastForecasts } from "./monthlyComparison";
 import MonthlyComparison from "./MonthlyComparison";
 import TransactionSearch from "./TransactionSearch";
 import {
@@ -629,6 +630,7 @@ export default function App() {
   }
   async function change(fn: (d: State) => void, action: string) {
     const next = structuredClone(docRef.current!.state);
+    freezePastForecasts(next);
     fn(next);
     await commit(next, action);
   }
@@ -827,10 +829,10 @@ export default function App() {
         amountField(
           "variable",
           "Budget variable mensuel (€)",
-          c ? budget(c, selectedMonth) : 0,
+          c ? budget(c, month()) : 0,
           "La part fixe est calculée à partir des échéances.",
         ),
-        field("effective", "À partir du mois", selectedMonth, "month"),
+        field("effective", "À partir du mois", month(), "month", "Les prévisions des mois terminés restent figées."),
       ],
       async (v) => {
         await change((d) => {

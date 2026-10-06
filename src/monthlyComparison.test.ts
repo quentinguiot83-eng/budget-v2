@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { emptyState, type Account, type Tx } from "./engine.ts";
-import { monthlyComparison } from "./monthlyComparison.ts";
+import { freezePastForecasts, monthlyComparison } from "./monthlyComparison.ts";
 function fixture() {
   const s = emptyState();
   const a: Account = { id: "current", name: "Courant", opening: 0, date: "2020-01-01", group: "current", rate: 0, cap: 0, capType: "balance", contributed: 0, relay: "", allocation: 0 };
@@ -55,4 +55,41 @@ test("uncategorized and zero-budget expenses remain visible, future records are 
   s.transactions.push({ id: "future", type: "expense", amount: 99900, date: "2099-02-15", account: "current", description: "Futur" });
   assert.equal(monthlyComparison(s, "2025-02").categories.find(c => c.id === "")?.actual, 2000);
   assert.equal(monthlyComparison(s, "2099-02").rows[2].actual, 0);
+});
+
+test("closed forecasts survive changed budgets, income, charges and allocation after reload", () => {
+  const s = fixture();
+  freezePastForecasts(s);
+  const before = monthlyComparison(s, "2025-02");
+  const saved = structuredClone(s.monthlyForecasts);
+  s.categories[0].budgets["2020-01"] = 10000;
+  s.categories[0].name = "Courses renommées";
+  s.income = 300000;
+  s.rules[0].amount = 80000;
+  s.accounts[1].allocation = 50;
+  freezePastForecasts(s);
+  assert.deepEqual(s.monthlyForecasts, saved);
+  const restored = JSON.parse(JSON.stringify(s));
+  const after = monthlyComparison(restored, "2025-02");
+  assert.ok(after.forecastFrozen);
+  assert.deepEqual(after.rows.map(r => r.planned), before.rows.map(r => r.planned));
+  assert.equal(after.categories.find(c => c.id === "food")?.planned, 40000);
+  assert.equal(after.categories.find(c => c.id === "food")?.name, "Courses");
+  restored.transactions.find((t: Tx) => t.id === "food").amount = 46000;
+  assert.equal(monthlyComparison(restored, "2025-02").rows[2].actual, 46000);
+});
+test("current and future forecasts remain live, new categories cannot rewrite a closed forecast", () => {
+  const s = fixture();
+  freezePastForecasts(s);
+  s.categories.push({ id: "new", name: "Nouvelle", icon: "", budgets: { "2020-01": 12345 } });
+  s.transactions.push({ id: "late", type: "expense", amount: 500, date: "2025-02-20", account: "current", category: "new", description: "Correction" });
+  const past = monthlyComparison(s, "2025-02");
+  assert.equal(past.rows[2].planned, 40000);
+  assert.equal(past.categories.find(c => c.id === "new")?.planned, 0);
+  assert.equal(past.categories.find(c => c.id === "new")?.actual, 500);
+  const current = new Date().toISOString().slice(0,7);
+  assert.equal(s.monthlyForecasts?.[current], undefined);
+  s.categories[0].budgets[current] = 99900;
+  assert.equal(monthlyComparison(s, current).categories.find(c => c.id === "food")?.planned, 99900);
+  assert.equal(monthlyComparison(s, "2099-01").categories.find(c => c.id === "food")?.planned, 99900);
 });
