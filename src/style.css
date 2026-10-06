@@ -2553,3 +2553,17 @@ dialog::backdrop {
 .budget-overrun-alert .section-head { flex-wrap: wrap; gap: 12px; }
 .budget-overrun-alert h2 { display: flex; align-items: center; gap: 8px; }
 .budget-overrun-alert p { margin-bottom: 0; font-size: .85rem; }
+
+.transaction-search-top{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.transaction-search-input{display:flex;align-items:center;gap:10px;flex:1;min-width:220px;border:1px solid var(--border);border-radius:11px;padding:0 13px;background:var(--surface,#fff);color:var(--muted)}
+.transaction-search-input input{border:0;outline:none;width:100%;min-width:0;padding:13px 0;background:transparent;color:var(--ink);font:inherit}
+.transaction-search-input:focus-within{outline:2px solid var(--chart);outline-offset:2px}
+.transaction-search-period{display:flex;gap:12px;align-items:end;flex-wrap:wrap;margin-top:18px}
+.transaction-search-period .field{min-width:150px;margin:0}
+.transaction-search-period .text{margin-bottom:12px}
+.transaction-search-filters{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-top:18px}
+.transaction-search-filters .field{margin:0;min-width:0}
+.transaction-search-results>p:first-child{padding:0 18px}
+.transaction-search-results>.secondary{margin:16px}
+@media(max-width:640px){.transaction-search-top{gap:8px}.transaction-search-input{flex-basis:100%;min-width:0}.transaction-search-top>button{flex:1;justify-content:center}.transaction-search-filters{grid-template-columns:repeat(2,minmax(0,1fr))}.transaction-search-period>.field{flex:1;min-width:120px}.transaction-search{padding:16px!important}}
+.transaction-search .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}

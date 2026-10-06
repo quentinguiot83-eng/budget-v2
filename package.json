@@ -7,7 +7,7 @@
     "dev": "vite --host 127.0.0.1",
     "build": "tsc -b && vite build",
     "preview": "vite preview --host 0.0.0.0",
-    "test": "node --import tsx --test src/engine.test.ts src/calendarFeed.test.ts src/calendarEndpoint.test.ts"
+    "test": "node --import tsx --test src/engine.test.ts src/calendarFeed.test.ts src/calendarEndpoint.test.ts src/transactionSearch.test.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.57.0",
