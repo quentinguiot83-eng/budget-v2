@@ -7554,13 +7554,15 @@ export default function App() {
             </>
           )}
           {route === "add" && (
-            <AddPage
-              trips={s.trips}
-              navigate={navigate}
-              operation={operation}
-              transfer={transfer}
-              newLoan={newLoan}
-            />
+            <div data-tour="add-page">
+              <AddPage
+                trips={s.trips}
+                navigate={navigate}
+                operation={operation}
+                transfer={transfer}
+                newLoan={newLoan}
+              />
+            </div>
           )}
           {route === "trips" && (
             <>
