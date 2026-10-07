@@ -98,13 +98,13 @@ export default function PhoneNotifications({ state }: { state: State }) {
       if (!data.session) throw Error("Reconnecte-toi pour envoyer un test.");
       const response = await fetch("/api/push?action=test&device=" + encodeURIComponent(deviceId || ""), { method: "POST", headers: { Authorization: `Bearer ${data.session.access_token}` } });
       const raw = await response.text();
-      let result: { sent?: number; failed?: number; error?: string };
+      let result: { sent?: number; failed?: number; error?: string; code?: string };
       try {
         result = JSON.parse(raw);
       } catch {
         throw Error(`Le serveur de notifications a répondu avec une erreur (${response.status}). Recharge Wimm puis réessaie.`);
       }
-      if (!response.ok || result.failed) throw Error(result.error || "Le test n’a pas pu être envoyé.");
+      if (!response.ok || result.failed) throw Error(result.code ? `${result.error || "Le test n’a pas pu être envoyé."} (${result.code})` : result.error || "Le test n’a pas pu être envoyé.");
       setMessage(result.sent ? "Notification de test envoyée. Vérifie ton téléphone." : "Test déjà envoyé récemment. Réessaie dans une minute.");
     } catch (e) { setMessage(e instanceof Error ? e.message : "Test indisponible."); }
     finally { setBusy(false); }
