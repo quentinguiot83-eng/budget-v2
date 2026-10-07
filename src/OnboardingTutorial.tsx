@@ -1,221 +1,206 @@
-import { useEffect, useState, type ReactNode } from "react";
-import {
-  Bell,
-  ChartNoAxesCombined,
-  CheckCircle2,
-  Home,
-  Landmark,
-  ListChecks,
-  PiggyBank,
-  Plus,
-  Search,
-  Wallet,
-} from "lucide-react";
+import { useEffect, useLayoutEffect, useState } from "react";
+import { ChevronLeft, ChevronRight, X } from "lucide-react";
 
 type TutorialProps = {
   open: boolean;
   hasCurrent: boolean;
   proEnabled: boolean;
+  route: string;
+  navigate: (route: string) => void;
   onConfigure: () => void;
   onSkip: () => void;
   onComplete: () => void;
 };
 
 type Step = {
-  icon: ReactNode;
+  route: string;
+  target: string;
   title: string;
   text: string;
-  points: string[];
 };
 
 export default function OnboardingTutorial({
   open,
   hasCurrent,
   proEnabled,
+  route,
+  navigate,
   onConfigure,
   onSkip,
   onComplete,
 }: TutorialProps) {
   const [step, setStep] = useState(0);
+  const [box, setBox] = useState<DOMRect | null>(null);
 
   const steps: Step[] = [
     {
-      icon: <Wallet size={30} />,
-      title: "Bienvenue dans Wimm",
-      text: "Wimm part de vos soldes réels pour suivre ce qui est déjà payé, ce qui reste à payer et ce que vous pouvez encore utiliser.",
-      points: [
-        "Vos comptes et votre patrimoine restent séparés de vos budgets.",
-        "Les virements ne sont pas comptés deux fois comme des dépenses.",
-        "Le mois reste lisible même si une dépense ou une épargne est saisie plus tard.",
-      ],
+      route: "home",
+      target: "[data-tour='home-overview']",
+      title: "Votre tableau de bord",
+      text: "Ici, Wimm vous montre directement votre compte courant, ce qu’il vous reste pour finir le mois et les informations importantes à surveiller.",
     },
     {
-      icon: <Landmark size={30} />,
-      title: "Commencez par votre situation réelle",
-      text: "Saisissez le solde que votre banque affiche aujourd’hui. Wimm vous demandera ensuite si le salaire et l’épargne du mois sont déjà compris dans ces soldes.",
-      points: [
-        "Salaire déjà reçu : Wimm ne l’attendra pas une seconde fois.",
-        "Épargne déjà effectuée : Wimm ne vous proposera pas de la refaire.",
-        "Ces réponses ne concernent que le mois de démarrage.",
-      ],
+      route: "home",
+      target: "[data-tour='setup-account']",
+      title: "Votre point de départ",
+      text: hasCurrent
+        ? "Votre compte courant est déjà configuré. Wimm part toujours de vos soldes réels pour éviter de compter deux fois votre argent."
+        : "Commencez ici : indiquez le solde réellement affiché par votre banque. Wimm vous demandera aussi si le salaire et l’épargne du mois sont déjà inclus.",
     },
     {
-      icon: <Home size={30} />,
-      title: "Accueil : votre situation du mois",
-      text: "L’accueil rassemble les informations à regarder rapidement sans ouvrir tous les détails.",
-      points: [
-        "Disponible jusqu’à la fin du mois.",
-        "Alertes de budgets dépassés et échéances à confirmer.",
-        "Bilan mensuel court et état de l’épargne.",
-      ],
+      route: "budget",
+      target: "[data-tour='budget-summary']",
+      title: "Le budget du mois",
+      text: "Cette zone compare le budget prévu, ce que vous avez réellement dépensé et ce qu’il reste dans vos enveloppes.",
     },
     {
-      icon: <ListChecks size={30} />,
-      title: "Budget : prévu, réel et enveloppes",
-      text: "La page Budget compare ce que vous aviez prévu avec ce qui s’est réellement passé.",
-      points: [
-        "Budgets variables par catégorie.",
-        "Dépenses fixes comptées uniquement au mois où elles tombent.",
-        "Bilan mensuel avec les écarts et historique figé des mois terminés.",
-      ],
+      route: "budget",
+      target: "[data-tour='budget-categories']",
+      title: "Vos catégories",
+      text: "Chaque catégorie possède son enveloppe. Vous voyez immédiatement combien a été utilisé et combien il reste.",
     },
     {
-      icon: <Plus size={30} />,
-      title: "Ajouter et retrouver vos opérations",
-      text: "Le bouton central sert à enregistrer vos mouvements au fil du mois.",
-      points: [
-        "Dépenses, revenus, transferts et épargne.",
-        "Recherche dans toutes les transactions par nom, montant, catégorie ou période.",
-        "Calendrier des paiements pour confirmer les échéances.",
-      ],
+      route: "budget",
+      target: "[data-tour='budget-tools']",
+      title: "Les détails du budget",
+      text: "Depuis ces boutons, vous retrouvez les dépenses fixes, le calendrier des échéances, toutes les transactions et la répartition de vos dépenses.",
     },
     {
-      icon: <PiggyBank size={30} />,
-      title: "Patrimoine et épargne",
-      text: "Vos livrets, placements et comptes voyage sont suivis séparément du budget courant.",
-      points: [
-        "Objectifs d’épargne calculés à partir de votre capacité réelle.",
-        "Répartition de l’épargne entre vos comptes.",
-        "Suivi des soldes et projections à long terme.",
-      ],
+      route: "add",
+      target: "[data-tour='add-button']",
+      title: "Ajouter une opération",
+      text: "Le bouton + reste accessible en bas de l’écran sur mobile. Il sert à saisir une dépense, un revenu, un transfert ou une opération d’épargne.",
     },
     {
-      icon: <ChartNoAxesCombined size={30} />,
+      route: "analysis",
+      target: "[data-tour='analysis']",
       title: "Comprendre vos dépenses",
-      text: "Répartition et Projections servent à prendre du recul sur plusieurs mois ou plusieurs années.",
-      points: [
-        "Camembert du mois et évolution par catégorie.",
-        "Périodes de 6 mois, 12 mois, 5 ans ou depuis toujours.",
-        "Projections de patrimoine et de vos projets futurs.",
-      ],
+      text: "La Répartition vous montre où part votre argent, par catégorie et sur la période que vous choisissez.",
     },
     {
-      icon: <Search size={30} />,
-      title: "Projets, voyages et fonctions avancées",
-      text: "Wimm peut aussi suivre des dépenses qui ne doivent pas fausser votre budget habituel.",
-      points: [
-        "Voyages et projets avec leur propre budget.",
-        "Prêts, crédits et remboursements.",
-        proEnabled
-          ? "Le module Pro est actif : agenda, clients, factures et suivi de l’activité."
-          : "Le module Pro peut être activé pour gérer agenda, clients, factures et activité.",
-      ],
+      route: "wealth",
+      target: "[data-tour='wealth-overview']",
+      title: "Votre patrimoine",
+      text: "Ici sont regroupés vos comptes d’épargne et placements, séparément du compte courant. L’épargne voyage reste également identifiable.",
     },
     {
-      icon: <Bell size={30} />,
-      title: "Rappels et notifications",
-      text: "Wimm peut vous prévenir sans vous obliger à surveiller l’application.",
-      points: [
-        "Dépassements de budget.",
-        "Échéances à payer et factures Pro à suivre.",
-        "Notifications téléphone configurables depuis Réglages.",
-      ],
+      route: "projection",
+      target: "[data-tour='projection-chart']",
+      title: "Vous projeter dans le temps",
+      text: "Les Projections utilisent vos revenus, charges, épargne et projets pour estimer l’évolution de votre situation à plusieurs horizons.",
     },
     {
-      icon: <CheckCircle2 size={30} />,
-      title: "Vous êtes prêt",
-      text: "Vous pouvez maintenant utiliser Wimm au quotidien. Les détails restent accessibles quand vous en avez besoin, sans surcharger l’accueil.",
-      points: [
-        "Vous pouvez passer ce tutoriel à tout moment.",
-        "Il restera toujours disponible dans Réglages → Aide et tutoriel.",
-      ],
+      route: "settings",
+      target: "[data-tour='tutorial-settings']",
+      title: "Retrouver cette visite",
+      text: "Vous pourrez relancer cette visite guidée quand vous voulez depuis Réglages → Aide et tutoriel." + (proEnabled ? " Votre module Pro reste accessible depuis la navigation." : ""),
     },
   ];
+
+  const current = steps[step];
 
   useEffect(() => {
     if (open) setStep(0);
   }, [open]);
 
+  useEffect(() => {
+    if (!open || route === current.route) return;
+    navigate(current.route);
+  }, [open, step, current.route, route]);
+
+  useLayoutEffect(() => {
+    if (!open) return;
+    let timer = 0;
+    let observer: ResizeObserver | null = null;
+
+    const locate = () => {
+      const el = document.querySelector(current.target) as HTMLElement | null;
+      if (!el) {
+        setBox(null);
+        timer = window.setTimeout(locate, 120);
+        return;
+      }
+      el.scrollIntoView({ behavior: "smooth", block: "center", inline: "nearest" });
+      const update = () => setBox(el.getBoundingClientRect());
+      window.setTimeout(update, 260);
+      update();
+      observer = new ResizeObserver(update);
+      observer.observe(el);
+      window.addEventListener("resize", update);
+      window.addEventListener("scroll", update, true);
+      return () => {
+        observer?.disconnect();
+        window.removeEventListener("resize", update);
+        window.removeEventListener("scroll", update, true);
+      };
+    };
+
+    const cleanup = locate();
+    return () => {
+      window.clearTimeout(timer);
+      if (typeof cleanup === "function") cleanup();
+      observer?.disconnect();
+    };
+  }, [open, step, route, current.target]);
+
   if (!open) return null;
 
-  const current = steps[step];
   const last = step === steps.length - 1;
-  const setup = step === 1;
+  const missingSetup = step === 1 && !hasCurrent;
+  const pad = 8;
+  const highlight = box
+    ? {
+        top: Math.max(6, box.top - pad),
+        left: Math.max(6, box.left - pad),
+        width: Math.min(window.innerWidth - 12, box.width + pad * 2),
+        height: Math.min(window.innerHeight - 12, box.height + pad * 2),
+      }
+    : null;
 
   return (
-    <div className="tutorial-layer" role="dialog" aria-modal="true" aria-label="Tutoriel Wimm">
-      <div className="tutorial-card">
-        <div className="tutorial-head">
-          <div className="tutorial-progress-label">
-            <span>Découvrir Wimm</span>
-            <strong>{step + 1}/{steps.length}</strong>
-          </div>
-          <button type="button" className="text tutorial-skip" onClick={onSkip}>
-            Passer
+    <div className="live-tour" role="dialog" aria-modal="true" aria-label="Visite guidée Wimm">
+      <div className="live-tour-shade" />
+      {highlight && <div className="live-tour-highlight" style={highlight} />}
+
+      <div className="live-tour-popover">
+        <div className="live-tour-top">
+          <span>Visite guidée · {step + 1}/{steps.length}</span>
+          <button type="button" className="icon" aria-label="Passer le tutoriel" onClick={onSkip}>
+            <X size={18} />
           </button>
         </div>
+        <div className="live-tour-progress"><i style={{ width: `${((step + 1) / steps.length) * 100}%` }} /></div>
+        <h2>{current.title}</h2>
+        <p>{current.text}</p>
 
-        <div className="tutorial-progress" aria-hidden="true">
-          <i style={{ width: `${((step + 1) / steps.length) * 100}%` }} />
-        </div>
-
-        <div className="tutorial-icon">{current.icon}</div>
-        <h1>{current.title}</h1>
-        <p className="tutorial-copy">{current.text}</p>
-
-        <div className="tutorial-points">
-          {current.points.map((point) => (
-            <div key={point}>
-              <CheckCircle2 size={17} />
-              <span>{point}</span>
-            </div>
-          ))}
-        </div>
-
-        {setup && !hasCurrent && (
-          <div className="tutorial-setup-note">
-            <strong>Configuration indispensable</strong>
-            <span>Vous pouvez passer le tutoriel, mais Wimm aura besoin de votre compte courant avant de calculer votre budget.</span>
-          </div>
+        {missingSetup && (
+          <button type="button" className="primary wide live-tour-configure" onClick={onConfigure}>
+            Configurer mon compte maintenant
+          </button>
         )}
 
-        {setup && hasCurrent && (
-          <div className="tutorial-setup-note done">
-            <CheckCircle2 size={18} />
-            <span>Votre compte courant de départ est configuré.</span>
-          </div>
-        )}
-
-        <div className="tutorial-actions">
-          {step > 0 && (
-            <button type="button" className="secondary" onClick={() => setStep((value) => value - 1)}>
-              Retour
-            </button>
-          )}
-          {setup && !hasCurrent ? (
-            <button type="button" className="primary" onClick={onConfigure}>
-              Configurer mon compte courant
-            </button>
-          ) : last ? (
+        <div className="live-tour-actions">
+          <button
+            type="button"
+            className="secondary"
+            disabled={step === 0}
+            onClick={() => setStep((value) => Math.max(0, value - 1))}
+          >
+            <ChevronLeft size={17} /> Précédent
+          </button>
+          {last ? (
             <button type="button" className="primary" onClick={onComplete}>
-              Ouvrir Wimm
+              Terminer
             </button>
           ) : (
             <button type="button" className="primary" onClick={() => setStep((value) => value + 1)}>
-              Continuer
+              Suivant <ChevronRight size={17} />
             </button>
           )}
         </div>
+        <button type="button" className="text wide live-tour-skip" onClick={onSkip}>
+          Passer la visite
+        </button>
       </div>
     </div>
   );
