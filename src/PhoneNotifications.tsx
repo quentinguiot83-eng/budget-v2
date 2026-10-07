@@ -27,7 +27,7 @@ export default function PhoneNotifications({ state }: { state: State }) {
     let cancelled = false;
     void (async () => {
       try {
-        const response = await fetch("/api/push?action=config");
+        const response = await fetch("/api/push-config");
         if (!response.ok) throw Error("Impossible de vérifier les notifications.");
         const next = await response.json();
         if (cancelled) return;
