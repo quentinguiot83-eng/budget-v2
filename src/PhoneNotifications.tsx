@@ -4,6 +4,22 @@ import { api, rpc } from "./api";
 import { pushAlerts } from "./pushAlerts";
 import type { State } from "./engine";
 
+function decodeVapidPublicKey(value: string) {
+  const normalized = value.trim().replace(/-/g, "+").replace(/_/g, "/");
+  const padded = normalized + "=".repeat((4 - normalized.length % 4) % 4);
+  let binary = "";
+  try {
+    binary = atob(padded);
+  } catch {
+    throw Error("La clé de notifications du serveur est invalide. Recharge Wimm puis réessaie.");
+  }
+  const bytes = Uint8Array.from(binary, c => c.charCodeAt(0));
+  if (bytes.length !== 65 || bytes[0] !== 4) {
+    throw Error("La clé de notifications du serveur est invalide. Recharge Wimm puis réessaie.");
+  }
+  return bytes;
+}
+
 export async function dispatchPhoneAlerts() {
   try {
     const { data } = await api.auth.getSession();
@@ -53,7 +69,7 @@ export default function PhoneNotifications({ state }: { state: State }) {
       if (permission !== "granted") throw Error("Autorise les notifications pour Wimm dans les réglages de ton téléphone, puis réessaie.");
       await navigator.serviceWorker.register("/push-sw.js", { scope: "/" });
       const registration = await navigator.serviceWorker.ready;
-      const key = Uint8Array.from(atob(config.publicKey.replace(/-/g, "+").replace(/_/g, "/")), c => c.charCodeAt(0));
+      const key = decodeVapidPublicKey(config.publicKey);
       const existing = await registration.pushManager.getSubscription();
       const subscription = existing || await registration.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: key });
       const saved = await rpc("budget_push_device", { p_subscription: subscription.toJSON(), p_budgets: budgets, p_dues: dues,
