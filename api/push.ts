@@ -1,10 +1,10 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
 import { timingSafeEqual } from "node:crypto";
-import webpush from "web-push";
 import { pushAlerts, validPushEndpoint, type DueInvoice } from "../src/pushAlerts.ts";
 import type { State } from "../src/engine.ts";
 
-type Device = { id: string; userId: string; subscription: webpush.PushSubscription; budgets: boolean; dues: boolean; state: State; invoices: DueInvoice[] };
+type PushSubscriptionData = { endpoint: string; expirationTime?: number | null; keys: { p256dh: string; auth: string } };
+type Device = { id: string; userId: string; subscription: PushSubscriptionData; budgets: boolean; dues: boolean; state: State; invoices: DueInvoice[] };
 function equal(a: string, b: string) {
   const x = Buffer.from(a), y = Buffer.from(b);
   return x.length === y.length && timingSafeEqual(x, y);
@@ -46,6 +46,10 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
       return result.json();
     };
     const devices = await db("budget_push_context", { p_user: userId }) as Device[];
+    // web-push is CommonJS. Load it dynamically so Vercel's ESM runtime does not
+    // fail while evaluating the serverless function before the handler runs.
+    const webPushModule = await import("web-push");
+    const webpush = webPushModule.default ?? webPushModule;
     webpush.setVapidDetails(process.env.WIMM_VAPID_SUBJECT || `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL || process.env.VERCEL_URL || "wimm.invalid"}`, publicKey!, privateKey!);
     let sent = 0, failed = 0;
     const queue = devices.filter(d => action !== "test" || d.userId === userId && d.id === query.get("device"));
