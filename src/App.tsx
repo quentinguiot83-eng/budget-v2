@@ -1,3 +1,4 @@
+import PhoneNotifications, { dispatchPhoneAlerts } from "./PhoneNotifications";
 import { categoryUsage, categoryReplacements, deleteArchivedCategory } from "./categoryDeletion";
 import SpendingAnalysis from "./SpendingAnalysis";
 import { freezePastForecasts } from "./monthlyComparison";
@@ -377,7 +378,10 @@ export default function App() {
     [loading, setLoading] = useState(!demoEnabled),
     [error, setError] = useState(""),
     [notice, setNotice] = useState(""),
-    [route, setRoute] = useState("home"),
+    [route, setRoute] = useState(() => {
+      const screen = new URLSearchParams(location.search).get("screen");
+      return screen && ["home", "calendar", "pro"].includes(screen) ? screen : "home";
+    }),
     [backRoute, setBackRoute] = useState<string | null>(null),
     [selectedMonth, setMonth] = useState(month()),
     [sheet, setSheet] = useState<Sheet>(null),
@@ -617,6 +621,7 @@ export default function App() {
       const before = new Map(budgetOverruns(docRef.current!.state, selectedMonth).map((b) => [b.id, b.excess]));
       const increased = budgetOverruns(next, selectedMonth).filter((b) => b.excess > (before.get(b.id) || 0));
       setDoc((d) => (d ? { ...d, state: next, revision } : d));
+      if (!demoEnabled) void dispatchPhoneAlerts();
       setNotice(
         increased.length > 0
           ? "Alerte budget : " + increased.map((b) => `${b.name}, dépassement de ${money(b.excess)} (${money(b.spent)} / ${money(b.limit)}).`).join(" ")
@@ -7834,6 +7839,7 @@ export default function App() {
           )}
           {route === "settings" && (
             <>
+              {!demoEnabled && <PhoneNotifications state={s} />}
               <div className="two-col">
                 <section className="card">
                   <div className="appearance-mode-row">
