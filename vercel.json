@@ -34,6 +34,9 @@
     },
     "api/push-cron.ts": {
       "maxDuration": 60
+    },
+    "api/push-test.ts": {
+      "maxDuration": 60
     }
   }
 }
