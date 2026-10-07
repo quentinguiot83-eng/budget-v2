@@ -2772,3 +2772,54 @@ dialog::backdrop {
   }
   .tutorial-settings-card .section-head button{width:100%}
 }
+
+
+/* Visite guidée contextuelle */
+.live-tour{position:fixed;inset:0;z-index:300;pointer-events:none}
+.live-tour-shade{position:absolute;inset:0;background:#14233799;backdrop-filter:blur(2px)}
+.live-tour-highlight{
+  position:fixed;
+  z-index:1;
+  border:3px solid var(--accent);
+  border-radius:18px;
+  box-shadow:0 0 0 9999px #14233780,0 0 0 6px color-mix(in srgb,var(--accent) 25%,transparent),0 16px 45px #1423372e;
+  background:transparent;
+  transition:top .24s ease,left .24s ease,width .24s ease,height .24s ease;
+}
+.live-tour-popover{
+  position:fixed;
+  z-index:2;
+  right:clamp(16px,4vw,52px);
+  bottom:clamp(82px,10vh,120px);
+  width:min(390px,calc(100vw - 32px));
+  padding:20px;
+  border:1px solid var(--border);
+  border-radius:20px;
+  background:var(--surface);
+  color:var(--ink);
+  box-shadow:0 22px 70px #14233742;
+  pointer-events:auto;
+}
+.live-tour-top,.live-tour-actions{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.live-tour-top>span{font-size:.78rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.live-tour-progress{height:5px;margin:12px 0 18px;border-radius:999px;background:var(--accent-soft);overflow:hidden}
+.live-tour-progress i{display:block;height:100%;border-radius:inherit;background:var(--accent);transition:width .2s ease}
+.live-tour-popover h2{margin:0 0 8px;font-size:1.25rem}
+.live-tour-popover p{margin:0 0 18px;color:var(--muted);font-size:.91rem;line-height:1.58}
+.live-tour-actions button{display:inline-flex;align-items:center;justify-content:center;gap:5px}
+.live-tour-actions button:disabled{opacity:.4;cursor:default}
+.live-tour-configure{margin:0 0 14px}
+.live-tour-skip{margin-top:10px}
+@media(max-width:640px){
+  .live-tour-popover{
+    left:10px;
+    right:10px;
+    bottom:max(82px,calc(env(safe-area-inset-bottom) + 72px));
+    width:auto;
+    padding:17px;
+    border-radius:18px;
+  }
+  .live-tour-popover h2{font-size:1.12rem}
+  .live-tour-popover p{font-size:.86rem}
+  .live-tour-highlight{border-radius:14px}
+}
