@@ -917,6 +917,90 @@ export default function App() {
       },
     );
   }
+  function initialCurrentAccount() {
+    openForm(
+      "Configurer mon compte courant",
+      [
+        field("name", "Nom du compte", "Compte courant"),
+        field(
+          "opening",
+          "Solde actuel (€)",
+          0,
+          "number",
+          "Saisissez exactement le solde que votre banque affiche aujourd’hui. Il peut être négatif si le compte est à découvert.",
+        ),
+        field(
+          "date",
+          "Solde constaté au",
+          today(),
+          "date",
+          "N’ajoutez ensuite que les opérations qui ne sont pas déjà comprises dans ce solde.",
+        ),
+        choice(
+          "salaryReceived",
+          "Le salaire de ce mois est-il déjà reçu et inclus dans ce solde ?",
+          [
+            ["no", "Non, il reste à recevoir"],
+            ["yes", "Oui, il est déjà inclus"],
+          ],
+          "no",
+          "Cette réponse concerne uniquement le mois de démarrage. Wimm évite ainsi de compter le salaire une deuxième fois.",
+        ),
+        choice(
+          "savingDone",
+          "L’épargne prévue ce mois est-elle déjà effectuée et reflétée dans vos soldes ?",
+          [
+            ["no", "Non, elle reste à faire"],
+            ["yes", "Oui, elle est déjà effectuée"],
+          ],
+          "no",
+          "Choisissez Oui si vos virements d’épargne de ce mois ont déjà été réalisés avant le démarrage de Wimm.",
+        ),
+      ],
+      async (v) => {
+        await change((d) => {
+          if (d.accounts.some((account) => account.group === "current" && !account.archived))
+            throw Error("Un compte courant est déjà configuré.");
+          if (v.date > today())
+            throw Error("La date du solde doit être passée ou actuelle.");
+
+          d.accounts.push({
+            id: uid(),
+            name: v.name || "Compte courant",
+            group: "current",
+            opening: euro(v.opening),
+            date: v.date,
+            rate: 0,
+            taxMode: "none",
+            taxRate: 0,
+            cap: 0,
+            capType: "balance",
+            contributed: 0,
+            relay: "",
+            allocation: 0,
+          });
+
+          const currentMonth = month();
+          d.salaryReceivedMonths ??= [];
+          d.savingDoneMonths ??= [];
+
+          if (
+            v.salaryReceived === "yes" &&
+            !d.salaryReceivedMonths.includes(currentMonth)
+          )
+            d.salaryReceivedMonths.push(currentMonth);
+
+          if (
+            v.savingDone === "yes" &&
+            !d.savingDoneMonths.includes(currentMonth)
+          )
+            d.savingDoneMonths.push(currentMonth);
+        }, "Compte courant initialisé");
+      },
+      "Continuer",
+    );
+  }
+
   function editAccount(a?: Account) {
     openForm(
       a ? "Modifier le compte" : "Ajouter un compte",
@@ -5305,7 +5389,7 @@ export default function App() {
                   sont déjà compris dans vos soldes.
                 </p>
               </div>
-              <button className="primary" onClick={() => editAccount()}>
+              <button className="primary" onClick={() => initialCurrentAccount()}>
                 Configurer mon compte
               </button>
             </section>
@@ -8405,7 +8489,7 @@ export default function App() {
         open={tutorialOpen}
         hasCurrent={!!current}
         proEnabled={proEnabled}
-        onConfigure={() => editAccount()}
+        onConfigure={() => initialCurrentAccount()}
         onSkip={() => void closeTutorial()}
         onComplete={() => void closeTutorial()}
       />
