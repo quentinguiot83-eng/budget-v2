@@ -67,7 +67,7 @@ export default function OnboardingTutorial({
     },
     {
       route: "add",
-      target: "[data-tour='add-button']",
+      target: "[data-tour='add-page']",
       title: "Ajouter une opération",
       text: "Le bouton + reste accessible en bas de l’écran sur mobile. Il sert à saisir une dépense, un revenu, un transfert ou une opération d’épargne.",
     },
