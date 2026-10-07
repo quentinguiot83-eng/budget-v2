@@ -2626,3 +2626,149 @@ dialog::backdrop {
 .archived-category-row small{font-size:.75rem;line-height:1.5}
 .archived-category-row>button{flex-shrink:0}
 @media(max-width:640px){.archived-category-settings{padding:16px}}
+
+
+/* Tutoriel de première utilisation */
+.tutorial-layer{
+  position:fixed;
+  inset:0;
+  z-index:90;
+  display:grid;
+  place-items:center;
+  padding:max(18px,env(safe-area-inset-top)) 18px max(18px,env(safe-area-inset-bottom));
+  background:#14233766;
+  backdrop-filter:blur(7px);
+}
+.tutorial-card{
+  width:min(620px,100%);
+  max-height:calc(100dvh - 36px);
+  overflow:auto;
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:24px;
+  padding:26px;
+  box-shadow:0 28px 90px #14233733;
+}
+.tutorial-head,.tutorial-progress-label,.tutorial-actions{
+  display:flex;
+  align-items:center;
+}
+.tutorial-head{
+  justify-content:space-between;
+  gap:16px;
+}
+.tutorial-progress-label{
+  gap:10px;
+  color:var(--muted);
+  font-size:.82rem;
+}
+.tutorial-progress-label strong{color:var(--ink)}
+.tutorial-skip{padding:6px 0}
+.tutorial-progress{
+  height:6px;
+  border-radius:999px;
+  overflow:hidden;
+  background:var(--accent-soft);
+  margin:14px 0 26px;
+}
+.tutorial-progress i{
+  display:block;
+  height:100%;
+  border-radius:inherit;
+  background:var(--accent);
+  transition:width .2s ease;
+}
+.tutorial-icon{
+  width:58px;
+  height:58px;
+  display:grid;
+  place-items:center;
+  border-radius:18px;
+  color:var(--accent-deep);
+  background:var(--accent-soft);
+  margin-bottom:18px;
+}
+.tutorial-card h1{
+  margin:0 0 10px;
+  font-size:clamp(1.65rem,4vw,2.25rem);
+  line-height:1.12;
+}
+.tutorial-copy{
+  margin:0;
+  color:var(--muted);
+  line-height:1.65;
+}
+.tutorial-points{
+  display:grid;
+  gap:11px;
+  margin:22px 0;
+}
+.tutorial-points>div{
+  display:flex;
+  gap:10px;
+  align-items:flex-start;
+  font-size:.92rem;
+  line-height:1.5;
+}
+.tutorial-points svg{
+  flex:0 0 auto;
+  margin-top:2px;
+  color:var(--accent-deep);
+}
+.tutorial-setup-note{
+  display:grid;
+  gap:5px;
+  padding:14px 16px;
+  border-radius:14px;
+  background:var(--accent-soft);
+  font-size:.85rem;
+  line-height:1.5;
+  margin:4px 0 20px;
+}
+.tutorial-setup-note.done{
+  display:flex;
+  align-items:center;
+  color:var(--accent-deep);
+}
+.tutorial-actions{
+  justify-content:flex-end;
+  gap:10px;
+  margin-top:24px;
+}
+.tutorial-actions .primary{min-width:150px}
+.tutorial-settings-card{padding:22px}
+.tutorial-settings-card .section-head{align-items:flex-start}
+.tutorial-settings-card h2{
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+.tutorial-settings-card p{
+  margin:7px 0 0;
+  max-width:580px;
+  line-height:1.55;
+}
+@media(max-width:640px){
+  .tutorial-layer{
+    align-items:end;
+    padding:12px 10px max(10px,env(safe-area-inset-bottom));
+  }
+  .tutorial-card{
+    max-height:calc(100dvh - 24px);
+    padding:20px 18px;
+    border-radius:22px;
+  }
+  .tutorial-progress{margin-bottom:22px}
+  .tutorial-actions{
+    display:grid;
+    grid-template-columns:1fr;
+  }
+  .tutorial-actions .primary,.tutorial-actions .secondary{width:100%}
+  .tutorial-actions .secondary{order:2}
+  .tutorial-settings-card{padding:16px}
+  .tutorial-settings-card .section-head{
+    display:grid;
+    gap:14px;
+  }
+  .tutorial-settings-card .section-head button{width:100%}
+}
