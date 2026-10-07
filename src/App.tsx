@@ -4,6 +4,7 @@ import SpendingAnalysis from "./SpendingAnalysis";
 import { freezePastForecasts } from "./monthlyComparison";
 import MonthlyComparison from "./MonthlyComparison";
 import TransactionSearch from "./TransactionSearch";
+import OnboardingTutorial from "./OnboardingTutorial";
 import {
   lazy,
   Suspense,
@@ -199,7 +200,8 @@ const choice = (
   label: string,
   options: [string, string][],
   value = "",
-): Field => ({ name, label, options, value });
+  hint = "",
+): Field => ({ name, label, options, value, hint });
 const amountField = (
   name: string,
   label: string,
@@ -395,7 +397,8 @@ export default function App() {
     [activeTrip, setActiveTrip] = useState(""),
     [txFilter, setTxFilter] = useState(""),
     [proEnabled, setProEnabled] = useState(false),
-    [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+    [mobileMenuOpen, setMobileMenuOpen] = useState(false),
+    [tutorialOpen, setTutorialOpen] = useState(false);
   const busy = useRef(false),
     docRef = useRef(doc),
     personalDocRef = useRef(personalDoc),
@@ -427,6 +430,8 @@ export default function App() {
   const current = s.accounts.find(
     (a) => a.group === "current" && !a.archived,
   );
+  const tutorialSeen = session?.user.user_metadata?.wimm_tutorial_seen === true;
+  const tutorialStarted = session?.user.user_metadata?.wimm_tutorial_started === true;
   const totals = stats(s, selectedMonth);
   const availableDate = today();
   const availableThisMonth = useMemo(() => monthEndAvailable(s), [s, availableDate]);
@@ -512,6 +517,28 @@ export default function App() {
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
   }, [session?.user.id]);
+  useEffect(() => {
+    if (
+      demoEnabled ||
+      !session ||
+      !doc?.household ||
+      tutorialSeen ||
+      (current && !tutorialStarted)
+    )
+      return;
+    setTutorialOpen(true);
+    if (!tutorialStarted && !current) {
+      void api.auth.updateUser({
+        data: { wimm_tutorial_started: true },
+      });
+    }
+  }, [
+    session?.user.id,
+    doc?.household?.id,
+    current?.id,
+    tutorialSeen,
+    tutorialStarted,
+  ]);
   useEffect(() => {
     if (demoEnabled) return;
     const refresh = () => {
@@ -602,6 +629,17 @@ export default function App() {
   }
   function showError(e: unknown) {
     setError(e instanceof Error ? e.message : "Une erreur est survenue.");
+  }
+  async function closeTutorial() {
+    setTutorialOpen(false);
+    if (demoEnabled || !session || tutorialSeen) return;
+    const { error } = await api.auth.updateUser({
+      data: {
+        wimm_tutorial_started: true,
+        wimm_tutorial_seen: true,
+      },
+    });
+    if (error) setNotice("Tutoriel fermé. Vous pourrez le rouvrir depuis Réglages.");
   }
   async function commit(next: State, action: string) {
     if (busy.current) throw Error("Un enregistrement est déjà en cours.");
@@ -914,21 +952,23 @@ export default function App() {
           ? [
               choice(
                 "salaryReceived",
-                "Salaire de ce mois déjà reçu ?",
+                "Le salaire de ce mois est-il déjà reçu et inclus dans ce solde ?",
                 [
-                  ["no", "Non"],
-                  ["yes", "Oui"],
+                  ["no", "Non, il reste à recevoir"],
+                  ["yes", "Oui, il est déjà inclus"],
                 ],
                 "no",
+                "Cette réponse concerne uniquement le mois de démarrage. Wimm évite ainsi de compter le salaire une deuxième fois.",
               ),
               choice(
                 "savingDone",
-                "Épargne de ce mois déjà effectuée ?",
+                "L’épargne prévue ce mois est-elle déjà effectuée et incluse dans vos soldes ?",
                 [
-                  ["no", "Non"],
-                  ["yes", "Oui"],
+                  ["no", "Non, elle reste à faire"],
+                  ["yes", "Oui, elle est déjà incluse"],
                 ],
                 "no",
+                "Choisissez Oui si les soldes de vos livrets ou placements reflètent déjà les virements d’épargne de ce mois.",
               ),
             ]
           : []),
@@ -5260,8 +5300,9 @@ export default function App() {
               <div>
                 <h2>Commençons par votre compte courant.</h2>
                 <p>
-                  Renseignez son solde, puis ajoutez vos catégories et vos
-                  revenus estimés.
+                  Renseignez le solde réellement affiché par votre banque.
+                  Wimm vous demandera aussi si le salaire et l’épargne de ce mois
+                  sont déjà compris dans vos soldes.
                 </p>
               </div>
               <button className="primary" onClick={() => editAccount()}>
@@ -7840,6 +7881,17 @@ export default function App() {
           {route === "settings" && (
             <>
               {!demoEnabled && <PhoneNotifications state={s} />}
+              <section className="card tutorial-settings-card">
+                <div className="section-head">
+                  <div>
+                    <h2><CircleHelp size={19} /> Aide et tutoriel</h2>
+                    <p className="muted">Revoyez à tout moment le principe de Wimm et ses principales fonctionnalités.</p>
+                  </div>
+                  <button type="button" className="secondary" onClick={() => setTutorialOpen(true)}>
+                    Revoir le tutoriel
+                  </button>
+                </div>
+              </section>
               <div className="two-col">
                 <section className="card">
                   <div className="appearance-mode-row">
@@ -8349,6 +8401,14 @@ export default function App() {
           </button>
         ))}
       </nav>
+      <OnboardingTutorial
+        open={tutorialOpen}
+        hasCurrent={!!current}
+        proEnabled={proEnabled}
+        onConfigure={() => editAccount()}
+        onSkip={() => void closeTutorial()}
+        onComplete={() => void closeTutorial()}
+      />
       {sheet && (
         <Modal title={sheet.title} close={() => !saving && setSheet(null)}>
           {sheet.body}
