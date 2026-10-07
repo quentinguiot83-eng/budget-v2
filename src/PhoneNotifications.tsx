@@ -96,7 +96,7 @@ export default function PhoneNotifications({ state }: { state: State }) {
     try {
       const { data } = await api.auth.getSession();
       if (!data.session) throw Error("Reconnecte-toi pour envoyer un test.");
-      const response = await fetch("/api/push?action=test&device=" + encodeURIComponent(deviceId || ""), { method: "POST", headers: { Authorization: `Bearer ${data.session.access_token}` } });
+      const response = await fetch("/api/push-test?device=" + encodeURIComponent(deviceId || ""), { method: "POST", headers: { Authorization: `Bearer ${data.session.access_token}` } });
       const raw = await response.text();
       let result: { sent?: number; failed?: number; error?: string; code?: string };
       try {
