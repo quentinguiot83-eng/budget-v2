@@ -5205,7 +5205,7 @@ export default function App() {
           <img src="/wimm-icon.png" alt="" className="brand-logo" /> Wimm
         </button>
         <p className="eyebrow">{doc.household.name}</p>
-        <nav>
+        <nav data-tour="desktop-nav">
           {nav
             .filter((n) => !s.hidden.includes(n.id))
             .map((n) => (
@@ -5380,7 +5380,7 @@ export default function App() {
             </section>
           )}
           {!current && !["settings", "wealth", "pro"].includes(route) && (
-            <section className="card setup-card">
+            <section className="card setup-card" data-tour="setup-account">
               <div>
                 <h2>Commençons par votre compte courant.</h2>
                 <p>
@@ -5412,7 +5412,7 @@ export default function App() {
                 </button>
               )}
 
-              <div className="overview">
+              <div className="overview" data-tour="home-overview">
                 <section className="balance-card">
                   <div className="split">
                     <span>Compte courant</span>
@@ -5629,7 +5629,7 @@ export default function App() {
           )}
           {route === "budget" && (
             <>
-              <div className="toolbar">
+              <div className="toolbar" data-tour="budget-tools">
                 <button className="secondary" onClick={() => navigate("fixed")}>
                   <List size={17} />
                   Dépenses fixes
@@ -5654,7 +5654,7 @@ export default function App() {
                   Répartition
                 </button>
               </div>
-              <section className="budget-summary">
+              <section className="budget-summary" data-tour="budget-summary">
                 <div>
                   <span>Budget prévu du mois</span>
                   <strong>{money(totals.fixed + totals.variable)}</strong>
@@ -5689,7 +5689,7 @@ export default function App() {
                   Catégorie
                 </button>
               </div>
-              <div className="category-grid">{categoryCards()}</div>
+              <div className="category-grid" data-tour="budget-categories">{categoryCards()}</div>
               {!s.categories.length && (
                 <Empty
                   title="Un budget à votre mesure"
@@ -7073,7 +7073,7 @@ export default function App() {
 
           {route === "wealth" && (
             <>
-              <div className="overview wealth-overview">
+              <div className="overview wealth-overview" data-tour="wealth-overview">
                 <section className="balance-card">
                   <span>Comptes inclus dans le patrimoine</span>
                   <div className="hero-number">{money(wealth)}</div>
@@ -7291,7 +7291,7 @@ export default function App() {
                   <small>Varie selon les charges dues chaque mois.</small>
                 </section>
               </div>
-              <section className="card">
+              <section className="card" data-tour="projection-chart">
                 <div className="section-head">
                   <h2>Évolution estimée</h2>
                   <div className="pills">
@@ -7952,7 +7952,7 @@ export default function App() {
             <TransactionSearch initialType={txFilter} state={s} month={selectedMonth} setMonth={setMonth} add={() => navigate("add")} rows={txRows}/>
           )}
           {route === "analysis" && (
-            <SpendingAnalysis state={s} selectedMonth={selectedMonth}/>
+            <div data-tour="analysis"><SpendingAnalysis state={s} selectedMonth={selectedMonth}/></div>
           )}
           {route === "loans" && (
             <LoansPage
@@ -7965,7 +7965,7 @@ export default function App() {
           {route === "settings" && (
             <>
               {!demoEnabled && <PhoneNotifications state={s} />}
-              <section className="card tutorial-settings-card">
+              <section className="card tutorial-settings-card" data-tour="tutorial-settings">
                 <div className="section-head">
                   <div>
                     <h2><CircleHelp size={19} /> Aide et tutoriel</h2>
@@ -8471,10 +8471,11 @@ export default function App() {
           </aside>
         </div>
       )}
-      <nav className="bottom-nav" aria-label="Navigation principale">
+      <nav className="bottom-nav" aria-label="Navigation principale" data-tour="mobile-nav">
         {mobileNav.map((n) => (
           <button
             key={n.id}
+            data-tour={n.id === "add" ? "add-button" : undefined}
             className={`${n.id === "add" ? "add-nav " : ""}${
               route === n.id ? "active" : ""
             }`}
@@ -8489,6 +8490,8 @@ export default function App() {
         open={tutorialOpen}
         hasCurrent={!!current}
         proEnabled={proEnabled}
+        route={route}
+        navigate={navigate}
         onConfigure={() => initialCurrentAccount()}
         onSkip={() => void closeTutorial()}
         onComplete={() => void closeTutorial()}
