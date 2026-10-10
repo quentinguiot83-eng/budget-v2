@@ -42,7 +42,7 @@ export default function OnboardingTutorial({
     },
     {
       route: "home",
-      target: "[data-tour='setup-account']",
+      target: hasCurrent ? "[data-tour='home-overview']" : "[data-tour='setup-account']",
       title: "Votre point de départ",
       text: hasCurrent
         ? "Votre compte courant est déjà configuré. Wimm part toujours de vos soldes réels pour éviter de compter deux fois votre argent."
