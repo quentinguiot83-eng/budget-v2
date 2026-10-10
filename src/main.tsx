@@ -4,6 +4,7 @@ import App from "./App";
 import SafeMenuEnhancer from "./SafeMenuEnhancer";
 import BudgetCategoryEnhancer from "./BudgetCategoryEnhancer";
 import "./style.css";
+import "./soft-tech.css";
 
 createRoot(document.getElementById("root")!).render(
   <React.StrictMode>

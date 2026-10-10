@@ -4973,7 +4973,7 @@ export default function App() {
       <main className="auth-page">
         <section className="auth-story">
           <div className="brand">
-            <img src="/wimm-icon.png" alt="" className="brand-logo" /> Wimm
+            wimm<span className="soft-brand-star" aria-hidden="true">✦</span>
           </div>
           <h1>
             Anticipez vos finances.
@@ -4999,7 +4999,7 @@ export default function App() {
         </section>
         <section className="auth-panel">
           <div className="mobile-brand brand">
-            <img src="/wimm-icon.png" alt="" className="brand-logo" /> Wimm
+            wimm<span className="soft-brand-star" aria-hidden="true">✦</span>
           </div>
           <p className="eyebrow">BIENVENUE CHEZ VOUS</p>
           <h2>
@@ -5118,7 +5118,7 @@ export default function App() {
     return (
       <main className="onboarding">
         <div className="brand">
-          <img src="/wimm-icon.png" alt="" className="brand-logo" /> Wimm
+          wimm<span className="soft-brand-star" aria-hidden="true">✦</span>
         </div>
         <h1>Bienvenue dans votre budget.</h1>
         <p className="muted">
@@ -5210,7 +5210,7 @@ export default function App() {
     <div className="app">
       <aside className="sidebar">
         <button className="brand" onClick={() => navigate("home")}>
-          <img src="/wimm-icon.png" alt="" className="brand-logo" /> Wimm
+          wimm<span className="soft-brand-star" aria-hidden="true">✦</span>
         </button>
         <p className="eyebrow">{doc.household.name}</p>
         <nav data-tour="desktop-nav">
@@ -5254,7 +5254,7 @@ export default function App() {
         </div>
       </aside>
       <div className="main">
-        <header className="topbar">
+        <header className="topbar soft-topbar">
           <div>
             <div className="mobile-brand mobile-brand-row">
               <button
@@ -5264,8 +5264,9 @@ export default function App() {
                 aria-expanded={mobileMenuOpen}
                 onClick={() => setMobileMenuOpen(true)}
               >
-                <Menu size={23} />
+                <Menu size={21} />
               </button>
+              <button className="soft-wordmark" onClick={() => navigate("home")} aria-label="Wimm — accueil">wimm<span>✦</span></button>
             </div>
             <span className="eyebrow">{doc.household.name}</span>
           </div>
@@ -5476,65 +5477,14 @@ export default function App() {
                   </div>
                 </section>
                 <section className="metric metric-income">
-                  <div className="metric-top">
-                    <span className="metric-icon">
-                      <ArrowDownLeft />
-                    </span>
-
-                    <small>
-                      Revenus affectés à ce mois
-                    </small>
-                  </div>
-
-                  <strong>
-                    {money(totals.income)}
-                  </strong>
-
-                  <div className="metric-bottom">
-                    <button
-                      className="text text-link"
-                      onClick={() => {
-                        navigate("transactions");
-                        setTxFilter("income");
-                      }}
-                    >
-                      Voir les revenus
-                    </button>
-                  </div>
+                  <div className="metric-top"><span className="metric-icon"><Wallet size={20}/></span><small>Disponible jusqu’à la fin du mois</small></div>
+                  <strong className={availableThisMonth.available < 0 ? "negative" : ""}>{money(availableThisMonth.available)}</strong>
+                  <div className="metric-bottom"><button className="text text-link" onClick={() => navigate("budget")}>Voir mon budget</button></div>
                 </section>
                 <section className="metric metric-expense">
-                  <div className="metric-top">
-                    <span className="metric-icon">
-                      <ArrowUpRight />
-                    </span>
-
-                    <small>
-                      Dépenses du mois
-                    </small>
-                  </div>
-
-                  <strong>
-                    {money(totals.spending)}
-                  </strong>
-
-                  <div className="metric-bottom">
-                    <span className="muted">
-                      sur{" "}
-                      {money(
-                        totals.fixed +
-                          totals.variable,
-                      )}{" "}
-                      de budget prévu
-                    </span>
-
-                    <Progress
-                      value={totals.spending}
-                      max={
-                        totals.fixed +
-                        totals.variable
-                      }
-                    />
-                  </div>
+                  <div className="metric-top"><span className="metric-icon"><ArrowUpRight size={20}/></span><small>Épargne versée ce mois</small></div>
+                  <strong>{money(totals.saved)}</strong>
+                  <div className="metric-bottom"><span className="muted">sur {money(savingsCapacity)} de capacité</span><Progress value={totals.saved} max={savingsCapacity}/></div>
                 </section>
               </div>
               {alerts.length > 0 && (
@@ -5552,9 +5502,23 @@ export default function App() {
                 </button>
               )}
 
+              <button className="month-analysis-cta" onClick={() => navigate("analysis")}>
+                <span className="month-analysis-icon"><Wallet size={23} /></span>
+                <span><strong>Analyse mon mois</strong><small>Bilan, comparaison et répartition des dépenses</small></span>
+                <ChevronRight size={21} />
+              </button>
+
               {availablePanel()}
 
               <div className="home-remaining-grid">
+                <section className="home-remaining-card">
+                  <span className="muted">Revenus affectés à ce mois</span><strong>{money(totals.income)}</strong>
+                  <button className="text" onClick={() => { navigate("transactions"); setTxFilter("income"); }}>Voir les revenus</button>
+                </section>
+                <section className="home-remaining-card">
+                  <span className="muted">Dépenses du mois</span><strong>{money(totals.spending)}</strong>
+                  <small>sur {money(totals.fixed + totals.variable)} de budget prévu</small>
+                </section>
                 <section className="home-remaining-card">
                   <span className="muted">
                     Charges fixes restantes
@@ -8448,7 +8412,7 @@ export default function App() {
           >
             <div className="mobile-drawer-head">
               <button className="brand" onClick={() => navigate("home")}>
-                <img src="/wimm-icon.png" alt="" className="brand-logo" /> Wimm
+                wimm<span className="soft-brand-star" aria-hidden="true">✦</span>
               </button>
               <button
                 type="button"
