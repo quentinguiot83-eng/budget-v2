@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
+import { categoryEmojis } from "./categoryEmojis";
 import { X, ChevronRight } from "lucide-react";
 export type Field = {
   name: string;
@@ -149,7 +150,20 @@ export function Form({
       }}
     >
       <fieldset disabled={busy}>
-        {visibleFields.map((f) => (
+        {visibleFields.map((f) => f.type === "emoji" && f.options ? (
+          <div key={f.name} className="field">
+            <span>{f.label}</span>
+            <input type="hidden" name={f.name} value={values[f.name]} />
+            <div className="emoji-picker" role="group" aria-label={f.label}>
+              {f.options.map(([value, label]) => <button key={value} type="button"
+                aria-label={label} aria-pressed={values[f.name] === value}
+                onClick={() => setValues(current => ({ ...current, [f.name]: value }))}>
+                <span aria-hidden="true">{categoryEmojis[value] || label.split(" ")[0]}</span>
+              </button>)}
+            </div>
+            {f.hint && <small>{f.hint}</small>}
+          </div>
+        ) : (
           <label key={f.name} className="field">
             <span>{f.label}</span>
             {f.options ? (

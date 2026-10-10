@@ -1,3 +1,5 @@
+import { applyAppearance, isInstalledIOS } from "./appearance";
+import { categoryEmojis } from "./categoryEmojis";
 import { seedStarterCategories } from "./starterCategories";
 import PhoneNotifications, { dispatchPhoneAlerts } from "./PhoneNotifications";
 import { categoryUsage, categoryReplacements, deleteArchivedCategory } from "./categoryDeletion";
@@ -162,34 +164,6 @@ const palette = [
   "#d6b291",
   "#8aaec1",
 ];
-const icons: Record<string, ReactNode> = {
-  home: <House size={20} />,
-  food: <ShoppingBasket size={20} />,
-  out: <Utensils size={20} />,
-  other: <Wallet size={20} />,
-  car: <Car size={20} />,
-  coffee: <Coffee size={20} />,
-  health: <HeartPulse size={20} />,
-  sport: <Dumbbell size={20} />,
-  clothes: <Shirt size={20} />,
-  gift: <Gift size={20} />,
-  pets: <PawPrint size={20} />,
-  baby: <Baby size={20} />,
-  education: <GraduationCap size={20} />,
-  work: <Briefcase size={20} />,
-  repair: <Wrench size={20} />,
-  phone: <Smartphone size={20} />,
-  internet: <Wifi size={20} />,
-  energy: <Zap size={20} />,
-  transport: <Bus size={20} />,
-  fuel: <Fuel size={20} />,
-  games: <Gamepad2 size={20} />,
-  music: <Music size={20} />,
-  books: <BookOpen size={20} />,
-  doctor: <Stethoscope size={20} />,
-  shopping: <ShoppingCart size={20} />,
-  travel: <Plane size={20} />,
-};
 const field = (
   name: string,
   label: string,
@@ -383,6 +357,9 @@ export default function App() {
     [error, setError] = useState(""),
     [notice, setNotice] = useState(""),
     [route, setRoute] = useState(() => {
+      if (sessionStorage.getItem("wimm-appearance-return") === "settings") {
+        return "settings";
+      }
       const screen = new URLSearchParams(location.search).get("screen");
       return screen && ["home", "calendar", "pro"].includes(screen) ? screen : "home";
     }),
@@ -433,6 +410,10 @@ export default function App() {
   const current = s.accounts.find(
     (a) => a.group === "current" && !a.archived,
   );
+  const [previewName, setPreviewName] = useState("Alex");
+  const displayName = [session?.user.user_metadata?.display_name, session?.user.user_metadata?.full_name, session?.user.user_metadata?.name]
+    .find((value): value is string => typeof value === "string" && value.trim().length > 0)?.trim()
+    || (demoEnabled ? previewName : session?.user.email?.split("@")[0] || "");
   const tutorialSeen = session?.user.user_metadata?.wimm_tutorial_seen === true;
   const tutorialStarted = session?.user.user_metadata?.wimm_tutorial_started === true;
   const totals = stats(s, selectedMonth);
@@ -562,14 +543,12 @@ export default function App() {
       window.removeEventListener("focus", refresh);
     };
   }, []);
+  useEffect(() => { sessionStorage.removeItem("wimm-appearance-return"); }, []);
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
   }, [theme]);
   useEffect(() => {
-    document.documentElement.dataset.mode = nightMode ? "dark" : "light";
-    localStorage.setItem("wimm-night-mode", nightMode ? "1" : "0");
-    document.documentElement.style.setProperty("--status-bar-background", nightMode ? "#17212b" : "#ffffff");
-    document.querySelector('meta[name="theme-color"]')?.setAttribute("content", nightMode ? "#17212b" : "#ffffff");
+    applyAppearance(nightMode);
   }, [nightMode]);
   useEffect(() => {
     if (!notice) return;
@@ -864,9 +843,9 @@ export default function App() {
       c ? "Modifier la catégorie" : "Nouvelle catégorie",
       [
         field("name", "Nom", c?.name),
-        choice(
+        { ...choice(
           "icon",
-          "Icône",
+          "Emoji",
           [
             ["home", "🏠 Maison"],
             ["food", "🥕 Courses / alimentation"],
@@ -896,7 +875,7 @@ export default function App() {
             ["other", "💳 Autre"],
           ],
           c?.icon || "other",
-        ),
+        ), type: "emoji" },
         amountField(
           "variable",
           "Budget variable mensuel (€)",
@@ -4388,7 +4367,7 @@ export default function App() {
       icon: <Coins size={20} />,
     },
     { id: "settings", label: "Réglages", icon: <Settings size={20} /> },
-  ].filter(Boolean) as { id: string; label: string; icon: ReactNode }[];
+  ].filter((item) => item && !["budget", "add", "wealth", "projection"].includes(item.id)) as { id: string; label: string; icon: ReactNode }[];
 
   const txRows = (list: Tx[]) =>
     list.length ? (
@@ -4585,8 +4564,7 @@ export default function App() {
                     ],
                 }}
               >
-                {icons[c.icon] ||
-                  icons.other}
+                {categoryEmojis[c.icon] || "💳"}
               </span>
 
               <div className="grow">
@@ -5024,6 +5002,7 @@ export default function App() {
                     : "Se connecter"
             }
             fields={[
+              ...(authMode === "signup" ? [field("displayName", "Nom affiché")] : []),
               ...(authMode !== "new-password"
                 ? [field("email", "Adresse e-mail", "", "email")]
                 : []),
@@ -5046,7 +5025,7 @@ export default function App() {
                 const { error } = await api.auth.signUp({
                   email: v.email,
                   password: v.password,
-                  options: { emailRedirectTo: location.origin },
+                  options: { emailRedirectTo: location.origin, data: { display_name: v.displayName.trim() } },
                 });
                 if (error) throw error;
                 setNotice(
@@ -5215,7 +5194,7 @@ export default function App() {
         <p className="eyebrow">{doc.household.name}</p>
         <nav data-tour="desktop-nav">
           {nav
-            .filter((n) => !s.hidden.includes(n.id))
+            .filter((n) => !s.hidden.includes(n.id) && !["budget", "add", "wealth"].includes(n.id))
             .map((n) => (
               <button
                 key={n.id}
@@ -5226,13 +5205,6 @@ export default function App() {
                 {n.label}
               </button>
             ))}
-          <button
-            className={route === "projection" ? "active" : ""}
-            onClick={() => navigate("projection")}
-          >
-            <ChartNoAxesCombined />
-            Projections
-          </button>
           {!s.hidden.includes("loans") && (
             <button
               className={route === "loans" ? "active" : ""}
@@ -5327,7 +5299,7 @@ export default function App() {
             )}
 
             {route === "home" && (
-              <p className="eyebrow">LE QUOTIDIEN, EN CLAIR</p>
+              <p className="home-greeting">Bonjour{displayName ? ` ${displayName}` : ""}</p>
             )}
 
             <h1>{titles[route]}</h1>
@@ -5423,7 +5395,7 @@ export default function App() {
                 </button>
               )}
 
-              <div className="overview" data-tour="home-overview">
+              <div className="overview home-overview" data-tour="home-overview">
                 <section className="balance-card">
                   <div className="split">
                     <span>Compte courant</span>
@@ -5475,16 +5447,6 @@ export default function App() {
                       Voir le calcul <CircleHelp size={14} />
                     </button>
                   </div>
-                </section>
-                <section className="metric metric-income">
-                  <div className="metric-top"><span className="metric-icon"><Wallet size={20}/></span><small>Disponible jusqu’à la fin du mois</small></div>
-                  <strong className={availableThisMonth.available < 0 ? "negative" : ""}>{money(availableThisMonth.available)}</strong>
-                  <div className="metric-bottom"><button className="text text-link" onClick={() => navigate("budget")}>Voir mon budget</button></div>
-                </section>
-                <section className="metric metric-expense">
-                  <div className="metric-top"><span className="metric-icon"><ArrowUpRight size={20}/></span><small>Épargne versée ce mois</small></div>
-                  <strong>{money(totals.saved)}</strong>
-                  <div className="metric-bottom"><span className="muted">sur {money(savingsCapacity)} de capacité</span><Progress value={totals.saved} max={savingsCapacity}/></div>
                 </section>
               </div>
               {alerts.length > 0 && (
@@ -7110,7 +7072,7 @@ export default function App() {
                   .filter((a) => !a.archived && a.group !== "personal")
                   .map((a) => (
                     <article className="card account" key={a.id}>
-                      <div className="split">
+                      <div className="account-heading">
                         <span className="account-icon">
                           {a.group === "travel" ? (
                             <Plane />
@@ -7120,6 +7082,7 @@ export default function App() {
                             <Coins />
                           )}
                         </span>
+                        <div className="account-heading-copy"><h3>{a.name}</h3><strong className="large">{money(balance(s, a.id))}</strong></div>
                         <button
                           className="icon"
                           aria-label={"Modifier " + a.name}
@@ -7128,10 +7091,6 @@ export default function App() {
                           <Pencil size={17} />
                         </button>
                       </div>
-                      <h3>{a.name}</h3>
-                      <strong className="large">
-                        {money(balance(s, a.id))}
-                      </strong>
                       <p className="muted">
                         {a.group === "current"
                           ? "Compte courant"
@@ -7961,7 +7920,15 @@ export default function App() {
                       <small>Assombrit Wimm pour une utilisation plus confortable le soir.</small>
                     </div>
                     <label className="night-switch">
-                      <input type="checkbox" checked={nightMode} onChange={(event) => setNightMode(event.target.checked)} />
+                      <input type="checkbox" checked={nightMode} onChange={(event) => {
+                        const dark = event.target.checked;
+                        applyAppearance(dark);
+                        setNightMode(dark);
+                        if (isInstalledIOS()) {
+                          sessionStorage.setItem("wimm-appearance-return", "settings");
+                          window.setTimeout(() => location.reload(), 80);
+                        }
+                      }} />
                       <span aria-hidden="true" />
                     </label>
                   </div>
@@ -7998,6 +7965,18 @@ export default function App() {
                 <section className="card">
                   <h2>Votre compte</h2>
                   <p>{session?.user.email || "Aperçu de démonstration"}</p>
+                  <div className="profile-name-row"><span>Nom affiché : <strong>{displayName || "Non renseigné"}</strong></span>
+                    <button className="text" onClick={() => openForm("Votre nom affiché", [field("name", "Nom affiché", displayName)], async v => {
+                      const name = v.name.trim();
+                      if (!name) throw Error("Indiquez votre nom affiché.");
+                      if (demoEnabled) setPreviewName(name);
+                      else {
+                        const { data, error } = await api.auth.updateUser({ data: { display_name: name } });
+                        if (error) throw error;
+                        if (data.user) setSession(current => current ? { ...current, user: data.user } : current);
+                      }
+                    })}>Modifier</button>
+                  </div>
                   <button
                     className="secondary"
                     onClick={() => {

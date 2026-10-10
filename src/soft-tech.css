@@ -368,3 +368,61 @@ dialog::backdrop { background: rgba(25, 22, 46, .45); backdrop-filter: blur(6px)
 }
 .category .grow > strong { font-size: .9rem; font-weight: 650; }
 @media (max-width: 560px) { .category .grow > strong { font-size: .85rem; } }
+
+/* Each named theme drives cards, charts, buttons and the dock in both modes. */
+:root, :root[data-theme="blue"] { --action: #3566c9; --accent: #d6e4fc; --accent-soft: #edf3fe; --accent-deep: #315eaf; --chart: #5988d8; --soft-blue: #eff5ff; --soft-lilac: #eaf1fc; }
+:root[data-theme="lavender"] { --action: #7650d0; --accent: #e2d8fc; --accent-soft: #f2edff; --accent-deep: #6742b9; --chart: #9775dc; --soft-blue: #f5f1ff; --soft-lilac: #ede7fb; }
+:root[data-theme="sage"] { --action: #377861; --accent: #d1e8dd; --accent-soft: #ecf6f0; --accent-deep: #306a55; --chart: #659b84; --soft-blue: #f0f7f3; --soft-lilac: #e9f3ed; }
+:root[data-theme="rose"] { --action: #a64477; --accent: #f1d7e5; --accent-soft: #fcf0f6; --accent-deep: #963969; --chart: #c5749c; --soft-blue: #fff4f9; --soft-lilac: #f9eaf2; }
+:root[data-theme="peach"] { --action: #a3582f; --accent: #f4ddc9; --accent-soft: #fff3e9; --accent-deep: #954b24; --chart: #c68b61; --soft-blue: #fff7f0; --soft-lilac: #f9eddf; }
+:root[data-theme] { --soft-gradient: linear-gradient(115deg, var(--accent-soft), var(--accent)); }
+:root[data-mode="dark"][data-theme="blue"] { --action: #3566c9; --accent: #a7c4ff; --accent-deep: #aac8ff; --accent-soft: #24364f; --chart: #8eb5f5; --soft-blue: #233044; --soft-lilac: #27364a; }
+:root[data-mode="dark"][data-theme="lavender"] { --action: #7650d0; --accent: #cbb8fb; --accent-deep: #cfbaff; --accent-soft: #332b49; --chart: #bb9eee; --soft-blue: #2d283e; --soft-lilac: #352d47; }
+:root[data-mode="dark"][data-theme="sage"] { --action: #377861; --accent: #a4d4bc; --accent-deep: #acd8c2; --accent-soft: #263e35; --chart: #8cbea6; --soft-blue: #24352f; --soft-lilac: #293d34; }
+:root[data-mode="dark"][data-theme="rose"] { --action: #a64477; --accent: #edb3cf; --accent-deep: #f0b9d4; --accent-soft: #462d3c; --chart: #dda0bd; --soft-blue: #382934; --soft-lilac: #422e3b; }
+:root[data-mode="dark"][data-theme="peach"] { --action: #a3582f; --accent: #e9c2a2; --accent-deep: #efc9a9; --accent-soft: #44352b; --chart: #d5ad8b; --soft-blue: #372e28; --soft-lilac: #41342a; }
+:root[data-mode="dark"][data-theme] { --soft-gradient: linear-gradient(115deg, var(--soft-blue), var(--soft-lilac)); }
+.primary, .prosuite-btn, .billing-v2-primary, .pro-business-primary,
+:root[data-mode="dark"] .primary, :root[data-mode="dark"] .prosuite-btn { background: var(--action); color: #fff; box-shadow: 0 5px 15px color-mix(in srgb, var(--action) 15%, transparent); }
+.primary:hover, .prosuite-btn:hover { background: color-mix(in srgb, var(--action) 90%, #000); }
+.month-analysis-cta { background: linear-gradient(110deg, var(--action), color-mix(in srgb, var(--action) 88%, #242438)); box-shadow: 0 8px 24px color-mix(in srgb, var(--action) 18%, transparent); }
+.bottom-nav .add-nav svg { background: var(--action); color: #fff; box-shadow: 0 5px 16px color-mix(in srgb, var(--action) 20%, transparent); }
+:root[data-mode="dark"] .pills button.selected { background: var(--action); color: #fff; }
+.swatch.blue { background: #d6e4fc; color: #315eaf; }
+.swatch.lavender { background: #e2d8fc; }
+.swatch.sage { background: #d1e8dd; }
+.swatch.rose { background: #f1d7e5; }
+.swatch.peach { background: #f4ddc9; }
+.home-overview { grid-template-columns: 1fr; }
+.home-greeting { margin: 0 0 8px; font-size: .9rem; color: var(--muted); font-weight: 500; }
+.profile-name-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding-block: 10px 18px; font-size: .82rem; }
+.emoji-picker { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 7px; margin: 6px 0; }
+.emoji-picker button { display: grid; place-items: center; min-height: 44px; font-size: 1.4rem; border: 1px solid var(--border); border-radius: 12px; background: var(--soft-canvas); }
+.emoji-picker button[aria-pressed="true"] { background: var(--accent-soft); border: 2px solid var(--accent-deep); }
+.category-icon { font-size: 1.25rem; }
+.account-heading { display: grid; grid-template-columns: 36px minmax(0, 1fr) 32px; gap: 12px; align-items: center; }
+.account-heading-copy { min-width: 0; }
+.account .account-heading h3 { margin: 0 0 4px; font-size: .94rem; line-height: 1.3; }
+.account-heading .large { font-size: 1.3rem; }
+.account .account-icon { width: 36px; height: 36px; }
+.account .account-icon svg { width: 19px; height: 19px; }
+.account > p { margin: 9px 0; }
+.account > small { display: block; font-size: .72rem; line-height: 1.4; }
+.account .progress { margin-block: 9px; }
+.account .account-actions { margin-top: 12px; gap: 7px; }
+.account .account-actions button { font-size: .73rem; padding: 7px 10px; }
+.account-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+@media (max-width: 850px) { .account-grid { grid-template-columns: 1fr; } }
+@media (max-width: 380px) { .emoji-picker { grid-template-columns: repeat(6, minmax(0, 1fr)); } }
+@media (min-width: 851px) {
+  .bottom-nav { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); position: fixed; bottom: 20px; left: calc(50% + 122px); transform: translateX(-50%); width: min(490px, calc(100vw - 300px)); padding: 11px 12px; border: 1px solid var(--border); border-radius: 22px; background: var(--surface); box-shadow: var(--soft-shadow); z-index: 30; }
+  .bottom-nav button { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; color: var(--muted); font-size: .7rem; }
+  .bottom-nav button.active { color: var(--accent-deep); font-weight: 700; }
+  .bottom-nav svg { width: 21px; height: 21px; }
+  .bottom-nav .add-nav { margin-top: -18px; }
+  .bottom-nav .add-nav svg { width: 49px; height: 49px; padding: 13px; border-radius: 50%; border: 4px solid var(--surface); }
+  .page-footer { padding-bottom: 80px; }
+}
+/* The initial head script and live theme effect use this same surface. */
+html { background-color: var(--status-bar-background, var(--surface)) !important; }
+.emoji-picker button, .category-icon { font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif; }

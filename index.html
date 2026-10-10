@@ -16,8 +16,9 @@
       try {
         const dark = localStorage.getItem("wimm-night-mode") === "1";
         document.documentElement.dataset.mode = dark ? "dark" : "light";
-        document.documentElement.style.setProperty("--status-bar-background", dark ? "#17212b" : "#ffffff");
-        document.querySelector('meta[name="theme-color"]').content = dark ? "#17212b" : "#ffffff";
+        document.documentElement.style.colorScheme = dark ? "dark" : "light";
+        document.documentElement.style.setProperty("--status-bar-background", dark ? "#202331" : "#ffffff");
+        document.querySelector('meta[name="theme-color"]').content = dark ? "#202331" : "#ffffff";
       } catch {}
     </script>
     <meta
