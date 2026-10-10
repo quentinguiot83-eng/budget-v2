@@ -14,7 +14,10 @@
     </style>
     <script>
       try {
-        const dark = localStorage.getItem("wimm-night-mode") === "1";
+        const saved = localStorage.getItem("wimm-appearance-mode");
+        const legacy = localStorage.getItem("wimm-night-mode");
+        const mode = ["light", "dark", "auto"].includes(saved) ? saved : legacy === "1" ? "dark" : legacy === "0" ? "light" : "auto";
+        const dark = mode === "dark" || (mode === "auto" && matchMedia("(prefers-color-scheme: dark)").matches);
         document.documentElement.dataset.mode = dark ? "dark" : "light";
         document.documentElement.style.colorScheme = dark ? "dark" : "light";
         document.documentElement.style.setProperty("--status-bar-background", dark ? "#202331" : "#ffffff");

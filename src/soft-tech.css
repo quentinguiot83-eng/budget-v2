@@ -437,3 +437,8 @@ button.block-info:focus-visible { outline: 2px solid currentColor; outline-offse
 :root[data-mode="dark"] button.block-info { background: var(--accent-soft); color: var(--accent-deep); }
 :root[data-mode="dark"] .card.budget-overrun-alert { background: #382c28; border-color: #76513d; border-left-color: #e09b6a; color: #ffcfaa; }
 :root[data-mode="dark"] .card.budget-overrun-alert h2, :root[data-mode="dark"] .card.budget-overrun-alert .muted, :root[data-mode="dark"] .card.budget-overrun-alert .text, :root[data-mode="dark"] .card.budget-overrun-alert strong { color: #ffcfaa; }
+
+.appearance-choices { display: grid; grid-template-columns: 1fr 1fr 1.4fr; gap: 6px; padding: 5px; margin-bottom: 20px; background: var(--accent-soft); border-radius: 14px; }
+.appearance-choices button { padding: 10px 5px; min-height: 44px; border: 1px solid transparent; border-radius: 10px; font-size: 13px; color: var(--accent-deep); background: transparent; }
+.appearance-choices button[aria-pressed="true"] { background: var(--action); color: #fff; font-weight: 700; }
+.appearance-choices button:focus-visible { outline: 2px solid var(--accent-deep); outline-offset: 2px; }

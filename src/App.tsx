@@ -1,4 +1,4 @@
-import { applyAppearance, isInstalledIOS } from "./appearance";
+import { applyAppearance, isInstalledIOS, readAppearanceMode, type AppearanceMode } from "./appearance";
 import { categoryEmojis } from "./categoryEmojis";
 import { seedStarterCategories } from "./starterCategories";
 import PhoneNotifications, { dispatchPhoneAlerts } from "./PhoneNotifications";
@@ -367,7 +367,7 @@ export default function App() {
     [selectedMonth, setMonth] = useState(month()),
     [sheet, setSheet] = useState<Sheet>(null),
     [theme, setTheme] = useState("blue"),
-    [nightMode, setNightMode] = useState(() => localStorage.getItem("wimm-night-mode") === "1"),
+    [appearanceMode, setAppearanceMode] = useState<AppearanceMode>(readAppearanceMode),
     [authMode, setAuthMode] = useState("login"),
     [saving, setSaving] = useState(false),
     [invite, setInvite] = useState(""),
@@ -548,8 +548,19 @@ export default function App() {
     document.documentElement.dataset.theme = theme;
   }, [theme]);
   useEffect(() => {
-    applyAppearance(nightMode);
-  }, [nightMode]);
+    applyAppearance(appearanceMode);
+    if (appearanceMode !== "auto") return;
+    const preference = window.matchMedia("(prefers-color-scheme: dark)");
+    const sync = () => applyAppearance("auto");
+    preference.addEventListener("change", sync);
+    window.addEventListener("focus", sync);
+    document.addEventListener("visibilitychange", sync);
+    return () => {
+      preference.removeEventListener("change", sync);
+      window.removeEventListener("focus", sync);
+      document.removeEventListener("visibilitychange", sync);
+    };
+  }, [appearanceMode]);
   useEffect(() => {
     if (!notice) return;
     const t = setTimeout(() => setNotice(""), 4500);
@@ -7844,23 +7855,19 @@ export default function App() {
               </section>
               <div className="two-col">
                 <section className="card">
-                  <div className="appearance-mode-row">
-                    <div>
-                      <strong>Mode nuit</strong>
-                      <small>Assombrit Wimm pour une utilisation plus confortable le soir.</small>
-                    </div>
-                    <label className="night-switch">
-                      <input type="checkbox" checked={nightMode} onChange={(event) => {
-                        const dark = event.target.checked;
-                        applyAppearance(dark);
-                        setNightMode(dark);
-                        if (isInstalledIOS()) {
+                  <div className="section-head"><h2>Apparence</h2><BlockInfo title="Apparence"><p>Automatique suit le mode clair ou sombre choisi dans les réglages de votre téléphone. Clair et Nuit gardent le même thème à tout moment.</p></BlockInfo></div>
+                  <div className="appearance-choices" role="group" aria-label="Apparence">
+                    {([["light", "Clair"], ["dark", "Nuit"], ["auto", "Automatique"]] as const).map(([mode, label]) => (
+                      <button type="button" key={mode} aria-pressed={appearanceMode === mode} onClick={() => {
+                        const previousMode = document.documentElement.dataset.mode;
+                        applyAppearance(mode);
+                        setAppearanceMode(mode);
+                        if (isInstalledIOS() && previousMode !== document.documentElement.dataset.mode) {
                           sessionStorage.setItem("wimm-appearance-return", "settings");
                           window.setTimeout(() => location.reload(), 80);
                         }
-                      }} />
-                      <span aria-hidden="true" />
-                    </label>
+                      }}>{label}</button>
+                    ))}
                   </div>
                   <div className="section-head"><h2>Votre couleur</h2><BlockInfo title="Votre couleur"><p>Un thème personnel, même dans un foyer partagé.</p></BlockInfo></div>
                   <div className="theme-grid">
