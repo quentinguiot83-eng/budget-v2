@@ -8,12 +8,15 @@
     />
     <meta name="theme-color" content="#ffffff" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <style>
+      html, body { background-color: var(--status-bar-background, #ffffff); }
+    </style>
     <script>
       try {
         const dark = localStorage.getItem("wimm-night-mode") === "1";
         document.documentElement.dataset.mode = dark ? "dark" : "light";
-        document.querySelector('meta[name="apple-mobile-web-app-status-bar-style"]').content = dark ? "black-translucent" : "default";
+        document.documentElement.style.setProperty("--status-bar-background", dark ? "#17212b" : "#ffffff");
         document.querySelector('meta[name="theme-color"]').content = dark ? "#17212b" : "#ffffff";
       } catch {}
     </script>

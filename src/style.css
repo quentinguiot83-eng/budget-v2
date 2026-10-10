@@ -2883,3 +2883,7 @@ body{min-height:100dvh}
 :root[data-mode="dark"] .budget-overrun-alert{background:#302517;color:#f2ce9e;border-color:#956f3c}
 :root[data-mode="dark"] .pills input{background:var(--surface);color:var(--ink);border-color:var(--border)}
 @media(max-width:560px){:root{--block-gap:18px}}
+
+/* Keep the iOS layout mode fixed; repaint the safe area on every theme change. */
+html{background-color:var(--status-bar-background,var(--surface))!important}
+body::before{content:"";position:fixed;top:0;left:0;right:0;height:env(safe-area-inset-top,0px);background:var(--status-bar-background,var(--surface));z-index:200;pointer-events:none}
