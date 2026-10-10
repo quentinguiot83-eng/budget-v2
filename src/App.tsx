@@ -32,6 +32,7 @@ import {
   House,
   Utensils,
   CircleHelp,
+  Info,
   CalendarDays,
   List,
   SlidersHorizontal,
@@ -398,7 +399,8 @@ export default function App() {
     [txFilter, setTxFilter] = useState(""),
     [proEnabled, setProEnabled] = useState(false),
     [mobileMenuOpen, setMobileMenuOpen] = useState(false),
-    [tutorialOpen, setTutorialOpen] = useState(false);
+    [tutorialOpen, setTutorialOpen] = useState(false),
+    [tutorialPage, setTutorialPage] = useState<string | null>(null);
   const busy = useRef(false),
     docRef = useRef(doc),
     personalDocRef = useRef(personalDoc),
@@ -526,6 +528,7 @@ export default function App() {
       (current && !tutorialStarted)
     )
       return;
+    setTutorialPage(null);
     setTutorialOpen(true);
     if (!tutorialStarted && !current) {
       void api.auth.updateUser({
@@ -564,7 +567,7 @@ export default function App() {
   useEffect(() => {
     document.documentElement.dataset.mode = nightMode ? "dark" : "light";
     localStorage.setItem("wimm-night-mode", nightMode ? "1" : "0");
-    document.querySelector('meta[name="apple-mobile-web-app-status-bar-style"]')?.setAttribute("content", nightMode ? "black-translucent" : "default");
+    document.querySelector('meta[name="apple-mobile-web-app-status-bar-style"]')?.setAttribute("content", "black-translucent");
     document.querySelector('meta[name="theme-color"]')?.setAttribute("content", nightMode ? "#0e151c" : "#f6f8fb");
   }, [nightMode]);
   useEffect(() => {
@@ -5197,7 +5200,7 @@ export default function App() {
     fixed: "Dépenses fixes",
     calendar: "Calendrier des paiements",
     transactions: "Toutes les transactions",
-    analysis: "Vos dépenses en détail",
+    analysis: "Analyse mon mois",
     loans: "Crédits et prêts",
   };
   return (
@@ -5264,6 +5267,7 @@ export default function App() {
             <span className="eyebrow">{doc.household.name}</span>
           </div>
           <div className="flex">
+            <button type="button" className="icon page-info" aria-label="Tutoriel de cette page" onClick={() => { setTutorialPage(route); setTutorialOpen(true); }}><Info size={21}/></button>
             <button
               className="icon bell"
               aria-label={`${alerts.length} échéances à valider`}
@@ -5545,7 +5549,7 @@ export default function App() {
               )}
 
               {availablePanel()}
-              {monthlyReviewPanel()}
+
               <div className="home-remaining-grid">
                 <section className="home-remaining-card">
                   <span className="muted">
@@ -5651,9 +5655,10 @@ export default function App() {
                 </button>
                 <button
                   className="secondary"
+                  data-tour="month-analysis-button"
                   onClick={() => navigate("analysis")}
                 >
-                  Répartition
+                  Analyse mon mois
                 </button>
               </div>
               <section className="budget-summary" data-tour="budget-summary">
@@ -5683,7 +5688,7 @@ export default function App() {
                 </div>
               </section>
               {availablePanel()}
-              <MonthlyComparison state={s} period={selectedMonth}/>
+
               <div className="section-head">
                 <h2>Vos catégories</h2>
                 <button className="primary" onClick={() => editCategory()}>
@@ -7956,7 +7961,7 @@ export default function App() {
             <TransactionSearch initialType={txFilter} state={s} month={selectedMonth} setMonth={setMonth} add={() => navigate("add")} rows={txRows}/>
           )}
           {route === "analysis" && (
-            <div data-tour="analysis"><SpendingAnalysis state={s} selectedMonth={selectedMonth}/></div>
+            <div data-tour="analysis">{monthlyReviewPanel()}<MonthlyComparison state={s} period={selectedMonth}/><SpendingAnalysis state={s} selectedMonth={selectedMonth}/></div>
           )}
           {route === "loans" && (
             <LoansPage
@@ -7968,14 +7973,14 @@ export default function App() {
           )}
           {route === "settings" && (
             <>
-              {!demoEnabled && <PhoneNotifications state={s} />}
+              {!demoEnabled && <div data-tour="phone-notifications"><PhoneNotifications state={s} /></div>}
               <section className="card tutorial-settings-card" data-tour="tutorial-settings">
                 <div className="section-head">
                   <div>
                     <h2><CircleHelp size={19} /> Aide et tutoriel</h2>
                     <p className="muted">Revoyez à tout moment le principe de Wimm et ses principales fonctionnalités.</p>
                   </div>
-                  <button type="button" className="secondary" onClick={() => setTutorialOpen(true)}>
+                  <button type="button" className="secondary" onClick={() => { setTutorialPage(null); setTutorialOpen(true); }}>
                     Revoir le tutoriel
                   </button>
                 </div>
@@ -8491,14 +8496,15 @@ export default function App() {
         ))}
       </nav>
       <OnboardingTutorial
+        pageRoute={tutorialPage}
         open={tutorialOpen}
         hasCurrent={!!current}
         proEnabled={proEnabled}
         route={route}
         navigate={navigate}
         onConfigure={() => initialCurrentAccount()}
-        onSkip={() => void closeTutorial()}
-        onComplete={() => void closeTutorial()}
+        onSkip={() => tutorialPage ? setTutorialOpen(false) : void closeTutorial()}
+        onComplete={() => tutorialPage ? setTutorialOpen(false) : void closeTutorial()}
       />
       {sheet && (
         <Modal title={sheet.title} close={() => !saving && setSheet(null)}>

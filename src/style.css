@@ -2851,3 +2851,21 @@ dialog::backdrop {
   .live-tour-popover p{font-size:.85rem}
   .add-page-layout{gap:18px}
 }
+
+/* Paint the iOS safe area on initial launch and span the full mobile header. */
+html{background:var(--surface);min-height:100%}
+body{min-height:100dvh}
+.topbar{background:var(--surface);color:var(--ink)}
+.live-tour-location{font-size:.8rem;font-weight:700;color:var(--accent-deep);margin:5px 0}
+.page-info:focus-visible{outline:2px solid var(--accent-deep);outline-offset:3px}
+@media(max-width:850px){
+ body{padding-top:0}
+ .main{--mobile-gutter:24px}
+ .topbar{position:sticky;top:0!important;z-index:35;margin-inline:calc(-1 * var(--mobile-gutter));padding:calc(10px + env(safe-area-inset-top)) var(--mobile-gutter) 10px;height:auto;min-height:77px;box-sizing:border-box}
+ .topbar:before{display:none}
+ .topbar>div:first-child{min-width:0}
+ .topbar .eyebrow{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:calc(100vw - 180px)}
+ .topbar>.flex{flex-shrink:0;gap:4px}
+ .live-tour-popover{max-height:34dvh}
+}
+@media(max-width:560px){.main{--mobile-gutter:18px}}

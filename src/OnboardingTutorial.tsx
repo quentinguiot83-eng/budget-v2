@@ -3,6 +3,7 @@ import { ChevronLeft, ChevronRight, X } from "lucide-react";
 
 type TutorialProps = {
   open: boolean;
+  pageRoute?: string | null;
   hasCurrent: boolean;
   proEnabled: boolean;
   route: string;
@@ -21,6 +22,7 @@ type Step = {
 
 export default function OnboardingTutorial({
   open,
+  pageRoute,
   hasCurrent,
   proEnabled,
   route,
@@ -33,79 +35,229 @@ export default function OnboardingTutorial({
   const [box, setBox] = useState<DOMRect | null>(null);
   const popover = useRef<HTMLDivElement>(null);
 
-  const steps: Step[] = [
+  const allSteps: Step[] = [
     {
-      route: "home",
-      target: "[data-tour='home-overview']",
-      title: "Votre tableau de bord",
-      text: "Consultez votre solde réel, votre reste pour le mois et les alertes importantes.",
+        "route": "home",
+        "target": hasCurrent ? "[data-tour='home-overview']" : "[data-tour='setup-account']",
+        "title": "Votre solde réel",
+        "text": "Le solde correspond à l’argent présent sur le compte courant après les opérations enregistrées. Commencez par saisir le montant affiché par votre banque."
     },
     {
-      route: "home",
-      target: hasCurrent ? "[data-tour='home-overview']" : "[data-tour='setup-account']",
-      title: "Votre point de départ",
-      text: hasCurrent
-        ? "Votre compte courant est déjà configuré. Wimm part toujours de vos soldes réels pour éviter de compter deux fois votre argent."
-        : "Commencez ici : indiquez le solde réellement affiché par votre banque. Wimm vous demandera aussi si le salaire et l’épargne du mois sont déjà inclus.",
+        "route": "home",
+        "target": "[data-tour='home-overview']",
+        "title": "Le reste disponible",
+        "text": "Le disponible de fin de mois tient aussi compte des dépenses à venir, des enveloppes et de l’épargne. Il peut donc être inférieur au solde bancaire."
     },
     {
-      route: "budget",
-      target: "[data-tour='budget-summary']",
-      title: "Le budget du mois",
-      text: "Cette zone compare le budget prévu, ce que vous avez réellement dépensé et ce qu’il reste dans vos enveloppes.",
+        "route": "home",
+        "target": ".page-heading",
+        "title": "Choisir le mois",
+        "text": "Utilisez les flèches près du mois pour consulter une autre période. « Mois actuel » vous ramène au mois en cours."
     },
     {
-      route: "budget",
-      target: "[data-tour='budget-categories']",
-      title: "Vos catégories",
-      text: "Chaque catégorie possède son enveloppe. Vous voyez immédiatement combien a été utilisé et combien il reste.",
+        "route": "budget",
+        "target": "[data-tour='budget-summary']",
+        "title": "Prévu, dépensé et restant",
+        "text": "Le budget prévu additionne les charges fixes et les enveloppes variables. Le montant dépensé évolue quand vous enregistrez ou validez une dépense."
     },
     {
-      route: "budget",
-      target: "[data-tour='budget-tools']",
-      title: "Les détails du budget",
-      text: "Retrouvez vos dépenses fixes, les échéances à valider, les transactions et leur répartition.",
+        "route": "budget",
+        "target": "[data-tour='budget-categories']",
+        "title": "Créer une enveloppe",
+        "text": "Le bouton Catégorie permet de créer un poste, par exemple Courses, et de lui attribuer un budget pour le mois. Chaque carte affiche sa consommation."
     },
     {
-      route: "add",
-      target: ".add-grid",
-      title: "Ajouter une opération",
-      text: "Choisissez une dépense, un revenu, un virement ou un prêt. Le bouton + ouvre cette page.",
+        "route": "budget",
+        "target": "[data-tour='budget-categories']",
+        "title": "Ajuster vos budgets",
+        "text": "Ouvrez une catégorie pour modifier son enveloppe ou consulter ses opérations. Une catégorie archivée reste dans les anciens mois pour préserver votre historique."
     },
     {
-      route: "analysis",
-      target: "[data-tour='analysis']",
-      title: "Comprendre vos dépenses",
-      text: "La Répartition vous montre où part votre argent, par catégorie et sur la période que vous choisissez.",
+        "route": "budget",
+        "target": "[data-tour='budget-tools']",
+        "title": "Les dépenses à venir",
+        "text": "Dépenses fixes ouvre vos charges récurrentes. Calendrier montre leurs échéances. Transactions permet de retrouver et corriger une opération."
     },
     {
-      route: "wealth",
-      target: "[data-tour='wealth-overview']",
-      title: "Votre patrimoine",
-      text: "Ici sont regroupés vos comptes d’épargne et placements, séparément du compte courant. L’épargne voyage reste également identifiable.",
+        "route": "budget",
+        "target": "[data-tour='month-analysis-button']",
+        "title": "Analyse mon mois",
+        "text": "Ce bouton regroupe votre bilan mensuel, la comparaison prévu/réel et la répartition. Choisissez d’abord le mois à analyser, puis ouvrez cette page."
     },
     {
-      route: "projection",
-      target: "[data-tour='projection-chart']",
-      title: "Vous projeter dans le temps",
-      text: "Les Projections utilisent vos revenus, charges, épargne et projets pour estimer l’évolution de votre situation à plusieurs horizons.",
+        "route": "fixed",
+        "target": ".page-heading",
+        "title": "Créer une charge récurrente",
+        "text": "Ajoutez son nom, son montant, son compte et sa fréquence. Une charge annuelle, trimestrielle ou semestrielle compte uniquement dans son mois d’échéance."
     },
     {
-      route: "settings",
-      target: "[data-tour='tutorial-settings']",
-      title: "Retrouver cette visite",
-      text: "Vous pourrez relancer cette visite guidée quand vous voulez depuis Réglages → Aide et tutoriel." + (proEnabled ? " Votre module Pro reste accessible depuis la navigation." : ""),
+        "route": "fixed",
+        "target": ".page-heading",
+        "title": "Modifier une charge",
+        "text": "Vous pouvez ajuster une charge quand son montant ou sa fréquence change. Vérifiez les prochaines dates dans le calendrier après modification."
     },
-  ];
+    {
+        "route": "calendar",
+        "target": ".page-heading",
+        "title": "Lire les échéances",
+        "text": "Le calendrier rassemble les paiements prévus. Une échéance à valider représente une opération attendue, pas encore confirmée comme débitée."
+    },
+    {
+        "route": "calendar",
+        "target": ".page-heading",
+        "title": "Confirmer le paiement",
+        "text": "Validez lorsque le débit apparaît à la banque. Wimm enregistre alors la dépense : ne la saisissez pas une deuxième fois dans Ajouter."
+    },
+    {
+        "route": "add",
+        "target": ".add-grid",
+        "title": "Enregistrer une dépense",
+        "text": "Choisissez Une dépense, puis renseignez montant, date, compte et catégorie. Exemple : 42,80 € chez Carrefour dans Courses."
+    },
+    {
+        "route": "add",
+        "target": ".add-grid",
+        "title": "Enregistrer un revenu",
+        "text": "Choisissez Un revenu et précisez son type, par exemple Salaire ou Remboursement. Le revenu augmente le solde du compte choisi."
+    },
+    {
+        "route": "add",
+        "target": ".add-grid",
+        "title": "Faire un virement",
+        "text": "Choisissez les comptes de départ et d’arrivée. Un transfert vers un livret déplace votre argent ; ce n’est pas une dépense de consommation."
+    },
+    {
+        "route": "add",
+        "target": "[data-tour='add-page']",
+        "title": "Une dépense de voyage",
+        "text": "Utilisez la carte voyage pour associer l’achat au bon séjour et à sa catégorie. Vous retrouverez ce montant dans le suivi du voyage."
+    },
+    {
+        "route": "transactions",
+        "target": ".page-heading",
+        "title": "Retrouver une opération",
+        "text": "Recherchez une description et choisissez la période ou les filtres. Ouvrez l’opération concernée pour vérifier ses informations ou la corriger."
+    },
+    {
+        "route": "analysis",
+        "target": ".monthly-review-card",
+        "title": "Votre bilan mensuel",
+        "text": "Le bilan résume les revenus, dépenses et épargne du mois et compare les dépenses avec la période comparable du mois précédent. Un mois en cours reste provisoire."
+    },
+    {
+        "route": "analysis",
+        "target": ".monthly-comparison",
+        "title": "Comparer prévu et réel",
+        "text": "Ce tableau met en regard les prévisions et les opérations enregistrées. Les écarts permettent de repérer une charge oubliée ou une enveloppe à ajuster."
+    },
+    {
+        "route": "analysis",
+        "target": ".spending-analysis-monthly",
+        "title": "Où part votre argent",
+        "text": "Le graphique et sa légende montrent les dépenses par catégorie pour le mois sélectionné. Les pourcentages indiquent leur part dans le total."
+    },
+    {
+        "route": "analysis",
+        "target": ".spending-analysis-controls",
+        "title": "Changer la période",
+        "text": "Choisissez un mois, six mois ou une période plus longue pour étudier l’évolution. L’option voyages permet d’inclure ces dépenses dans l’analyse."
+    },
+    {
+        "route": "analysis",
+        "target": ".spending-analysis-chart",
+        "title": "Choisir les catégories",
+        "text": "Cochez les catégories à afficher sur les courbes. Vous pouvez toutes les sélectionner, en isoler quelques-unes ou afficher les cinq principales."
+    },
+    {
+        "route": "wealth",
+        "target": "[data-tour='wealth-overview']",
+        "title": "Ajouter vos comptes",
+        "text": "Renseignez chaque livret ou placement avec son solde réel. Les comptes d’épargne sont séparés du compte courant et l’épargne voyage reste identifiable."
+    },
+    {
+        "route": "wealth",
+        "target": ".page-heading",
+        "title": "Paramétrer vos placements",
+        "text": "Précisez le rendement estimé et le plafond si nécessaire. Ces paramètres servent aux projections ; ils ne représentent pas une promesse de rendement."
+    },
+    {
+        "route": "trips",
+        "target": ".page-heading",
+        "title": "Préparer un voyage",
+        "text": "Créez un séjour avec ses dates et son budget total, puis répartissez cette somme entre transport, hébergement et autres catégories."
+    },
+    {
+        "route": "trips",
+        "target": ".page-heading",
+        "title": "Suivre les dépenses du séjour",
+        "text": "Associez chaque achat au voyage depuis Ajouter. Le suivi permet de comparer ce qui était prévu avec ce qui a réellement été dépensé."
+    },
+    {
+        "route": "projection",
+        "target": "[data-tour='projection-chart']",
+        "title": "Choisir un horizon",
+        "text": "Les projections estiment l’évolution de votre argent à partir des revenus, charges, budgets et paramètres d’épargne. Changez l’horizon pour comparer les trajectoires."
+    },
+    {
+        "route": "projection",
+        "target": "[data-tour='projection-chart']",
+        "title": "Lire les courbes",
+        "text": "Le patrimoine et l’épargne voyage sont distingués. Un projet ou un séjour peut réduire un solde futur ; vérifiez vos hypothèses quand votre situation change."
+    },
+    {
+        "route": "loans",
+        "target": ".page-heading",
+        "title": "Crédits et prêts",
+        "text": "Ajoutez un crédit ou une somme prêtée à un tiers, avec les conditions de remboursement. Le suivi affiche les échéances et le montant restant dû."
+    },
+    {
+        "route": "loans",
+        "target": ".page-heading",
+        "title": "Suivre un remboursement",
+        "text": "Confirmez une mensualité lorsqu’elle est réellement payée. Vous pouvez modifier les paramètres du prêt si le montant ou le rythme des remboursements change."
+    },
+    {
+        "route": "personal",
+        "target": ".page-heading",
+        "title": "Votre compte personnel",
+        "text": "Cet espace suit vos opérations personnelles séparément des finances du foyer. Enregistrez les mouvements sur le bon compte pour garder une vision claire."
+    },
+    {
+        "route": "settings",
+        "target": "[data-tour='phone-notifications']",
+        "title": "Activer les notifications",
+        "text": "Sur votre iPhone, ouvrez Wimm depuis son icône sur l’écran d’accueil. Activez les notifications, autorisez-les, puis choisissez les alertes et envoyez un test."
+    },
+    {
+        "route": "settings",
+        "target": "[data-tour='phone-notifications']",
+        "title": "Les rappels d’échéance",
+        "text": "Les dépenses fixes sont signalées le jour de leur échéance, le matin à l’heure de Paris. Après validation du paiement, ce rappel n’est plus nécessaire."
+    },
+    {
+        "route": "settings",
+        "target": "[data-tour='tutorial-settings']",
+        "title": "Une aide sur chaque page",
+        "text": "Le petit i en haut relance uniquement les explications de la page ouverte. Depuis Aide et tutoriel, vous pouvez aussi revoir la visite complète."
+    },
+    {
+        "route": "pro",
+        "target": ".page-heading",
+        "title": "Votre espace professionnel",
+        "text": "Le module Pro rassemble votre activité. Utilisez ses sections pour suivre les clients, factures et obligations professionnelles séparément du budget du foyer."
+    }
+];
+  const steps = pageRoute ? allSteps.filter(s => s.route === pageRoute) : allSteps.filter(s => s.route !== "personal" && (s.route !== "pro" || proEnabled));
 
-  const current = steps[step];
+  const current = steps[Math.min(step, steps.length - 1)];
+  const labels: Record<string,string> = { home: "Accueil", budget: "Budget", add: "Ajouter", fixed: "Dépenses fixes", calendar: "Calendrier", transactions: "Transactions", analysis: "Budget → Analyse mon mois", wealth: "Patrimoine", projection: "Projections", trips: "Voyages", loans: "Crédits et prêts", personal: "Compte perso", settings: "Réglages", pro: "Professionnel" };
 
   useEffect(() => {
     if (open) setStep(0);
-  }, [open]);
+  }, [open, pageRoute]);
 
   useEffect(() => {
-    if (!open || route === current.route) return;
+    if (!open || !current || route === current.route) return;
     navigate(current.route);
   }, [open, step, current.route, route]);
 
@@ -115,6 +267,7 @@ export default function OnboardingTutorial({
     let observer: ResizeObserver | null = null;
     let element: HTMLElement | null = null;
     let disposed = false;
+    let attempts = 0;
     setBox(null);
     const update = () => {
       if (!disposed && element) setBox(element.getBoundingClientRect());
@@ -122,10 +275,12 @@ export default function OnboardingTutorial({
     const locate = () => {
       if (disposed) return;
       element = document.querySelector(current.target);
-      if (!element) {
+      if (!element && ++attempts < 12) {
         timer = window.setTimeout(locate, 120);
         return;
       }
+      if (!element) element = document.querySelector(".page-heading");
+      if (!element) return;
       // Leave room for the sticky header and the compact tutorial bubble.
       const headerBottom = document.querySelector(".topbar")?.getBoundingClientRect().bottom ?? 0;
       const panelTop = popover.current?.getBoundingClientRect().top ?? window.innerHeight - 260;
@@ -153,19 +308,19 @@ export default function OnboardingTutorial({
   if (!open) return null;
 
   const last = step === steps.length - 1;
-  const missingSetup = step === 1 && !hasCurrent;
+  const missingSetup = current.route === "home" && step === 0 && !hasCurrent;
   const pad = 8;
   const highlight = box
     ? {
         top: Math.max(6, box.top - pad),
         left: Math.max(6, box.left - pad),
-        width: Math.min(window.innerWidth - 12, box.width + pad * 2),
-        height: Math.min(window.innerHeight - 12, box.height + pad * 2),
+        width: Math.max(0, Math.min(window.innerWidth - 6, box.right + pad) - Math.max(6, box.left - pad)),
+        height: Math.max(0, Math.min(window.innerHeight - 6, box.bottom + pad) - Math.max(6, box.top - pad)),
       }
     : null;
 
   return (
-    <div className="live-tour" role="dialog" aria-modal="true" aria-label="Visite guidée Wimm">
+    <div className="live-tour" role="dialog" aria-modal="false" aria-label="Visite guidée Wimm">
       {!highlight && <div className="live-tour-shade" />}
       {highlight && <div className="live-tour-highlight" style={highlight} />}
 
@@ -176,6 +331,7 @@ export default function OnboardingTutorial({
             <X size={18} />
           </button>
         </div>
+        <div className="live-tour-location">Onglet : {labels[current.route]}</div>
         <div className="live-tour-progress"><i style={{ width: `${((step + 1) / steps.length) * 100}%` }} /></div>
         <h2>{current.title}</h2>
         <p>{current.text}</p>
