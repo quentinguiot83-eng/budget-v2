@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
 
 type TutorialProps = {
@@ -31,13 +31,14 @@ export default function OnboardingTutorial({
 }: TutorialProps) {
   const [step, setStep] = useState(0);
   const [box, setBox] = useState<DOMRect | null>(null);
+  const popover = useRef<HTMLDivElement>(null);
 
   const steps: Step[] = [
     {
       route: "home",
       target: "[data-tour='home-overview']",
       title: "Votre tableau de bord",
-      text: "Ici, Wimm vous montre directement votre compte courant, ce qu’il vous reste pour finir le mois et les informations importantes à surveiller.",
+      text: "Consultez votre solde réel, votre reste pour le mois et les alertes importantes.",
     },
     {
       route: "home",
@@ -63,13 +64,13 @@ export default function OnboardingTutorial({
       route: "budget",
       target: "[data-tour='budget-tools']",
       title: "Les détails du budget",
-      text: "Depuis ces boutons, vous retrouvez les dépenses fixes, le calendrier des échéances, toutes les transactions et la répartition de vos dépenses.",
+      text: "Retrouvez vos dépenses fixes, les échéances à valider, les transactions et leur répartition.",
     },
     {
       route: "add",
-      target: "[data-tour='add-page']",
+      target: ".add-grid",
       title: "Ajouter une opération",
-      text: "Le bouton + reste accessible en bas de l’écran sur mobile. Il sert à saisir une dépense, un revenu, un transfert ou une opération d’épargne.",
+      text: "Choisissez une dépense, un revenu, un virement ou un prêt. Le bouton + ouvre cette page.",
     },
     {
       route: "analysis",
@@ -112,34 +113,40 @@ export default function OnboardingTutorial({
     if (!open) return;
     let timer = 0;
     let observer: ResizeObserver | null = null;
-
+    let element: HTMLElement | null = null;
+    let disposed = false;
+    setBox(null);
+    const update = () => {
+      if (!disposed && element) setBox(element.getBoundingClientRect());
+    };
     const locate = () => {
-      const el = document.querySelector(current.target) as HTMLElement | null;
-      if (!el) {
-        setBox(null);
+      if (disposed) return;
+      element = document.querySelector(current.target);
+      if (!element) {
         timer = window.setTimeout(locate, 120);
         return;
       }
-      el.scrollIntoView({ behavior: "smooth", block: "center", inline: "nearest" });
-      const update = () => setBox(el.getBoundingClientRect());
-      window.setTimeout(update, 260);
+      // Leave room for the sticky header and the compact tutorial bubble.
+      const headerBottom = document.querySelector(".topbar")?.getBoundingClientRect().bottom ?? 0;
+      const panelTop = popover.current?.getBoundingClientRect().top ?? window.innerHeight - 260;
+      const top = Math.max(16, headerBottom + 16);
+      const available = Math.max(80, panelTop - top - 16);
+      const rect = element.getBoundingClientRect();
+      const desired = top + Math.max(0, (available - rect.height) / 2);
+      window.scrollBy({ top: rect.top - desired, behavior: "instant" });
       update();
       observer = new ResizeObserver(update);
-      observer.observe(el);
-      window.addEventListener("resize", update);
-      window.addEventListener("scroll", update, true);
-      return () => {
-        observer?.disconnect();
-        window.removeEventListener("resize", update);
-        window.removeEventListener("scroll", update, true);
-      };
+      observer.observe(element);
     };
-
-    const cleanup = locate();
+    window.addEventListener("resize", update);
+    window.addEventListener("scroll", update, true);
+    locate();
     return () => {
+      disposed = true;
       window.clearTimeout(timer);
-      if (typeof cleanup === "function") cleanup();
       observer?.disconnect();
+      window.removeEventListener("resize", update);
+      window.removeEventListener("scroll", update, true);
     };
   }, [open, step, route, current.target]);
 
@@ -159,10 +166,10 @@ export default function OnboardingTutorial({
 
   return (
     <div className="live-tour" role="dialog" aria-modal="true" aria-label="Visite guidée Wimm">
-      <div className="live-tour-shade" />
+      {!highlight && <div className="live-tour-shade" />}
       {highlight && <div className="live-tour-highlight" style={highlight} />}
 
-      <div className="live-tour-popover">
+      <div className="live-tour-popover" ref={popover}>
         <div className="live-tour-top">
           <span>Visite guidée · {step + 1}/{steps.length}</span>
           <button type="button" className="icon" aria-label="Passer le tutoriel" onClick={onSkip}>
@@ -186,7 +193,7 @@ export default function OnboardingTutorial({
             disabled={step === 0}
             onClick={() => setStep((value) => Math.max(0, value - 1))}
           >
-            <ChevronLeft size={17} /> Précédent
+            <ChevronLeft size={17} /><span className="sr-only">Précédent</span>
           </button>
           {last ? (
             <button type="button" className="primary" onClick={onComplete}>
@@ -198,9 +205,7 @@ export default function OnboardingTutorial({
             </button>
           )}
         </div>
-        <button type="button" className="text wide live-tour-skip" onClick={onSkip}>
-          Passer la visite
-        </button>
+
       </div>
     </div>
   );

@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import type { IncomingMessage, ServerResponse } from "node:http";
 import webpush from "web-push";
 import handler from "../api/push.ts";
-import { emptyState } from "./engine.ts";
+import { emptyState, today } from "./engine.ts";
 
 test("push endpoint protects cron, verifies sessions, limits tests to the device owner, and removes expired subscriptions", async () => {
   const keys = webpush.generateVAPIDKeys();
@@ -40,6 +40,15 @@ test("push endpoint protects cron, verifies sessions, limits tests to the device
     assert.equal((await request("test&device=my-device", "POST", "Bearer user-token")).body.sent, 1);
     assert.equal(delivery.mock.callCount(), 1);
     assert.equal(calls.find(c => c.url.endsWith("budget_push_context"))?.body?.p_user, "user");
+    device.state.accounts = [{ id: "current", name: "Courant", opening: 0, date: today(), group: "current", rate: 0, cap: 0, capType: "balance", contributed: 0, relay: "", allocation: 0 }];
+    device.state.rules = [{ id: "rent", name: "Loyer", kind: "fixed", account: "current", category: "", amount: 72200, start: today(), interval: 1, count: 0 }];
+    assert.equal((await request("dispatch", "POST", "Bearer user-token")).body.sent, 2);
+    const payload = JSON.parse(String(delivery.mock.calls.at(-1)?.arguments[1]));
+    assert.equal(payload.url, "/?screen=calendar");
+    assert.match(payload.body, /à valider aujourd’hui/);
+    device.dues = false;
+    assert.equal((await request("dispatch", "POST", "Bearer user-token")).body.sent, 0);
+    device.dues = true;
     delivery.mock.mockImplementation(async () => { throw Object.assign(Error("Expired"), { statusCode: 410 }); });
     assert.equal((await request("test&device=my-device", "POST", "Bearer user-token")).body.failed, 1);
     assert.ok(calls.some(c => c.url.endsWith("budget_push_expire") && c.body?.p_id === "my-device"));

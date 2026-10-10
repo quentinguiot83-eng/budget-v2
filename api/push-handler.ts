@@ -58,7 +58,7 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
       await Promise.all(queue.slice(start, start + 5).map(async d => {
         if (!validPushEndpoint(d.subscription.endpoint)) return;
         let alerts = action === "test" ? [{ key: `test:${Math.floor(Date.now() / 60000)}`, kind: "test", title: "Notifications Wimm activées", body: "Ton téléphone est prêt à recevoir les alertes Wimm.", url: "/" }]
-          : pushAlerts(d.state, action === "cron" ? d.invoices : []).filter(a => (a.kind === "budgets" ? d.budgets : d.dues) && (action === "cron" || a.kind === "budgets"));
+          : pushAlerts(d.state, d.invoices).filter(a => a.kind === "budgets" ? d.budgets : d.dues);
         const claimed: typeof alerts = [];
         for (const a of alerts) {
           if (await db("budget_push_claim", { p_id: d.id, p_key: a.key })) claimed.push(a);
@@ -68,10 +68,10 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
         const first = claimed[0];
         const payload = claimed.length === 1 ? { ...first, tag: first.key } : {
           title: `${claimed.length} alertes Wimm`, body: claimed.slice(0, 3).map(a => a.body).join(" ") + (claimed.length > 3 ? " Ouvre Wimm pour voir les autres." : ""),
-          url: "/?screen=home", tag: "wimm-alerts",
+          url: claimed.every(a => a.kind === "dues" && a.url === "/?screen=calendar") ? "/?screen=calendar" : "/?screen=home", tag: "wimm-alerts",
         };
         try {
-          await webpush.sendNotification(d.subscription, JSON.stringify(payload), { TTL: 3600, timeout: 10000 });
+          await webpush.sendNotification(d.subscription, JSON.stringify(payload), { TTL: 86400, timeout: 10000 });
           await db("budget_push_finish", { p_id: d.id, p_keys: claimed.map(a => a.key), p_success: true });
           sent++;
         } catch (e) {

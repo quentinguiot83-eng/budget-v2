@@ -12,7 +12,7 @@ export function pushAlerts(state: State, invoices: DueInvoice[] = []): PushAlert
   for (const d of overdue(state)) {
     if (state.accounts.find(a => a.id === d.rule.account)?.group === "personal") continue;
     alerts.push({ key: `due:${d.key}`, kind: "dues", title: "Paiement à confirmer",
-      body: `${d.rule.name} : ${money(d.rule.amount)} ${d.date < today() ? "en attente" : "à payer aujourd’hui"}.`, url: "/?screen=calendar" });
+      body: `${d.rule.name} : ${money(d.rule.amount)} ${d.date < today() ? "en attente" : "à valider aujourd’hui"}.`, url: "/?screen=calendar" });
   }
   for (const i of invoices) {
     if (!i.dueDate || i.dueDate > today() || !["sent", "partially_paid"].includes(i.status)) continue;

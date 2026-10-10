@@ -564,6 +564,8 @@ export default function App() {
   useEffect(() => {
     document.documentElement.dataset.mode = nightMode ? "dark" : "light";
     localStorage.setItem("wimm-night-mode", nightMode ? "1" : "0");
+    document.querySelector('meta[name="apple-mobile-web-app-status-bar-style"]')?.setAttribute("content", nightMode ? "black-translucent" : "default");
+    document.querySelector('meta[name="theme-color"]')?.setAttribute("content", nightMode ? "#0e151c" : "#f6f8fb");
   }, [nightMode]);
   useEffect(() => {
     if (!notice) return;

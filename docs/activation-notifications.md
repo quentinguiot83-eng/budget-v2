@@ -36,7 +36,7 @@ Chaque appareil s'active séparément. Les choix concernent cet appareil. Pour c
 ## Fonctionnement
 
 - Dépassements : vérification après chaque sauvegarde du budget ; une notification par catégorie et par mois. Les dépassements présents à l'activation ne sont pas renvoyés. Le contrôle quotidien récupère les alertes qui n'ont pas pu partir immédiatement.
-- Échéances : contrôle le matin à 06:00 UTC, soit 08:00 en été et 07:00 en hiver à Paris. Une alerte par échéance, sans rappel quotidien. Les paiements déjà confirmés et échéances annulées sont exclus.
+- Échéances : notification le jour où la dépense doit être validée ; contrôle le matin à 06:00 UTC, soit 08:00 en été et 07:00 en hiver à Paris. Une alerte par échéance, sans rappel quotidien. Une sauvegarde dans Wimm vérifie aussi les échéances déjà arrivées, pour couvrir une dépense créée ou modifiée après le contrôle du matin. Les paiements déjà confirmés et échéances annulées sont exclus.
 - Factures Pro : seules les factures émises ou partiellement payées, arrivées à échéance, sont signalées. Archiver une facture ne supprime pas un paiement encore attendu.
 - Un clic sur une notification ouvre Wimm. Les notifications sont regroupées quand plusieurs alertes sont détectées ensemble.
 - Désactiver : Réglages → Notifications sur téléphone → Désactiver. Les autres appareils continuent de recevoir leurs alertes.

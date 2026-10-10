@@ -41,3 +41,23 @@ test("push destinations reject private networks, credentials and spoofed hostnam
   for (const good of ["https://web.push.apple.com/Qabc", "https://fcm.googleapis.com/fcm/send/abc", "https://updates.push.services.mozilla.com/wpush/v2/abc"]) assert.ok(validPushEndpoint(good));
   for (const bad of ["http://web.push.apple.com/a", "https://127.0.0.1/a", "https://web.push.apple.com.attacker.example/a", "https://user:pass@web.push.apple.com/a", "https://web.push.apple.com:8443/a", "not a URL"]) assert.equal(validPushEndpoint(bad), false);
 });
+
+test("fixed expense reminder appears on its due date, with its own key for every recurrence", () => {
+  const s = fixture();
+  s.rules = [{ id: "fixed", name: "Électricité", kind: "fixed", account: "current", category: "food", amount: 4500, start: today(), interval: 1, count: 0 }];
+  const due = pushAlerts(s).find(a => a.kind === "dues");
+  assert.equal(due?.key, `due:fixed:${today()}`);
+  assert.equal(due?.url, "/?screen=calendar");
+  assert.match(due!.body, /à valider aujourd’hui/);
+  s.transactions.push({ id: "paid", type: "expense", amount: 4500, date: today(), account: "current", dueKey: `fixed:${today()}`, description: "Électricité" });
+  assert.equal(pushAlerts(s).length, 0);
+  s.transactions = [];
+  s.cancelled = [`fixed:${today()}`];
+  assert.equal(pushAlerts(s).length, 0);
+  s.cancelled = [];
+  s.rules[0].start = `${shiftMonth(month(), 1)}-01`;
+  assert.equal(pushAlerts(s).length, 0);
+  s.rules[0].start = `${shiftMonth(month(), -1)}-01`;
+  const reminders = pushAlerts(s).filter(a => a.kind === "dues");
+  assert.equal(new Set(reminders.map(a => a.key)).size, 2);
+});

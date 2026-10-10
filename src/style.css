@@ -2776,13 +2776,13 @@ dialog::backdrop {
 
 /* Visite guidée contextuelle */
 .live-tour{position:fixed;inset:0;z-index:300;pointer-events:none}
-.live-tour-shade{position:absolute;inset:0;background:#14233799;backdrop-filter:blur(2px)}
+.live-tour-shade{position:absolute;inset:0;background:#14233740}
 .live-tour-highlight{
   position:fixed;
   z-index:1;
   border:3px solid var(--accent);
   border-radius:18px;
-  box-shadow:0 0 0 9999px #14233780,0 0 0 6px color-mix(in srgb,var(--accent) 25%,transparent),0 16px 45px #1423372e;
+  box-shadow:0 0 0 9999px #14233740,0 0 0 3px color-mix(in srgb,var(--accent) 25%,transparent);
   background:transparent;
   transition:top .24s ease,left .24s ease,width .24s ease,height .24s ease;
 }
@@ -2822,4 +2822,32 @@ dialog::backdrop {
   .live-tour-popover h2{font-size:1.12rem}
   .live-tour-popover p{font-size:.86rem}
   .live-tour-highlight{border-radius:14px}
+}
+
+/* Compact, readable contextual tour and consistent mobile surfaces. */
+.add-page-layout{display:grid;gap:24px}
+.add-page-layout>.section-head,.add-page-layout>.footnote{margin:0}
+.add-card,.mobile-menu-trigger{background:var(--surface);color:var(--ink)}
+.live-tour-popover{padding:12px 14px;border-radius:14px;max-height:40dvh;overflow:auto}
+.live-tour-top>span{font-size:.7rem}
+.live-tour-progress{height:3px;margin:6px 0 10px}
+.live-tour-popover h2{font-size:1rem;margin-bottom:5px}
+.live-tour-popover p{font-size:.85rem;line-height:1.4;margin-bottom:10px}
+.live-tour-actions button{min-height:36px;padding:7px 12px}
+.live-tour-configure{margin-bottom:8px;padding:8px}
+.live-tour-popover .icon{width:32px;height:32px}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+.check-row{display:flex;align-items:flex-start;gap:10px;margin:12px 0;line-height:1.4}
+.check-row input{flex:0 0 auto;margin-top:3px}
+:root[data-mode="dark"] .mobile-drawer,:root[data-mode="dark"] .day,
+:root[data-mode="dark"] .projection-table-scroll th:first-child,
+:root[data-mode="dark"] .projection-table-scroll td:first-child{background:var(--surface);color:var(--ink)}
+@media(max-width:850px){
+  body{padding-top:env(safe-area-inset-top)}
+  .topbar{top:env(safe-area-inset-top)!important}
+  .topbar:before{content:"";position:absolute;bottom:100%;left:-24px;right:-24px;height:env(safe-area-inset-top);background:var(--surface)}
+  .live-tour-popover{left:12px;right:12px;width:auto;bottom:calc(86px + env(safe-area-inset-bottom));padding:12px 14px;border-radius:14px}
+  .live-tour-popover h2{font-size:1rem}
+  .live-tour-popover p{font-size:.85rem}
+  .add-page-layout{gap:18px}
 }

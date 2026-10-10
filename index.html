@@ -6,9 +6,17 @@
       name="viewport"
       content="width=device-width,initial-scale=1,viewport-fit=cover"
     />
-    <meta name="theme-color" content="#bdd3f6" />
+    <meta name="theme-color" content="#f6f8fb" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <script>
+      try {
+        const dark = localStorage.getItem("wimm-night-mode") === "1";
+        document.documentElement.dataset.mode = dark ? "dark" : "light";
+        document.querySelector('meta[name="apple-mobile-web-app-status-bar-style"]').content = dark ? "black-translucent" : "default";
+        if (dark) document.querySelector('meta[name="theme-color"]').content = "#0e151c";
+      } catch {}
+    </script>
     <meta
       name="description"
       content="Votre budget, votre épargne et vos voyages, réunis en famille."

@@ -29,7 +29,7 @@ export default function AddPage({
   newLoan,
 }: AddPageProps) {
   return (
-    <>
+    <div className="add-page-layout">
       <div className="section-head">
         <p className="lead">
           Que souhaitez-vous enregistrer ?
@@ -139,6 +139,6 @@ export default function AddPage({
         calendrier afin d’éviter un
         doublon.
       </p>
-    </>
+    </div>
   );
 }

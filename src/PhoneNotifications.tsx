@@ -117,8 +117,8 @@ export default function PhoneNotifications({ state }: { state: State }) {
       : <>
         {config && !config.ready && <p className="muted">Les notifications téléphone seront disponibles une fois leur activation terminée.</p>}
         <label className="check-row"><input type="checkbox" checked={budgets} onChange={e => setBudgets(e.target.checked)} disabled={busy} /> Dépassements de budget</label>
-        <label className="check-row"><input type="checkbox" checked={dues} onChange={e => setDues(e.target.checked)} disabled={busy} /> Échéances à payer et factures Pro à suivre</label>
-        <p className="muted">Une alerte par catégorie et par mois. Les échéances en attente sont signalées le matin, sans répétition quotidienne.</p>
+        <label className="check-row"><input type="checkbox" checked={dues} onChange={e => setDues(e.target.checked)} disabled={busy} /> Dépenses fixes à valider et factures Pro à suivre</label>
+        <p className="muted">Une alerte par catégorie et par mois. Les dépenses fixes sont signalées le jour de leur échéance, le matin (heure de Paris), même si Wimm est fermée. Aucun rappel après validation.</p>
         <div className="flex">
           <button className="primary" disabled={busy || !config?.ready} onClick={() => void save()}>{busy ? "Patiente…" : enabled ? "Enregistrer mes choix" : "Activer sur cet appareil"}</button>
           {enabled && <><button className="secondary" disabled={busy} onClick={() => void test()}>Envoyer un test</button><button className="text" disabled={busy} onClick={() => void disable()}><BellOff size={16} /> Désactiver</button></>}
