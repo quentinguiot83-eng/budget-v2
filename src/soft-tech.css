@@ -250,3 +250,121 @@ dialog::backdrop { background: rgba(25, 22, 46, .45); backdrop-filter: blur(6px)
 .auth-panel { background: var(--surface); }
 :root[data-mode="dark"] .auth-story { background: var(--soft-gradient); }
 :root[data-mode="dark"] .auth-panel { background: var(--surface); }
+
+/* Compact rhythm: one heading gap, smaller type and consistent card insets. */
+.page-heading { margin: 0; padding-block: 22px 18px; gap: 12px; }
+.page-heading h1 { font-size: clamp(1.45rem, 2.5vw, 1.9rem); line-height: 1.2; margin: 0; }
+.page-heading .eyebrow { margin: 0 0 7px; font-size: .65rem; }
+.content, .content > .page-stack { gap: 18px; }
+.card, .category, .home-remaining-card { padding: 20px; border-radius: 20px; }
+.card h2, .section-head h2, .prosuite-cardhead h2 { font-size: 1rem; line-height: 1.35; }
+.section-head { margin-bottom: 14px; gap: 10px; }
+.section-head .text { font-size: .78rem; }
+.two-col, .category-grid, .account-grid, .add-grid { gap: 18px; }
+.overview { gap: 14px; }
+.balance-card { min-height: 165px; padding: 22px; border-radius: 22px; }
+.balance-card .hero-number { font-size: clamp(2rem, 3vw, 2.6rem); margin: 17px 0; }
+.metric { padding: 19px; gap: 12px; }
+.metric strong { font-size: 1.45rem; }
+.available-card .large { font-size: 1.8rem; }
+.large { font-size: 1.5rem; }
+.home-remaining-card { gap: 5px; }
+.home-remaining-card strong { font-size: 1.3rem; }
+.home-remaining-grid { gap: 14px; }
+.budget-summary { padding: 22px; border-radius: 20px; gap: 16px; }
+.budget-summary strong { font-size: 1.45rem; margin-top: 5px; }
+.category p { font-size: .82rem; }
+.category .progress { margin: 11px 0 9px; }
+.card > .category { padding: 11px 0 0; box-shadow: none; }
+.category h3 { font-size: .92rem; }
+.category-icon { width: 36px; height: 36px; border-radius: 12px; }
+.row { padding: 12px 0; }
+.row-label { font-size: .85rem; }
+.row-icon { width: 35px; height: 35px; padding: 8px; border-radius: 12px; }
+.month-analysis-cta { padding: 17px 20px; border-radius: 19px; }
+.month-analysis-cta strong { font-size: .96rem; }
+.alert-bar { padding: 15px 18px; border-radius: 19px; }
+.add-card { padding: 20px; border-radius: 20px; }
+.add-card h3 { font-size: 1.02rem; }
+.add-card > span { width: 42px; height: 42px; }
+.prosuite-card, .prosuite-metric { padding: 19px; border-radius: 20px; }
+.prosuite-card { margin-bottom: 18px; }
+.prosuite-grid2 { gap: 18px; }
+.prosuite-grid2 > .prosuite-card { margin-bottom: 0; }
+.prosuite-pagehead { margin-bottom: 18px; }
+.prosuite-pagehead h1, .billing-v2-head h1 { font-size: 1.6rem; }
+.prosuite-pagehead p { font-size: .85rem; }
+.prosuite-metric strong { font-size: 1.4rem; }
+.billing-v2-card { padding: 20px; border-radius: 20px; }
+@media (max-width: 850px) {
+  .soft-topbar { min-height: 66px; padding-top: calc(8px + env(safe-area-inset-top)); padding-bottom: 8px; }
+  .soft-wordmark { font-size: 1.5rem; }
+  .soft-topbar > div:first-child > .eyebrow { font-size: .62rem; }
+  .page-heading { padding-block: 18px 16px; }
+  .overview .metric { min-height: 142px; }
+  .bottom-nav { padding-block: 10px 9px; border-radius: 22px; }
+  .bottom-nav .add-nav { margin-top: -18px; }
+  .bottom-nav .add-nav svg { width: 49px; height: 49px; padding: 13px; }
+}
+@media (max-width: 560px) {
+  .page-heading { padding-block: 16px; }
+  .page-heading h1 { font-size: 1.4rem; letter-spacing: -.035em; }
+  .page-heading > .month-picker { margin-top: 12px; }
+  .month-picker input { font-size: .85rem; padding-block: 5px; }
+  .month-picker .icon { width: 36px; height: 36px; }
+  .content, .content > .page-stack { gap: 16px; }
+  .card, .category, .home-remaining-card { padding: 16px; border-radius: 19px; }
+  .card h2, .section-head h2, .prosuite-cardhead h2 { font-size: .94rem; }
+  .section-head { margin-bottom: 12px; }
+  .card p { font-size: .82rem; line-height: 1.5; }
+  .card .muted, .card small { font-size: .76rem; }
+  .two-col, .category-grid, .account-grid, .add-grid { gap: 16px; }
+  .balance-card { min-height: 150px; padding: 20px; border-radius: 21px; }
+  .balance-card .hero-number { font-size: 2.05rem; margin: 16px 0; }
+  .balance-card .split > span { font-size: .78rem; }
+  .balance-card .split:last-child > span, .balance-card button { font-size: .7rem; }
+  .metric { padding: 15px; border-radius: 19px; gap: 9px; }
+  .metric-top { gap: 7px; }
+  .metric-top small { font-size: .72rem; min-height: 0; line-height: 1.4; }
+  .metric strong { font-size: 1.25rem; }
+  .metric-icon { width: 28px; height: 28px; border-radius: 10px; }
+  .metric-icon svg { width: 17px; height: 17px; }
+  .metric-bottom { font-size: .68rem; }
+  .home-remaining-card strong { font-size: 1.17rem; }
+  .home-remaining-card .muted, .home-remaining-card small { font-size: .72rem; line-height: 1.4; }
+  .home-remaining-card .text { font-size: .73rem; }
+  .home-remaining-grid { gap: 12px; }
+  .budget-summary { padding: 18px; gap: 14px; border-radius: 20px; }
+  .budget-summary > div:first-child { padding-bottom: 13px; }
+  .budget-summary > div:first-child strong { font-size: 1.7rem; }
+  .budget-summary strong { font-size: 1.2rem; }
+  .budget-summary > div > span, .budget-summary p { font-size: .76rem; }
+  .budget-summary p { margin-top: 7px; }
+  .available-card .large { font-size: 1.7rem; }
+  .large { font-size: 1.4rem; }
+  .category .flex { gap: 10px; }
+  .category .progress { margin: 10px 0 8px; }
+  .category h3 { font-size: .88rem; }
+  .category p { font-size: .78rem; margin-top: 3px; }
+  .category-icon { width: 34px; height: 34px; border-radius: 11px; }
+  .category-icon svg { width: 19px; height: 19px; }
+  .row-label { font-size: .82rem; }
+  .row-sub, .row-value { font-size: .76rem; }
+  .toolbar { gap: 7px; }
+  .toolbar .secondary { padding: 9px 11px; font-size: .76rem; }
+  .alert-bar { padding: 13px 15px; gap: 10px; font-size: .81rem; }
+  .month-analysis-cta { padding: 15px 17px; gap: 10px; }
+  .month-analysis-cta strong { font-size: .9rem; }
+  .month-analysis-cta small { font-size: .68rem; }
+  .month-analysis-icon { width: 34px; height: 34px; border-radius: 11px; }
+  .prosuite-card, .prosuite-metric, .billing-v2-card { padding: 16px; border-radius: 19px; }
+  .prosuite-pagehead h1, .billing-v2-head h1 { font-size: 1.4rem; }
+  .prosuite-pagehead p { font-size: .8rem; }
+  .prosuite-metric strong { font-size: 1.25rem; }
+  .prosuite-shortcuts button { padding: 16px; border-radius: 19px; }
+  .add-card { padding: 18px; }
+  .add-card h3 { font-size: .96rem; }
+  .add-card p { font-size: .8rem; }
+}
+.category .grow > strong { font-size: .9rem; font-weight: 650; }
+@media (max-width: 560px) { .category .grow > strong { font-size: .85rem; } }
