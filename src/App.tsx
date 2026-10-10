@@ -1,3 +1,4 @@
+import { seedStarterCategories } from "./starterCategories";
 import PhoneNotifications, { dispatchPhoneAlerts } from "./PhoneNotifications";
 import { categoryUsage, categoryReplacements, deleteArchivedCategory } from "./categoryDeletion";
 import SpendingAnalysis from "./SpendingAnalysis";
@@ -567,8 +568,8 @@ export default function App() {
   useEffect(() => {
     document.documentElement.dataset.mode = nightMode ? "dark" : "light";
     localStorage.setItem("wimm-night-mode", nightMode ? "1" : "0");
-    document.querySelector('meta[name="apple-mobile-web-app-status-bar-style"]')?.setAttribute("content", "black-translucent");
-    document.querySelector('meta[name="theme-color"]')?.setAttribute("content", nightMode ? "#0e151c" : "#f6f8fb");
+    document.querySelector('meta[name="apple-mobile-web-app-status-bar-style"]')?.setAttribute("content", nightMode ? "black-translucent" : "default");
+    document.querySelector('meta[name="theme-color"]')?.setAttribute("content", nightMode ? "#17212b" : "#ffffff");
   }, [nightMode]);
   useEffect(() => {
     if (!notice) return;
@@ -986,6 +987,7 @@ export default function App() {
           });
 
           const currentMonth = month();
+          seedStarterCategories(d, currentMonth);
           d.salaryReceivedMonths ??= [];
           d.savingDoneMonths ??= [];
 
@@ -1291,6 +1293,7 @@ export default function App() {
 
           if (!a && !current) {
             const currentMonth = month();
+            if (entry.group === "current") seedStarterCategories(d, currentMonth);
 
             d.salaryReceivedMonths ??= [];
             d.savingDoneMonths ??= [];
@@ -5392,7 +5395,8 @@ export default function App() {
                 <p>
                   Renseignez le solde réellement affiché par votre banque.
                   Wimm vous demandera aussi si le salaire et l’épargne de ce mois
-                  sont déjà compris dans vos soldes.
+                  sont déjà compris dans vos soldes. Maison, Courses, Sorties et
+                  Transports seront créées avec des budgets à personnaliser.
                 </p>
               </div>
               <button className="primary" onClick={() => initialCurrentAccount()}>
@@ -7961,7 +7965,7 @@ export default function App() {
             <TransactionSearch initialType={txFilter} state={s} month={selectedMonth} setMonth={setMonth} add={() => navigate("add")} rows={txRows}/>
           )}
           {route === "analysis" && (
-            <div data-tour="analysis">{monthlyReviewPanel()}<MonthlyComparison state={s} period={selectedMonth}/><SpendingAnalysis state={s} selectedMonth={selectedMonth}/></div>
+            <div className="page-stack" data-tour="analysis">{monthlyReviewPanel()}<MonthlyComparison state={s} period={selectedMonth}/><SpendingAnalysis state={s} selectedMonth={selectedMonth}/></div>
           )}
           {route === "loans" && (
             <LoansPage

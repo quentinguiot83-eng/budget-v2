@@ -101,11 +101,13 @@ export default function Charts(
           <XAxis
             dataKey="name"
             tick={{
+              fill: "var(--muted)",
               fontSize: 11,
             }}
           />
 
           <YAxis
+            tick={{ fill: "var(--muted)", fontSize: 12 }}
             tickFormatter={(v) =>
               Math.round(
                 Number(v) / 100,
@@ -115,6 +117,9 @@ export default function Charts(
           />
 
           <Tooltip
+            contentStyle={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 12, color: "var(--ink)" }}
+            labelStyle={{ color: "var(--ink)", fontWeight: 700 }}
+            itemStyle={{ color: "var(--ink)" }}
             formatter={(v) =>
               money(Number(v))
             }
@@ -170,7 +175,7 @@ export default function Charts(
         >
           <CartesianGrid
             vertical={false}
-            stroke="#e9edf2"
+            stroke="var(--border)"
           />
 
           <XAxis
@@ -182,6 +187,7 @@ export default function Charts(
               )
             }
             tick={{
+              fill: "var(--muted)",
               fontSize: 12,
             }}
           />
@@ -196,11 +202,15 @@ export default function Charts(
             }
             width={60}
             tick={{
+              fill: "var(--muted)",
               fontSize: 12,
             }}
           />
 
           <Tooltip
+            contentStyle={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 12, color: "var(--ink)" }}
+            labelStyle={{ color: "var(--ink)", fontWeight: 700 }}
+            itemStyle={{ color: "var(--ink)" }}
             formatter={(v) => {
 
               const value =
@@ -308,6 +318,9 @@ export default function Charts(
           </Pie>
 
           <Tooltip
+            contentStyle={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 12, color: "var(--ink)" }}
+            labelStyle={{ color: "var(--ink)", fontWeight: 700 }}
+            itemStyle={{ color: "var(--ink)" }}
             formatter={(v) =>
               money(Number(v))
             }
@@ -330,7 +343,7 @@ export default function Charts(
       >
         <CartesianGrid
           vertical={false}
-          stroke="#e9edf2"
+          stroke="var(--border)"
         />
 
         <XAxis
@@ -339,6 +352,7 @@ export default function Charts(
           minTickGap={28}
           interval="preserveStartEnd"
           tick={{
+              fill: "var(--muted)",
             fontSize: 11,
           }}
         />
@@ -352,11 +366,15 @@ export default function Charts(
           }
           width={65}
           tick={{
+              fill: "var(--muted)",
             fontSize: 12,
           }}
         />
 
         <Tooltip
+            contentStyle={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 12, color: "var(--ink)" }}
+            labelStyle={{ color: "var(--ink)", fontWeight: 700 }}
+            itemStyle={{ color: "var(--ink)" }}
           isAnimationActive={false}
           position={{ x: 54, y: 0 }}
           content={({ active, payload, label }) => {

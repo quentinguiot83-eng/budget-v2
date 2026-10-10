@@ -2869,3 +2869,17 @@ body{min-height:100dvh}
  .live-tour-popover{max-height:34dvh}
 }
 @media(max-width:560px){.main{--mobile-gutter:18px}}
+
+/* Shared spacing for top-level blocks, including nested analysis cards. */
+:root{--block-gap:24px}
+.content,.page-stack{display:grid;gap:var(--block-gap)}
+.content>.card,.page-stack>.card,.content>[data-tour]>.card{margin-block:0}
+.pills button,.trip-tabs button{background:var(--accent-soft);color:var(--ink);border:1px solid var(--border)}
+.pills button.selected,.trip-tabs button.selected{background:var(--accent);color:#263647;border-color:var(--accent)}
+:root[data-mode="dark"] .month-picker .icon{background:var(--surface);color:var(--ink)}
+:root[data-mode="dark"] .recharts-default-tooltip{background:var(--surface)!important;border-color:var(--border)!important;color:var(--ink)!important}
+:root[data-mode="dark"] .recharts-tooltip-label,:root[data-mode="dark"] .recharts-tooltip-item{color:var(--ink)!important}
+:root[data-mode="dark"] .recharts-cartesian-axis-tick-value{fill:var(--muted)}
+:root[data-mode="dark"] .budget-overrun-alert{background:#302517;color:#f2ce9e;border-color:#956f3c}
+:root[data-mode="dark"] .pills input{background:var(--surface);color:var(--ink);border-color:var(--border)}
+@media(max-width:560px){:root{--block-gap:18px}}
