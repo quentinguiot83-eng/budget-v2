@@ -74,7 +74,7 @@ import {
   ShoppingCart,
 } from "lucide-react";
 import { api, rpc } from "./api";
-import { Modal, Form, Progress, Empty, Row, type Field } from "./ui";
+import { Modal, Form, Progress, Empty, Row, BlockInfo, type Field } from "./ui";
 import AddPage from "./pages/AddPage";
 import LoansPage from "./pages/LoansPage";
 import ProWorkspace from "./ProWorkspace";
@@ -4215,9 +4215,11 @@ export default function App() {
       <section className="card available-card">
         <div className="section-head">
           <h2>Disponible jusqu’à la fin du mois</h2>
-          <button type="button" className="text" onClick={() => explain(
+          <button type="button" className="block-info" aria-label="Informations : Disponible jusqu’à la fin du mois" onClick={() => explain(
             "Calcul du disponible jusqu’à la fin du mois",
             <>
+              <p>Après les paiements à venir, les projets du mois et l’épargne à effectuer.</p>
+              <p>Calcul au {dateLabel(today())} · jusqu’au {dateLabel(a.end)}</p>
               <Row title="Solde actuel des comptes courants" value={money(a.cash)} />
               <Row title="Charges et mensualités encore à payer" value={"− " + money(a.fixed)} />
               {a.pending.map((d) => <Row key={d.key} title={d.rule.name}
@@ -4238,13 +4240,11 @@ export default function App() {
                 Le solde dépend de vos saisies dans Wimm.</p>
               {!a.hasRealIncome && <p>L’épargne sera réservée après la saisie des revenus affectés à ce mois.</p>}
             </>,
-          )}>Voir le calcul <CircleHelp size={14} /></button>
+          )}><Info size={17} /></button>
         </div>
         <strong className={`large${a.available < 0 ? " negative" : ""}`}>{money(a.available)}</strong>
-        <p className="muted">Après les paiements à venir, les projets du mois et l’épargne à effectuer.</p>
         {a.available < 0 && <p role="status" className="negative">Il manque {money(-a.available)} pour couvrir les sommes réservées.</p>}
         {!a.hasRealIncome && <p className="muted">Épargne non encore réservée : aucun revenu affecté à ce mois n’a été saisi.</p>}
-        <small className="muted">Calcul au {dateLabel(today())} · jusqu’au {dateLabel(a.end)}</small>
       </section>
     );
   }
@@ -4819,9 +4819,7 @@ export default function App() {
       <section className="card">
         <div className="section-head">
           <h2>Votre épargne du mois</h2>
-          <button className="text" onClick={calc}>
-            Voir le calcul
-          </button>
+          <button type="button" className="block-info" aria-label="Informations : Épargne du mois" onClick={calc}><Info size={17} /></button>
         </div>
         <div className="split">
           <strong className="large">
@@ -5474,7 +5472,7 @@ export default function App() {
 
               <div className="home-remaining-grid">
                 <section className="home-remaining-card">
-                  <span className="muted">Revenus affectés à ce mois</span><strong>{money(totals.income)}</strong>
+                  <span className="muted">Revenus du mois</span><strong>{money(totals.income)}</strong>
                   <button className="text" onClick={() => { navigate("transactions"); setTxFilter("income"); }}>Voir les revenus</button>
                 </section>
                 <section className="home-remaining-card">
@@ -5639,19 +5637,13 @@ export default function App() {
                   Maison, courses, sorties… Choisissez vos enveloppes.
                 </Empty>
               )}
-              <p className="footnote">
-                Le budget restant est une enveloppe de dépenses, pas le solde de
-                votre compte. Les catégories archivées restent dans
-                l’historique.
-              </p>
+              <BlockInfo title="Comprendre les enveloppes"><p>Le budget restant est une enveloppe de dépenses, pas le solde de votre compte. Les catégories archivées restent dans l’historique.</p></BlockInfo>
             </>
           )}
           {route === "fixed" && (
             <>
               <div className="section-head">
-                <p className="muted">
-                  Chaque charge est comptée uniquement dans son mois d’échéance.
-                </p>
+                <BlockInfo title="Dépenses fixes"><p>Chaque charge est comptée uniquement dans son mois d’échéance.</p></BlockInfo>
                 <button className="primary" onClick={() => editRule()}>
                   <Plus size={18} />
                   Dépense fixe
@@ -7222,12 +7214,37 @@ export default function App() {
                 <section className="metric">
                   <span>Capacité prévue · {monthLabel(selectedMonth)}</span>
                   <strong>{money(totals.capacity)}</strong>
-                  <small>Varie selon les charges dues chaque mois.</small>
+                  <BlockInfo title="Capacité prévue"><p>Varie selon les charges dues chaque mois. Le calcul utilise vos revenus estimés, vos budgets et les échéances du mois sélectionné.</p></BlockInfo>
                 </section>
               </div>
               <section className="card" data-tour="projection-chart">
                 <div className="section-head">
                   <h2>Évolution estimée</h2>
+                  <BlockInfo title="Comprendre les projections">
+                  <p>
+                    Départ : soldes actuels. Simulation à partir du mois
+                    prochain, revenus et budgets variables constants, charges à
+                    leurs dates réelles, fin des crédits respectée. Rendements
+                    annuels effectifs convertis en taux mensuels. Intérêts sur
+                    le solde d’ouverture, versements et projets en fin de mois.
+                    La fiscalité configurée pour chaque compte patrimoine
+                    est intégrée à la courbe nette. Les livrets fiscalisés
+                    peuvent appliquer la fiscalité directement aux intérêts,
+                    tandis que les placements comme le PEA peuvent appliquer
+                    une taxation estimée sur la plus-value à la sortie.
+                    L’inflation et les remboursements de prêts à recevoir
+                    ne sont pas simulés. Les projets datés du mois courant ou en retard
+                    sont placés au premier mois simulé.
+                  </p>
+                  <p>
+                    Les sommes non affectées à un placement restent sur le compte courant
+                    et sont incluses dans la courbe Patrimoine. L’épargne dédiée
+                    aux voyages reste affichée séparément.
+                    Les rendements sont des hypothèses, pas des garanties. Un
+                    projet lié à un voyage est réduit des virements de
+                    financement déjà effectués.
+                  </p>
+<p>Les déficits ne sont pas automatiquement retirés de vos comptes d’épargne.</p></BlockInfo>
                   <div className="pills">
                     {[1, 5, 10, 30].map((n) => (
                       <button
@@ -7253,69 +7270,6 @@ export default function App() {
                     />
                   </Suspense>
                 </div>
-                <div className="forecast-totals">
-                  <span>À {years} ans</span>
-                  <strong>
-                    {money(
-                      project(
-                        s,
-                        years,
-                      ).at(-1)!
-                        .wealth +
-                        project(
-                          s,
-                          years,
-                        ).at(-1)!
-                          .current,
-                    )}
-                    <small>
-                      Patrimoine total
-                    </small>
-                  </strong>
-
-                  <strong>
-                    {money(
-                      project(
-                        s,
-                        years,
-                      ).at(-1)!
-                        .wealthNet +
-                        project(
-                          s,
-                          years,
-                        ).at(-1)!
-                          .current,
-                    )}
-                    <small>
-                      Après fiscalité
-                    </small>
-                  </strong>
-
-                  <strong>
-                    −{" "}
-                    {money(
-                      project(
-                        s,
-                        years,
-                      ).at(-1)!
-                        .taxEstimate,
-                    )}
-                    <small>
-                      Fiscalité estimée
-                    </small>
-                  </strong>
-
-                  <strong>
-                    {money(
-                      project(
-                        s,
-                        years,
-                      ).at(-1)!
-                        .travel,
-                    )}
-                    <small>Voyages</small>
-                  </strong>
-                </div>
                 {projectionData.at(-1)!.deficit > 0 && (
                   <p className="warning">
                     Financement manquant
@@ -7326,35 +7280,11 @@ export default function App() {
                       : ""}
                     {" · "}
                     Cumul : {money(projectionData.at(-1)!.deficit)}.
-                    {" "}Les déficits ne sont pas automatiquement retirés de
-                    vos comptes d’épargne.
+
                   </p>
                 )}
                 <details>
-                  <summary>Hypothèses et valeurs annuelles</summary>
-                  <p>
-                    Départ : soldes actuels. Simulation à partir du mois
-                    prochain, revenus et budgets variables constants, charges à
-                    leurs dates réelles, fin des crédits respectée. Rendements
-                    annuels effectifs convertis en taux mensuels. Intérêts sur
-                    le solde d’ouverture, versements et projets en fin de mois.
-                    La fiscalité configurée pour chaque compte patrimoine
-                    est intégrée à la courbe nette. Les livrets fiscalisés
-                    peuvent appliquer la fiscalité directement aux intérêts,
-                    tandis que les placements comme le PEA peuvent appliquer
-                    une taxation estimée sur la plus-value à la sortie.
-                    L’inflation et les remboursements de prêts à recevoir
-                    ne sont pas simulés. Les projets datés du mois courant ou en retard
-                    sont placés au premier mois simulé.
-                  </p>
-                  <p>
-                    Les sommes non affectées à un placement restent sur le compte courant
-                    et sont incluses dans la courbe Patrimoine. L’épargne dédiée
-                    aux voyages reste affichée séparément.
-                    Les rendements sont des hypothèses, pas des garanties. Un
-                    projet lié à un voyage est réduit des virements de
-                    financement déjà effectués.
-                  </p>
+                  <summary>Valeurs annuelles</summary>
                   <div className="projection-table-scroll">
                     <table>
                       <thead>
@@ -7932,10 +7862,7 @@ export default function App() {
                       <span aria-hidden="true" />
                     </label>
                   </div>
-                  <h2>Votre couleur</h2>
-                  <p className="muted">
-                    Un thème personnel, même dans un foyer partagé.
-                  </p>
+                  <div className="section-head"><h2>Votre couleur</h2><BlockInfo title="Votre couleur"><p>Un thème personnel, même dans un foyer partagé.</p></BlockInfo></div>
                   <div className="theme-grid">
                     {themes.map(([id, label]) => (
                       <button

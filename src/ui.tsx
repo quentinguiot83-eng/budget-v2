@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { categoryEmojis } from "./categoryEmojis";
-import { X, ChevronRight } from "lucide-react";
+import { X, ChevronRight, Info } from "lucide-react";
 export type Field = {
   name: string;
   label: string;
@@ -60,6 +60,14 @@ export function Modal({
     </dialog>
   );
 }
+export function BlockInfo({ title, children }: { title: string; children: ReactNode }) {
+  const [open, setOpen] = useState(false);
+  return <>
+    <button type="button" className="block-info" aria-label={`Informations : ${title}`} title={`Informations : ${title}`} onClick={() => setOpen(true)}><Info size={17} /></button>
+    {open && <Modal title={title} close={() => setOpen(false)}><div className="block-info-content">{children}</div></Modal>}
+  </>;
+}
+
 export function Form({
   fields,
   submit,

@@ -1,3 +1,4 @@
+import { BlockInfo } from "./ui";
 import { useEffect, useState } from "react";
 import { Bell, BellOff } from "lucide-react";
 import { api, rpc } from "./api";
@@ -110,15 +111,15 @@ export default function PhoneNotifications({ state }: { state: State }) {
     finally { setBusy(false); }
   }
   return <section className="card">
-    <h2><Bell size={20} /> Notifications sur téléphone</h2>
-    <p className="muted">Choisis les alertes à recevoir sur cet appareil, même quand Wimm est fermée.</p>
+    <div className="section-head"><h2><Bell size={20} /> Notifications sur téléphone</h2><BlockInfo title="Notifications sur téléphone"><p className="muted">Choisis les alertes à recevoir sur cet appareil, même quand Wimm est fermée.</p><p className="muted">Une alerte par catégorie et par mois. Les dépenses fixes sont signalées le jour de leur échéance, le matin (heure de Paris), même si Wimm est fermée. Aucun rappel après validation.</p></BlockInfo></div>
+    
     {ios && !standalone ? <p>Dans Safari, ouvre Partager → Ajouter à l’écran d’accueil. Ouvre ensuite Wimm depuis sa nouvelle icône pour activer les notifications.</p>
       : !supported ? <p>Ce navigateur ne permet pas les notifications. Essaie depuis l’application Wimm ajoutée à l’écran d’accueil ou un navigateur compatible.</p>
       : <>
         {config && !config.ready && <p className="muted">Les notifications téléphone seront disponibles une fois leur activation terminée.</p>}
         <label className="check-row"><input type="checkbox" checked={budgets} onChange={e => setBudgets(e.target.checked)} disabled={busy} /> Dépassements de budget</label>
         <label className="check-row"><input type="checkbox" checked={dues} onChange={e => setDues(e.target.checked)} disabled={busy} /> Dépenses fixes à valider et factures Pro à suivre</label>
-        <p className="muted">Une alerte par catégorie et par mois. Les dépenses fixes sont signalées le jour de leur échéance, le matin (heure de Paris), même si Wimm est fermée. Aucun rappel après validation.</p>
+        
         <div className="flex">
           <button className="primary" disabled={busy || !config?.ready} onClick={() => void save()}>{busy ? "Patiente…" : enabled ? "Enregistrer mes choix" : "Activer sur cet appareil"}</button>
           {enabled && <><button className="secondary" disabled={busy} onClick={() => void test()}>Envoyer un test</button><button className="text" disabled={busy} onClick={() => void disable()}><BellOff size={16} /> Désactiver</button></>}

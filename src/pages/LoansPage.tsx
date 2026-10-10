@@ -1,4 +1,4 @@
-import { Row } from "../ui";
+import { Row, BlockInfo } from "../ui";
 
 import {
   type State,
@@ -168,13 +168,13 @@ export default function LoansPage({
 
           })}
 
-        <p className="footnote">
+        <BlockInfo title="Paiements des crédits"><p>
           Ces achats ne débitent le
           compte qu’à validation des
           mensualités. Les alertes
           apparaissent dans le
           calendrier.
-        </p>
+        </p></BlockInfo>
 
       </section>
 

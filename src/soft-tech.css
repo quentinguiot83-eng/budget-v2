@@ -426,3 +426,14 @@ dialog::backdrop { background: rgba(25, 22, 46, .45); backdrop-filter: blur(6px)
 /* The initial head script and live theme effect use this same surface. */
 html { background-color: var(--status-bar-background, var(--surface)) !important; }
 .emoji-picker button, .category-icon { font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif; }
+
+/* Contextual help keeps blocks compact, with a touch-friendly control. */
+button.block-info { display: inline-flex; align-items: center; justify-content: center; flex: 0 0 auto; width: 36px; height: 36px; min-height: 36px; padding: 0; border: 0; border-radius: 50%; background: var(--accent-soft); color: var(--accent-deep); }
+button.block-info:hover { filter: brightness(.94); }
+button.block-info:focus-visible { outline: 2px solid currentColor; outline-offset: 3px; }
+.block-info-content { line-height: 1.55; }
+.card.budget-overrun-alert { background: #fff3e9; border: 1px solid #eec3a0; border-left: 4px solid #cc7145; color: #713d25; }
+.card.budget-overrun-alert h2, .card.budget-overrun-alert .muted, .card.budget-overrun-alert .text, .card.budget-overrun-alert strong { color: #713d25; }
+:root[data-mode="dark"] button.block-info { background: var(--accent-soft); color: var(--accent-deep); }
+:root[data-mode="dark"] .card.budget-overrun-alert { background: #382c28; border-color: #76513d; border-left-color: #e09b6a; color: #ffcfaa; }
+:root[data-mode="dark"] .card.budget-overrun-alert h2, :root[data-mode="dark"] .card.budget-overrun-alert .muted, :root[data-mode="dark"] .card.budget-overrun-alert .text, :root[data-mode="dark"] .card.budget-overrun-alert strong { color: #ffcfaa; }

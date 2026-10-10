@@ -7,7 +7,7 @@ import {
   Plane,
 } from "lucide-react";
 
-import { Row } from "../ui";
+import { Row, BlockInfo } from "../ui";
 import type { Trip } from "../engine";
 
 type AddPageProps = {
@@ -133,12 +133,12 @@ export default function AddPage({
         </section>
       )}
 
-      <p className="footnote">
+      <BlockInfo title="Enregistrer une opération"><p>
         Pour une charge déjà planifiée,
         utilisez « Valider » dans le
         calendrier afin d’éviter un
         doublon.
-      </p>
+      </p></BlockInfo>
     </div>
   );
 }
