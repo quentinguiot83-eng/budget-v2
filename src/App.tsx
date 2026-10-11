@@ -4137,14 +4137,9 @@ export default function App() {
     );
 
   }
-  function availablePanel() {
+  function availableInfoButton() {
     const a = availableThisMonth;
-    if (selectedMonth !== month() || !current) return null;
-    return (
-      <section className={`card available-card${a.available < 0 ? " available-card-warning" : ""}`}>
-        <div className="section-head">
-          <div className="block-title"><h2>Disponible jusqu’à la fin du mois</h2>
-          <button type="button" className="block-info" aria-label="Informations : Disponible jusqu’à la fin du mois" onClick={() => explain(
+    return (<button type="button" className="block-info" aria-label="Informations : Disponible jusqu’à la fin du mois" onClick={() => explain(
             "Calcul du disponible jusqu’à la fin du mois",
             <>
               <p>Après les paiements à venir, les projets du mois et l’épargne à effectuer.</p>
@@ -4169,14 +4164,7 @@ export default function App() {
                 Le solde dépend de vos saisies dans Wimm.</p>
               {!a.hasRealIncome && <p>L’épargne sera réservée après la saisie des revenus affectés à ce mois.</p>}
             </>,
-          )}><Info size={17} /></button></div>
-        </div>
-        <strong className={`large${a.available < 0 ? " negative" : ""}`}>{money(a.available)}</strong>
-        <small className="available-card-caption">Après les échéances et l’épargne prévues</small>
-        {a.available < 0 && <p role="status" className="negative">Il manque {money(-a.available)} pour couvrir les sommes réservées.</p>}
-        {!a.hasRealIncome && <p className="muted">Épargne non encore réservée : aucun revenu affecté à ce mois n’a été saisi.</p>}
-      </section>
-    );
+          )}><Info size={17} /></button>);
   }
 
   function calc() {
@@ -5262,17 +5250,6 @@ export default function App() {
           )}
         </div>
         <main className="content">
-          {exceededBudgets.length > 0 && route === "home" && (
-            <section className="card budget-overrun-alert" role="alert" aria-label="Budgets dépassés">
-              <div className="section-head">
-                <h2><Bell size={18} /> {exceededBudgets.length === 1 ? "Budget dépassé" : "Budgets dépassés"}</h2>
-                <button type="button" className="text" onClick={() => navigate("budget")}>Voir les budgets</button>
-              </div>
-              {exceededBudgets.map((b) => <Row key={b.id} title={b.name}
-                sub={`${money(b.spent)} utilisés sur ${money(b.limit)} de budget`}
-                value={`+ ${money(b.excess)}`} />)}
-            </section>
-          )}
           {!current && !["settings", "wealth", "pro"].includes(route) && (
             <section className="card setup-card" data-tour="setup-account">
               <div>
@@ -5291,157 +5268,75 @@ export default function App() {
           )}
           {route === "pro" && <ProWorkspace native />}
           {route === "home" && (
-            <>
-              {salaryAlert && (
-                <button
-                  type="button"
-                  className="alert-bar"
-                  onClick={confirmSalary}
-                >
-                  <Bell size={19} />
-                  <strong>Salaire à confirmer</strong>
-                  <span>
-                    Prévu le {dateLabel(salaryPlannedDate)} · indiquez le montant réellement reçu
-                  </span>
-                  <ChevronRight size={18} />
-                </button>
-              )}
-
-              <div className="overview home-overview" data-tour="home-overview">
-                <section className="balance-card">
-                  <div className="split">
-                    <div className="block-title"><span>Compte courant</span>                    <button type="button" className="block-info" aria-label="Informations : Compte courant"
-                      onClick={() =>
-                        explain(
-                          "Calcul du solde réel",
-                          <>
-                            {s.accounts
-                              .filter((a) => a.group === "current")
-                              .map((a) => (
-                                <section key={a.id}>
-                                  <h3>{a.name}</h3>
-                                  <Row
-                                    title="Solde de départ"
-                                    sub={dateLabel(a.date)}
-                                    value={money(a.opening)}
-                                  />
-                                  <Row
-                                    title="Mouvements validés depuis cette date"
-                                    value={money(balance(s, a.id) - a.opening)}
-                                  />
-                                  <Row
-                                    title="Solde actuel"
-                                    value={money(balance(s, a.id))}
-                                  />
-                                </section>
-                              ))}
-                            <p>
-                              Les échéances non validées et les rendements
-                              projetés n’affectent pas ce solde. Il évolue avec
-                              vos saisies, sans connexion bancaire.
-                            </p>
-                          </>,
-                        )
-                      }
-                    >
-                      <Info size={17} />
-                    </button></div>
-                    <Wallet size={23} />
-                  </div>
-                  <div className="hero-number">
-                    {money(
-                      s.accounts
-                        .filter((a) => a.group === "current")
-                        .reduce((n, a) => n + balance(s, a.id), 0),
-                    )}
-                  </div>
-                  <div className="split">
-                    <span>Solde actuel · {dateLabel(today())}</span>
-
-                  </div>
-                </section>
-              </div>
-              {alerts.length > 0 && (
-                <button
-                  className="alert-bar"
-                  onClick={() => navigate("calendar")}
-                >
-                  <Bell size={19} />
-                  <strong>
-                    {alerts.length} paiement{alerts.length > 1 ? "s" : ""} à
-                    valider
-                  </strong>
-                  <span>Vérifiez les mouvements sur votre banque</span>
-                  <ChevronRight size={18} />
-                </button>
-              )}
-
-              <button className="month-analysis-cta" onClick={() => navigate("analysis")}>
-                <span className="month-analysis-icon"><Wallet size={23} /></span>
-                <span><strong>Analyse financière</strong><small>Répartition, évolution et bilan sur la période choisie</small></span>
-                <ChevronRight size={21} />
-              </button>
-
-              {availablePanel()}
-
-              <div className="home-remaining-grid">
-                <section className="home-remaining-card">
-                  <span className="muted">Revenus du mois</span><strong>{money(totals.income)}</strong>
-                  <button className="text" onClick={() => { navigate("transactions"); setTxFilter("income"); }}>Voir les revenus</button>
-                </section>
-                <section className="home-remaining-card">
-                  <span className="muted">Dépenses du mois</span><strong>{money(totals.spending)}</strong>
-                  <small>sur {money(totals.fixed + totals.variable)} de budget prévu</small>
-                </section>
-              </div>
-
-              <div className="two-col">
-                {savingsPanel("home")}
-                <section className="card home-month-budget-card">
-                  <div className="section-head">
-                    <h2>Budget du mois</h2>
-                    <button className="text home-budget-see-all" onClick={() => navigate("budget")}>
-                      Tout voir <ChevronRight size={15} />
+            <div className="wimm-home-clean">
+              <section className="balance-card home-balance-main" data-tour="home-overview">
+                <div className="split">
+                  <div className="block-title">
+                    <span>Solde du compte commun</span>
+                    <button type="button" className="block-info" aria-label="Détail du solde"
+                      onClick={() => explain("Calcul du solde réel",
+                        <><p>Solde des comptes courants, calculé depuis leur solde de départ et les mouvements validés.</p>
+                          {s.accounts.filter(a => a.group === "current").map(a =>
+                            <Row key={a.id} title={a.name} sub={dateLabel(a.date)} value={money(balance(s,a.id))}/>)}
+                          <p>Les échéances à venir ne sont pas incluses dans le solde actuel.</p></>)}>
+                      <Info size={17}/>
                     </button>
                   </div>
-                  <div className="home-budget-overview">
-                    <div className="home-budget-amount">
-                      <strong className="large">{money(variableSpent)}</strong>
-                      <span className="muted">sur {money(totals.variable)}</span>
-                    </div>
-                    <span className={`home-budget-percent${totals.variable > 0 && variableSpent >= totals.variable ? " home-budget-percent-limit" : ""}`}>
-                      {totals.variable > 0 ? Math.round(variableSpent / totals.variable * 100) : 0} %
-                    </span>
+                  <Wallet size={22}/>
+                </div>
+                <div className="hero-number">{money(s.accounts.filter(a => a.group === "current").reduce((n,a) => n + balance(s,a.id),0))}</div>
+                <div className="home-balance-date">Solde actuel · {dateLabel(today())}</div>
+                {selectedMonth === month() && current && (
+                  <div className="home-balance-available">
+                    <div className="block-title"><span>Disponible jusqu’à la fin du mois</span>{availableInfoButton()}</div>
+                    <strong className={availableThisMonth.available < 0 ? "negative" : ""}>{money(availableThisMonth.available)}</strong>
+                    {availableThisMonth.available < 0 && <small className="negative">Les charges et réserves prévues dépassent le solde disponible.</small>}
+                    {!availableThisMonth.hasRealIncome && <small>Les revenus du mois restent à renseigner pour calculer l'épargne réservée.</small>}
                   </div>
-                  <Progress
-                    value={variableSpent}
-                    max={Math.max(1, totals.variable)}
-                  />
-                  <div className="home-budget-top-label">Les 3 budgets les plus utilisés</div>
-                  <div className="home-budget-top-list">
-                    {categoryCards(true, true, true)}
-                    {!s.categories.some(c => categoryVariableBudget(c) > 0) && (
-                      <p className="muted home-budget-empty">Aucun budget variable pour ce mois.</p>
-                    )}
-                  </div>
+                )}
+              </section>
+
+              <div className="home-remaining-grid home-income-expenses">
+                <section className="home-remaining-card home-income">
+                  <span className="muted">Revenus du mois</span><strong>{money(totals.income)}</strong>
+                  <button className="text" onClick={() => { navigate("transactions"); setTxFilter("income"); }}>Voir les revenus <ChevronRight size={14}/></button>
+                </section>
+                <section className="home-remaining-card home-expenses">
+                  <span className="muted">Dépenses du mois</span><strong>{money(totals.spending)}</strong>
+                  <button className="text" onClick={() => { navigate("transactions"); setTxFilter("expense"); }}>Voir les dépenses <ChevronRight size={14}/></button>
                 </section>
               </div>
-              <section className="card">
-                <div className="section-head">
-                  <h2>Dernières transactions</h2>
-                  <button
-                    className="text"
-                    onClick={() => {
-                      setTxFilter("");
-                      navigate("transactions");
-                    }}
-                  >
-                    Tout voir
-                  </button>
-                </div>
-                {txRows(sortedTx.slice(0, 5))}
-              </section>
-            </>
+
+              {savingsPanel("home")}
+
+              {(salaryAlert || alerts.length > 0 || (!savingMonthMarkedDone && (totals.forecast?.savings ?? savingsTarget) > totals.saved)) && (
+                <section className="card home-actions">
+                  <div className="section-head"><h2>À faire</h2></div>
+                  {salaryAlert && <button type="button" className="home-action-row" onClick={confirmSalary}>
+                    <CalendarDays size={19}/><span><strong>Confirmer votre salaire</strong><small>Prévu le {dateLabel(salaryPlannedDate)}</small></span><ChevronRight size={18}/>
+                  </button>}
+                  {alerts.length > 0 && <button type="button" className="home-action-row" onClick={() => navigate("calendar")}>
+                    <CalendarDays size={19}/><span><strong>{alerts.length} paiement{alerts.length > 1 ? "s" : ""} à valider</strong><small>Vérifier les échéances sur votre banque</small></span><ChevronRight size={18}/>
+                  </button>}
+                  {!savingMonthMarkedDone && (totals.forecast?.savings ?? savingsTarget) > totals.saved && <button type="button" className="home-action-row" onClick={() => navigate("wealth")}>
+                    <Wallet size={19}/><span><strong>Effectuer l'épargne restante</strong><small>{money((totals.forecast?.savings ?? savingsTarget) - totals.saved)} à verser</small></span><ChevronRight size={18}/>
+                  </button>}
+                </section>
+              )}
+
+              {(exceededBudgets.length > 0 || (selectedMonth === month() && current && availableThisMonth.available < 0)) && (
+                <section className="card home-alerts" aria-label="Alertes financières">
+                  <div className="section-head"><h2><Bell size={18}/> Alertes</h2></div>
+                  {selectedMonth === month() && current && availableThisMonth.available < 0 &&
+                    <button className="home-action-row" type="button" onClick={() => navigate("budget")}>
+                      <Bell size={18}/><span><strong>Solde prévisionnel insuffisant</strong><small>{money(-availableThisMonth.available)} manquants pour les réserves du mois</small></span><ChevronRight size={17}/>
+                    </button>}
+                  {exceededBudgets.map(b => <button className="home-action-row" type="button" key={b.id} onClick={() => navigate("budget")}>
+                    <Bell size={18}/><span><strong>{b.name} : budget dépassé</strong><small>{money(b.spent)} sur {money(b.limit)} · +{money(b.excess)}</small></span><ChevronRight size={17}/>
+                  </button>)}
+                </section>
+              )}
+            </div>
           )}
           {route === "budget" && (
             <>
