@@ -1021,3 +1021,30 @@ button.block-info:focus-visible { outline: 2px solid currentColor; outline-offse
   .wimm-home-clean .home-income-expenses .home-remaining-card { padding: 15px 12px; min-width: 0; gap: 10px; }
   .wimm-home-clean .home-income-expenses .home-remaining-card strong { font-size: clamp(1.1rem, 5vw, 1.4rem); overflow-wrap: anywhere; }
 }
+
+/* Budget simplifié : trois raccourcis et enveloppes en liste compacte. */
+.budget-quick-links { display: grid !important; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px !important; margin: 15px 0 24px !important; }
+.budget-quick-links button { min-width: 0 !important; min-height: 66px; display: flex !important; flex-direction: column; align-items: center; justify-content: center; gap: 7px; padding: 11px 6px !important; border-radius: 17px; background: color-mix(in srgb, #a8cfc0 19%, var(--surface)); color: var(--accent-deep); font-weight: 700; font-size: .77rem; }
+.budget-quick-links button:nth-child(2) { background: color-mix(in srgb, #a7b4ed 20%, var(--surface)); }
+.budget-quick-links button:nth-child(3) { background: color-mix(in srgb, #d8b4e6 19%, var(--surface)); }
+.budget-category-heading { margin: 12px 0 13px; gap: 10px; }
+.budget-add-category { display: inline-flex; align-items: center; justify-content: center; gap: 5px; white-space: nowrap; }
+.budget-category-list { display: grid !important; grid-template-columns: 1fr !important; gap: 0 !important; border: 1px solid var(--border); background: var(--surface); border-radius: 21px; padding: 5px 17px; overflow: hidden; }
+.budget-category-list > .category { border: 0 !important; border-bottom: 1px solid var(--border) !important; border-radius: 0 !important; box-shadow: none !important; background: transparent !important; padding: 15px 0 !important; margin: 0 !important; min-height: 0 !important; }
+.budget-category-list > .category:last-child { border-bottom: 0 !important; }
+.budget-category-list .category .flex { gap: 10px; }
+.budget-category-list .category-icon { width: 39px; height: 39px; flex: 0 0 39px; }
+.budget-category-list .category .grow strong { font-size: .89rem; }
+.budget-category-list .category .grow p { margin: 4px 0 0; font-size: .76rem; }
+.budget-category-list .category .progress { height: 7px; margin: 11px 0 0; }
+.budget-category-list .category .meta { margin-top: 8px; font-size: .72rem; }
+.budget-other-categories { margin-top: 13px; }
+.budget-other-categories > summary { cursor: pointer; display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 12px 5px; color: var(--accent-deep); font-size: .84rem; font-weight: 700; list-style: none; }
+.budget-other-categories > summary::-webkit-details-marker { display: none; }
+.budget-other-categories[open] > summary svg { transform: rotate(90deg); }
+@media (max-width: 560px) {
+  .budget-quick-links { gap: 8px !important; }
+  .budget-quick-links button { font-size: .72rem; }
+  .budget-category-list { padding: 4px 13px; }
+  .budget-category-heading h2 { font-size: 1.06rem; }
+}
