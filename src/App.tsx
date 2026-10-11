@@ -5555,10 +5555,13 @@ export default function App() {
                       const ds = dues(s, selectedMonth).filter(
                         (d) => Number(d.date.slice(8)) === i + 1,
                       );
+                      const dayIsToday = selectedMonth === month() && i + 1 === Number(today().slice(8));
                       return (
                         <button
                           key={i}
-                          className={"day " + (ds.length ? "has-due" : "")}
+                          className={"day " + (ds.length ? "has-due " : "") + (dayIsToday ? "today" : "")}
+                          aria-current={dayIsToday ? "date" : undefined}
+                          aria-label={dayIsToday ? "Aujourd’hui, " + (i + 1) + " " + monthLabel(selectedMonth) : undefined}
                           onClick={() =>
                             ds.length &&
                             explain("Paiements du " + (i + 1), dueList(ds))
