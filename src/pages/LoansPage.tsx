@@ -33,8 +33,8 @@ export default function LoansPage({
 }: LoansPageProps) {
 
   return (
-    <>
-      <div className="toolbar">
+    <div className="loans-soft-page">
+      <div className="toolbar loans-soft-actions">
 
         <button
           className="primary"
@@ -58,7 +58,7 @@ export default function LoansPage({
       </div>
 
 
-      <section className="card">
+      <section className="card loans-credits-card">
 
         <div className="block-title"><h2>Mensualités de crédits</h2><BlockInfo title="Paiements des crédits"><p>
           Ces achats ne débitent le
@@ -177,7 +177,7 @@ export default function LoansPage({
       </section>
 
 
-      <section className="card">
+      <section className="card loans-lent-card">
 
         <h2>
           Argent prêté
@@ -243,7 +243,7 @@ export default function LoansPage({
         )}
 
       </section>
-    </>
+    </div>
   );
 
 }
