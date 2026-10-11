@@ -4270,6 +4270,7 @@ export default function App() {
     explain(
       "Calcul de la capacité d’épargne",
       <>
+        <p className="muted">La capacité varie selon les charges dues chaque mois. Ce calcul utilise les revenus estimés, les budgets et les échéances du mois sélectionné.</p>
         <Row
           title="Revenus mensuels estimés"
           value={money(incomeUsed)}
@@ -7006,9 +7007,13 @@ export default function App() {
             <>
               <div className="overview wealth-overview" data-tour="wealth-overview">
                 <section className="balance-card">
+                  <div className="block-title">
                   <span>Comptes inclus dans le patrimoine</span>
-                  <div className="hero-number">{money(wealth)}</div>
                   <button
+                    type="button"
+                    className="block-info"
+                    aria-label="Voir le calcul des comptes inclus dans le patrimoine"
+                    title="Voir le calcul"
                     onClick={() =>
                       explain(
                         "Comptes inclus",
@@ -7031,8 +7036,10 @@ export default function App() {
                       )
                     }
                   >
-                    Voir le calcul <CircleHelp size={14} />
+                    <Info size={17} />
                   </button>
+                </div>
+                <div className="hero-number">{money(wealth)}</div>
                 </section>
                 <section className="metric travel-metric">
                   <Plane />
@@ -7204,9 +7211,6 @@ export default function App() {
                   <SlidersHorizontal size={17} />
                   Revenus et répartition
                 </button>
-                <button className="secondary" onClick={calc}>
-                  Voir le calcul
-                </button>
               </div>
               <div className="two-col projection-summary">
                 <section className="metric">
@@ -7214,7 +7218,12 @@ export default function App() {
                   <strong>{money(s.income)}</strong>
                 </section>
                 <section className="metric">
-                  <div className="block-title"><span>Capacité prévue · {monthLabel(selectedMonth)}</span><BlockInfo title="Capacité prévue"><p>Varie selon les charges dues chaque mois. Le calcul utilise vos revenus estimés, vos budgets et les échéances du mois sélectionné.</p></BlockInfo></div>
+                  <div className="block-title">
+                    <span>Capacité prévue · {monthLabel(selectedMonth)}</span>
+                    <button type="button" className="block-info" aria-label="Voir le calcul de la capacité prévue" title="Voir le calcul de la capacité prévue" onClick={calc}>
+                      <Info size={17} />
+                    </button>
+                  </div>
                   <strong>{money(totals.capacity)}</strong>
                 </section>
               </div>
