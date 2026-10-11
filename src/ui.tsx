@@ -240,17 +240,26 @@ export function Progress({
   color?: string;
 }) {
   const ratio = max > 0 ? (value / max) * 100 : value > 0 ? 100 : 0;
+  const clamped = Math.max(0, Math.min(100, ratio));
+  // La même couleur s'assombrit progressivement en fonction du remplissage.
+  // Les couleurs spécifiques (ex. catégories de voyage) conservent leur teinte.
+  const base = color || "var(--chart)";
+  const light = `color-mix(in srgb, ${base} 52%, white)`;
+  const dark = `color-mix(in srgb, ${base} 74%, #183439)`;
+  const fill = `color-mix(in srgb, ${light} ${100 - clamped}%, ${dark} ${clamped}%)`;
   return (
     <div
       className={"progress " + (value > max ? "over" : "")}
       role="progressbar"
-      aria-valuenow={Math.round(ratio)}
+      aria-valuemin={0}
+      aria-valuemax={100}
+      aria-valuenow={Math.round(clamped)}
       aria-label={`${Math.round(ratio)} % du budget consommé`}
     >
       <span
         style={{
-          width: Math.max(0, Math.min(100, ratio)) + "%",
-          background: color,
+          width: clamped + "%",
+          background: value > max ? "#cf8a91" : fill,
         }}
       />
     </div>
