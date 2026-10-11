@@ -870,3 +870,61 @@ button.block-info:focus-visible { outline: 2px solid currentColor; outline-offse
   .monthly-bilan-overview > div:first-child strong { font-size: 1.38rem; }
   .monthly-bilan-unique .section-head { align-items: flex-start; }
 }
+
+/* Pastels inspirés de la maquette : accents répartis par rôle, sans changer
+   la couleur de thème choisie par chaque utilisateur. */
+.home-overview .balance-card, .wealth-overview .balance-card {
+  background: linear-gradient(115deg,
+    color-mix(in srgb, #8cbafa 19%, var(--surface)),
+    color-mix(in srgb, #b09bfa 24%, var(--surface)) 72%,
+    color-mix(in srgb, #8cbbef 18%, var(--surface)));
+}
+.wealth-overview > .metric:nth-child(2), .home-overview > .metric:nth-child(2) {
+  background: linear-gradient(125deg,
+    color-mix(in srgb, #86d8d1 17%, var(--surface)),var(--surface));
+  border-color: color-mix(in srgb, #86d8d1 24%, var(--border));
+}
+.wealth-overview > .metric:nth-child(3), .home-overview > .metric:nth-child(3) {
+  background: linear-gradient(125deg,
+    color-mix(in srgb, #baabfc 19%, var(--surface)),var(--surface));
+  border-color: color-mix(in srgb, #baabfc 25%, var(--border));
+}
+.home-remaining-card:first-child {
+  background: linear-gradient(125deg,color-mix(in srgb, #8bddda 21%, var(--surface)),var(--surface));
+}
+.home-remaining-card:nth-child(2) {
+  background: linear-gradient(125deg,color-mix(in srgb, #ffb2c6 20%, var(--surface)),var(--surface));
+}
+.home-month-budget-card {
+  background: linear-gradient(142deg,var(--surface) 70%,
+    color-mix(in srgb, #b4a4fd 14%, var(--surface)));
+}
+.budget-month-tracker {
+  background: linear-gradient(115deg,
+    color-mix(in srgb, #84c9ee 13%, var(--surface)),
+    color-mix(in srgb, #b9a8fb 13%, var(--surface)));
+}
+.page-remaining-summary-fixed {
+  background: linear-gradient(115deg,
+    color-mix(in srgb, #88d6d0 16%, var(--surface)),
+    color-mix(in srgb, #9ec9f0 10%, var(--surface)));
+}
+.account-grid > .account:nth-child(4n+1) {
+  background: linear-gradient(145deg,color-mix(in srgb, #91bffa 10%, var(--surface)),var(--surface) 65%);
+}
+.account-grid > .account:nth-child(4n+2) {
+  background: linear-gradient(145deg,color-mix(in srgb, #87dbd4 11%, var(--surface)),var(--surface) 65%);
+}
+.account-grid > .account:nth-child(4n+3) {
+  background: linear-gradient(145deg,color-mix(in srgb, #bba7f9 12%, var(--surface)),var(--surface) 65%);
+}
+.account-grid > .account:nth-child(4n+4) {
+  background: linear-gradient(145deg,color-mix(in srgb, #f0b4cb 11%, var(--surface)),var(--surface) 65%);
+}
+.month-analysis-cta {
+  background: linear-gradient(115deg,#7260d3,#6551c9 55%,#438ca7);
+}
+:root[data-mode="dark"] .home-overview .balance-card,
+:root[data-mode="dark"] .wealth-overview .balance-card {
+  border: 1px solid color-mix(in srgb,#ada1f4 24%,var(--border));
+}
