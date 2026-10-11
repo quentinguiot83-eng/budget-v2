@@ -1441,3 +1441,119 @@ body, #root { background: var(--soft-canvas); }
 @media (prefers-reduced-motion:reduce) {
   .wimm-tour-v2 .live-tour-highlight { transition:none; }
 }
+
+
+/* Initialisation guidée du foyer — les 5 étapes suivant la création du foyer. */
+.wimm-setup-page {
+  min-height:100dvh; display:flex; align-items:flex-start; justify-content:center;
+  padding:clamp(20px,4vw,52px) clamp(12px,3vw,24px) 44px;
+  background:radial-gradient(ellipse 70% 36% at 10% 0%, color-mix(in srgb,var(--wimm-mint) 13%,transparent),transparent),
+             radial-gradient(ellipse 58% 48% at 100% 12%,color-mix(in srgb,var(--wimm-lavender) 9%,transparent),transparent),
+             var(--soft-canvas);
+  color:var(--ink);
+}
+.wimm-setup-shell {
+  width:min(100%,740px); display:grid; gap:22px; background:var(--surface);
+  border:1px solid color-mix(in srgb,var(--wimm-mint) 19%,var(--border));
+  box-shadow:0 22px 70px rgba(29,45,58,.11);
+  border-radius:27px; padding:clamp(20px,4vw,34px);
+}
+.wimm-setup-header { display:flex; align-items:flex-start; gap:17px; }
+.wimm-setup-emblem {
+  width:53px; height:53px; flex:0 0 53px; border-radius:18px; display:grid;place-items:center;
+  background:linear-gradient(140deg,var(--wimm-mint-wash),var(--wimm-blue-wash));
+  color:var(--wimm-green);
+}
+.wimm-setup-heading { min-width:0; }
+.wimm-setup-heading .eyebrow { color:var(--wimm-green); font-size:.7rem; font-weight:800; letter-spacing:.065em; }
+.wimm-setup-heading h1 { font-size:clamp(1.4rem,3.1vw,2rem); font-weight:850; line-height:1.25; letter-spacing:-.045em; margin:5px 0; }
+.wimm-setup-heading p { margin:0; font-size:.86rem; line-height:1.48; color:var(--muted); }
+.wimm-setup-progress { display:grid; gap:9px; }
+.wimm-setup-progress>div:first-child { display:flex; align-items:center; justify-content:space-between; gap:12px; }
+.wimm-setup-progress strong { color:var(--wimm-green); font-size:.82rem; }
+.wimm-setup-progress span { font-size:.75rem; color:var(--muted); }
+.wimm-setup-track { width:100%; height:7px; border-radius:99px; background:var(--wimm-mint-wash); overflow:hidden; }
+.wimm-setup-track span { display:block; height:100%; border-radius:inherit; background:linear-gradient(90deg,var(--wimm-mint),var(--wimm-green)); transition:width .25s ease; }
+.wimm-setup-body { display:grid; gap:16px; min-width:0; }
+.wimm-setup-body h2 { margin:0; font-size:1rem; font-weight:800; letter-spacing:-.025em; }
+.wimm-setup-subhead { display:flex; justify-content:space-between; align-items:center; gap:9px; flex-wrap:wrap; }
+.wimm-setup-subhead h2 small { font-size:.72rem; color:var(--muted); font-weight:600; }
+.wimm-setup-subhead button,.wimm-setup-add {
+  display:inline-flex;align-items:center;justify-content:center;gap:6px; padding:9px 12px;
+  border:1px solid color-mix(in srgb,var(--wimm-green) 21%,var(--border)); background:var(--wimm-mint-wash);
+  color:var(--wimm-green); border-radius:12px; font-size:.81rem; font-weight:750;
+}
+.wimm-setup-fields { display:grid; gap:13px; }
+.wimm-setup-fields.two { grid-template-columns:repeat(2,minmax(0,1fr)); }
+.wimm-setup-fields>label,.wimm-setup-budget-row>label { display:grid; gap:6px; min-width:0; font-size:.78rem; font-weight:750; color:var(--muted); }
+.wimm-setup-fields input,.wimm-setup-fields select,.wimm-setup-budget-row input,.wimm-setup-share input {
+  min-width:0; width:100%; min-height:44px; border:1px solid var(--border); border-radius:12px;
+  padding:10px 12px; background:var(--soft-canvas); color:var(--ink);
+  font:inherit; font-size:.9rem; font-weight:600; transition:border-color .15s ease;
+}
+.wimm-setup-fields input:focus,.wimm-setup-fields select:focus,.wimm-setup-budget-row input:focus,.wimm-setup-share input:focus {
+  outline:2px solid color-mix(in srgb,var(--wimm-green) 26%,transparent);
+  border-color:var(--wimm-green);
+}
+.wimm-setup-checks { display:grid; gap:8px; }
+.wimm-setup-checks label {
+  display:flex; align-items:flex-start; gap:11px; border:1px solid var(--border);
+  background:color-mix(in srgb,var(--wimm-mint-wash) 23%,var(--surface));
+  border-radius:13px; padding:12px; color:var(--ink); font-size:.83rem; line-height:1.45;
+}
+.wimm-setup-checks input { flex:0 0 auto; accent-color:var(--wimm-green); width:17px; height:17px; margin:2px 0 0; }
+.wimm-setup-hint { display:flex; align-items:flex-start; gap:8px; font-size:.78rem; line-height:1.5; color:var(--muted); margin:0; }
+.wimm-setup-hint svg { flex:0 0 auto; color:var(--wimm-mint); margin-top:1px; }
+.wimm-setup-entry {
+  padding:15px; display:grid; gap:12px; border-radius:16px;
+  background:linear-gradient(120deg,color-mix(in srgb,var(--wimm-blue-wash) 48%,var(--surface)),var(--surface));
+  border:1px solid var(--border);
+}
+.wimm-setup-remove { display:inline-flex;align-items:center; gap:6px; border:0; padding:6px; justify-self:end; color:var(--wimm-coral); background:transparent; font-size:.76rem; font-weight:750; }
+.wimm-setup-chips { display:flex; gap:8px; flex-wrap:wrap; }
+.wimm-setup-chips button {
+  border:1px solid color-mix(in srgb,var(--wimm-blue) 19%,var(--border)); border-radius:11px;
+  display:inline-flex;align-items:center;gap:5px; padding:9px 11px; background:var(--wimm-blue-wash);
+  color:var(--ink);font-size:.78rem;font-weight:700;
+}
+.wimm-setup-chips button:disabled { opacity:.5; }
+.wimm-setup-empty { min-height:135px; border:1px dashed color-mix(in srgb,var(--wimm-mint) 45%,var(--border)); border-radius:17px;display:grid;justify-items:center;align-content:center;gap:8px;text-align:center;padding:20px;background:var(--wimm-mint-wash); }
+.wimm-setup-empty>svg { color:var(--wimm-green); }
+.wimm-setup-empty strong { font-size:.88rem; }
+.wimm-setup-empty span { font-size:.77rem;color:var(--muted); }
+.wimm-setup-budget-row { display:grid;grid-template-columns:minmax(0,1.5fr) minmax(100px,1fr) auto;align-items:end;gap:10px; }
+.wimm-setup-budget-row .wimm-setup-remove { min-height:44px; align-self:end; }
+.wimm-setup-share { display:flex;justify-content:space-between;gap:12px;align-items:center; border-bottom:1px solid var(--border);padding:8px 2px;font-weight:700;font-size:.85rem; }
+.wimm-setup-share>span:last-child { display:flex;gap:8px;align-items:center;color:var(--muted); }
+.wimm-setup-share input { width:93px; text-align:right; }
+.wimm-setup-review { display:grid; gap:6px;padding:14px 16px;border:1px solid var(--border);border-radius:14px;background:color-mix(in srgb,var(--wimm-blue-wash) 22%,var(--surface)); }
+.wimm-setup-review>strong { font-size:.78rem;color:var(--muted); }
+.wimm-setup-review>span { font-size:.88rem;line-height:1.45;overflow-wrap:anywhere; }
+.wimm-setup-review b { float:right;font-weight:800;margin-left:12px; }
+.wimm-setup-ready { display:flex; gap:11px;align-items:flex-start;padding:15px;border-radius:16px;background:var(--wimm-mint-wash);color:var(--wimm-green);font-size:.83rem;line-height:1.5; }
+.wimm-setup-ready svg { flex:0 0 auto; }
+.wimm-setup-ready strong { display:block;margin-bottom:3px; }
+.wimm-setup-error {margin:0;background:var(--wimm-coral-wash);color:var(--wimm-coral);padding:12px;border-radius:12px;font-size:.83rem;font-weight:700; }
+.wimm-setup-footer { display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;border-top:1px solid var(--border);padding-top:18px; }
+.wimm-setup-footer button { min-height:45px;border-radius:13px;display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:10px 16px;font-size:.84rem;font-weight:800; }
+.wimm-setup-footer .primary { margin-left:auto; }
+.wimm-setup-footer-note { font-size:.75rem;color:var(--muted); }
+@media(max-width:620px) {
+  .wimm-setup-page { padding:12px 9px calc(21px + env(safe-area-inset-bottom)); }
+  .wimm-setup-shell { border-radius:20px;padding:18px 15px;gap:18px; }
+  .wimm-setup-header { gap:11px; }
+  .wimm-setup-emblem { width:42px;height:42px;flex-basis:42px;border-radius:14px; }
+  .wimm-setup-heading h1 { font-size:1.31rem; }
+  .wimm-setup-heading p { font-size:.79rem; }
+  .wimm-setup-progress>div:first-child {align-items:flex-start;}
+  .wimm-setup-progress span { text-align:right;font-size:.69rem; }
+  .wimm-setup-fields.two { grid-template-columns:minmax(0,1fr); }
+  .wimm-setup-budget-row { grid-template-columns:minmax(0,1.35fr) minmax(0,1fr) auto; gap:7px; }
+  .wimm-setup-budget-row input { padding:8px 7px;font-size:.82rem; }
+  .wimm-setup-budget-row>label { font-size:.7rem; }
+  .wimm-setup-chips { gap:6px; }
+  .wimm-setup-chips button { font-size:.73rem;padding:8px 9px; }
+  .wimm-setup-review b { float:none;display:block;margin:5px 0 0; }
+  .wimm-setup-footer button { flex:1 1 auto;font-size:.8rem;padding-inline:8px; }
+}
+@media(prefers-reduced-motion:reduce){.wimm-setup-track span{transition:none}}
