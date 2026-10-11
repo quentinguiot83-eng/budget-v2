@@ -9,6 +9,7 @@ import AnalysisDashboard from "./AnalysisDashboard";
 import { freezePastForecasts } from "./monthlyComparison";
 import TransactionSearch from "./TransactionSearch";
 import OnboardingTutorial from "./OnboardingTutorial";
+import SetupWizard, { applyInitialSetup } from "./SetupWizard";
 import {
   lazy,
   Suspense,
@@ -5036,6 +5037,16 @@ export default function App() {
         </button>
       </main>
     );
+  if (!current) {
+    return (
+      <SetupWizard
+        householdName={doc.household.name}
+        onComplete={async (draft) => {
+          await change((state) => applyInitialSetup(state, draft), "Initialisation du foyer");
+        }}
+      />
+    );
+  }
   const alerts = overdue(s).filter(
     (d) => d.rule.kind !== "repay" || loanRemaining(s, d.rule.loanId || "") > 0,
   );
