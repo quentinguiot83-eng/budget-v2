@@ -1286,3 +1286,41 @@ body, #root { background: var(--soft-canvas); }
   .loans-soft-actions > button { flex-basis: 0; min-width: 0; font-size: .78rem; padding-inline: 9px; }
   .prosuite-native .prosuite-metric { min-width: 0; }
 }
+
+/* Aujourd'hui — calendrier des dépenses et agenda Pro.
+   Le cercle vert est réservé à la date du jour; échéances et sélection restent distinctes. */
+.calendar-grid .day.today {
+  position: relative;
+  background: linear-gradient(145deg,
+    color-mix(in srgb, var(--wimm-mint-wash) 88%, var(--surface)),
+    color-mix(in srgb, var(--wimm-blue-wash) 34%, var(--surface)));
+  border: 1.5px solid color-mix(in srgb, var(--wimm-green) 67%, var(--border));
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--wimm-green) 12%, transparent),
+    0 5px 14px color-mix(in srgb, var(--wimm-green) 10%, transparent);
+}
+.calendar-grid .day.today > strong {
+  display: grid; place-items: center; flex: 0 0 auto;
+  width: 30px; height: 30px; border-radius: 50%;
+  background: var(--wimm-green); color: #fff;
+  font-weight: 850; font-variant-numeric: tabular-nums;
+  box-shadow: 0 3px 8px color-mix(in srgb, var(--wimm-green) 23%, transparent);
+}
+.calendar-grid .day.today.has-due > small {
+  color: var(--wimm-green);
+  font-weight: 850;
+}
+.prosuite-payment-calendar .day.selected:not(.today) {
+  background: var(--wimm-lavender-wash);
+  border-color: color-mix(in srgb, var(--wimm-lavender) 65%, var(--border));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--wimm-lavender) 17%, transparent);
+}
+.prosuite-payment-calendar .day.today.selected {
+  outline: 2px solid var(--wimm-lavender); outline-offset: 2px;
+}
+.calendar-grid .day:focus-visible {
+  outline: 2px solid var(--wimm-blue); outline-offset: 3px;
+}
+@media (max-width: 560px) {
+  .calendar-grid .day.today > strong { width: 25px; height: 25px; font-size: .79rem; }
+  .calendar-grid .day.today { padding: 5px 2px; }
+}
