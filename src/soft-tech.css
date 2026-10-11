@@ -928,3 +928,25 @@ button.block-info:focus-visible { outline: 2px solid currentColor; outline-offse
 :root[data-mode="dark"] .wealth-overview .balance-card {
   border: 1px solid color-mix(in srgb,#ada1f4 24%,var(--border));
 }
+
+/* Navigation flottante Wimm — halo pastel, liseré continu et ombre portée. */
+.bottom-nav {
+  background: linear-gradient(108deg,
+    color-mix(in srgb, #f2eaff 32%, var(--surface)) 0%,
+    color-mix(in srgb, #fff8f1 16%, var(--surface)) 44%,
+    color-mix(in srgb, #e6f7ef 35%, var(--surface)) 100%) !important;
+  border: 1px solid color-mix(in srgb, var(--accent-deep) 12%, var(--border)) !important;
+  box-shadow: 0 13px 33px rgba(32,42,63,.15), 0 3px 9px rgba(32,42,63,.06),
+    inset 0 1px 0 rgba(255,255,255,.6) !important;
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+}
+:root[data-mode="dark"] .bottom-nav {
+  background: linear-gradient(112deg,
+    color-mix(in srgb, #433953 22%, var(--surface)),
+    var(--surface) 51%,
+    color-mix(in srgb, #2c5346 25%, var(--surface))) !important;
+  border-color: color-mix(in srgb, var(--accent-deep) 22%, var(--border)) !important;
+  box-shadow: 0 14px 35px rgba(0,0,0,.4), 0 3px 8px rgba(0,0,0,.2),
+    inset 0 1px 0 rgba(255,255,255,.06) !important;
+}
