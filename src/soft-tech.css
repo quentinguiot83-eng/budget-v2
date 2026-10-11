@@ -442,3 +442,9 @@ button.block-info:focus-visible { outline: 2px solid currentColor; outline-offse
 .appearance-choices button { padding: 10px 5px; min-height: 44px; border: 1px solid transparent; border-radius: 10px; font-size: 13px; color: var(--accent-deep); background: transparent; }
 .appearance-choices button[aria-pressed="true"] { background: var(--action); color: #fff; font-weight: 700; }
 .appearance-choices button:focus-visible { outline: 2px solid var(--accent-deep); outline-offset: 2px; }
+
+/* A single opaque surface paints the native safe area and Safari's page canvas. */
+html, body { background-color: var(--status-bar-background, var(--surface)) !important; }
+#root { background: var(--soft-canvas); min-height: 100dvh; }
+#app-status-bar { background-color: var(--status-bar-background, var(--surface)); transition: none; }
+.soft-topbar { background-color: var(--status-bar-background, var(--surface)) !important; }

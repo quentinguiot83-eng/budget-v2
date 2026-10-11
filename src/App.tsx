@@ -1,4 +1,4 @@
-import { applyAppearance, isInstalledIOS, readAppearanceMode, type AppearanceMode } from "./appearance";
+import { applyAppearance, readAppearanceMode, type AppearanceMode } from "./appearance";
 import { categoryEmojis } from "./categoryEmojis";
 import { seedStarterCategories } from "./starterCategories";
 import PhoneNotifications, { dispatchPhoneAlerts } from "./PhoneNotifications";
@@ -549,15 +549,16 @@ export default function App() {
   }, [theme]);
   useEffect(() => {
     applyAppearance(appearanceMode);
-    if (appearanceMode !== "auto") return;
     const preference = window.matchMedia("(prefers-color-scheme: dark)");
-    const sync = () => applyAppearance("auto");
+    const sync = () => applyAppearance(appearanceMode);
     preference.addEventListener("change", sync);
     window.addEventListener("focus", sync);
+    window.addEventListener("pageshow", sync);
     document.addEventListener("visibilitychange", sync);
     return () => {
       preference.removeEventListener("change", sync);
       window.removeEventListener("focus", sync);
+      window.removeEventListener("pageshow", sync);
       document.removeEventListener("visibilitychange", sync);
     };
   }, [appearanceMode]);
@@ -7859,13 +7860,8 @@ export default function App() {
                   <div className="appearance-choices" role="group" aria-label="Apparence">
                     {([["light", "Clair"], ["dark", "Nuit"], ["auto", "Automatique"]] as const).map(([mode, label]) => (
                       <button type="button" key={mode} aria-pressed={appearanceMode === mode} onClick={() => {
-                        const previousMode = document.documentElement.dataset.mode;
                         applyAppearance(mode);
                         setAppearanceMode(mode);
-                        if (isInstalledIOS() && previousMode !== document.documentElement.dataset.mode) {
-                          sessionStorage.setItem("wimm-appearance-return", "settings");
-                          window.setTimeout(() => location.reload(), 80);
-                        }
                       }}>{label}</button>
                     ))}
                   </div>

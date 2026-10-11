@@ -10,7 +10,8 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <style>
-      html, body { background-color: var(--status-bar-background, #ffffff); }
+      html, body { background-color: var(--status-bar-background, #ffffff) !important; }
+      #app-status-bar { position: fixed; top: 0; left: 0; right: 0; height: max(1px, env(safe-area-inset-top, 0px)); background-color: var(--status-bar-background, #ffffff); z-index: 200; pointer-events: none; }
     </style>
     <script>
       try {
@@ -34,6 +35,7 @@
     <title>Wimm — Where is my money?</title>
   </head>
   <body>
+    <div id="app-status-bar" aria-hidden="true"></div>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

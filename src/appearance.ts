@@ -18,6 +18,3 @@ export function applyAppearance(mode: AppearanceMode) {
   document.querySelector('meta[name="theme-color"]')?.setAttribute("content", surface);
 }
 
-export function isInstalledIOS() {
-  return (navigator as Navigator & { standalone?: boolean }).standalone === true;
-}
