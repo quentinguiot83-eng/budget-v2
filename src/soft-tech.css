@@ -950,3 +950,39 @@ button.block-info:focus-visible { outline: 2px solid currentColor; outline-offse
   box-shadow: 0 14px 35px rgba(0,0,0,.4), 0 3px 8px rgba(0,0,0,.2),
     inset 0 1px 0 rgba(255,255,255,.06) !important;
 }
+
+/* L'accueil n'affiche que la synthèse ; les opérations sont regroupées
+   au début de Patrimoine et se replient après validation du mois. */
+.savings-home-summary {
+  display: grid; align-content: start; gap: 12px;
+  background: linear-gradient(135deg, color-mix(in srgb, #a9d7ee 14%, var(--surface)), var(--surface));
+}
+.savings-home-summary .section-head { margin: 0; }
+.savings-home-summary .block-title h2 { font-size: 1rem; }
+.savings-home-amount { display: flex; align-items: baseline; flex-wrap: wrap; gap: 6px 12px; }
+.savings-home-amount strong { font-size: clamp(1.35rem, 2.5vw, 1.65rem); letter-spacing: -.04em; font-variant-numeric: tabular-nums; }
+.savings-home-amount .muted { font-size: .81rem; }
+.savings-home-summary .progress { margin: 0; }
+.savings-home-summary > small { font-size: .78rem; }
+.savings-home-link { display: inline-flex; justify-content: flex-start; align-items: center; gap: 5px; width: fit-content; margin-top: 4px; }
+.savings-done-tag { display: inline-flex; align-items: center; gap: 5px; background: var(--accent-soft); color: var(--accent-deep); border-radius: 12px; padding: 6px 9px; font-weight: 750; font-size: .75rem; }
+.savings-wealth-panel { padding: 0 !important; overflow: hidden; border-color: color-mix(in srgb, var(--accent-deep) 17%, var(--border)); }
+.savings-wealth-summary { list-style: none; cursor: pointer; display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 21px 24px; background: linear-gradient(105deg, color-mix(in srgb, #b3a1f2 14%, var(--surface)), color-mix(in srgb, #9edbcf 13%, var(--surface))); }
+.savings-wealth-summary::-webkit-details-marker { display: none; }
+.savings-wealth-summary:focus-visible { outline: 2px solid var(--accent-deep); outline-offset: -4px; }
+.savings-wealth-heading { display: grid; gap: 6px; min-width: 0; }
+.savings-wealth-heading > strong { font-size: 1.01rem; color: var(--ink); }
+.savings-wealth-heading > small { font-size: .78rem; }
+.savings-wealth-summary-right { display: flex; align-items: center; gap: 12px; flex: 0 0 auto; }
+.savings-wealth-summary-right > strong { font-size: .86rem; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.savings-wealth-summary-right svg { color: var(--accent-deep); transition: transform .2s ease; }
+.savings-wealth-details[open] .savings-wealth-summary-right svg { transform: rotate(90deg); }
+.savings-wealth-content { padding: 6px 24px 23px; display: grid; gap: 12px; }
+.savings-wealth-content > .progress { margin: 7px 0; }
+.savings-wealth-content > .text { justify-self: start; }
+@media (max-width: 560px) {
+  .savings-home-summary { padding: 19px; }
+  .savings-wealth-summary { padding: 18px; flex-wrap: wrap; gap: 9px; }
+  .savings-wealth-summary-right { width: 100%; justify-content: space-between; }
+  .savings-wealth-content { padding: 4px 18px 20px; }
+}
