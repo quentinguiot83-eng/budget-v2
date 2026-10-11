@@ -137,3 +137,55 @@
   .analysis-period-options { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .analysis-date-inputs { grid-template-columns: 1fr; }
 }
+
+/* Accents pastel inspirés du concept Wimm : couleur pour hiérarchiser,
+   surfaces blanches et texte foncé conservés pour la lisibilité. */
+.analysis-rolling-hint { margin: 3px 0 0; font-size: .76rem; }
+.analysis-dashboard .analysis-range-card {
+  background: linear-gradient(118deg, var(--surface) 55%, color-mix(in srgb, #b8a5fd 11%, var(--surface)));
+}
+.analysis-dashboard .analysis-overview-card {
+  background: linear-gradient(130deg, color-mix(in srgb, #8cbcf5 9%, var(--surface)), var(--surface) 62%);
+}
+.analysis-primary-metric {
+  background: linear-gradient(117deg, color-mix(in srgb, #85b7fb 23%, var(--surface)), color-mix(in srgb, #c5b2ff 25%, var(--surface)));
+  border-color: color-mix(in srgb, #8ba1e9 23%, var(--border));
+}
+.analysis-overview-grid > .analysis-kpi-fixed {
+  background: color-mix(in srgb, #85c9ed 17%, var(--surface));
+  border-color: color-mix(in srgb, #8acde9 22%, var(--border));
+}
+.analysis-overview-grid > .analysis-kpi-variable {
+  background: color-mix(in srgb, #f0a4b8 16%, var(--surface));
+  border-color: color-mix(in srgb, #efb0c0 20%, var(--border));
+}
+.analysis-overview-grid > .analysis-kpi-income {
+  background: color-mix(in srgb, #79d7d2 18%, var(--surface));
+  border-color: color-mix(in srgb, #79d7d2 22%, var(--border));
+}
+.analysis-overview-grid > .analysis-kpi-savings {
+  background: color-mix(in srgb, #b6a4fb 19%, var(--surface));
+  border-color: color-mix(in srgb, #b6a4fb 26%, var(--border));
+}
+.analysis-dashboard .analysis-distribution {
+  background: linear-gradient(150deg, var(--surface) 76%, color-mix(in srgb, #c8b3ff 14%, var(--surface)));
+}
+.analysis-dashboard .analysis-trend {
+  background: linear-gradient(150deg, var(--surface) 75%, color-mix(in srgb, #90ccfb 13%, var(--surface)));
+}
+.analysis-dashboard .analysis-detail-card {
+  background: linear-gradient(150deg, var(--surface) 83%, color-mix(in srgb, #a0ddcb 12%, var(--surface)));
+}
+.analysis-period-options button.active {
+  background: color-mix(in srgb, #ac97fd 24%, var(--surface));
+  border-color: color-mix(in srgb, #a591ed 55%, var(--border));
+  color: var(--ink);
+}
+:root[data-mode="dark"] .analysis-period-options button.active {
+  background: color-mix(in srgb, #7564c6 30%, var(--surface));
+  color: var(--ink);
+}
+@media (max-width: 560px) {
+  .analysis-period-options { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .analysis-period-options button { font-size: .73rem; }
+}
