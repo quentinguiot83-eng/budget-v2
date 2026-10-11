@@ -7008,12 +7008,12 @@ export default function App() {
               <div className="overview wealth-overview" data-tour="wealth-overview">
                 <section className="balance-card">
                   <div className="block-title">
-                  <span>Comptes inclus dans le patrimoine</span>
+                  <span style={{ fontSize: ".9rem" }}>Comptes inclus dans le patrimoine</span>
                   <button
                     type="button"
                     className="block-info"
-                    aria-label="Voir le calcul des comptes inclus dans le patrimoine"
-                    title="Voir le calcul"
+                    aria-label="Détail du calcul du patrimoine"
+                    title="Détail du calcul du patrimoine"
                     onClick={() =>
                       explain(
                         "Comptes inclus",
@@ -7220,7 +7220,7 @@ export default function App() {
                 <section className="metric">
                   <div className="block-title">
                     <span>Capacité prévue · {monthLabel(selectedMonth)}</span>
-                    <button type="button" className="block-info" aria-label="Voir le calcul de la capacité prévue" title="Voir le calcul de la capacité prévue" onClick={calc}>
+                    <button type="button" className="block-info" aria-label="Détail du calcul de la capacité prévue" title="Détail du calcul de la capacité prévue" onClick={calc}>
                       <Info size={17} />
                     </button>
                   </div>
