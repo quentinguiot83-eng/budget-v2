@@ -2853,7 +2853,7 @@ dialog::backdrop {
 }
 
 /* Paint the iOS safe area on initial launch and span the full mobile header. */
-html{background:var(--surface);min-height:100%}
+html{min-height:100%}
 body{min-height:100dvh}
 .topbar{background:var(--surface);color:var(--ink)}
 .live-tour-location{font-size:.8rem;font-weight:700;color:var(--accent-deep);margin:5px 0}
@@ -2883,7 +2883,3 @@ body{min-height:100dvh}
 :root[data-mode="dark"] .budget-overrun-alert{background:#302517;color:#f2ce9e;border-color:#956f3c}
 :root[data-mode="dark"] .pills input{background:var(--surface);color:var(--ink);border-color:var(--border)}
 @media(max-width:560px){:root{--block-gap:18px}}
-
-/* Keep the iOS layout mode fixed; repaint the safe area on every theme change. */
-html{background-color:var(--status-bar-background,var(--surface))!important}
-

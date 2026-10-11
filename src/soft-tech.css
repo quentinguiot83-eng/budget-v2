@@ -423,8 +423,6 @@ dialog::backdrop { background: rgba(25, 22, 46, .45); backdrop-filter: blur(6px)
   .bottom-nav .add-nav svg { width: 49px; height: 49px; padding: 13px; border-radius: 50%; border: 4px solid var(--surface); }
   .page-footer { padding-bottom: 80px; }
 }
-/* The initial head script and live theme effect use this same surface. */
-html { background-color: var(--status-bar-background, var(--surface)) !important; }
 .emoji-picker button, .category-icon { font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif; }
 
 /* Contextual help keeps blocks compact, with a touch-friendly control. */
@@ -443,10 +441,8 @@ button.block-info:focus-visible { outline: 2px solid currentColor; outline-offse
 .appearance-choices button[aria-pressed="true"] { background: var(--action); color: #fff; font-weight: 700; }
 .appearance-choices button:focus-visible { outline: 2px solid var(--accent-deep); outline-offset: 2px; }
 
-/* A single opaque surface paints the native safe area and Safari's page canvas. */
-html, body { background-color: var(--status-bar-background, var(--surface)) !important; }
+/* Keep app content and the visible top bar consistent with the saved theme. */
 #root { background: var(--soft-canvas); min-height: 100dvh; }
-#app-status-bar { background-color: var(--status-bar-background, var(--surface)); transition: none; }
 .soft-topbar { background-color: var(--status-bar-background, var(--surface)) !important; }
 
 /* Shared month navigation: reset sits above, arrows stay aligned. */
