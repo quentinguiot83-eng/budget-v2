@@ -1,15 +1,14 @@
-/** Geometric wordmark: vector outlines keep the lettering identical on every device. */
+/** Wimm wordmark traced from the user-provided Grimblade font.
+ * Vector outlines keep the exact letterforms on all devices without loading a font. */
 export function WimmWordmark() {
-  return <svg className="wimm-wordmark" viewBox="0 0 206 52" role="img" aria-label="Wimm" xmlns="http://www.w3.org/2000/svg">
-    <g fill="currentColor">
-      <path d="M2 8H13L21 33L30 8H40L49 33L57 8H68L54 46H44L35 22L26 46H16Z" />
-      <circle cx="77" cy="11" r="5.2" />
-      <path d="M72.5 21H81.5V46H72.5Z" />
-    </g>
-    <g fill="none" stroke="currentColor" strokeWidth="9">
-      <path d="M92 46V31C92 19 111 19 111 31V46M111 31C111 19 130 19 130 31V46" />
-      <path d="M143 46V31C143 19 162 19 162 31V46M162 31C162 19 181 19 181 31V46" />
-    </g>
-    <path className="wimm-wordmark-star" d="M195 1C197 10 199 12 206 14C199 16 197 18 195 27C193 18 191 16 184 14C191 12 193 10 195 1Z" />
-  </svg>;
+  return (
+    <svg className="wimm-wordmark" viewBox="0 0 3000 750" role="img" aria-label="Wimm" xmlns="http://www.w3.org/2000/svg">
+      <g fill="currentColor" transform="translate(0 735)">
+        <path d="M148 -700 287 -178 434 -700H562L709 -178L848 -700H982L775 0H647L498 -490L349 0H221L14 -700Z" />
+        <path d="M1044 -500H1164V0H1044ZM1029 -645Q1029 -610 1050.0 -590.0Q1071 -570 1104 -570Q1137 -570 1158.0 -590.0Q1179 -610 1179 -645Q1179 -680 1158.0 -700.0Q1137 -720 1104 -720Q1071 -720 1050.0 -700.0Q1029 -680 1029 -645Z" />
+        <path d="M1481 -510Q1540 -510 1583.5 -487.5Q1627 -465 1656 -424Q1685 -465 1728.5 -487.5Q1772 -510 1831 -510Q1884 -510 1925.5 -492.0Q1967 -474 1995.5 -441.5Q2024 -409 2039.0 -363.5Q2054 -318 2054 -262V0H1934V-262Q1934 -328 1907.0 -365.0Q1880 -402 1825 -402Q1770 -402 1743.0 -365.0Q1716 -328 1716 -262V0H1596V-262Q1596 -328 1569.0 -365.0Q1542 -402 1487 -402Q1432 -402 1405.0 -365.0Q1378 -328 1378 -262V0H1258V-262Q1258 -318 1273.0 -363.5Q1288 -409 1316.5 -441.5Q1345 -474 1386.5 -492.0Q1428 -510 1481 -510Z" />
+        <path d="M2369 -510Q2428 -510 2471.5 -487.5Q2515 -465 2544 -424Q2573 -465 2616.5 -487.5Q2660 -510 2719 -510Q2772 -510 2813.5 -492.0Q2855 -474 2883.5 -441.5Q2912 -409 2927.0 -363.5Q2942 -318 2942 -262V0H2822V-262Q2822 -328 2795.0 -365.0Q2768 -402 2713 -402Q2658 -402 2631.0 -365.0Q2604 -328 2604 -262V0H2484V-262Q2484 -328 2457.0 -365.0Q2430 -402 2375 -402Q2320 -402 2293.0 -365.0Q2266 -328 2266 -262V0H2146V-262Q2146 -318 2161.0 -363.5Q2176 -409 2204.5 -441.5Q2233 -474 2274.5 -492.0Q2316 -510 2369 -510Z" />
+      </g>
+    </svg>
+  );
 }
