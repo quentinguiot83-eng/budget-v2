@@ -380,7 +380,9 @@ export default function App() {
     [mobileMenuOpen, setMobileMenuOpen] = useState(false),
     [tutorialOpen, setTutorialOpen] = useState(false),
     [tutorialPage, setTutorialPage] = useState<string | null>(null),
+    [tutorialMode, setTutorialMode] = useState<"quick" | "library" | "page">("quick"),
     [expandedPersonalBudgets, setExpandedPersonalBudgets] = useState<Record<string, boolean>>({});
+  const tutorialAutoOpened = useRef(false);
   const busy = useRef(false),
     docRef = useRef(doc),
     personalDocRef = useRef(personalDoc),
@@ -499,29 +501,17 @@ export default function App() {
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
   }, [session?.user.id]);
+  // The guided discovery begins only after the first current account is configured.
+  // "started" prevents the welcome panel reopening every time the app is launched.
   useEffect(() => {
-    if (
-      demoEnabled ||
-      !session ||
-      !doc?.household ||
-      tutorialSeen ||
-      (current && !tutorialStarted)
-    )
-      return;
+    if (demoEnabled || !session || !doc?.household || !current ||
+        tutorialSeen || tutorialStarted || tutorialAutoOpened.current) return;
+    tutorialAutoOpened.current = true;
+    setTutorialMode("quick");
     setTutorialPage(null);
     setTutorialOpen(true);
-    if (!tutorialStarted && !current) {
-      void api.auth.updateUser({
-        data: { wimm_tutorial_started: true },
-      });
-    }
-  }, [
-    session?.user.id,
-    doc?.household?.id,
-    current?.id,
-    tutorialSeen,
-    tutorialStarted,
-  ]);
+    void api.auth.updateUser({ data: { wimm_tutorial_started: true } });
+  }, [session?.user.id, doc?.household?.id, current?.id, tutorialSeen, tutorialStarted]);
   useEffect(() => {
     if (demoEnabled) return;
     const refresh = () => {
@@ -5149,7 +5139,7 @@ export default function App() {
             <span className="eyebrow">{doc.household.name}</span>
           </div>
           <div className="flex">
-            <button type="button" className="icon page-info" aria-label="Tutoriel de cette page" onClick={() => { setTutorialPage(route); setTutorialOpen(true); }}><Info size={21}/></button>
+            <button type="button" className="icon page-info" aria-label="Tutoriel de cette page" onClick={() => { setTutorialMode("page"); setTutorialPage(route); setTutorialOpen(true); }}><Info size={21}/></button>
             <button
               className="icon bell"
               aria-label={`${alerts.length} échéances à valider`}
@@ -7605,14 +7595,21 @@ export default function App() {
           {route === "settings" && (
             <>
               {!demoEnabled && <div data-tour="phone-notifications"><PhoneNotifications state={s} /></div>}
-              <section className="card tutorial-settings-card" data-tour="tutorial-settings">
-                <div className="section-head">
+              <section className="card tutorial-settings-card tutorial-learning-hub" data-tour="tutorial-settings">
+                <div className="tutorial-learning-head">
+                  <span className="tutorial-learning-icon"><CircleHelp size={25}/></span>
                   <div>
-                    <h2><CircleHelp size={19} /> Aide et tutoriel</h2>
-                    <p className="muted">Revoyez à tout moment le principe de Wimm et ses principales fonctionnalités.</p>
+                    <span className="eyebrow">CENTRE D’APPRENTISSAGE</span>
+                    <h2>Découvrez tout ce que Wimm peut faire</h2>
+                    <p className="muted">Des explications courtes, directement sur les vrais écrans de votre application. Reprenez quand vous voulez.</p>
                   </div>
-                  <button type="button" className="secondary" onClick={() => { setTutorialPage(null); setTutorialOpen(true); }}>
-                    Revoir le tutoriel
+                </div>
+                <div className="tutorial-learning-actions">
+                  <button type="button" className="primary" onClick={() => { setTutorialMode("library"); setTutorialPage(null); setTutorialOpen(true); }}>
+                    <CircleHelp size={17}/> Explorer les 13 chapitres
+                  </button>
+                  <button type="button" className="secondary" onClick={() => { setTutorialMode("quick"); setTutorialPage(null); setTutorialOpen(true); }}>
+                    <ChevronRight size={17}/> Découverte rapide · 2 min
                   </button>
                 </div>
               </section>
@@ -8135,6 +8132,8 @@ export default function App() {
         ))}
       </nav>
       <OnboardingTutorial
+        mode={tutorialMode}
+        storageKey={`wimm-guide-${session?.user.id || "demo"}`}
         pageRoute={tutorialPage}
         open={tutorialOpen}
         hasCurrent={!!current}
@@ -8142,8 +8141,8 @@ export default function App() {
         route={route}
         navigate={navigate}
         onConfigure={() => initialCurrentAccount()}
-        onSkip={() => tutorialPage ? setTutorialOpen(false) : void closeTutorial()}
-        onComplete={() => tutorialPage ? setTutorialOpen(false) : void closeTutorial()}
+        onSkip={() => tutorialMode === "quick" ? void closeTutorial() : setTutorialOpen(false)}
+        onComplete={() => tutorialMode === "quick" ? void closeTutorial() : setTutorialOpen(false)}
       />
       {sheet && (
         <Modal title={sheet.title} close={() => !saving && setSheet(null)}>
