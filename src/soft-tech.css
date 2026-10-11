@@ -1324,3 +1324,120 @@ body, #root { background: var(--soft-canvas); }
   .calendar-grid .day.today > strong { width: 25px; height: 25px; font-size: .79rem; }
   .calendar-grid .day.today { padding: 5px 2px; }
 }
+
+
+/* Wimm · apprentissage guidé 2026 : visite compacte + centre de 13 chapitres. */
+.tutorial-learning-hub {
+  background: linear-gradient(116deg, var(--wimm-mint-wash), var(--surface) 64%, var(--wimm-lavender-wash));
+  border: 1px solid color-mix(in srgb, var(--wimm-mint) 25%, var(--border));
+  box-shadow: var(--wimm-card-shadow);
+  padding: clamp(18px, 3vw, 25px);
+}
+.tutorial-learning-head { display:flex; align-items:flex-start; gap:14px; }
+.tutorial-learning-icon {
+  width:47px; height:47px; flex:0 0 47px; display:grid; place-items:center;
+  border-radius:16px; color:var(--wimm-green); background:color-mix(in srgb, var(--wimm-mint) 17%, var(--surface));
+}
+.tutorial-learning-head .eyebrow { color:var(--wimm-green); font-weight:800; font-size:.68rem; letter-spacing:.07em; }
+.tutorial-learning-head h2 { font-size:1.12rem; margin:5px 0 6px; line-height:1.35; }
+.tutorial-learning-head p { margin:0; max-width:62ch; line-height:1.5; font-size:.84rem; }
+.tutorial-learning-actions { display:flex; flex-wrap:wrap; gap:10px; margin-top:18px; }
+.tutorial-learning-actions button { display:inline-flex; align-items:center; justify-content:center; gap:9px; min-height:44px; border-radius:14px; font-size:.84rem; }
+.wimm-welcome-layer {
+  position:fixed; inset:0; z-index:320; display:grid; place-items:center;
+  padding:calc(14px + env(safe-area-inset-top)) 14px calc(16px + env(safe-area-inset-bottom));
+  background:rgba(27,36,49,.38); color:var(--ink);
+}
+.wimm-welcome-card, .wimm-tutorial-library {
+  position:relative; width:min(100%, 480px); max-height:calc(100dvh - 45px);
+  border:1px solid color-mix(in srgb, var(--wimm-green) 15%, var(--border));
+  border-radius:27px; background:var(--surface);
+  box-shadow:0 25px 75px rgba(13,28,43,.22); overflow:auto;
+  overscroll-behavior:contain;
+}
+.wimm-welcome-card {
+  display:grid; justify-items:center; gap:15px; padding:38px 30px 25px; text-align:center;
+  background:linear-gradient(158deg, var(--wimm-mint-wash), var(--surface) 45%, var(--surface));
+}
+.wimm-tutorial-close { position:absolute; right:15px; top:15px; width:36px; height:36px; border-radius:50%; display:grid; place-items:center; color:var(--muted); background:var(--surface); border:1px solid var(--border); }
+.wimm-welcome-emblem {
+  display:grid; place-items:center; width:72px; height:72px; border-radius:25px;
+  background:linear-gradient(140deg, var(--wimm-mint-wash), var(--wimm-blue-wash));
+  box-shadow:0 8px 20px color-mix(in srgb, var(--wimm-green) 13%, transparent);
+  color:var(--wimm-green); margin-bottom:5px;
+}
+.wimm-welcome-card>.eyebrow { color:var(--wimm-green); font-size:.71rem; font-weight:800; letter-spacing:.095em; }
+.wimm-welcome-card h2 { margin:0; font-size:clamp(1.46rem, 5.5vw, 1.94rem); font-weight:850; line-height:1.18; letter-spacing:-.045em; }
+.wimm-welcome-promise { font-size:.97rem; line-height:1.55; color:var(--muted); max-width:34ch; margin:0; }
+.wimm-welcome-promise strong { color:var(--ink); }
+.wimm-welcome-pillars { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:9px; width:100%; margin:5px 0; }
+.wimm-welcome-pillars>div { display:grid; justify-items:center; align-content:center; gap:8px; min-height:88px; padding:12px 4px; border:1px solid var(--border); border-radius:16px; font-size:.72rem; font-weight:700; }
+.wimm-welcome-pillars>div:nth-child(1) { background:var(--wimm-blue-wash); color:var(--wimm-blue); }
+.wimm-welcome-pillars>div:nth-child(2) { background:var(--wimm-mint-wash); color:var(--wimm-green); }
+.wimm-welcome-pillars>div:nth-child(3) { background:var(--wimm-lavender-wash); color:var(--wimm-lavender); }
+.wimm-welcome-duration { color:var(--muted); font-size:.73rem; margin:0; }
+.wimm-welcome-card>.primary { width:100%; min-height:47px; border-radius:14px; display:flex; justify-content:center; align-items:center; gap:10px; font-weight:800; }
+.wimm-welcome-later { background:transparent; border:0; color:var(--muted); padding:8px 3px; font-size:.78rem; }
+.wimm-tutorial-library { width:min(100%, 680px); display:flex; flex-direction:column; padding:24px; gap:16px; }
+.wimm-library-heading { display:flex; align-items:flex-start; gap:12px; }
+.wimm-library-heading>.icon { flex:0 0 33px; margin-left:auto; }
+.wimm-library-icon { flex:0 0 43px; width:43px; height:43px; display:grid; place-items:center; border-radius:15px; background:var(--wimm-mint-wash); color:var(--wimm-green); }
+.wimm-library-heading .eyebrow { color:var(--wimm-green); font-size:.68rem; font-weight:800; }
+.wimm-library-heading h2 { font-size:1.35rem; font-weight:850; letter-spacing:-.035em; margin:4px 0 6px; }
+.wimm-library-heading p { color:var(--muted); font-size:.81rem; line-height:1.45; margin:0; }
+.wimm-library-quick { display:flex; align-items:center; text-align:left; gap:14px; width:100%; border:1px solid color-mix(in srgb,var(--wimm-mint) 23%,var(--border)); border-radius:18px; background:linear-gradient(112deg, var(--wimm-mint-wash),var(--surface)); padding:15px; color:var(--ink); }
+.wimm-library-quick-icon { display:grid; place-items:center; flex:0 0 39px; width:39px; height:39px; border-radius:13px; color:var(--wimm-green); background:var(--surface); }
+.wimm-library-quick>span:nth-child(2) { flex:1; display:grid; gap:4px; }
+.wimm-library-quick strong { font-size:.92rem; }
+.wimm-library-quick small { color:var(--muted); font-size:.76rem; }
+.wimm-library-subhead { display:flex; justify-content:space-between; align-items:center; gap:10px; font-size:.87rem; }
+.wimm-library-subhead small { font-size:.76rem; color:var(--wimm-green); font-weight:800; }
+.wimm-chapter-list { display:grid; grid-template-columns:1fr 1fr; gap:9px; overflow:auto; }
+.wimm-chapter-row { display:flex; align-items:center; gap:10px; min-width:0; padding:13px; text-align:left; border-radius:14px; border:1px solid var(--border); background:var(--surface); color:var(--ink); }
+.wimm-chapter-row:hover { background:color-mix(in srgb,var(--wimm-blue-wash) 40%, var(--surface)); }
+.wimm-chapter-number { display:grid; place-items:center; flex:0 0 30px; width:30px; height:30px; border-radius:11px; background:var(--wimm-lavender-wash); color:var(--wimm-lavender); font-weight:850; font-size:.83rem; }
+.wimm-chapter-number.done { color:#fff; background:var(--wimm-green); }
+.wimm-chapter-label { min-width:0; display:grid; gap:3px; flex:1; }
+.wimm-chapter-label strong { font-size:.8rem; line-height:1.25; }
+.wimm-chapter-label small { color:var(--muted); font-size:.69rem; line-height:1.25; }
+.wimm-chapter-label em { font-size:.67rem; color:var(--wimm-green); font-weight:700; font-style:normal; }
+.wimm-chapter-row>svg { color:var(--muted); flex-shrink:0; }
+.wimm-library-footer { margin:0; color:var(--muted); font-size:.73rem; line-height:1.5; }
+/* Focus on the real UI without the former heavy dimming or any blur. */
+.wimm-tour-v2 .live-tour-highlight { border:2px solid var(--wimm-green); border-radius:17px; box-shadow:0 0 0 9999px rgba(17,29,38,.095),0 0 0 3px color-mix(in srgb,var(--wimm-green) 23%,transparent); transition:top .17s ease,left .17s ease,width .17s ease,height .17s ease; }
+.wimm-tour-v2 .live-tour-popover {
+  width:min(380px,calc(100vw - 24px)); max-height:min(40dvh,260px);
+  padding:14px 17px; border-radius:19px; overflow:auto;
+  border:1px solid color-mix(in srgb, var(--wimm-green) 26%, var(--border));
+  box-shadow:0 12px 38px rgba(19,35,50,.18); bottom:calc(93px + env(safe-area-inset-bottom));
+  background:var(--surface);
+}
+.wimm-tour-v2 .live-tour-top>span { color:var(--wimm-green); font-size:.73rem; letter-spacing:0; text-transform:none; font-weight:850; }
+.wimm-tour-v2 .live-tour-location { display:inline-block; margin:0 0 5px; font-size:.7rem; color:var(--muted); font-weight:700; }
+.wimm-tour-v2 .live-tour-progress { margin:8px 0 10px; height:4px; }
+.wimm-tour-v2 .live-tour-progress i { background:var(--wimm-green); }
+.wimm-tour-v2 .live-tour-popover h2 { font-size:1rem; font-weight:850; margin:0 0 5px; line-height:1.3; }
+.wimm-tour-v2 .live-tour-popover p { font-size:.81rem; line-height:1.46; margin:0 0 10px; }
+.wimm-tour-v2 .live-tour-actions { gap:8px; }
+.wimm-tour-v2 .live-tour-actions button { min-height:35px; padding:7px 12px; border-radius:10px; font-size:.77rem; font-weight:750; }
+.wimm-tour-v2 .live-tour-actions .primary { margin-left:auto; display:flex; gap:5px; }
+.wimm-tour-unavailable { display:block; padding:7px 9px; border-radius:10px; background:var(--wimm-amber-wash); color:var(--ink); line-height:1.4; font-size:.7rem; margin-bottom:10px; }
+@media (max-width:680px) {
+  .wimm-welcome-card { padding:29px 20px 19px; gap:12px; }
+  .wimm-welcome-pillars>div { min-height:72px; }
+  .wimm-tutorial-library { padding:17px 13px; max-height:calc(100dvh - 25px); gap:13px; border-radius:21px; }
+  .wimm-library-heading h2 { font-size:1.16rem; }
+  .wimm-library-heading p { font-size:.76rem; }
+  .wimm-chapter-list { grid-template-columns:1fr; }
+  .wimm-chapter-row { padding:10px; }
+  .wimm-tour-v2 .live-tour-popover { left:12px; right:12px; width:auto; padding:11px 13px; max-height:32dvh; bottom:calc(88px + env(safe-area-inset-bottom)); }
+  .wimm-tour-v2 .live-tour-popover h2 { font-size:.92rem; }
+  .wimm-tour-v2 .live-tour-popover p { font-size:.76rem; }
+  .tutorial-learning-actions { display:grid; }
+  .tutorial-learning-actions button { width:100%; }
+  .tutorial-learning-head { gap:9px; }
+  .tutorial-learning-icon { flex-basis:39px; width:39px; height:39px; }
+}
+@media (prefers-reduced-motion:reduce) {
+  .wimm-tour-v2 .live-tour-highlight { transition:none; }
+}
