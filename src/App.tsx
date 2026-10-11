@@ -4712,113 +4712,89 @@ export default function App() {
   );
 
   function savingsPanel(location: "home" | "wealth") {
-    if (totals.forecast) {
-      return <section className="card">
-        <div className="section-head"><h2>Votre épargne du mois</h2><span className="muted">Objectif figé</span></div>
-        <Row title="Objectif prévu" value={money(totals.forecast.savings)} />
-        <Row title="Épargne enregistrée" value={money(totals.saved)} />
-        <p className="muted">Les versements suivent le mois d’épargne choisi, même si leur date bancaire est différente.</p>
-        {savingMonthMarkedDone && <p className="muted">Mois marqué comme déjà effectué avant Wimm.</p>}
-      </section>;
-    }
-    if (location === "home" && totals.income <= 0) {
+    const goal = totals.forecast?.savings ?? savingsTarget;
+    const done = savingMonthMarkedDone || (goal > 0 && totals.saved >= goal);
+    const hasIncome = totals.income > 0 || !!totals.forecast;
+    const toSave = Math.max(0, goal - totals.saved);
+
+    if (location === "home") {
       return (
-        <section className="card">
+        <section className="card savings-home-summary" aria-label="Votre épargne du mois">
           <div className="section-head">
-            <h2>Votre épargne du mois</h2>
+            <div className="block-title">
+              <h2>Votre épargne du mois</h2>
+              <button type="button" className="block-info" aria-label="Informations : Épargne du mois" onClick={calc}><Info size={17} /></button>
+            </div>
+            {done && <span className="savings-done-tag"><Check size={14} /> Fait</span>}
           </div>
-
-          <p className="muted">
-            La répartition de l’épargne sera calculée lorsque les revenus du mois auront été saisis.
-          </p>
-
-          <button
-            className="secondary"
-            type="button"
-            onClick={() => operation("income")}
-          >
-            Ajouter un revenu
+          <div className="savings-home-amount">
+            <strong>{money(totals.saved)}</strong>
+            <span className="muted">sur {money(goal)} prévus</span>
+          </div>
+          {hasIncome && goal > 0 && <Progress value={done ? goal : totals.saved} max={goal} />}
+          {!hasIncome && <small className="muted">À calculer après réception des revenus du mois</small>}
+          {!done && hasIncome && goal > 0 && <small className="muted">{money(toSave)} restent à verser</small>}
+          <button type="button" className="text savings-home-link" onClick={() => navigate("wealth")}>
+            {done ? "Voir mon épargne" : "Gérer mon épargne"} <ChevronRight size={16} />
           </button>
         </section>
       );
     }
 
     return (
-      <section className="card">
-        <div className="section-head">
-          <div className="block-title"><h2>Votre épargne du mois</h2>
-          <button type="button" className="block-info" aria-label="Informations : Épargne du mois" onClick={calc}><Info size={17} /></button></div>
-        </div>
-        <div className="split">
-          <strong className="large">
-            {savingMonthMarkedDone ? "Fait" : money(totals.saved)}
-          </strong>
-          <span className="muted">
-            {savingMonthMarkedDone
-              ? "déjà effectué avant Wimm"
-              : `sur ${money(savingsTarget)}`}
-          </span>
-        </div>
-        <Progress
-          value={savingMonthMarkedDone ? savingsTarget : totals.saved}
-          max={savingsTarget}
-        />
-        {s.accounts
-          .filter(
-            (a) =>
-              !["current", "personal"].includes(
-                a.group,
-              ) &&
-              !a.archived &&
-              a.allocation > 0,
-          )
-          .map((a) => {
-            const paid = s.transactions
-              .filter(
-                (t) =>
-                  isSavingsTransfer(s, t) &&
-                  t.date <= today() &&
-                  t.to === a.id &&
-                  savingsBudgetMonth(t) === selectedMonth,
-              )
-              .reduce((n, t) => n + t.amount, 0);
-            const target = savings.amounts[a.id] || 0;
-            const remaining = Math.max(0, target - paid);
-            const suggested = Math.min(remaining, savingsRemaining);
-
-            return (
-              <Row
-                key={a.id}
-                title={a.name}
-                sub={`${a.allocation} % · Objectif ${money(target)} · ${money(paid)} déjà versés · ${money(remaining)} restants`}
-                value={
-                  savingMonthMarkedDone ? (
-                    <span className="muted">Déjà fait</span>
-                  ) : remaining <= 0 ? (
-                    <span className="muted">Fait</span>
-                  ) : savingsRemaining <= 0 ? (
-                    <span className="muted">Capacité atteinte</span>
-                  ) : (
-                    <button
-                      className="secondary compact"
-                      onClick={() => transfer(a)}
-                    >
-                      Épargner {money(suggested)}
-                    </button>
-                  )
-                }
-              />
-            );
-          })}
-        {location === "home" ? (
-          <button className="text" onClick={() => navigate("wealth")}>
-            Gérer mon épargne
-          </button>
-        ) : (
-          <button className="text" onClick={allocations}>
-            Modifier la répartition
-          </button>
-        )}
+      <section className="card savings-wealth-panel" data-tour="wealth-savings">
+        <details key={selectedMonth + (done ? "-done" : "-pending")}
+          className="savings-wealth-details" open={!done}>
+          <summary className="savings-wealth-summary">
+            <span className="savings-wealth-heading">
+              <strong>Votre épargne du mois</strong>
+              <small className="muted">{monthLabel(selectedMonth)} · {done ? "Épargne effectuée" : !hasIncome ? "En attente des revenus" : money(toSave) + " à verser"}</small>
+            </span>
+            <span className="savings-wealth-summary-right">
+              <strong>{money(totals.saved)} <span className="muted">/ {money(goal)}</span></strong>
+              <ChevronRight size={19} />
+            </span>
+          </summary>
+          <div className="savings-wealth-content">
+            <div className="block-title">
+              <span className="muted">Suivi et répartition des versements</span>
+              <button type="button" className="block-info" aria-label="Détail du calcul de l'épargne" onClick={calc}><Info size={17}/></button>
+            </div>
+            <Progress value={done ? goal : totals.saved} max={goal} />
+            {totals.forecast ? (
+              <>
+                <Row title="Objectif prévu" value={money(goal)} />
+                <Row title="Épargne enregistrée" value={money(totals.saved)} />
+                <p className="muted">Les versements suivent le mois d’épargne choisi, même si leur date bancaire est différente.</p>
+              </>
+            ) : (
+              <>
+                {!hasIncome && <p className="muted">La répartition sera calculée lorsque les revenus du mois auront été saisis.</p>}
+                {s.accounts
+                  .filter(a => !["current", "personal"].includes(a.group) && !a.archived && a.allocation > 0)
+                  .map(a => {
+                    const paid = s.transactions
+                      .filter(t => isSavingsTransfer(s, t) && t.date <= today() && t.to === a.id &&
+                        savingsBudgetMonth(t) === selectedMonth)
+                      .reduce((n, t) => n + t.amount, 0);
+                    const target = savings.amounts[a.id] || 0;
+                    const remaining = Math.max(0, target - paid);
+                    const suggested = Math.min(remaining, savingsRemaining);
+                    return <Row key={a.id} title={a.name}
+                      sub={`${a.allocation} % · Objectif ${money(target)} · ${money(paid)} déjà versés · ${money(remaining)} restants`}
+                      value={savingMonthMarkedDone || remaining <= 0
+                        ? <span className="muted">Fait</span>
+                        : savingsRemaining <= 0
+                        ? <span className="muted">Capacité atteinte</span>
+                        : <button className="secondary compact" onClick={() => transfer(a)}>Épargner {money(suggested)}</button>}
+                    />;
+                  })}
+              </>
+            )}
+            {savingMonthMarkedDone && <p className="muted">Mois marqué comme déjà effectué avant Wimm.</p>}
+            <button type="button" className="text" onClick={allocations}>Modifier la répartition</button>
+          </div>
+        </details>
       </section>
     );
   }
@@ -6896,6 +6872,7 @@ export default function App() {
 
           {route === "wealth" && (
             <>
+              {savingsPanel("wealth")}
               <div className="overview wealth-overview" data-tour="wealth-overview">
                 <section className="balance-card">
                   <div className="block-title">
@@ -7092,7 +7069,6 @@ export default function App() {
                     </article>
                   ))}
               </div>
-              {savingsPanel("wealth")}
             </>
           )}
           {route === "projection" && (
