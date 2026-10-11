@@ -4167,6 +4167,21 @@ export default function App() {
           )}><Info size={17} /></button>);
   }
 
+
+  function availablePanel() {
+    const a = availableThisMonth;
+    if (selectedMonth !== month() || !current) return null;
+    return <section className={`card available-card${a.available < 0 ? " available-card-warning" : ""}`}>
+      <div className="section-head"><div className="block-title">
+        <h2>Disponible jusqu’à la fin du mois</h2>{availableInfoButton()}
+      </div></div>
+      <strong className={`large${a.available < 0 ? " negative" : ""}`}>{money(a.available)}</strong>
+      <small className="available-card-caption">Après les échéances et l’épargne prévues</small>
+      {a.available < 0 && <p className="negative">Il manque {money(-a.available)} pour couvrir les sommes réservées.</p>}
+      {!a.hasRealIncome && <p className="muted">Épargne non encore réservée : aucun revenu affecté à ce mois n’a été saisi.</p>}
+    </section>;
+  }
+
   function calc() {
     const incomeUsed = totals.plannedIncome;
     const capacityUsed = totals.capacity;
