@@ -74,6 +74,14 @@ export function resolveAnalysisRange(
   const selectedMonth = /^\d{4}-(0[1-9]|1[0-2])$/.test(anchor)
     ? (anchor > todayMonth ? todayMonth : anchor)
     : todayMonth;
+  // Ne pas manipuler des dates ISO invalides pendant la saisie partielle.
+  if (mode === "custom" && (!validDate(customStart) || !validDate(customEnd))) {
+    return {
+      start: customStart, end: customEnd, previousStart: "", previousEnd: "",
+      startMonth: "", endMonth: "", label: "", fullMonthBudgets: false,
+      valid: false, error: "Saisis deux dates valides pour définir la période.",
+    };
+  }
   const startMonth = mode === "year"
     ? selectedMonth.slice(0, 4) + "-01"
     : mode === "custom" ? customStart.slice(0, 7)
@@ -162,15 +170,20 @@ export function financialAnalysis(state: State, range: AnalysisRange, includeTra
   const previousEntries = range.valid ? includedExpenses(state, range.previousStart, range.previousEnd) : [];
   const current = range.valid ? aggregate(currentEntries, includeTravel) : empty;
   const previous = range.valid ? aggregate(previousEntries, includeTravel) : empty;
-  const categories: FinancialCategory[] = Array.from(current.categories, ([id, c]) => ({
-    id, name: names.get(id) || "Catégorie supprimée", fixed: c.fixed,
-    variable: c.variable, travel: c.travel,
-    total: c.fixed + c.variable + c.travel,
-    previous: (() => {
-      const p = previous.categories.get(id);
-      return p ? p.fixed + p.variable + p.travel : 0;
-    })(),
-  })).sort((a, b) => b.total - a.total || a.name.localeCompare(b.name, "fr"));
+  // Inclure aussi les catégories absentes de la période courante pour
+  // détecter correctement les baisses (par exemple 80 € puis 0 €).
+  const allCategoryIds = new Set([...current.categories.keys(), ...previous.categories.keys()]);
+  const categories: FinancialCategory[] = Array.from(allCategoryIds, (id) => {
+    const c = current.categories.get(id);
+    const p = previous.categories.get(id);
+    return {
+      id,
+      name: names.get(id) || "Catégorie supprimée",
+      fixed: c?.fixed ?? 0, variable: c?.variable ?? 0, travel: c?.travel ?? 0,
+      total: (c?.fixed ?? 0) + (c?.variable ?? 0) + (c?.travel ?? 0),
+      previous: (p?.fixed ?? 0) + (p?.variable ?? 0) + (p?.travel ?? 0),
+    };
+  }).sort((a, b) => b.total - a.total || a.name.localeCompare(b.name, "fr"));
 
   const currentTransactions = state.transactions.filter(t =>
     range.valid && t.date >= range.start && t.date <= range.end &&
