@@ -1219,3 +1219,70 @@ body, #root { background: var(--soft-canvas); }
  .content button.primary, .content button.secondary, .bottom-nav button { transition: none; }
  .content button.primary:hover, .content button.secondary:hover { transform: none; }
 }
+
+/* Soft Fintech Pastel — quatre espaces spécialisés. */
+/* Voyages : horizon turquoise, enveloppes aérées et onglets faciles à lire. */
+.trip-hero {
+  position: relative; overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--wimm-mint) 25%, var(--border));
+  background: linear-gradient(118deg, var(--wimm-mint-wash), var(--surface) 54%, var(--wimm-blue-wash));
+  box-shadow: var(--wimm-card-shadow); border-radius: 25px;
+}
+.trip-hero::after {
+  content: ""; position: absolute; pointer-events: none;
+  width: 125px; height: 125px; right: -34px; top: -38px; border-radius: 50%;
+  background: radial-gradient(circle, color-mix(in srgb, var(--wimm-mint) 23%, transparent), transparent 72%);
+}
+.trip-hero .trip-icon, .travel-metric > svg { color: var(--wimm-green); }
+.trip-tabs { border: 1px solid color-mix(in srgb, var(--wimm-mint) 15%, var(--border)); background: color-mix(in srgb, var(--wimm-mint-wash) 65%, var(--surface)); border-radius: 18px; }
+.trip-tabs button.selected, .trip-tabs button.active { color: var(--wimm-green); background: var(--surface); box-shadow: var(--wimm-card-shadow); }
+.trip-close-card, .trip-envelopes-card { background: linear-gradient(145deg, var(--surface) 70%, var(--wimm-blue-wash)); border-color: color-mix(in srgb, var(--wimm-blue) 16%, var(--border)); }
+.trip-category { border-radius: 16px; }
+.travel-metric { background: linear-gradient(136deg, var(--wimm-mint-wash), var(--surface)); border-color: color-mix(in srgb, var(--wimm-mint) 20%, var(--border)); box-shadow: var(--wimm-card-shadow); }
+/* Compte perso : solde principal identifiable, histoire et échéances différenciées. */
+.content:has(.personal-advances-card) .overview .balance-card,
+.content:has(.personal-history-card) .overview .balance-card {
+  background: linear-gradient(117deg, var(--wimm-lavender-wash), var(--surface) 64%, var(--wimm-blue-wash));
+  border: 1px solid color-mix(in srgb, var(--wimm-lavender) 23%, var(--border));
+  box-shadow: var(--wimm-card-shadow);
+}
+.personal-page-settings { background: var(--wimm-lavender-wash) !important; border-color: color-mix(in srgb, var(--wimm-lavender) 23%, var(--border)) !important; }
+.personal-advances-card { background: linear-gradient(135deg, var(--wimm-blue-wash), var(--surface) 70%); border-color: color-mix(in srgb, var(--wimm-blue) 19%, var(--border)) !important; }
+.personal-installments-card { background: linear-gradient(135deg, var(--wimm-mint-wash), var(--surface) 72%); border-color: color-mix(in srgb, var(--wimm-mint) 19%, var(--border)) !important; }
+.personal-budgets-card { background: linear-gradient(135deg, var(--wimm-lavender-wash), var(--surface) 72%); border-color: color-mix(in srgb, var(--wimm-lavender) 20%, var(--border)) !important; }
+.personal-history-card { background: var(--surface); border-color: color-mix(in srgb, var(--wimm-blue) 11%, var(--border)) !important; }
+.personal-advances-card, .personal-installments-card, .personal-budgets-card, .personal-history-card { box-shadow: var(--wimm-card-shadow); }
+.personal-history-card .row { padding-block: 12px; }
+/* Crédits et prêts : deux sections clairement séparées, sans toucher aux calculs. */
+.loans-soft-page { display: grid; gap: 17px; }
+.loans-soft-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 0; }
+.loans-soft-actions > button { flex: 1 1 170px; min-height: 46px; border-radius: 15px; }
+.loans-soft-page > .card { margin: 0; border-radius: 22px; box-shadow: var(--wimm-card-shadow); }
+.loans-credits-card { background: linear-gradient(136deg, var(--wimm-blue-wash), var(--surface) 40%); border: 1px solid color-mix(in srgb, var(--wimm-blue) 19%, var(--border)); }
+.loans-lent-card { background: linear-gradient(136deg, var(--wimm-mint-wash), var(--surface) 42%); border: 1px solid color-mix(in srgb, var(--wimm-mint) 20%, var(--border)); }
+.loans-soft-page .rule-row { border-bottom: 1px solid var(--border); padding-block: 16px; }
+.loans-soft-page .rule-row:last-child { border-bottom: 0; }
+/* Espace Pro : tableau de bord et sous-pages avec identité cohérente. */
+.prosuite-native.prosuite-layer { --pro-green: var(--wimm-green); }
+.prosuite-native .prosuite-topbar { background: linear-gradient(105deg, var(--wimm-mint-wash), var(--surface)); border-color: color-mix(in srgb, var(--wimm-mint) 18%, var(--border)); box-shadow: var(--wimm-card-shadow); }
+.prosuite-native .prosuite-nav { background: color-mix(in srgb, var(--wimm-lavender-wash) 35%, var(--surface)); border: 1px solid var(--border); box-shadow: var(--wimm-card-shadow); }
+.prosuite-native .prosuite-nav button.active { background: var(--surface); color: var(--wimm-green); box-shadow: 0 3px 10px color-mix(in srgb, var(--wimm-green) 10%, transparent); }
+.prosuite-native .prosuite-metric { border: 1px solid var(--border); box-shadow: var(--wimm-card-shadow); background: var(--surface); }
+.prosuite-native .prosuite-metric:nth-child(4n+1) { background: linear-gradient(130deg, var(--wimm-mint-wash), var(--surface)); border-color: color-mix(in srgb, var(--wimm-mint) 18%, var(--border)); }
+.prosuite-native .prosuite-metric:nth-child(4n+2) { background: linear-gradient(130deg, var(--wimm-coral-wash), var(--surface)); border-color: color-mix(in srgb, var(--wimm-coral) 18%, var(--border)); }
+.prosuite-native .prosuite-metric:nth-child(4n+3) { background: linear-gradient(130deg, var(--wimm-blue-wash), var(--surface)); border-color: color-mix(in srgb, var(--wimm-blue) 18%, var(--border)); }
+.prosuite-native .prosuite-metric:nth-child(4n+4) { background: linear-gradient(130deg, var(--wimm-lavender-wash), var(--surface)); border-color: color-mix(in srgb, var(--wimm-lavender) 18%, var(--border)); }
+.prosuite-native .prosuite-metric strong { letter-spacing: -.045em; font-variant-numeric: tabular-nums; }
+.prosuite-native .prosuite-shortcuts button:nth-child(3n+1) { background: var(--wimm-blue-wash); }
+.prosuite-native .prosuite-shortcuts button:nth-child(3n+2) { background: var(--wimm-lavender-wash); }
+.prosuite-native .prosuite-shortcuts button:nth-child(3n+3) { background: var(--wimm-mint-wash); }
+.prosuite-native .prosuite-shortcuts button, .prosuite-native .prosuite-client, .prosuite-native .prosuite-product, .prosuite-native .prosuite-card { box-shadow: var(--wimm-card-shadow); border: 1px solid var(--border); border-radius: 19px; }
+.prosuite-native .prosuite-pagehead > div > span { color: var(--wimm-green); font-weight: 800; }
+.prosuite-native .prosuite-table th { background: var(--wimm-blue-wash); }
+.prosuite-native .prosuite-client-avatar, .prosuite-native .prosuite-product-icon { background: var(--wimm-lavender-wash); color: var(--wimm-lavender); }
+:root[data-mode="dark"] .trip-hero, :root[data-mode="dark"] .prosuite-native .prosuite-metric,
+:root[data-mode="dark"] .loans-credits-card, :root[data-mode="dark"] .loans-lent-card { color: var(--ink); }
+@media (max-width: 560px) {
+  .loans-soft-actions > button { flex-basis: 0; min-width: 0; font-size: .78rem; padding-inline: 9px; }
+  .prosuite-native .prosuite-metric { min-width: 0; }
+}
