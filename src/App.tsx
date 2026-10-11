@@ -1,3 +1,4 @@
+import { WimmWordmark } from "./WimmWordmark";
 import { SortableList } from "./SortableList";
 import { applyAppearance, readAppearanceMode, type AppearanceMode } from "./appearance";
 import { categoryEmojis } from "./categoryEmojis";
@@ -4962,7 +4963,7 @@ export default function App() {
       <main className="auth-page">
         <section className="auth-story">
           <div className="brand">
-            wimm<span className="soft-brand-star" aria-hidden="true">✦</span>
+            <WimmWordmark />
           </div>
           <h1>
             Anticipez vos finances.
@@ -4988,7 +4989,7 @@ export default function App() {
         </section>
         <section className="auth-panel">
           <div className="mobile-brand brand">
-            wimm<span className="soft-brand-star" aria-hidden="true">✦</span>
+            <WimmWordmark />
           </div>
           <p className="eyebrow">BIENVENUE CHEZ VOUS</p>
           <h2>
@@ -5108,7 +5109,7 @@ export default function App() {
     return (
       <main className="onboarding">
         <div className="brand">
-          wimm<span className="soft-brand-star" aria-hidden="true">✦</span>
+          <WimmWordmark />
         </div>
         <h1>Bienvenue dans votre budget.</h1>
         <p className="muted">
@@ -5200,7 +5201,7 @@ export default function App() {
     <div className="app">
       <aside className="sidebar">
         <button className="brand" onClick={() => navigate("home")}>
-          wimm<span className="soft-brand-star" aria-hidden="true">✦</span>
+          <WimmWordmark />
         </button>
         <p className="eyebrow">{doc.household.name}</p>
         <nav data-tour="desktop-nav">
@@ -5249,7 +5250,7 @@ export default function App() {
               >
                 <Menu size={21} />
               </button>
-              <button className="soft-wordmark" onClick={() => navigate("home")} aria-label="Wimm — accueil">wimm<span>✦</span></button>
+              <button className="soft-wordmark" onClick={() => navigate("home")} aria-label="Wimm — accueil"><WimmWordmark /></button>
             </div>
             <span className="eyebrow">{doc.household.name}</span>
           </div>
@@ -8308,7 +8309,7 @@ export default function App() {
           >
             <div className="mobile-drawer-head">
               <button className="brand" onClick={() => navigate("home")}>
-                wimm<span className="soft-brand-star" aria-hidden="true">✦</span>
+                <WimmWordmark />
               </button>
               <button
                 type="button"

@@ -465,3 +465,10 @@ html, body { background-color: var(--status-bar-background, var(--surface)) !imp
 @media(max-width:560px) { .page-heading > .month-picker { min-width: 0; width: 100%; margin-top: 2px; } .budget-summary { padding: 18px; } .budget-summary > div:first-child > strong { font-size: 1.9rem; } }
 .transaction-month > .month-reset { width: 30px; height: 28px; min-height: 28px; padding: 0; border: 0; background: transparent; color: var(--accent-deep); }
 .transaction-month > .month-reset:disabled { visibility: hidden; }
+
+/* Geometric Wimm lettering, shared across navigation and sign-in. */
+.wimm-wordmark { display: block; width: 142px !important; height: auto !important; max-width: 100%; flex: 0 0 auto; color: var(--ink); overflow: visible; }
+.wimm-wordmark-star { fill: var(--accent-deep); }
+.soft-wordmark .wimm-wordmark { width: 120px !important; }
+.brand .wimm-wordmark { padding: 0; background: transparent; border-radius: 0; }
+@media(max-width:360px) { .soft-wordmark .wimm-wordmark { width: 105px !important; } }
