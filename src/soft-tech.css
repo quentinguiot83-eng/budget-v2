@@ -1048,3 +1048,24 @@ button.block-info:focus-visible { outline: 2px solid currentColor; outline-offse
   .budget-category-list { padding: 4px 13px; }
   .budget-category-heading h2 { font-size: 1.06rem; }
 }
+
+/* Point d'entrée Analyse : présent, mais sans quatrième grosse tuile. */
+.budget-analysis-link { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 12px; border: 1px solid var(--border); border-radius: 16px; background: var(--surface); color: var(--ink); padding: 13px 16px; margin: -9px 0 20px; text-align: left; cursor: pointer; }
+.budget-analysis-link > span { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.budget-analysis-link strong { font-size: .86rem; }
+.budget-analysis-link small { font-size: .72rem; color: var(--muted); }
+.budget-analysis-link svg { color: var(--accent-deep); flex-shrink: 0; }
+.transaction-period-simple { display: flex; align-items: end; gap: 12px; flex-wrap: wrap; }
+.transaction-period-simple > .field { flex: 1 1 190px; min-width: 0; }
+.transaction-period-simple > .text { margin-inline-start: auto; }
+.projection-summary-unified { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 13px; align-items: stretch; }
+.projection-summary-unified > .metric { min-width: 0; min-height: 154px; display: flex; flex-direction: column; justify-content: space-between; align-items: stretch; padding: 20px; border-radius: 20px; gap: 10px; }
+.projection-summary-unified .projection-stat-income { background: color-mix(in srgb, #a7cddd 14%, var(--surface)); }
+.projection-summary-unified .projection-stat-capacity { background: color-mix(in srgb, #a8dccd 18%, var(--surface)); }
+.projection-stat-head { display: flex; gap: 8px; align-items: flex-start; justify-content: space-between; min-height: 39px; }
+.projection-stat-head > span { color: var(--muted); font-size: .81rem; font-weight: 650; line-height: 1.35; max-width: 18ch; }
+.projection-stat-head > svg { color: var(--accent-deep); flex: 0 0 auto; }
+.projection-stat-head .block-info { width: 29px; height: 29px; min-height: 29px; }
+.projection-summary-unified > .metric > strong { font-size: clamp(1.35rem, 3vw, 1.8rem); font-weight: 830; line-height: 1.2; letter-spacing: -.045em; overflow-wrap: anywhere; font-variant-numeric: tabular-nums; }
+.projection-summary-unified > .metric > small { font-size: .72rem; }
+@media (max-width: 560px) { .budget-analysis-link small { flex-basis: 100%; margin-left: 29px; } .projection-summary-unified { gap: 9px; } .projection-summary-unified > .metric { padding: 14px 12px; min-height: 143px; } .projection-stat-head > span { font-size: .74rem; } .projection-summary-unified > .metric > strong { font-size: clamp(1.13rem, 4.9vw, 1.55rem); } }
