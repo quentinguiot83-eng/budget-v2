@@ -986,3 +986,38 @@ button.block-info:focus-visible { outline: 2px solid currentColor; outline-offse
   .savings-wealth-summary-right { width: 100%; justify-content: space-between; }
   .savings-wealth-content { padding: 4px 18px 20px; }
 }
+
+/* Accueil Wimm : cinq zones, sans cartes redondantes. */
+.wimm-home-clean { display: grid; gap: 17px; }
+.wimm-home-clean > .home-balance-main { margin: 0; }
+.home-balance-date { color: var(--muted); font-size: .75rem; margin-top: 1px; }
+.home-balance-available { border-top: 1px solid color-mix(in srgb, var(--ink) 12%, transparent); padding-top: 17px; margin-top: 18px; display: grid; gap: 8px; }
+.home-balance-available .block-title { justify-content: space-between; gap: 6px; }
+.home-balance-available .block-title > span { color: var(--muted); font-size: .82rem; }
+.home-balance-available strong { font-size: clamp(1.4rem, 3vw, 1.85rem); font-weight: 850; font-variant-numeric: tabular-nums; }
+.home-balance-available small { color: var(--muted); font-size: .75rem; }
+.wimm-home-clean .home-income-expenses { margin: 0; }
+.wimm-home-clean .home-income-expenses .home-remaining-card { border-radius: 20px; padding: 20px; display: grid; align-content: start; gap: 12px; }
+.wimm-home-clean .home-income { background: color-mix(in srgb, #97d7c9 18%, var(--surface)); }
+.wimm-home-clean .home-expenses { background: color-mix(in srgb, #ecc2d0 21%, var(--surface)); }
+.wimm-home-clean .home-income-expenses .home-remaining-card strong { font-size: clamp(1.25rem, 2.8vw, 1.65rem); font-variant-numeric: tabular-nums; }
+.wimm-home-clean .home-income-expenses .text { display: inline-flex; align-items: center; gap: 3px; justify-self: start; padding: 0; font-size: .78rem; }
+.wimm-home-clean > .savings-home-summary { margin: 0; }
+.home-actions, .home-alerts { display: grid; gap: 0; }
+.home-actions .section-head, .home-alerts .section-head { margin-bottom: 9px; }
+.home-alerts { background: color-mix(in srgb, #efc388 11%, var(--surface)); border-color: color-mix(in srgb, #c88f40 30%, var(--border)); }
+.home-alerts .section-head h2 { display: inline-flex; align-items: center; gap: 9px; }
+.home-action-row { border: 0; border-top: 1px solid var(--border); border-radius: 0; background: transparent; color: var(--ink); width: 100%; display: flex; align-items: center; gap: 13px; padding: 14px 2px; text-align: left; cursor: pointer; }
+.home-action-row:first-of-type { border-top: 0; }
+.home-action-row > span { min-width: 0; display: grid; gap: 4px; flex: 1; }
+.home-action-row strong { font-size: .86rem; font-weight: 750; }
+.home-action-row small { font-size: .76rem; color: var(--muted); }
+.home-action-row > svg:first-child { color: var(--accent-deep); flex: 0 0 auto; }
+.home-action-row > svg:last-child { color: var(--muted); flex: 0 0 auto; }
+.home-alerts .home-action-row > svg:first-child { color: #b17b3b; }
+@media (max-width: 560px) {
+  .wimm-home-clean { gap: 14px; }
+  .wimm-home-clean .home-income-expenses { grid-template-columns: repeat(2, minmax(0,1fr)); gap: 10px; }
+  .wimm-home-clean .home-income-expenses .home-remaining-card { padding: 15px 12px; min-width: 0; gap: 10px; }
+  .wimm-home-clean .home-income-expenses .home-remaining-card strong { font-size: clamp(1.1rem, 5vw, 1.4rem); overflow-wrap: anywhere; }
+}
