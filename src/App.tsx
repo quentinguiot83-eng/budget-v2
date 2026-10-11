@@ -5402,7 +5402,7 @@ export default function App() {
 
               <button className="month-analysis-cta" onClick={() => navigate("analysis")}>
                 <span className="month-analysis-icon"><Wallet size={23} /></span>
-                <span><strong>Analyse mon mois</strong><small>Bilan, comparaison et répartition des dépenses</small></span>
+                <span><strong>Analyse financière</strong><small>Répartition, évolution et bilan sur la période choisie</small></span>
                 <ChevronRight size={21} />
               </button>
 
@@ -5520,7 +5520,7 @@ export default function App() {
                   data-tour="month-analysis-button"
                   onClick={() => navigate("analysis")}
                 >
-                  Analyse mon mois
+                  Analyse financière
                 </button>
               </div>
               {availablePanel()}
