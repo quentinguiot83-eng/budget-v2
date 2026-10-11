@@ -5,9 +5,8 @@ import { CategoryGlyph } from "./CategoryGlyph";
 import { seedStarterCategories } from "./starterCategories";
 import PhoneNotifications, { dispatchPhoneAlerts } from "./PhoneNotifications";
 import { categoryUsage, categoryReplacements, deleteArchivedCategory } from "./categoryDeletion";
-import SpendingAnalysis from "./SpendingAnalysis";
+import AnalysisDashboard from "./AnalysisDashboard";
 import { freezePastForecasts } from "./monthlyComparison";
-import MonthlyComparison from "./MonthlyComparison";
 import TransactionSearch from "./TransactionSearch";
 import OnboardingTutorial from "./OnboardingTutorial";
 import {
@@ -5109,7 +5108,7 @@ export default function App() {
     fixed: "Dépenses fixes",
     calendar: "Calendrier des paiements",
     transactions: "Toutes les transactions",
-    analysis: "Analyse mon mois",
+    analysis: "Analyse financière",
     loans: "Crédits et prêts",
   };
   return (
@@ -5256,7 +5255,6 @@ export default function App() {
             "budget",
             "personal",
             "calendar",
-            "analysis",
             "fixed",
           ].includes(route) && (
             <div className="month-picker">
@@ -7720,7 +7718,7 @@ export default function App() {
             <TransactionSearch initialType={txFilter} state={s} month={selectedMonth} setMonth={setMonth} add={() => navigate("add")} rows={txRows}/>
           )}
           {route === "analysis" && (
-            <div className="page-stack" data-tour="analysis"><MonthlyComparison state={s} period={selectedMonth}/><SpendingAnalysis state={s} selectedMonth={selectedMonth}/></div>
+            <div data-tour="analysis"><AnalysisDashboard state={s} selectedMonth={selectedMonth} /></div>
           )}
           {route === "loans" && (
             <LoansPage
