@@ -12,6 +12,11 @@
     <style>
       html, body { background-color: var(--status-bar-background, #ffffff) !important; }
       #app-status-bar { position: fixed; top: 0; left: 0; right: 0; height: max(1px, env(safe-area-inset-top, 0px)); background-color: var(--status-bar-background, #ffffff); z-index: 200; pointer-events: none; }
+      /* Keep an actual coloured strip at the top for iOS edge-colour sampling,
+         even when a standalone iPhone reports a zero-pixel safe-area inset. */
+      @media (max-width: 850px) {
+        #app-status-bar { height: max(8px, env(safe-area-inset-top, 0px)); }
+      }
     </style>
     <script>
       try {
