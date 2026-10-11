@@ -74,6 +74,12 @@ type Props =
         | string[]
         | null;
       palette: string[];
+    }
+  | {
+      kind: "financial-trend";
+      data: AnalysisPoint[];
+      series: { id: string; name: string; color: string }[];
+      percent: boolean;
     };
 
 
@@ -331,6 +337,41 @@ export default function Charts(
 
   }
 
+
+  if (props.kind === "financial-trend") {
+    return (
+      <ResponsiveContainer width="100%" height="100%">
+        <LineChart data={props.data} margin={{ top: 14, right: 14, left: 2, bottom: 10 }}>
+          <CartesianGrid vertical={false} stroke="var(--border)" />
+          <XAxis dataKey="label" tick={{ fill: "var(--muted)", fontSize: 11 }}
+            minTickGap={22} interval="preserveStartEnd"
+            tickFormatter={(value) => {
+              const text = String(value);
+              return text.includes(" – ") ? text.split(" ").slice(0, 2).join(" ") : text;
+            }} />
+          <YAxis width={66} tick={{ fill: "var(--muted)", fontSize: 11 }}
+            tickFormatter={(value) => props.percent ? Math.round(Number(value)) + " %" :
+              Math.round(Number(value) / 100) + " €"} />
+          <Tooltip
+            contentStyle={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 12, color: "var(--ink)" }}
+            labelStyle={{ color: "var(--ink)", fontWeight: 700 }}
+            itemStyle={{ color: "var(--ink)" }}
+            formatter={(value, name) => [
+              props.percent ? (Number(value) > 0 ? "+" : "") + Number(value).toLocaleString("fr-FR") + " %" :
+                money(Number(value)),
+              String(name),
+            ]}
+          />
+          {props.series.map(series => (
+            <Line key={series.id} dataKey={series.id} name={series.name}
+              stroke={series.color} strokeWidth={series.id === "__total" ? 3 : 2}
+              type="monotone" dot={props.data.length <= 8 ? { r: 2.5 } : false}
+              activeDot={{ r: 4 }} isAnimationActive={false} />
+          ))}
+        </LineChart>
+      </ResponsiveContainer>
+    );
+  }
 
   return (
     <ResponsiveContainer
