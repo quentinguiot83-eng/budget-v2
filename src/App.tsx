@@ -1,7 +1,7 @@
 import { WimmWordmark } from "./WimmWordmark";
 import { SortableList } from "./SortableList";
 import { applyAppearance, readAppearanceMode, type AppearanceMode } from "./appearance";
-import { categoryEmojis } from "./categoryEmojis";
+import { CategoryGlyph } from "./CategoryGlyph";
 import { seedStarterCategories } from "./starterCategories";
 import PhoneNotifications, { dispatchPhoneAlerts } from "./PhoneNotifications";
 import { categoryUsage, categoryReplacements, deleteArchivedCategory } from "./categoryDeletion";
@@ -859,7 +859,7 @@ export default function App() {
         field("name", "Nom", c?.name),
         { ...choice(
           "icon",
-          "Emoji",
+          "Icône",
           [
             ["home", "🏠 Maison"],
             ["food", "🥕 Courses / alimentation"],
@@ -4582,7 +4582,7 @@ export default function App() {
             <div className="flex">
 
               <span className="category-icon">
-                <span className="category-emoji" aria-hidden="true">{categoryEmojis[c.icon] || "💳"}</span>
+                <CategoryGlyph icon={c.icon} />
               </span>
 
               <div className="grow">
@@ -5495,39 +5495,6 @@ export default function App() {
                   <span className="muted">Dépenses du mois</span><strong>{money(totals.spending)}</strong>
                   <small>sur {money(totals.fixed + totals.variable)} de budget prévu</small>
                 </section>
-                <section className="home-remaining-card">
-                  <span className="muted">
-                    Charges fixes restantes
-                  </span>
-
-                  <strong>
-                    {money(fixedRemaining)}
-                  </strong>
-
-                  <small>
-                    sur {money(totals.fixed)} prévues
-                  </small>
-                </section>
-
-                <section className="home-remaining-card home-remaining-card-priority">
-                  <span className="muted">
-                    Budget variable restant
-                  </span>
-
-                  <strong
-                    className={
-                      variableRemaining < 0
-                        ? "negative"
-                        : ""
-                    }
-                  >
-                    {money(variableRemaining)}
-                  </strong>
-
-                  <small>
-                    sur {money(totals.variable)} disponibles
-                  </small>
-                </section>
               </div>
 
               <div className="two-col">
@@ -5580,6 +5547,27 @@ export default function App() {
           )}
           {route === "budget" && (
             <>
+
+              <section className="page-remaining-summary page-remaining-summary-variable" aria-label="Budget variable restant">
+                <div className="page-remaining-heading">
+                  <div className="block-title">
+                    <span>Budget variable restant</span>
+                    <BlockInfo title="Budget variable restant">
+                      <p>Il s’agit du budget variable prévu pour ce mois, diminué des dépenses variables déjà enregistrées. Ce montant représente vos enveloppes disponibles, et non le solde de votre compte.</p>
+                    </BlockInfo>
+                  </div>
+                  <span className="page-remaining-period">{monthLabel(selectedMonth)}</span>
+                </div>
+                <div className="page-remaining-main">
+                  <strong className={variableRemaining < 0 ? "negative" : ""}>{money(variableRemaining)}</strong>
+                  <span className="muted">sur {money(totals.variable)} de budget disponible</span>
+                </div>
+                <Progress value={variableSpent} max={Math.max(1, totals.variable)} />
+                <div className="page-remaining-foot">
+                  <span>{money(variableSpent)} dépensés</span>
+                  <span>{totals.variable > 0 ? Math.round(variableSpent / totals.variable * 100) : 0} % utilisé</span>
+                </div>
+              </section>
               <section className="budget-summary" data-tour="budget-summary">
                 <div>
                   <span>Budget prévu du mois</span>
@@ -5658,6 +5646,27 @@ export default function App() {
           )}
           {route === "fixed" && (
             <>
+
+              <section className="page-remaining-summary page-remaining-summary-fixed" aria-label="Charges fixes restantes">
+                <div className="page-remaining-heading">
+                  <div className="block-title">
+                    <span>Charges fixes restantes</span>
+                    <BlockInfo title="Charges fixes restantes">
+                      <p>Montant des charges fixes prévues pour le mois sélectionné qui ne sont pas encore enregistrées comme payées. Les échéances trimestrielles ou annuelles ne comptent que dans leur mois de prélèvement.</p>
+                    </BlockInfo>
+                  </div>
+                  <span className="page-remaining-period">{monthLabel(selectedMonth)}</span>
+                </div>
+                <div className="page-remaining-main">
+                  <strong>{money(fixedRemaining)}</strong>
+                  <span className="muted">sur {money(totals.fixed)} prévues</span>
+                </div>
+                <Progress value={totals.fixedPaid} max={Math.max(1, totals.fixed)} />
+                <div className="page-remaining-foot">
+                  <span>{money(totals.fixedPaid)} payés</span>
+                  <span>{totals.fixed > 0 ? Math.round(totals.fixedPaid / totals.fixed * 100) : 0} % réglé</span>
+                </div>
+              </section>
               <div className="section-head">
                 <div className="block-title"><h2>Dépenses fixes</h2><BlockInfo title="Dépenses fixes"><p>Chaque charge est comptée uniquement dans son mois d’échéance.</p></BlockInfo></div>
                 <button className="primary" onClick={() => editRule()}>
@@ -5722,12 +5731,6 @@ export default function App() {
                   >
                     Loyer, assurance, abonnements…
                   </Empty>
-                )}
-              </section>
-              <section className="card">
-                <h2>Échéances de {monthLabel(selectedMonth)}</h2>
-                {dueList(
-                  dues(s, selectedMonth).filter((d) => d.rule.kind === "fixed"),
                 )}
               </section>
             </>

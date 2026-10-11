@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { categoryEmojis } from "./categoryEmojis";
+import { CategoryGlyph } from "./CategoryGlyph";
 import { X, ChevronRight, Info } from "lucide-react";
 export type Field = {
   name: string;
@@ -166,7 +166,7 @@ export function Form({
               {f.options.map(([value, label]) => <button key={value} type="button"
                 aria-label={label} aria-pressed={values[f.name] === value}
                 onClick={() => setValues(current => ({ ...current, [f.name]: value }))}>
-                <span className="emoji-picker-glyph" aria-hidden="true">{categoryEmojis[value] || label.split(" ")[0]}</span>
+                <span className="emoji-picker-glyph" aria-hidden="true"><CategoryGlyph icon={value} size={22} /></span>
               </button>)}
             </div>
             {f.hint && <small>{f.hint}</small>}

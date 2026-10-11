@@ -470,24 +470,24 @@ button.block-info:focus-visible { outline: 2px solid currentColor; outline-offse
 @media(max-width:360px) { .soft-wordmark .wimm-wordmark { width: 105px !important; } }
 
 
-/* Wimm category language: one consistent, theme-aware treatment for emoji.
-   The glyph remains recognisable, but the surrounding UI carries the colour. */
+/* Les choix d'emojis sont conservés, mais représentés par des traits simples
+   et monochromes, cohérents avec les icônes Wimm et les thèmes clair/sombre. */
 .category-icon {
   display: inline-grid;
   place-items: center;
   flex: 0 0 auto;
   background: var(--accent-soft);
-  border: 1px solid color-mix(in srgb, var(--accent-deep) 14%, var(--border));
-  box-shadow: inset 0 1px 0 color-mix(in srgb, white 32%, transparent);
-  color: var(--ink);
+  border: 1px solid color-mix(in srgb, var(--accent-deep) 12%, var(--border));
+  box-shadow: none;
+  color: var(--accent-deep);
   border-radius: 13px;
 }
-.category-emoji, .emoji-picker-glyph {
-  display: inline-block;
-  font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif;
-  font-size: 1.12rem;
+.category-glyph { display: block; color: inherit; flex: 0 0 auto; }
+.emoji-picker-glyph {
+  display: inline-grid;
+  place-items: center;
   line-height: 1;
-  filter: saturate(.76);
+  color: var(--accent-deep);
 }
 .emoji-picker button {
   border-radius: 13px;
@@ -628,4 +628,54 @@ button.block-info:focus-visible { outline: 2px solid currentColor; outline-offse
   .home-budget-amount .large { font-size: 1.7rem; }
   .home-month-budget-card > .progress { margin-bottom: 16px; }
   .home-budget-top-list .category-icon { width: 34px; height: 34px; }
+}
+
+/* Résumés déplacés depuis l'accueil vers les pages auxquelles ils appartiennent. */
+.page-remaining-summary {
+  padding: 24px;
+  border: 1px solid color-mix(in srgb, var(--accent-deep) 22%, var(--border));
+  border-radius: 24px;
+  background: linear-gradient(115deg, var(--accent-soft), var(--surface) 78%);
+  box-shadow: var(--soft-shadow);
+  min-width: 0;
+}
+.page-remaining-summary-fixed {
+  background: linear-gradient(115deg, var(--soft-blue), var(--surface) 78%);
+}
+.page-remaining-heading,
+.page-remaining-main,
+.page-remaining-foot {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+.page-remaining-heading { align-items: center; }
+.page-remaining-heading .block-title {
+  font-size: .98rem;
+  font-weight: 750;
+  color: var(--ink);
+}
+.page-remaining-period {
+  color: var(--muted);
+  font-size: .77rem;
+  white-space: nowrap;
+}
+.page-remaining-main { align-items: baseline; flex-wrap: wrap; margin-top: 13px; }
+.page-remaining-main strong {
+  font: 850 clamp(1.75rem, 3.2vw, 2.2rem)/1.15 Manrope, sans-serif;
+  color: var(--ink);
+  letter-spacing: -.05em;
+  font-variant-numeric: tabular-nums;
+}
+.page-remaining-main strong.negative { color: #b25c55; }
+.page-remaining-main .muted { font-size: .8rem; }
+.page-remaining-summary .progress { margin: 17px 0 9px; height: 8px; }
+.page-remaining-foot { color: var(--muted); font-size: .75rem; }
+.page-remaining-foot span:last-child { font-weight: 750; color: var(--accent-deep); }
+:root[data-mode="dark"] .page-remaining-main strong.negative { color: #ffb6a9; }
+@media (max-width: 560px) {
+  .page-remaining-summary { padding: 20px; }
+  .page-remaining-heading { align-items: flex-start; }
+  .page-remaining-heading .block-title { min-width: 0; }
+  .page-remaining-period { font-size: .72rem; }
 }
