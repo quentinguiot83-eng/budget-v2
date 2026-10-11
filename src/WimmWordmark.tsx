@@ -1,13 +1,15 @@
-/** Wimm wordmark traced from the user-provided Grimblade font.
- * Vector outlines keep the exact letterforms on all devices without loading a font. */
+/** Wordmark built from the supplied Bauhaus Demi letter outlines.
+ * The initial W is exactly the same lowercase m rotated 180 degrees. */
 export function WimmWordmark() {
+  const mPath = "M182 0H48V336Q48 414 102 456Q156 498 247 498Q327 498 392 424Q454 498 546 498Q623 498 674 457Q730 412 730 336V0H596V292Q596 371 526 370Q480 369 456 325V0H322V292Q322 370 252 370Q182 370 182 292Z";
+  const iPath = "M175 0H47V486H175ZM111 712Q144 712 165.5 690.5Q187 669 187 631Q187 593 165.5 571.5Q144 550 111 550Q78 550 56.5 571.5Q35 593 35 631Q35 669 56.5 690.5Q78 712 111 712Z";
   return (
-    <svg className="wimm-wordmark" viewBox="0 0 3000 750" role="img" aria-label="Wimm" xmlns="http://www.w3.org/2000/svg">
-      <g fill="currentColor" transform="translate(0 735)">
-        <path d="M148 -700 287 -178 434 -700H562L709 -178L848 -700H982L775 0H647L498 -490L349 0H221L14 -700Z" />
-        <path d="M1044 -500H1164V0H1044ZM1029 -645Q1029 -610 1050.0 -590.0Q1071 -570 1104 -570Q1137 -570 1158.0 -590.0Q1179 -610 1179 -645Q1179 -680 1158.0 -700.0Q1137 -720 1104 -720Q1071 -720 1050.0 -700.0Q1029 -680 1029 -645Z" />
-        <path d="M1481 -510Q1540 -510 1583.5 -487.5Q1627 -465 1656 -424Q1685 -465 1728.5 -487.5Q1772 -510 1831 -510Q1884 -510 1925.5 -492.0Q1967 -474 1995.5 -441.5Q2024 -409 2039.0 -363.5Q2054 -318 2054 -262V0H1934V-262Q1934 -328 1907.0 -365.0Q1880 -402 1825 -402Q1770 -402 1743.0 -365.0Q1716 -328 1716 -262V0H1596V-262Q1596 -328 1569.0 -365.0Q1542 -402 1487 -402Q1432 -402 1405.0 -365.0Q1378 -328 1378 -262V0H1258V-262Q1258 -318 1273.0 -363.5Q1288 -409 1316.5 -441.5Q1345 -474 1386.5 -492.0Q1428 -510 1481 -510Z" />
-        <path d="M2369 -510Q2428 -510 2471.5 -487.5Q2515 -465 2544 -424Q2573 -465 2616.5 -487.5Q2660 -510 2719 -510Q2772 -510 2813.5 -492.0Q2855 -474 2883.5 -441.5Q2912 -409 2927.0 -363.5Q2942 -318 2942 -262V0H2822V-262Q2822 -328 2795.0 -365.0Q2768 -402 2713 -402Q2658 -402 2631.0 -365.0Q2604 -328 2604 -262V0H2484V-262Q2484 -328 2457.0 -365.0Q2430 -402 2375 -402Q2320 -402 2293.0 -365.0Q2266 -328 2266 -262V0H2146V-262Q2146 -318 2161.0 -363.5Q2176 -409 2204.5 -441.5Q2233 -474 2274.5 -492.0Q2316 -510 2369 -510Z" />
+    <svg className="wimm-wordmark" viewBox="0 0 2586 745" role="img" aria-label="Wimm" xmlns="http://www.w3.org/2000/svg">
+      <g fill="currentColor" transform="translate(0 724) scale(1 -1)">
+        <path d={mPath} transform="translate(778 498) rotate(180)" />
+        <path d={iPath} transform="translate(784 0)" />
+        <path d={mPath} transform="translate(1034 0)" />
+        <path d={mPath} transform="translate(1812 0)" />
       </g>
     </svg>
   );
