@@ -235,8 +235,9 @@ function AgendaPage({events,clients,add,edit,remove,connect}:{connect?:()=>void;
         {Array.from({length:count},(_,i)=>{
           const day=i+1;
           const dayEvents=monthEvents.filter(e=>e.startsAt.slice(0,10)===key(day));
-          const className="day "+(dayEvents.length?"has-due ":"")+(selectedDay===day?"selected":"");
-          return <button type="button" key={day} className={className} onClick={()=>{setSelectedDay(day);add(key(day));}} title={"Ajouter un événement le "+day+" "+cursor.toLocaleDateString("fr-FR",{month:"long"})}>
+          const dayIsToday=isCurrentMonth&&day===now.getDate();
+          const className="day "+(dayEvents.length?"has-due ":"")+(selectedDay===day?"selected ":"")+(dayIsToday?"today":"");
+          return <button type="button" key={day} className={className} aria-current={dayIsToday?"date":undefined} onClick={()=>{setSelectedDay(day);add(key(day));}} title={(dayIsToday?"Aujourd’hui · ":"")+"Ajouter un événement le "+day+" "+cursor.toLocaleDateString("fr-FR",{month:"long"})}>
             <strong>{day}</strong>
             {dayEvents.length>0&&<small>{dayEvents.length}</small>}
           </button>;
