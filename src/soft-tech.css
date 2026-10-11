@@ -720,3 +720,96 @@ button.block-info:focus-visible { outline: 2px solid currentColor; outline-offse
   .personal-budget-actions .icon { width: 35px; min-width: 35px; padding: 6px; }
   .personal-budget-details > .personal-budget-transfer { width: 100%; }
 }
+
+
+/* Page Compte perso : informations contextuelles dans le titre,
+   paramétrage sur la même ligne plutôt que dans un large bloc explicatif. */
+.page-heading:has(.personal-page-title-row) > div:first-child {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.personal-page-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  column-gap: 14px;
+  row-gap: 10px;
+  width: 100%;
+}
+.personal-page-title { min-width: 0; gap: 7px; }
+.personal-page-title h1 { margin: 0; white-space: nowrap; }
+.personal-page-title .block-info {
+  width: 30px; height: 30px; min-height: 30px;
+  flex: 0 0 auto;
+}
+.personal-page-settings {
+  display: inline-flex; align-items: center; justify-content: center;
+  gap: 7px; margin-left: auto; min-height: 42px;
+  padding: 9px 13px; font-size: .85rem; white-space: nowrap;
+}
+
+/* Synthèse Budget : total mensuel et uniquement deux suivis lisibles. */
+.budget-month-tracker {
+  padding: 24px;
+  background: linear-gradient(110deg, var(--accent-soft), var(--surface));
+  color: var(--ink);
+  border: 1px solid color-mix(in srgb, var(--accent-deep) 15%, var(--border));
+  border-radius: 24px;
+  box-shadow: var(--soft-shadow);
+  min-width: 0;
+}
+.budget-month-tracker-total {
+  display: grid; gap: 6px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--border);
+}
+.budget-month-tracker-total > span {
+  font-size: .82rem; font-weight: 650; color: var(--muted);
+}
+.budget-month-tracker-total > strong {
+  font: 850 clamp(1.8rem, 3.2vw, 2.3rem)/1.2 Manrope, sans-serif;
+  color: var(--ink); letter-spacing: -.055em;
+  font-variant-numeric: tabular-nums;
+}
+.budget-month-tracker-lines { display: grid; gap: 19px; padding-top: 18px; }
+.budget-month-tracker-line { display: grid; gap: 10px; min-width: 0; }
+.budget-month-tracker-line-head {
+  display: flex; justify-content: space-between; align-items: baseline;
+  flex-wrap: wrap; gap: 5px 12px; min-width: 0;
+}
+.budget-month-tracker-line-head > span:first-child {
+  font-size: .86rem; font-weight: 750;
+}
+.budget-month-tracker-amount {
+  color: var(--ink); font-size: .84rem; font-weight: 750;
+  font-variant-numeric: tabular-nums; white-space: nowrap;
+}
+.budget-month-tracker-amount .muted { font-weight: 500; }
+.budget-month-tracker-line .progress {
+  height: 8px; margin: 0; background: var(--border);
+}
+.budget-month-tracker-line:first-child .progress span {
+  background: color-mix(in srgb, var(--accent-deep) 68%, var(--muted));
+}
+.budget-month-tracker-line:last-child .progress span {
+  background: var(--accent-deep);
+}
+@media (max-width: 560px) {
+  .personal-page-title-row { gap: 6px 8px; flex-wrap: nowrap; }
+  .personal-page-title { gap: 3px; }
+  .personal-page-title h1 { font-size: 1.35rem; }
+  .personal-page-title .block-info { width: 29px; height: 29px; min-height: 29px; }
+  .personal-page-settings {
+    min-height: 38px; padding: 7px 9px; gap: 5px; font-size: .76rem;
+  }
+  .personal-page-settings svg { width: 15px; height: 15px; }
+  .budget-month-tracker { padding: 20px; }
+  .budget-month-tracker-lines { gap: 18px; }
+  .budget-month-tracker-line-head > span:first-child { font-size: .81rem; }
+  .budget-month-tracker-amount { font-size: .8rem; }
+}
+@media (max-width: 365px) {
+  .personal-page-title-row { flex-wrap: wrap; }
+  .personal-page-settings { margin-left: 0; }
+}

@@ -5277,7 +5277,26 @@ export default function App() {
               <p className="home-greeting">Bonjour{displayName ? ` ${displayName}` : ""}</p>
             )}
 
-            <h1>{titles[route]}</h1>
+            {route === "personal" ? (
+              <div className="personal-page-title-row">
+                <div className="block-title personal-page-title">
+                  <h1>{titles[route]}</h1>
+                  <BlockInfo title="Votre compte personnel">
+                    <p>Son solde, ses achats et son historique sont visibles uniquement depuis votre compte Wimm.</p>
+                    <p>Les autres membres du foyer voient uniquement les virements depuis le compte commun et le budget personnel lié, sans accès aux opérations privées.</p>
+                  </BlockInfo>
+                </div>
+                {ps.account && (
+                  <button type="button" className="secondary personal-page-settings"
+                    onClick={() => editPersonalAccount()}>
+                    <Pencil size={16} />
+                    Paramétrer
+                  </button>
+                )}
+              </div>
+            ) : (
+              <h1>{titles[route]}</h1>
+            )}
 
           </div>
           {[
@@ -5521,30 +5540,31 @@ export default function App() {
                   <span>{totals.variable > 0 ? Math.round(variableSpent / totals.variable * 100) : 0} % utilisé</span>
                 </div>
               </section>
-              <section className="budget-summary" data-tour="budget-summary">
-                <div>
-                  <span>Budget prévu du mois</span>
+              <section className="budget-month-tracker" data-tour="budget-summary"
+                aria-label={"Suivi du budget de " + monthLabel(selectedMonth)}>
+                <div className="budget-month-tracker-total">
+                  <span>Budget total du mois</span>
                   <strong>{money(totals.fixed + totals.variable)}</strong>
-                  <p>
-                    Fixe {money(totals.fixed)} <span>·</span> Variable{" "}
-                    {money(totals.variable)}
-                  </p>
                 </div>
-                <div>
-                  <span>Dépensé</span>
-                  <strong>{money(totals.spending)}</strong>
-                </div>
-                <div>
-                  <span>Reste dans les enveloppes</span>
-                  <strong
-                    className={
-                      totals.spending > totals.fixed + totals.variable
-                        ? "negative"
-                        : ""
-                    }
-                  >
-                    {money(totals.fixed + totals.variable - totals.spending)}
-                  </strong>
+                <div className="budget-month-tracker-lines">
+                  <div className="budget-month-tracker-line">
+                    <div className="budget-month-tracker-line-head">
+                      <span>Dépenses fixes</span>
+                      <span className="budget-month-tracker-amount">
+                        {money(totals.fixedPaid)} <span className="muted">/ {money(totals.fixed)}</span>
+                      </span>
+                    </div>
+                    <Progress value={totals.fixedPaid} max={Math.max(1, totals.fixed)} />
+                  </div>
+                  <div className="budget-month-tracker-line">
+                    <div className="budget-month-tracker-line-head">
+                      <span>Dépenses variables</span>
+                      <span className="budget-month-tracker-amount">
+                        {money(variableSpent)} <span className="muted">/ {money(totals.variable)}</span>
+                      </span>
+                    </div>
+                    <Progress value={variableSpent} max={Math.max(1, totals.variable)} />
+                  </div>
                 </div>
               </section>
               <div className="budget-actions" data-tour="budget-tools">
@@ -5760,31 +5780,6 @@ export default function App() {
           )}
           {route === "personal" && (
             <>
-              <div className="section-head">
-                <div>
-                  <p className="lead">
-                    Votre compte personnel.
-                  </p>
-                  <p className="muted">
-                    Son solde, ses achats et son historique
-                    sont visibles uniquement depuis votre
-                    compte Wimm.
-                  </p>
-                </div>
-
-                {ps.account && (
-                  <button
-                    className="secondary"
-                    onClick={() =>
-                      editPersonalAccount()
-                    }
-                  >
-                    <Pencil size={17} />
-                    Paramétrer
-                  </button>
-                )}
-              </div>
-
               {!ps.account ? (
                 <>
                   {s.accounts.some(
