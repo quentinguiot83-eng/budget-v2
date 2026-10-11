@@ -5389,6 +5389,9 @@ export default function App() {
                 <button className="secondary" onClick={() => navigate("transactions")}><List size={19}/><span>Transactions</span></button>
                 <button className="secondary" onClick={() => navigate("calendar")}><CalendarDays size={19}/><span>Calendrier</span></button>
               </div>
+              <button type="button" className="budget-analysis-link" data-tour="month-analysis-button" onClick={() => navigate("analysis")}>
+                <span><Wallet size={18}/><strong>Analyse financière</strong><small>Répartition, tendances et bilan de vos dépenses</small></span><ChevronRight size={19}/>
+              </button>
               <div className="section-head budget-category-heading">
                 <div className="block-title">
                   <h2>Mes budgets variables</h2>
@@ -6971,19 +6974,19 @@ export default function App() {
                   Revenus et répartition
                 </button>
               </div>
-              <div className="two-col projection-summary">
-                <section className="metric">
-                  <span>Revenus mensuels estimés</span>
+              <div className="two-col projection-summary projection-summary-unified">
+                <section className="metric projection-stat-income">
+                  <div className="projection-stat-head"><span>Revenus mensuels estimés</span><Wallet size={17} aria-hidden="true"/></div>
                   <strong>{money(s.income)}</strong>
+                  <small className="muted">Base de la projection</small>
                 </section>
-                <section className="metric">
-                  <div className="block-title">
-                    <span>Capacité prévue · {monthLabel(selectedMonth)}</span>
-                    <button type="button" className="block-info" aria-label="Détail du calcul de la capacité prévue" title="Détail du calcul de la capacité prévue" onClick={calc}>
-                      <Info size={17} />
-                    </button>
+                <section className="metric projection-stat-capacity">
+                  <div className="projection-stat-head">
+                    <span>Capacité d’épargne prévue</span>
+                    <button type="button" className="block-info" aria-label="Détail du calcul de la capacité prévue" title="Détail du calcul de la capacité prévue" onClick={calc}><Info size={17}/></button>
                   </div>
                   <strong>{money(totals.capacity)}</strong>
+                  <small className="muted">{monthLabel(selectedMonth)}</small>
                 </section>
               </div>
               <section className="card" data-tour="projection-chart">
