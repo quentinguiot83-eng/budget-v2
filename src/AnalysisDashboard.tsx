@@ -11,9 +11,9 @@ import {
 const Chart = lazy(() => import("./Charts"));
 const colors = ["#639682", "#8a91ba", "#bd927b", "#78a6ac", "#a48ab2", "#ad9572", "#658bb6", "#94aa74", "#bf859b", "#7f9e9b"];
 const modes: { id: DashboardMode; label: string }[] = [
-  { id: "1", label: "1 mois" }, { id: "3", label: "3 mois" },
-  { id: "6", label: "6 mois" }, { id: "12", label: "12 mois" },
-  { id: "year", label: "Année" }, { id: "custom", label: "Personnalisée" },
+  { id: "1", label: "Mois en cours" }, { id: "3", label: "3 derniers mois" },
+  { id: "6", label: "6 derniers mois" }, { id: "12", label: "12 derniers mois" },
+  { id: "year", label: "Année" }, { id: "custom", label: "Personnalisé" },
 ];
 const formatChange = (cents: number) =>
   (cents > 0 ? "+" : cents < 0 ? "−" : "") + money(Math.abs(cents));
@@ -25,7 +25,7 @@ function InfoLine({ label, value, hint }: { label: string; value: string; hint?:
 export default function AnalysisDashboard({ state, selectedMonth }: { state: State; selectedMonth: string }) {
   const anchorStart = selectedMonth <= month() ? selectedMonth : month();
   const [mode, setMode] = useState<DashboardMode>("1");
-  const [anchor, setAnchor] = useState(anchorStart);
+  const [anchor, setAnchor] = useState(month());
   const [customStart, setCustomStart] = useState(anchorStart + "-01");
   const [customEnd, setCustomEnd] = useState(() =>
     anchorStart === month() ? today() : dateAt(anchorStart, 31),
@@ -125,7 +125,7 @@ export default function AnalysisDashboard({ state, selectedMonth }: { state: Sta
         {modes.map(option => <button type="button" key={option.id}
           className={mode === option.id ? "active" : ""}
           aria-pressed={mode === option.id}
-          onClick={() => { setMode(option.id); setSelectedTrend(["__total"]); }}>
+          onClick={() => { setMode(option.id); if (option.id !== "year" && option.id !== "custom") setAnchor(month()); setSelectedTrend(["__total"]); }}>
           {option.label}
         </button>)}
       </div>
@@ -143,9 +143,7 @@ export default function AnalysisDashboard({ state, selectedMonth }: { state: Sta
             }} /></label>
         </div>
       ) : (
-        <label className="analysis-anchor-label">Jusqu’au mois
-          <input type="month" value={anchor} max={month()} onChange={event => event.target.value && setAnchor(event.target.value)} />
-        </label>
+        <p className="analysis-rolling-hint muted">Période glissante jusqu’à aujourd’hui</p>
       )}
       {range.valid
         ? <div className="analysis-range-foot"><span>{range.label}</span>
@@ -179,10 +177,10 @@ export default function AnalysisDashboard({ state, selectedMonth }: { state: Sta
           </span>
         </div>
         <div className="analysis-overview-grid">
-          <div><span>Fixes</span><strong>{money(analysis.fixed)}</strong></div>
-          <div><span>Variables</span><strong>{money(analysis.variable)}</strong></div>
-          <div><span>Revenus reçus</span><strong>{money(analysis.income)}</strong></div>
-          <div><span>Épargne versée</span><strong>{money(analysis.savings)}</strong></div>
+          <div className="analysis-kpi-fixed"><span>Fixes</span><strong>{money(analysis.fixed)}</strong></div>
+          <div className="analysis-kpi-variable"><span>Variables</span><strong>{money(analysis.variable)}</strong></div>
+          <div className="analysis-kpi-income"><span>Revenus reçus</span><strong>{money(analysis.income)}</strong></div>
+          <div className="analysis-kpi-savings"><span>Épargne versée</span><strong>{money(analysis.savings)}</strong></div>
         </div>
         <div className="analysis-overview-note">
           <span>Voyages enregistrés : <strong>{money(analysis.travel)}</strong>{includeTravel ? " · inclus dans les dépenses" : " · hors total"}</span>
