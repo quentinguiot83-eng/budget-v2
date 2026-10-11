@@ -1,7 +1,7 @@
 import { lazy, Suspense, useMemo, useState } from "react";
 import { ChevronDown, ChevronRight, CalendarDays, TrendingUp } from "lucide-react";
 import { BlockInfo } from "./ui";
-import { money, month, monthLabel, shiftMonth, type State } from "./engine";
+import { dateAt, money, month, monthLabel, shiftMonth, today, type State } from "./engine";
 import { monthlyComparison } from "./monthlyComparison";
 import {
   categoryAmount, financialAnalysis, resolveAnalysisRange,
@@ -27,10 +27,9 @@ export default function AnalysisDashboard({ state, selectedMonth }: { state: Sta
   const [mode, setMode] = useState<DashboardMode>("1");
   const [anchor, setAnchor] = useState(anchorStart);
   const [customStart, setCustomStart] = useState(anchorStart + "-01");
-  const [customEnd, setCustomEnd] = useState(() => {
-    const now = new Date();
-    return anchorStart === month() ? now.toLocaleDateString("sv-SE") : anchorStart + "-28";
-  });
+  const [customEnd, setCustomEnd] = useState(() =>
+    anchorStart === month() ? today() : dateAt(anchorStart, 31),
+  );
   const [includeTravel, setIncludeTravel] = useState(false);
   const [breakdown, setBreakdown] = useState<ExpenseKind>("all");
   const [expandedCategories, setExpandedCategories] = useState(false);
@@ -133,7 +132,7 @@ export default function AnalysisDashboard({ state, selectedMonth }: { state: Sta
       {mode === "custom" ? (
         <div className="analysis-date-inputs">
           <label>Du <input type="date" value={customStart} max={customEnd} onChange={event => setCustomStart(event.target.value)} /></label>
-          <label>Au <input type="date" value={customEnd} min={customStart} max={new Date().toLocaleDateString("sv-SE")} onChange={event => setCustomEnd(event.target.value)} /></label>
+          <label>Au <input type="date" value={customEnd} min={customStart} max={today()} onChange={event => setCustomEnd(event.target.value)} /></label>
         </div>
       ) : mode === "year" ? (
         <div className="analysis-date-inputs analysis-date-inputs-year">
