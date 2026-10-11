@@ -4351,6 +4351,7 @@ export default function App() {
     simple = false,
     variableOnly = false,
     topThree = false,
+    fixedOnly = false,
   ) =>
     s.categories
       .filter(
@@ -4367,7 +4368,7 @@ export default function App() {
           (
             !(variableOnly || historicalVariableOnly) ||
             categoryVariableBudget(c) > 0
-          ),
+          ) && (!fixedOnly || categoryVariableBudget(c) <= 0),
       )
       // On the home screen only: order by the share of each variable budget
       // used, so a small almost-exhausted envelope isn't hidden by a big one.
@@ -5383,42 +5384,23 @@ export default function App() {
                   </div>
                 </div>
               </section>
-              <div className="budget-actions" data-tour="budget-tools">
-                <button className="secondary" onClick={() => navigate("fixed")}>
-                  <List size={17} />
-                  Dépenses fixes
-                </button>
-                <button
-                  className="secondary"
-                  onClick={() => navigate("calendar")}
-                >
-                  <CalendarDays size={17} />
-                  Calendrier
-                </button>
-                <button
-                  className="secondary"
-                  onClick={() => navigate("transactions")}
-                >
-                  Transactions
-                </button>
-                <button
-                  className="secondary"
-                  data-tour="month-analysis-button"
-                  onClick={() => navigate("analysis")}
-                >
-                  Analyse financière
-                </button>
+              <div className="budget-actions budget-quick-links" data-tour="budget-tools">
+                <button className="secondary" onClick={() => navigate("fixed")}><List size={19}/><span>Fixes</span></button>
+                <button className="secondary" onClick={() => navigate("transactions")}><List size={19}/><span>Transactions</span></button>
+                <button className="secondary" onClick={() => navigate("calendar")}><CalendarDays size={19}/><span>Calendrier</span></button>
               </div>
-              {availablePanel()}
-
-              <div className="section-head">
-                <div className="block-title"><div className="block-title"><h2>Vos catégories</h2><BlockInfo title="Comprendre les enveloppes"><p>Le budget restant est une enveloppe de dépenses, pas le solde de votre compte. Les catégories archivées restent dans l’historique.</p></BlockInfo></div></div>
-                <button className="primary" onClick={() => editCategory()}>
-                  <Plus size={17} />
-                  Catégorie
-                </button>
+              <div className="section-head budget-category-heading">
+                <div className="block-title">
+                  <h2>Mes budgets variables</h2>
+                  <BlockInfo title="Comprendre les enveloppes"><p>Un budget variable représente le montant réservé pour une catégorie. Il est indépendant du solde bancaire. Les catégories archivées restent dans l’historique.</p></BlockInfo>
+                </div>
+                <button className="secondary compact budget-add-category" type="button" onClick={() => editCategory()} aria-label="Ajouter une catégorie"><Plus size={18}/><span>Catégorie</span></button>
               </div>
-              <div className="category-grid" data-tour="budget-categories">{categoryCards()}</div>
+              <div className="category-grid budget-category-list" data-tour="budget-categories">{categoryCards(false, true)}</div>
+              <details className="budget-other-categories">
+                <summary>Autres catégories et budgets fixes <ChevronRight size={17}/></summary>
+                <div className="category-grid budget-category-list">{categoryCards(false, false, false, true)}</div>
+              </details>
               {!s.categories.length && (
                 <Empty
                   title="Un budget à votre mesure"
