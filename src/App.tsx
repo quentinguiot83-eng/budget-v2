@@ -4165,20 +4165,6 @@ export default function App() {
     );
 
   }
-
-  const variableSpentTotal =
-    s.categories
-      .filter(
-        (c) =>
-          categoryVariableBudget(c) > 0,
-      )
-      .reduce(
-        (n, c) =>
-          n +
-          categoryVariableSpent(c),
-        0,
-      );
-
   function monthlyReviewPanel() {
     if (!current || selectedMonth > month()) return null;
     const comparison = !review.hasPreviousExpenses
@@ -5508,15 +5494,15 @@ export default function App() {
                   </div>
                   <div className="home-budget-overview">
                     <div className="home-budget-amount">
-                      <strong className="large">{money(variableSpentTotal)}</strong>
+                      <strong className="large">{money(variableSpent)}</strong>
                       <span className="muted">sur {money(totals.variable)}</span>
                     </div>
-                    <span className={`home-budget-percent${totals.variable > 0 && variableSpentTotal >= totals.variable ? " home-budget-percent-limit" : ""}`}>
-                      {totals.variable > 0 ? Math.round(variableSpentTotal / totals.variable * 100) : 0} %
+                    <span className={`home-budget-percent${totals.variable > 0 && variableSpent >= totals.variable ? " home-budget-percent-limit" : ""}`}>
+                      {totals.variable > 0 ? Math.round(variableSpent / totals.variable * 100) : 0} %
                     </span>
                   </div>
                   <Progress
-                    value={variableSpentTotal}
+                    value={variableSpent}
                     max={Math.max(1, totals.variable)}
                   />
                   <div className="home-budget-top-label">Les 3 budgets les plus utilisés</div>
