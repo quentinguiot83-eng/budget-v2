@@ -468,3 +468,164 @@ button.block-info:focus-visible { outline: 2px solid currentColor; outline-offse
 .soft-wordmark .wimm-wordmark { width: 120px !important; }
 .brand .wimm-wordmark { padding: 0; background: transparent; border-radius: 0; }
 @media(max-width:360px) { .soft-wordmark .wimm-wordmark { width: 105px !important; } }
+
+
+/* Wimm category language: one consistent, theme-aware treatment for emoji.
+   The glyph remains recognisable, but the surrounding UI carries the colour. */
+.category-icon {
+  display: inline-grid;
+  place-items: center;
+  flex: 0 0 auto;
+  background: var(--accent-soft);
+  border: 1px solid color-mix(in srgb, var(--accent-deep) 14%, var(--border));
+  box-shadow: inset 0 1px 0 color-mix(in srgb, white 32%, transparent);
+  color: var(--ink);
+  border-radius: 13px;
+}
+.category-emoji, .emoji-picker-glyph {
+  display: inline-block;
+  font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif;
+  font-size: 1.12rem;
+  line-height: 1;
+  filter: saturate(.76);
+}
+.emoji-picker button {
+  border-radius: 13px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, white 40%, transparent);
+  transition: border-color .15s ease, background .15s ease, box-shadow .15s ease;
+}
+.emoji-picker button:hover { background: var(--accent-soft); }
+.emoji-picker button[aria-pressed="true"] {
+  border: 1px solid var(--accent-deep);
+  background: var(--accent-soft);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent-deep) 15%, transparent);
+}
+.emoji-picker button:focus-visible { outline: 2px solid var(--accent-deep); outline-offset: 2px; }
+:root[data-mode="dark"] .category-icon,
+:root[data-mode="dark"] .emoji-picker button {
+  box-shadow: inset 0 1px 0 color-mix(in srgb, white 8%, transparent);
+}
+
+/* Make decisions and financial status more noticeable without adding clutter. */
+.available-card {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--accent-deep) 24%, var(--border));
+  background: linear-gradient(120deg, var(--soft-blue), var(--surface));
+  padding: 22px 24px;
+}
+.available-card::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 4px;
+  background: var(--accent-deep);
+  border-radius: 4px;
+}
+.available-card .section-head { margin-bottom: 8px; }
+.available-card .large {
+  display: block;
+  font-size: clamp(1.85rem, 3.2vw, 2.35rem);
+  letter-spacing: -.055em;
+  line-height: 1.15;
+}
+.available-card-caption { display: block; margin-top: 8px; color: var(--muted); font-size: .76rem; }
+.available-card-warning {
+  background: linear-gradient(120deg, color-mix(in srgb, #ce6d65 13%, var(--surface)), var(--surface));
+  border-color: color-mix(in srgb, #ce6d65 30%, var(--border));
+}
+.available-card-warning::before { background: #c06a63; }
+.alert-bar { border-left: 4px solid #d19a4b; }
+.alert-bar > strong { font-weight: 800; }
+.home-remaining-card-priority {
+  background: color-mix(in srgb, var(--accent-soft) 70%, var(--surface));
+  border-color: color-mix(in srgb, var(--accent-deep) 19%, var(--border));
+}
+.home-remaining-card-priority strong { font-weight: 850; letter-spacing: -.055em; }
+
+/* Monthly variable budget: global progress first, then the three highest
+   utilisation ratios, preserving navigation to the full budget page. */
+.home-month-budget-card {
+  border-color: color-mix(in srgb, var(--accent-deep) 18%, var(--border));
+}
+.home-month-budget-card > .section-head { align-items: center; }
+.home-budget-see-all { display: inline-flex; align-items: center; gap: 2px; white-space: nowrap; }
+.home-budget-overview {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 4px 0 7px;
+}
+.home-budget-amount { display: grid; align-items: baseline; gap: 3px; }
+.home-budget-amount .large { font-size: clamp(1.65rem, 2.6vw, 2rem); font-weight: 850; }
+.home-budget-amount .muted { font-size: .78rem; }
+.home-budget-percent {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--accent-soft);
+  border-radius: 11px;
+  padding: 8px 10px;
+  font-size: .84rem;
+  font-weight: 800;
+  color: var(--accent-deep);
+  white-space: nowrap;
+}
+.home-budget-percent-limit, .category-percent-limit {
+  background: color-mix(in srgb, #c16a65 13%, var(--surface));
+  color: #b25c55;
+}
+:root[data-mode="dark"] .home-budget-percent-limit,
+:root[data-mode="dark"] .category-percent-limit { color: #ffb6a9; }
+.home-month-budget-card > .progress { height: 9px; margin: 11px 0 20px; }
+.home-budget-top-label {
+  color: var(--muted);
+  font-size: .71rem;
+  font-weight: 750;
+  letter-spacing: .025em;
+  margin-bottom: 2px;
+}
+.home-budget-top-list { display: grid; }
+.home-budget-top-list .category {
+  min-width: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  padding: 13px 0 12px;
+  border-bottom: 1px solid var(--border);
+}
+.home-budget-top-list .category:last-child { border-bottom: 0; padding-bottom: 0; }
+.home-budget-top-list .category .flex { align-items: center; gap: 11px; }
+.home-budget-top-list .category .grow { min-width: 0; }
+.home-budget-top-list .category .grow strong {
+  display: block;
+  overflow-wrap: anywhere;
+  font-size: .85rem;
+  font-weight: 750;
+}
+.home-budget-top-list .category p { margin-top: 3px; font-size: .78rem; }
+.home-budget-top-list .category-icon { width: 37px; height: 37px; }
+.home-budget-top-list .category .progress { margin: 9px 0 0; height: 5px; }
+.category-percent {
+  flex: 0 0 auto;
+  align-self: flex-start;
+  background: var(--accent-soft);
+  color: var(--accent-deep);
+  font-size: .74rem;
+  font-weight: 800;
+  padding: 6px 8px;
+  border-radius: 9px;
+  white-space: nowrap;
+}
+.home-budget-empty { margin: 14px 0 0; }
+@media (max-width: 560px) {
+  .available-card { padding: 18px 20px; }
+  .available-card .large { font-size: 1.95rem; }
+  .home-budget-amount .large { font-size: 1.7rem; }
+  .home-month-budget-card > .progress { margin-bottom: 16px; }
+  .home-budget-top-list .category-icon { width: 34px; height: 34px; }
+}

@@ -4226,7 +4226,7 @@ export default function App() {
     const a = availableThisMonth;
     if (selectedMonth !== month() || !current) return null;
     return (
-      <section className="card available-card">
+      <section className={`card available-card${a.available < 0 ? " available-card-warning" : ""}`}>
         <div className="section-head">
           <div className="block-title"><h2>Disponible jusqu’à la fin du mois</h2>
           <button type="button" className="block-info" aria-label="Informations : Disponible jusqu’à la fin du mois" onClick={() => explain(
@@ -4257,6 +4257,7 @@ export default function App() {
           )}><Info size={17} /></button></div>
         </div>
         <strong className={`large${a.available < 0 ? " negative" : ""}`}>{money(a.available)}</strong>
+        <small className="available-card-caption">Après les échéances et l’épargne prévues</small>
         {a.available < 0 && <p role="status" className="negative">Il manque {money(-a.available)} pour couvrir les sommes réservées.</p>}
         {!a.hasRealIncome && <p className="muted">Épargne non encore réservée : aucun revenu affecté à ce mois n’a été saisi.</p>}
       </section>
@@ -4431,6 +4432,7 @@ export default function App() {
   const categoryCards = (
     simple = false,
     variableOnly = false,
+    topThree = false,
   ) =>
     s.categories
       .filter(
@@ -4449,7 +4451,16 @@ export default function App() {
             categoryVariableBudget(c) > 0
           ),
       )
-      .map((c, index) => {
+      // On the home screen only: order by the share of each variable budget
+      // used, so a small almost-exhausted envelope isn't hidden by a big one.
+      .sort((a, b) => topThree
+        ? (categoryVariableSpent(b) / Math.max(1, categoryVariableBudget(b)))
+          - (categoryVariableSpent(a) / Math.max(1, categoryVariableBudget(a)))
+          || categoryVariableSpent(b) - categoryVariableSpent(a)
+          || a.name.localeCompare(b.name, "fr")
+        : 0)
+      .slice(0, topThree ? 3 : undefined)
+      .map((c) => {
 
         const legacyPersonal =
           s.accounts.find(
@@ -4558,28 +4569,20 @@ export default function App() {
             ? variable
             : totalBudget;
 
+        const budgetProgress = displayBudget > 0
+          ? Math.round(Math.max(0, displaySpent) / displayBudget * 100)
+          : 0;
+
         return (
           <article
-            className="category"
+            className={`category${simple ? " category-compact" : ""}${displayBudget > 0 && displaySpent >= displayBudget ? " category-limit" : ""}`}
             key={c.id}
           >
 
             <div className="flex">
 
-              <span
-                className="category-icon"
-                style={{
-                  background:
-                    palette[
-                      index % 6
-                    ] + "28",
-                  color:
-                    palette[
-                      index % 6
-                    ],
-                }}
-              >
-                {categoryEmojis[c.icon] || "💳"}
+              <span className="category-icon">
+                <span className="category-emoji" aria-hidden="true">{categoryEmojis[c.icon] || "💳"}</span>
               </span>
 
               <div className="grow">
@@ -4610,6 +4613,12 @@ export default function App() {
                 )}
 
               </div>
+
+              {simple && (
+                <span className={`category-percent${budgetProgress >= 100 ? " category-percent-limit" : ""}`} aria-label={`${budgetProgress} pour cent du budget utilisé`}>
+                  {budgetProgress} %
+                </span>
+              )}
 
               {!simple && (
                 <button
@@ -5500,7 +5509,7 @@ export default function App() {
                   </small>
                 </section>
 
-                <section className="home-remaining-card">
+                <section className="home-remaining-card home-remaining-card-priority">
                   <span className="muted">
                     Budget variable restant
                   </span>
@@ -5523,32 +5532,33 @@ export default function App() {
 
               <div className="two-col">
                 {savingsPanel("home")}
-                <section className="card">
+                <section className="card home-month-budget-card">
                   <div className="section-head">
                     <h2>Budget du mois</h2>
-                    <button className="text" onClick={() => navigate("budget")}>
-                      Tout voir
+                    <button className="text home-budget-see-all" onClick={() => navigate("budget")}>
+                      Tout voir <ChevronRight size={15} />
                     </button>
                   </div>
-                  <div className="split">
-                    <strong className="large">
-                      {money(variableSpentTotal)}
-                    </strong>
-
-                    <span className="muted">
-                      sur {money(totals.variable)}
+                  <div className="home-budget-overview">
+                    <div className="home-budget-amount">
+                      <strong className="large">{money(variableSpentTotal)}</strong>
+                      <span className="muted">sur {money(totals.variable)}</span>
+                    </div>
+                    <span className={`home-budget-percent${totals.variable > 0 && variableSpentTotal >= totals.variable ? " home-budget-percent-limit" : ""}`}>
+                      {totals.variable > 0 ? Math.round(variableSpentTotal / totals.variable * 100) : 0} %
                     </span>
                   </div>
-
                   <Progress
                     value={variableSpentTotal}
-                    max={totals.variable}
+                    max={Math.max(1, totals.variable)}
                   />
-
-                  {categoryCards(
-                    true,
-                    true,
-                  )}
+                  <div className="home-budget-top-label">Les 3 budgets les plus utilisés</div>
+                  <div className="home-budget-top-list">
+                    {categoryCards(true, true, true)}
+                    {!s.categories.some(c => categoryVariableBudget(c) > 0) && (
+                      <p className="muted home-budget-empty">Aucun budget variable pour ce mois.</p>
+                    )}
+                  </div>
                 </section>
               </div>
               <section className="card">
