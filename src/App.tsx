@@ -4539,7 +4539,7 @@ export default function App() {
 
         return (
           <article
-            className={`category${simple ? " category-compact" : ""}${displayBudget > 0 && displaySpent >= displayBudget ? " category-limit" : ""}`}
+            className={`category${simple ? " category-compact" : ""}${isPersonal && !simple ? " category-personal" : ""}${displayBudget > 0 && displaySpent >= displayBudget ? " category-limit" : ""}`}
             key={c.id}
           >
 
@@ -4555,25 +4555,25 @@ export default function App() {
                   {totals.forecast?.categories.find(x => x.id === c.id)?.name ?? c.name}
                 </strong>
 
-                <p>
-                  {money(displaySpent)}{" "}
-                  <span className="muted">
-                    /{" "}
-                    {money(
-                      displayBudget,
+                {isPersonal && !simple ? (
+                  <p className="personal-budget-month">
+                    <span className="muted">Budget du mois</span>
+                    <strong>{money(envelope?.base ?? variable)}</strong>
+                  </p>
+                ) : (
+                  <>
+                    <p>
+                      {money(displaySpent)}{" "}
+                      <span className="muted">/ {money(displayBudget)}</span>
+                    </p>
+                    {totals.forecast && <small className="muted">{totals.forecast.fixedCategories ? "Budget prévu figé" : "Budget variable figé"}</small>}
+                    {isPersonal && (
+                      <small className="muted">
+                        {isMine ? "Votre budget personnel" :
+                          c.personalOwner ? "Budget personnel du foyer" : "Ancien compte perso à migrer"}
+                      </small>
                     )}
-                  </span>
-                </p>
-
-                {totals.forecast && <small className="muted">{totals.forecast.fixedCategories ? "Budget prévu figé" : "Budget variable figé"}</small>}
-                {isPersonal && (
-                  <small className="muted">
-                    {isMine
-                      ? "Votre budget personnel"
-                      : c.personalOwner
-                        ? "Budget personnel du foyer"
-                        : "Ancien compte perso à migrer"}
-                  </small>
+                  </>
                 )}
 
               </div>
@@ -4585,36 +4585,37 @@ export default function App() {
               )}
 
               {!simple && (
-                <button
-                  className="icon"
-                  aria-label={
-                    "Modifier " +
-                    c.name
-                  }
-                  onClick={() =>
-                    editCategory(c)
-                  }
-                >
-                  <Pencil
-                    size={17}
-                  />
-                </button>
+                <div className={isPersonal ? "personal-budget-actions" : ""}>
+                  <button type="button" className="icon"
+                    aria-label={"Modifier " + c.name}
+                    onClick={() => editCategory(c)}>
+                    <Pencil size={17} />
+                  </button>
+                  {isPersonal && (
+                    <button type="button" className="icon personal-budget-toggle"
+                      aria-label={expandedPersonalBudgets[c.id]
+                        ? "Masquer les détails de " + c.name
+                        : "Afficher les détails de " + c.name}
+                      aria-expanded={!!expandedPersonalBudgets[c.id]}
+                      aria-controls={"personal-budget-details-" + c.id}
+                      onClick={() => setExpandedPersonalBudgets(prev => ({
+                        ...prev, [c.id]: !prev[c.id],
+                      }))}>
+                      {expandedPersonalBudgets[c.id] ? <Minus size={19} /> : <Plus size={19} />}
+                    </button>
+                  )}
+                </div>
               )}
 
             </div>
 
-            <Progress
-              value={displaySpent}
-              max={Math.max(
-                1,
-                displayBudget,
-              )}
-            />
+            {(!isPersonal || simple || expandedPersonalBudgets[c.id]) && (
+              <Progress value={displaySpent} max={Math.max(1, displayBudget)} />
+            )}
 
-            {!simple && !totals.forecast &&
-            envelope &&
-            isPersonal ? (
-              <>
+            {!simple && !totals.forecast && envelope && isPersonal && expandedPersonalBudgets[c.id] ? (
+              <div className="personal-budget-details" id={"personal-budget-details-" + c.id}>
+                <small className="muted">Budget personnel du foyer · {monthLabel(selectedMonth)}</small>
 
                 <div className="split meta">
                   <span>
@@ -4657,34 +4658,22 @@ export default function App() {
                   </p>
                 )}
 
-                {isMine &&
-                ps.account?.category ===
-                  c.id ? (
-                  <button
-                    className="secondary compact"
-                    onClick={() =>
-                      transferPersonal()
-                    }
-                  >
-                    Virer{" "}
-                    {money(
-                      envelope.remaining,
-                    )}
-                  </button>
-                ) : legacyPersonal ? (
+                <button type="button" className="secondary compact personal-budget-transfer"
+                  disabled={envelope.remaining <= 0 || !current}
+                  onClick={() => transferPersonal(c)}>
+                  <ArrowLeftRight size={17} />
+                  Virer depuis le compte commun
+                </button>
+                <small className="muted personal-budget-privacy">
+                  Les achats et le solde du compte personnel restent privés.
+                </small>
+                {legacyPersonal && !c.personalOwner && (
                   <small className="muted">
-                    Migrez ce compte depuis
-                    l’onglet Compte perso.
-                  </small>
-                ) : (
-                  <small className="muted">
-                    Les détails du compte
-                    sont privés.
+                    Ancien compte : migration possible dans l’onglet Compte perso.
                   </small>
                 )}
-
-              </>
-            ) : !simple ? (
+              </div>
+            ) : !simple && !isPersonal ? (
               <>
 
                 {(fixed > 0 || variable > 0) && (
