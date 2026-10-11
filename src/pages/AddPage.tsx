@@ -31,9 +31,7 @@ export default function AddPage({
   return (
     <div className="add-page-layout">
       <div className="section-head">
-        <p className="lead">
-          Que souhaitez-vous enregistrer ?
-        </p>
+        <div className="block-title"><h2>Que souhaitez-vous enregistrer ?</h2><BlockInfo title="Enregistrer une opération"><p>Pour une charge déjà planifiée, utilisez « Valider » dans le calendrier afin d’éviter un doublon.</p></BlockInfo></div>
 
         <button
           className="text"
@@ -133,12 +131,7 @@ export default function AddPage({
         </section>
       )}
 
-      <BlockInfo title="Enregistrer une opération"><p>
-        Pour une charge déjà planifiée,
-        utilisez « Valider » dans le
-        calendrier afin d’éviter un
-        doublon.
-      </p></BlockInfo>
+
     </div>
   );
 }

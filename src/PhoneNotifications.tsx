@@ -111,7 +111,7 @@ export default function PhoneNotifications({ state }: { state: State }) {
     finally { setBusy(false); }
   }
   return <section className="card">
-    <div className="section-head"><h2><Bell size={20} /> Notifications sur téléphone</h2><BlockInfo title="Notifications sur téléphone"><p className="muted">Choisis les alertes à recevoir sur cet appareil, même quand Wimm est fermée.</p><p className="muted">Une alerte par catégorie et par mois. Les dépenses fixes sont signalées le jour de leur échéance, le matin (heure de Paris), même si Wimm est fermée. Aucun rappel après validation.</p></BlockInfo></div>
+    <div className="section-head"><div className="block-title"><h2><Bell size={20} /> Notifications sur téléphone</h2><BlockInfo title="Notifications sur téléphone"><p className="muted">Choisis les alertes à recevoir sur cet appareil, même quand Wimm est fermée.</p><p className="muted">Une alerte par catégorie et par mois. Les dépenses fixes sont signalées le jour de leur échéance, le matin (heure de Paris), même si Wimm est fermée. Aucun rappel après validation.</p></BlockInfo></div></div>
     
     {ios && !standalone ? <p>Dans Safari, ouvre Partager → Ajouter à l’écran d’accueil. Ouvre ensuite Wimm depuis sa nouvelle icône pour activer les notifications.</p>
       : !supported ? <p>Ce navigateur ne permet pas les notifications. Essaie depuis l’application Wimm ajoutée à l’écran d’accueil ou un navigateur compatible.</p>

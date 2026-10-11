@@ -1,3 +1,4 @@
+import { SortableList } from "./SortableList";
 import { applyAppearance, readAppearanceMode, type AppearanceMode } from "./appearance";
 import { categoryEmojis } from "./categoryEmojis";
 import { seedStarterCategories } from "./starterCategories";
@@ -4226,7 +4227,7 @@ export default function App() {
     return (
       <section className="card available-card">
         <div className="section-head">
-          <h2>Disponible jusqu’à la fin du mois</h2>
+          <div className="block-title"><h2>Disponible jusqu’à la fin du mois</h2>
           <button type="button" className="block-info" aria-label="Informations : Disponible jusqu’à la fin du mois" onClick={() => explain(
             "Calcul du disponible jusqu’à la fin du mois",
             <>
@@ -4252,7 +4253,7 @@ export default function App() {
                 Le solde dépend de vos saisies dans Wimm.</p>
               {!a.hasRealIncome && <p>L’épargne sera réservée après la saisie des revenus affectés à ce mois.</p>}
             </>,
-          )}><Info size={17} /></button>
+          )}><Info size={17} /></button></div>
         </div>
         <strong className={`large${a.available < 0 ? " negative" : ""}`}>{money(a.available)}</strong>
         {a.available < 0 && <p role="status" className="negative">Il manque {money(-a.available)} pour couvrir les sommes réservées.</p>}
@@ -4383,7 +4384,7 @@ export default function App() {
 
   const txRows = (list: Tx[]) =>
     list.length ? (
-      list.map((t) => (
+      <SortableList items={list}>{ordered => ordered.map((t) => (
         <Row
           key={t.id}
           icon={
@@ -4417,7 +4418,7 @@ export default function App() {
           }
           onClick={() => txDetails(t)}
         />
-      ))
+      ))}</SortableList>
     ) : (
       <p className="muted padded">Aucune transaction sur cette période.</p>
     );
@@ -4830,8 +4831,8 @@ export default function App() {
     return (
       <section className="card">
         <div className="section-head">
-          <h2>Votre épargne du mois</h2>
-          <button type="button" className="block-info" aria-label="Informations : Épargne du mois" onClick={calc}><Info size={17} /></button>
+          <div className="block-title"><h2>Votre épargne du mois</h2>
+          <button type="button" className="block-info" aria-label="Informations : Épargne du mois" onClick={calc}><Info size={17} /></button></div>
         </div>
         <div className="split">
           <strong className="large">
@@ -5324,15 +5325,7 @@ export default function App() {
             "fixed",
           ].includes(route) && (
             <div className="month-picker">
-              {selectedMonth !== month() && (
-                <button
-                  className="secondary current-month-button"
-                  type="button"
-                  onClick={() => setMonth(month())}
-                >
-                  Mois actuel
-                </button>
-              )}
+              <button className="month-reset icon" type="button" aria-label="Revenir au mois actuel" title="Revenir au mois actuel" disabled={selectedMonth === month()} onClick={() => setMonth(month())}><ChevronLeft size={16} /></button>
 
               <button
                 className="icon"
@@ -5408,19 +5401,7 @@ export default function App() {
               <div className="overview home-overview" data-tour="home-overview">
                 <section className="balance-card">
                   <div className="split">
-                    <span>Compte courant</span>
-                    <Wallet size={23} />
-                  </div>
-                  <div className="hero-number">
-                    {money(
-                      s.accounts
-                        .filter((a) => a.group === "current")
-                        .reduce((n, a) => n + balance(s, a.id), 0),
-                    )}
-                  </div>
-                  <div className="split">
-                    <span>Solde actuel · {dateLabel(today())}</span>
-                    <button
+                    <div className="block-title"><span>Compte courant</span>                    <button type="button" className="block-info" aria-label="Informations : Compte courant"
                       onClick={() =>
                         explain(
                           "Calcul du solde réel",
@@ -5454,8 +5435,20 @@ export default function App() {
                         )
                       }
                     >
-                      Voir le calcul <CircleHelp size={14} />
-                    </button>
+                      <Info size={17} />
+                    </button></div>
+                    <Wallet size={23} />
+                  </div>
+                  <div className="hero-number">
+                    {money(
+                      s.accounts
+                        .filter((a) => a.group === "current")
+                        .reduce((n, a) => n + balance(s, a.id), 0),
+                    )}
+                  </div>
+                  <div className="split">
+                    <span>Solde actuel · {dateLabel(today())}</span>
+
                   </div>
                 </section>
               </div>
@@ -5575,32 +5568,6 @@ export default function App() {
           )}
           {route === "budget" && (
             <>
-              <div className="toolbar" data-tour="budget-tools">
-                <button className="secondary" onClick={() => navigate("fixed")}>
-                  <List size={17} />
-                  Dépenses fixes
-                </button>
-                <button
-                  className="secondary"
-                  onClick={() => navigate("calendar")}
-                >
-                  <CalendarDays size={17} />
-                  Calendrier
-                </button>
-                <button
-                  className="secondary"
-                  onClick={() => navigate("transactions")}
-                >
-                  Transactions
-                </button>
-                <button
-                  className="secondary"
-                  data-tour="month-analysis-button"
-                  onClick={() => navigate("analysis")}
-                >
-                  Analyse mon mois
-                </button>
-              </div>
               <section className="budget-summary" data-tour="budget-summary">
                 <div>
                   <span>Budget prévu du mois</span>
@@ -5627,10 +5594,36 @@ export default function App() {
                   </strong>
                 </div>
               </section>
+              <div className="budget-actions" data-tour="budget-tools">
+                <button className="secondary" onClick={() => navigate("fixed")}>
+                  <List size={17} />
+                  Dépenses fixes
+                </button>
+                <button
+                  className="secondary"
+                  onClick={() => navigate("calendar")}
+                >
+                  <CalendarDays size={17} />
+                  Calendrier
+                </button>
+                <button
+                  className="secondary"
+                  onClick={() => navigate("transactions")}
+                >
+                  Transactions
+                </button>
+                <button
+                  className="secondary"
+                  data-tour="month-analysis-button"
+                  onClick={() => navigate("analysis")}
+                >
+                  Analyse mon mois
+                </button>
+              </div>
               {availablePanel()}
 
               <div className="section-head">
-                <h2>Vos catégories</h2>
+                <div className="block-title"><div className="block-title"><h2>Vos catégories</h2><BlockInfo title="Comprendre les enveloppes"><p>Le budget restant est une enveloppe de dépenses, pas le solde de votre compte. Les catégories archivées restent dans l’historique.</p></BlockInfo></div></div>
                 <button className="primary" onClick={() => editCategory()}>
                   <Plus size={17} />
                   Catégorie
@@ -5649,26 +5642,24 @@ export default function App() {
                   Maison, courses, sorties… Choisissez vos enveloppes.
                 </Empty>
               )}
-              <BlockInfo title="Comprendre les enveloppes"><p>Le budget restant est une enveloppe de dépenses, pas le solde de votre compte. Les catégories archivées restent dans l’historique.</p></BlockInfo>
             </>
           )}
           {route === "fixed" && (
             <>
               <div className="section-head">
-                <BlockInfo title="Dépenses fixes"><p>Chaque charge est comptée uniquement dans son mois d’échéance.</p></BlockInfo>
+                <div className="block-title"><h2>Dépenses fixes</h2><BlockInfo title="Dépenses fixes"><p>Chaque charge est comptée uniquement dans son mois d’échéance.</p></BlockInfo></div>
                 <button className="primary" onClick={() => editRule()}>
                   <Plus size={18} />
                   Dépense fixe
                 </button>
               </div>
               <section className="card">
-                {s.rules
+                <SortableList items={s.rules
                   .filter(
                     (r) =>
                       r.kind === "fixed" &&
                       (!r.end || r.end >= selectedMonth + "-01"),
-                  )
-                  .map((r) => (
+                  )}>{ordered => ordered.map((r) => (
                     <div className="rule-row" key={r.id}>
                       <div className="grow">
                         <strong>{r.name}</strong>
@@ -5707,7 +5698,7 @@ export default function App() {
                         <Trash2 size={18} />
                       </button>
                     </div>
-                  ))}
+                  ))}</SortableList>
                 {!s.rules.some((r) => r.kind === "fixed") && (
                   <Empty
                     title="Aucune charge fixe"
@@ -6894,9 +6885,7 @@ export default function App() {
                       </div>
 
                       {history.length ? (
-                        history
-                          .slice(0, 15)
-                          .map((h) => {
+                        <SortableList items={history}>{ordered => ordered.map((h) => {
 
                             const privateTx =
                               ps.transactions.find(
@@ -6996,7 +6985,7 @@ export default function App() {
                               />
                             );
 
-                          })
+                          })}</SortableList>
                       ) : (
                         <p className="muted padded">
                           Aucun mouvement pour
@@ -7224,15 +7213,13 @@ export default function App() {
                   <strong>{money(s.income)}</strong>
                 </section>
                 <section className="metric">
-                  <span>Capacité prévue · {monthLabel(selectedMonth)}</span>
+                  <div className="block-title"><span>Capacité prévue · {monthLabel(selectedMonth)}</span><BlockInfo title="Capacité prévue"><p>Varie selon les charges dues chaque mois. Le calcul utilise vos revenus estimés, vos budgets et les échéances du mois sélectionné.</p></BlockInfo></div>
                   <strong>{money(totals.capacity)}</strong>
-                  <BlockInfo title="Capacité prévue"><p>Varie selon les charges dues chaque mois. Le calcul utilise vos revenus estimés, vos budgets et les échéances du mois sélectionné.</p></BlockInfo>
                 </section>
               </div>
               <section className="card" data-tour="projection-chart">
                 <div className="section-head">
-                  <h2>Évolution estimée</h2>
-                  <BlockInfo title="Comprendre les projections">
+                  <div className="block-title"><h2>Évolution estimée</h2><BlockInfo title="Comprendre les projections">
                   <p>
                     Départ : soldes actuels. Simulation à partir du mois
                     prochain, revenus et budgets variables constants, charges à
@@ -7256,7 +7243,7 @@ export default function App() {
                     projet lié à un voyage est réduit des virements de
                     financement déjà effectués.
                   </p>
-<p>Les déficits ne sont pas automatiquement retirés de vos comptes d’épargne.</p></BlockInfo>
+<p>Les déficits ne sont pas automatiquement retirés de vos comptes d’épargne.</p></BlockInfo></div>
                   <div className="pills">
                     {[1, 5, 10, 30].map((n) => (
                       <button
@@ -7856,7 +7843,7 @@ export default function App() {
               </section>
               <div className="two-col">
                 <section className="card">
-                  <div className="section-head"><h2>Apparence</h2><BlockInfo title="Apparence"><p>Automatique suit le mode clair ou sombre choisi dans les réglages de votre téléphone. Clair et Nuit gardent le même thème à tout moment.</p></BlockInfo></div>
+                  <div className="section-head"><div className="block-title"><h2>Apparence</h2><BlockInfo title="Apparence"><p>Automatique suit le mode clair ou sombre choisi dans les réglages de votre téléphone. Clair et Nuit gardent le même thème à tout moment.</p></BlockInfo></div></div>
                   <div className="appearance-choices" role="group" aria-label="Apparence">
                     {([["light", "Clair"], ["dark", "Nuit"], ["auto", "Automatique"]] as const).map(([mode, label]) => (
                       <button type="button" key={mode} aria-pressed={appearanceMode === mode} onClick={() => {
@@ -7865,7 +7852,7 @@ export default function App() {
                       }}>{label}</button>
                     ))}
                   </div>
-                  <div className="section-head"><h2>Votre couleur</h2><BlockInfo title="Votre couleur"><p>Un thème personnel, même dans un foyer partagé.</p></BlockInfo></div>
+                  <div className="section-head"><div className="block-title"><h2>Votre couleur</h2><BlockInfo title="Votre couleur"><p>Un thème personnel, même dans un foyer partagé.</p></BlockInfo></div></div>
                   <div className="theme-grid">
                     {themes.map(([id, label]) => (
                       <button

@@ -1,16 +1,15 @@
 import { useMemo, useState, type ReactNode } from "react";
-import { Search, SlidersHorizontal, Plus } from "lucide-react";
-import type { State, Tx } from "./engine";
+import { Search, SlidersHorizontal, Plus, ChevronLeft } from "lucide-react";
+import { month as currentMonth, type State, type Tx } from "./engine";
 import { amountInCents, filterTransactions, type TransactionFilters } from "./transactionSearch";
 
 export default function TransactionSearch({ state, month, setMonth, add, rows, initialType }: { initialType: string; state: State; month: string; setMonth: (month: string) => void; add: () => void; rows: (transactions: Tx[]) => ReactNode }) {
   const defaults: TransactionFilters = { query: "", type: initialType, category: "", account: "", period: initialType ? "month" : "all", month, from: "", to: "", min: "", max: "" };
   const [filters, setFilters] = useState(defaults);
   const [expanded, setExpanded] = useState(false);
-  const [limit, setLimit] = useState(50);
   const current = { ...filters, month };
   const results = useMemo(() => filterTransactions(state, { ...filters, month }), [state, filters, month]);
-  function update<K extends keyof TransactionFilters>(key: K, value: TransactionFilters[K]) { setFilters(previous => ({ ...previous, [key]: value })); setLimit(50); }
+  function update<K extends keyof TransactionFilters>(key: K, value: TransactionFilters[K]) { setFilters(previous => ({ ...previous, [key]: value })); }
   const min = filters.min.trim() ? amountInCents(filters.min) : null;
   const max = filters.max.trim() ? amountInCents(filters.max) : null;
   const invalidAmounts = (filters.min.trim() && min === null) || (filters.max.trim() && max === null);
@@ -26,9 +25,9 @@ export default function TransactionSearch({ state, month, setMonth, add, rows, i
       </div>
       <div className="transaction-search-period">
         <label className="field"><span>Période</span><select value={filters.period} onChange={e => update("period", e.target.value as TransactionFilters["period"])}><option value="all">Tous les mois</option><option value="month">Un mois</option><option value="custom">Dates personnalisées</option></select></label>
-        {filters.period === "month" && <label className="field"><span>Mois</span><input type="month" value={month} onChange={e => { if (e.target.value) { setMonth(e.target.value); setLimit(50); } }}/></label>}
+        {filters.period === "month" && <div className="transaction-month"><button type="button" className="month-reset icon" aria-label="Revenir au mois actuel" title="Revenir au mois actuel" disabled={month === currentMonth()} onClick={() => setMonth(currentMonth())}><ChevronLeft size={16}/></button><label className="field"><span>Mois</span><input type="month" value={month} onChange={e => { if (e.target.value) { setMonth(e.target.value); } }}/></label></div>}
         {filters.period === "custom" && <><label className="field"><span>Du</span><input type="date" value={filters.from} onChange={e => update("from", e.target.value)}/></label><label className="field"><span>Au</span><input type="date" value={filters.to} onChange={e => update("to", e.target.value)}/></label></>}
-        {hasFilters && <button type="button" className="text" onClick={() => { setFilters({ ...defaults, type: "", period: "all" }); setLimit(50); }}>Effacer les filtres</button>}
+        {hasFilters && <button type="button" className="text" onClick={() => { setFilters({ ...defaults, type: "", period: "all" }); }}>Effacer les filtres</button>}
       </div>
       {expanded && <div id="transaction-filters" className="transaction-search-filters">
         <label className="field"><span>Type</span><select value={filters.type} onChange={e => update("type", e.target.value)}><option value="">Tous les types</option><option value="expense">Dépenses</option><option value="income">Revenus</option><option value="transfer">Virements</option><option value="personal_transfer">Virements perso</option><option value="loan">Prêts accordés</option><option value="repay">Remboursements de prêts</option><option value="adjust">Ajustements</option></select></label>
@@ -42,9 +41,8 @@ export default function TransactionSearch({ state, month, setMonth, add, rows, i
       {current.period === "month" && current.type === "income" && <p className="muted">Les revenus suivent leur mois budgétaire.</p>}
     </section>
     <section className="card transaction-search-results">
-      <p className="muted" role="status">{results.length} opération{results.length !== 1 ? "s" : ""}{results.length > limit ? ` · ${Math.min(limit, results.length)} affichées` : ""}</p>
-      {results.length ? rows(results.slice(0, limit)) : <p className="muted padded">{error ? "Corrige les filtres pour afficher les opérations." : "Aucune opération ne correspond à ta recherche."}</p>}
-      {results.length > limit && <button type="button" className="secondary" onClick={() => setLimit(value => value + 50)}>Afficher davantage</button>}
+      <p className="muted" role="status">{results.length} opération{results.length !== 1 ? "s" : ""}</p>
+      {results.length ? rows(results) : <p className="muted padded">{error ? "Corrige les filtres pour afficher les opérations." : "Aucune opération ne correspond à ta recherche."}</p>}
     </section>
   </>;
 }

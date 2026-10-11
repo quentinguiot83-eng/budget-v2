@@ -448,3 +448,20 @@ html, body { background-color: var(--status-bar-background, var(--surface)) !imp
 #root { background: var(--soft-canvas); min-height: 100dvh; }
 #app-status-bar { background-color: var(--status-bar-background, var(--surface)); transition: none; }
 .soft-topbar { background-color: var(--status-bar-background, var(--surface)) !important; }
+
+/* Shared month navigation: reset sits above, arrows stay aligned. */
+.page-heading > .month-picker { display: grid; grid-template-columns: 36px minmax(0, 1fr) 36px; gap: 4px 10px; min-width: 250px; background: transparent !important; border: 0; padding: 0; }
+.month-picker .month-reset { grid-column: 1 / -1; justify-self: start; width: 30px; height: 28px; min-height: 28px; border: 0; background: transparent; color: var(--accent-deep); }
+.month-picker .month-reset:disabled { visibility: hidden; }
+.month-picker input { width: 100%; max-width: none; min-width: 0; text-align: center; }
+.block-title { display: flex; align-items: center; gap: 7px; min-width: 0; }
+.block-title h2 { margin: 0; }
+.block-title .block-title { gap: 7px; }
+.block-title .block-info { width: 30px; height: 30px; min-height: 30px; }
+.budget-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.budget-actions button { min-height: 46px; padding: 10px; border-radius: 14px; justify-content: center; font-size: .82rem; }
+.list-sort { display: flex; align-items: center; justify-content: flex-end; gap: 8px; margin: 0 0 12px; font-size: .78rem; color: var(--muted); }
+.list-sort select { width: auto; max-width: 210px; min-height: 38px; padding: 7px 10px; font-size: .78rem; background: var(--surface); color: var(--ink); border: 1px solid var(--border); border-radius: 10px; }
+@media(max-width:560px) { .page-heading > .month-picker { min-width: 0; width: 100%; margin-top: 2px; } .budget-summary { padding: 18px; } .budget-summary > div:first-child > strong { font-size: 1.9rem; } }
+.transaction-month > .month-reset { width: 30px; height: 28px; min-height: 28px; padding: 0; border: 0; background: transparent; color: var(--accent-deep); }
+.transaction-month > .month-reset:disabled { visibility: hidden; }

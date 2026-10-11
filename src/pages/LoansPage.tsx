@@ -60,9 +60,13 @@ export default function LoansPage({
 
       <section className="card">
 
-        <h2>
-          Mensualités de crédits
-        </h2>
+        <div className="block-title"><h2>Mensualités de crédits</h2><BlockInfo title="Paiements des crédits"><p>
+          Ces achats ne débitent le
+          compte qu’à validation des
+          mensualités. Les alertes
+          apparaissent dans le
+          calendrier.
+        </p></BlockInfo></div>
 
         {state.rules
           .filter(
@@ -168,13 +172,7 @@ export default function LoansPage({
 
           })}
 
-        <BlockInfo title="Paiements des crédits"><p>
-          Ces achats ne débitent le
-          compte qu’à validation des
-          mensualités. Les alertes
-          apparaissent dans le
-          calendrier.
-        </p></BlockInfo>
+  
 
       </section>
 
