@@ -679,3 +679,44 @@ button.block-info:focus-visible { outline: 2px solid currentColor; outline-offse
   .page-remaining-heading .block-title { min-width: 0; }
   .page-remaining-period { font-size: .72rem; }
 }
+
+
+/* Cartes des enveloppes personnelles : l'essentiel d'abord, détails à la demande. */
+.category-personal .flex { align-items: center; gap: 12px; }
+.category-personal .grow { min-width: 0; }
+.category-personal .personal-budget-month {
+  display: flex; align-items: baseline; flex-wrap: wrap;
+  gap: 5px 10px; margin-top: 9px;
+}
+.category-personal .personal-budget-month > .muted { font-size: .77rem; }
+.category-personal .personal-budget-month > strong {
+  color: var(--ink); font-size: 1.06rem; font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+.personal-budget-actions { display: inline-flex; align-items: center; flex: 0 0 auto; gap: 4px; }
+.personal-budget-toggle {
+  color: var(--accent-deep) !important;
+  background: var(--accent-soft) !important;
+  border-color: color-mix(in srgb, var(--accent-deep) 14%, var(--border));
+}
+.personal-budget-toggle[aria-expanded="true"] {
+  border-color: color-mix(in srgb, var(--accent-deep) 34%, var(--border));
+}
+.personal-budget-details {
+  padding-top: 13px; margin-top: 16px; display: grid; gap: 9px;
+  border-top: 1px solid var(--border);
+}
+.personal-budget-details > .meta { margin: 0; }
+.personal-budget-details > .personal-budget-transfer {
+  display: inline-flex; align-items: center; justify-content: center; gap: 9px;
+  min-height: 43px; width: fit-content; margin-top: 6px; max-width: 100%;
+}
+.personal-budget-privacy { display: block; font-size: .74rem; }
+@media (max-width: 560px) {
+  .category-personal { padding: 17px; }
+  .category-personal .flex { gap: 9px; }
+  .category-personal .category-icon { width: 39px; height: 39px; }
+  .personal-budget-actions { gap: 0; }
+  .personal-budget-actions .icon { width: 35px; min-width: 35px; padding: 6px; }
+  .personal-budget-details > .personal-budget-transfer { width: 100%; }
+}
