@@ -1,12 +1,13 @@
 import { useMemo, useState, type ReactNode } from "react";
-import { Search, SlidersHorizontal, Plus, ChevronLeft } from "lucide-react";
+import { Search, SlidersHorizontal, Plus } from "lucide-react";
 import { month as currentMonth, type State, type Tx } from "./engine";
 import { amountInCents, filterTransactions, type TransactionFilters } from "./transactionSearch";
 
 export default function TransactionSearch({ state, month, setMonth, add, rows, initialType }: { initialType: string; state: State; month: string; setMonth: (month: string) => void; add: () => void; rows: (transactions: Tx[]) => ReactNode }) {
-  const defaults: TransactionFilters = { query: "", type: initialType, category: "", account: "", period: initialType ? "month" : "all", month, from: "", to: "", min: "", max: "" };
+  const defaults: TransactionFilters = { query: "", type: initialType, category: "", account: "", period: "month", month, from: "", to: "", min: "", max: "" };
   const [filters, setFilters] = useState(defaults);
   const [expanded, setExpanded] = useState(false);
+  const [periodChoice, setPeriodChoice] = useState<"current" | "all" | "pick">("current");
   const current = { ...filters, month };
   const results = useMemo(() => filterTransactions(state, { ...filters, month }), [state, filters, month]);
   function update<K extends keyof TransactionFilters>(key: K, value: TransactionFilters[K]) { setFilters(previous => ({ ...previous, [key]: value })); }
@@ -23,11 +24,27 @@ export default function TransactionSearch({ state, month, setMonth, add, rows, i
         <button type="button" className="secondary" onClick={() => setExpanded(value => !value)} aria-expanded={expanded} aria-controls="transaction-filters"><SlidersHorizontal size={17}/> Filtres{activeCount ? ` (${activeCount})` : ""}</button>
         <button type="button" className="primary" onClick={add}><Plus size={17}/> Opération</button>
       </div>
-      <div className="transaction-search-period">
-        <label className="field"><span>Période</span><select value={filters.period} onChange={e => update("period", e.target.value as TransactionFilters["period"])}><option value="all">Tous les mois</option><option value="month">Un mois</option><option value="custom">Dates personnalisées</option></select></label>
-        {filters.period === "month" && <div className="transaction-month"><button type="button" className="month-reset icon" aria-label="Revenir au mois actuel" title="Revenir au mois actuel" disabled={month === currentMonth()} onClick={() => setMonth(currentMonth())}><ChevronLeft size={16}/></button><label className="field"><span>Mois</span><input type="month" value={month} onChange={e => { if (e.target.value) { setMonth(e.target.value); } }}/></label></div>}
-        {filters.period === "custom" && <><label className="field"><span>Du</span><input type="date" value={filters.from} onChange={e => update("from", e.target.value)}/></label><label className="field"><span>Au</span><input type="date" value={filters.to} onChange={e => update("to", e.target.value)}/></label></>}
-        {hasFilters && <button type="button" className="text" onClick={() => { setFilters({ ...defaults, type: "", period: "all" }); }}>Effacer les filtres</button>}
+      <div className="transaction-search-period transaction-period-simple">
+        <label className="field"><span>Afficher les opérations</span>
+          <select value={periodChoice} onChange={e => {
+            const choice = e.target.value as "current" | "all" | "pick";
+            setPeriodChoice(choice);
+            if (choice === "current") { setMonth(currentMonth()); update("period", "month"); }
+            else if (choice === "all") update("period", "all");
+            else update("period", "month");
+          }}>
+            <option value="current">Mois en cours</option>
+            <option value="all">Depuis toujours</option>
+            <option value="pick">Choisir un mois</option>
+          </select>
+        </label>
+        {periodChoice === "pick" && <label className="field"><span>Mois sélectionné</span>
+          <input type="month" value={month} onChange={e => e.target.value && setMonth(e.target.value)} />
+        </label>}
+        {hasFilters && <button type="button" className="text" onClick={() => {
+          setFilters({ ...defaults, type: "", period: "month" });
+          setMonth(currentMonth()); setPeriodChoice("current");
+        }}>Effacer les filtres</button>}
       </div>
       {expanded && <div id="transaction-filters" className="transaction-search-filters">
         <label className="field"><span>Type</span><select value={filters.type} onChange={e => update("type", e.target.value)}><option value="">Tous les types</option><option value="expense">Dépenses</option><option value="income">Revenus</option><option value="transfer">Virements</option><option value="personal_transfer">Virements perso</option><option value="loan">Prêts accordés</option><option value="repay">Remboursements de prêts</option><option value="adjust">Ajustements</option></select></label>
