@@ -32,6 +32,7 @@ import {
   ArrowLeftRight,
   ChevronLeft,
   ChevronRight,
+  Minus,
   Bell,
   ShoppingBasket,
   House,
@@ -380,7 +381,8 @@ export default function App() {
     [proEnabled, setProEnabled] = useState(false),
     [mobileMenuOpen, setMobileMenuOpen] = useState(false),
     [tutorialOpen, setTutorialOpen] = useState(false),
-    [tutorialPage, setTutorialPage] = useState<string | null>(null);
+    [tutorialPage, setTutorialPage] = useState<string | null>(null),
+    [expandedPersonalBudgets, setExpandedPersonalBudgets] = useState<Record<string, boolean>>({});
   const busy = useRef(false),
     docRef = useRef(doc),
     personalDocRef = useRef(personalDoc),
@@ -2574,103 +2576,79 @@ export default function App() {
       },
     );
   }
-  function transferPersonal() {
-
-    if (
-      !current ||
-      !ps.account ||
-      !personalOwnerId
-    )
+  // Un membre du foyer peut enregistrer le virement d'une enveloppe
+  // commune vers le compte personnel lié, sans accéder à ses achats privés.
+  function transferPersonal(category?: Category) {
+    if (!current) {
+      setNotice("Ajoutez d’abord un compte courant commun.");
       return;
-
-    const envelope =
-      personalBudgetEnvelope(
-        s,
-        personalOwnerId,
-        ps.account.category,
-        selectedMonth,
-        month(ps.account.date),
-      );
-
+    }
+    const target = category ?? s.categories.find(c => c.id === ps.account?.category);
+    if (!target) {
+      setNotice("Aucune catégorie personnelle sélectionnée.");
+      return;
+    }
+    const legacy = s.accounts.find(a => !a.archived && a.group === "personal" &&
+      a.personalCategory === target.id);
+    const owner = target.personalOwner ||
+      (ps.account?.category === target.id ? personalOwnerId : "");
+    if (!owner && !legacy) {
+      setNotice("Ce budget n’est relié à aucun compte personnel.");
+      return;
+    }
+    const own = !!owner && owner === personalOwnerId &&
+      ps.account?.category === target.id;
+    const envelope = owner
+      ? personalBudgetEnvelope(s, owner, target.id, selectedMonth,
+          own ? month(ps.account!.date) : target.personalSince)
+      : personalEnvelope(s, legacy!.id, selectedMonth);
+    if (envelope.remaining <= 0) {
+      setNotice("Aucun montant ne reste à virer sur ce budget ce mois-ci.");
+      return;
+    }
     openForm(
-      "Virer mon budget perso",
+      "Virement vers " + target.name,
       [
-        amountField(
-          "amount",
-          "Montant (€)",
-          envelope.remaining,
-          `Reste prévu pour ${monthLabel(selectedMonth)} : ${money(envelope.remaining)}.`,
-        ),
-        field(
-          "date",
-          "Date du virement",
-          today(),
-          "date",
-        ),
-        choice(
-          "overdraft",
-          "Autoriser un solde négatif du compte courant",
-          [
-            ["no", "Non"],
-            [
-              "yes",
-              "Oui, je confirme",
-            ],
-          ],
-          "no",
-        ),
+        amountField("amount", "Montant (€)", envelope.remaining,
+          "Depuis " + current.name + " · Disponible sur ce budget : " +
+          money(envelope.remaining) + ". Ce suivi ne déclenche pas de virement bancaire."),
+        field("date", "Date du virement bancaire", today(), "date"),
+        choice("overdraft", "Autoriser un découvert sur le compte commun",
+          [["no", "Non"], ["yes", "Oui, je confirme"]], "no"),
       ],
-      async (v) => {
-
-        const amount =
-          euro(v.amount);
-
-        if (amount <= 0)
-          throw Error(
-            "Le montant doit être supérieur à zéro.",
-          );
-
-        if (
-          balance(
-            s,
-            current.id,
-            v.date,
-          ) < amount &&
-          v.overdraft !== "yes"
-        )
-          throw Error(
-            "Le compte courant serait négatif après ce virement.",
-          );
-
-        await change(
-          (d) =>
+      async v => {
+        const amount = euro(v.amount);
+        if (amount <= 0) throw Error("Le montant doit être supérieur à zéro.");
+        if (amount > envelope.remaining) {
+          throw Error("Le budget ne dispose que de " + money(envelope.remaining) + " à virer.");
+        }
+        if (v.date > today()) throw Error("Enregistrez le virement à sa date réelle.");
+        const firstDate = own ? ps.account!.date : legacy?.date ||
+          (target.personalSince ? target.personalSince + "-01" : "");
+        if (firstDate && v.date < firstDate) {
+          throw Error("Cette date précède l’ouverture du compte personnel.");
+        }
+        if (balance(s, current.id, v.date) < amount && v.overdraft !== "yes") {
+          throw Error("Le solde du compte commun serait négatif après ce virement.");
+        }
+        await change(d => {
+          if (owner) {
             d.transactions.push({
-              id: uid(),
-              type:
-                "personal_transfer",
-              account:
-                current.id,
-              amount,
-              date: v.date,
-              description:
-                "Budget perso",
-              category:
-                ps.account!.category,
-              personalOwner:
-                personalOwnerId,
-              personalKind:
-                "budget",
-              personalMonths: 1,
-              personalStartMonth:
-                selectedMonth,
-            }),
-          "Virement budget perso",
-        );
-
+              id: uid(), type: "personal_transfer", account: current.id,
+              amount, date: v.date, description: "Budget perso · " + target.name,
+              category: target.id, personalOwner: owner, personalKind: "budget",
+              personalMonths: 1, personalStartMonth: selectedMonth,
+            });
+          } else if (legacy) {
+            d.transactions.push({
+              id: uid(), type: "transfer", account: current.id, to: legacy.id,
+              amount, date: v.date, description: "Budget perso · " + target.name,
+            });
+          }
+        }, "Virement personnel enregistré");
       },
-      "Effectuer le virement",
+      "Enregistrer le virement",
     );
-
   }
 
   function transfer(to?: Account, travel?: Trip, from?: Account) {
