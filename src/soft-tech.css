@@ -813,3 +813,60 @@ button.block-info:focus-visible { outline: 2px solid currentColor; outline-offse
   .personal-page-title-row { flex-wrap: wrap; }
   .personal-page-settings { margin-left: 0; }
 }
+
+/* Un seul bilan mensuel : les chiffres essentiels d'abord, les tableaux à la demande. */
+.monthly-bilan-unique { margin-bottom: 0; }
+.monthly-bilan-unique .section-head { align-items: center; margin-bottom: 17px; }
+.monthly-bilan-period { font-size: .76rem; text-align: right; }
+.monthly-bilan-overview {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+.monthly-bilan-overview > div {
+  min-width: 0;
+  display: grid;
+  gap: 6px;
+  padding: 13px;
+  background: var(--soft-canvas);
+  border: 1px solid var(--border);
+  border-radius: 15px;
+}
+.monthly-bilan-overview > div:first-child {
+  background: var(--accent-soft);
+}
+.monthly-bilan-overview .muted { font-size: .75rem; }
+.monthly-bilan-overview strong {
+  font-size: clamp(1rem, 2.2vw, 1.35rem);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+.monthly-bilan-comparison { margin: 16px 0 6px; font-size: .86rem; line-height: 1.5; }
+.monthly-bilan-comparison small { display: block; margin-top: 3px; }
+.monthly-bilan-details {
+  margin-top: 18px;
+  padding-top: 4px;
+  border-top: 1px solid var(--border);
+}
+.monthly-bilan-details > summary {
+  color: var(--accent-deep);
+  font-weight: 750;
+  padding: 13px 3px;
+}
+.monthly-bilan-details-inner { display: grid; gap: 11px; padding-top: 10px; }
+.monthly-bilan-details-inner > h3 { font-size: .97rem; margin: 13px 0 0; }
+.monthly-bilan-top-categories { display: grid; gap: 5px; }
+.monthly-bilan-top-categories > div {
+  display: flex; align-items: baseline; justify-content: space-between;
+  gap: 12px; padding: 8px 0; border-bottom: 1px solid var(--border);
+}
+.monthly-bilan-top-categories strong { white-space: nowrap; font-variant-numeric: tabular-nums; }
+@media (max-width: 560px) {
+  .monthly-bilan-overview { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; }
+  .monthly-bilan-overview > div:first-child { grid-column: 1 / -1; }
+  .monthly-bilan-overview > div { padding: 12px; }
+  .monthly-bilan-overview strong { font-size: 1.07rem; }
+  .monthly-bilan-overview > div:first-child strong { font-size: 1.38rem; }
+  .monthly-bilan-unique .section-head { align-items: flex-start; }
+}

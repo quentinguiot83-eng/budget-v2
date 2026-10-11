@@ -103,7 +103,6 @@ import {
   euro,
   balance,
   monthEndAvailable,
-  monthlyReview,
   savingsBudgetMonth,
   isSavingsTransfer,
   budgetOverruns,
@@ -423,7 +422,6 @@ export default function App() {
   const totals = stats(s, selectedMonth);
   const availableDate = today();
   const availableThisMonth = useMemo(() => monthEndAvailable(s), [s, availableDate]);
-  const review = useMemo(() => monthlyReview(s, selectedMonth), [s, selectedMonth, availableDate]);
   const exceededBudgets = useMemo(() => budgetOverruns(s, selectedMonth), [s, selectedMonth, availableDate]);
   const savingsCapacity =
     totals.income > 0 ? totals.actualCapacity : totals.capacity;
@@ -443,9 +441,6 @@ export default function App() {
     0,
     totals.spending - totals.fixedPaid,
   );
-
-  const variableRemaining =
-    totals.variable - variableSpent;
 
   const isOwner = demoEnabled || doc?.household?.owner === session?.user.id;
   async function load() {
@@ -4143,49 +4138,6 @@ export default function App() {
     );
 
   }
-  function monthlyReviewPanel() {
-    if (!current || selectedMonth > month()) return null;
-    const comparison = !review.hasPreviousExpenses
-      ? `Aucune dépense enregistrée sur la période comparable de ${monthLabel(review.previousMonth)}.`
-      : review.difference === 0
-        ? `Même montant que ${monthLabel(review.previousMonth)} sur la période comparable.`
-        : `${money(Math.abs(review.difference))} de ${review.difference > 0 ? "plus" : "moins"} qu’en ${monthLabel(review.previousMonth)}${review.previousSpending > 0 ? ` (${Math.round(Math.abs(review.difference) / review.previousSpending * 100)} %)` : ""}.`;
-    return <section className="card monthly-review-card">
-      <div className="section-head">
-        <div><h2>Bilan mensuel</h2><small className="muted">{monthLabel(selectedMonth)} · {review.inProgress ? "En cours" : "Mois terminé"}</small></div>
-        <button type="button" className="text" onClick={() => explain(
-          `Bilan de ${monthLabel(selectedMonth)}`,
-          <>
-            <Row title="Dépenses du foyer" value={money(review.spending)} />
-            {review.categories.map((c) => <Row key={c.id} title={c.name} value={money(c.amount)} />)}
-            <Row title="Épargne réellement versée" value={money(review.savings)} />
-            <Row title="Dépenses de voyage" value={money(review.travelSpending)} />
-            <p>{comparison}</p>
-            <p className="muted">{review.inProgress
-              ? `Comparaison du 1er au ${review.cutoff.slice(8)} de ce mois avec le 1er au ${review.previousCutoff.slice(8)} du mois précédent.`
-              : "Comparaison des deux mois complets."}</p>
-            <p>Les dépenses du foyer incluent les charges fixes payées et les dépenses variables enregistrées,
-              hors voyages et comptes personnels. Les catégories archivées conservent leur historique.
-              L’épargne correspond aux virements des comptes courants vers les placements et le livret Voyage,
-              à leur date bancaire, quel que soit leur mois budgétaire. Les transferts entre placements et les
-              objectifs d’épargne ne sont pas comptés comme des versements.</p>
-          </>,
-        )}>Voir le détail <CircleHelp size={14} /></button>
-      </div>
-      <div className="monthly-review-metrics">
-        <div><span className="muted">Dépenses du foyer</span><strong>{money(review.spending)}</strong></div>
-        <div><span className="muted">Épargne versée</span><strong>{money(review.savings)}</strong></div>
-        <div><span className="muted">Dépenses de voyage</span><strong>{money(review.travelSpending)}</strong></div>
-      </div>
-      <p>{comparison}</p>
-      {review.inProgress && <p className="muted">Comparaison sur les mêmes jours du mois précédent.</p>}
-      {review.categories.length > 0
-        ? <><h3>Principales catégories</h3>{review.categories.slice(0, 3).map((c) => <Row key={c.id} title={c.name} value={money(c.amount)} />)}</>
-        : <p className="muted">Aucune dépense du foyer enregistrée pour ce mois.</p>}
-      <small className="muted">Bilan basé sur les opérations saisies dans Wimm.</small>
-    </section>;
-  }
-
   function availablePanel() {
     const a = availableThisMonth;
     if (selectedMonth !== month() || !current) return null;
@@ -5520,26 +5472,6 @@ export default function App() {
           {route === "budget" && (
             <>
 
-              <section className="page-remaining-summary page-remaining-summary-variable" aria-label="Budget variable restant">
-                <div className="page-remaining-heading">
-                  <div className="block-title">
-                    <span>Budget variable restant</span>
-                    <BlockInfo title="Budget variable restant">
-                      <p>Il s’agit du budget variable prévu pour ce mois, diminué des dépenses variables déjà enregistrées. Ce montant représente vos enveloppes disponibles, et non le solde de votre compte.</p>
-                    </BlockInfo>
-                  </div>
-                  <span className="page-remaining-period">{monthLabel(selectedMonth)}</span>
-                </div>
-                <div className="page-remaining-main">
-                  <strong className={variableRemaining < 0 ? "negative" : ""}>{money(variableRemaining)}</strong>
-                  <span className="muted">sur {money(totals.variable)} de budget disponible</span>
-                </div>
-                <Progress value={variableSpent} max={Math.max(1, totals.variable)} />
-                <div className="page-remaining-foot">
-                  <span>{money(variableSpent)} dépensés</span>
-                  <span>{totals.variable > 0 ? Math.round(variableSpent / totals.variable * 100) : 0} % utilisé</span>
-                </div>
-              </section>
               <section className="budget-month-tracker" data-tour="budget-summary"
                 aria-label={"Suivi du budget de " + monthLabel(selectedMonth)}>
                 <div className="budget-month-tracker-total">
@@ -7788,7 +7720,7 @@ export default function App() {
             <TransactionSearch initialType={txFilter} state={s} month={selectedMonth} setMonth={setMonth} add={() => navigate("add")} rows={txRows}/>
           )}
           {route === "analysis" && (
-            <div className="page-stack" data-tour="analysis">{monthlyReviewPanel()}<MonthlyComparison state={s} period={selectedMonth}/><SpendingAnalysis state={s} selectedMonth={selectedMonth}/></div>
+            <div className="page-stack" data-tour="analysis"><MonthlyComparison state={s} period={selectedMonth}/><SpendingAnalysis state={s} selectedMonth={selectedMonth}/></div>
           )}
           {route === "loans" && (
             <LoansPage
