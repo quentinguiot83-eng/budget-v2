@@ -6,6 +6,17 @@
       name="viewport"
       content="width=device-width,initial-scale=1,viewport-fit=cover"
     />
+    <script>
+      // iPhone only: prevent accidental pinch/double-tap viewport zoom in the PWA.
+      // Desktop zoom and system-level accessibility magnification are unchanged.
+      if (/iPhone|iPod/i.test(navigator.userAgent)) {
+        const viewport = document.querySelector('meta[name="viewport"]');
+        viewport?.setAttribute(
+          "content",
+          "width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover",
+        );
+      }
+    </script>
     <meta name="theme-color" content="#ffffff" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
