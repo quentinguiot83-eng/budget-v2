@@ -4736,6 +4736,28 @@ export default function App() {
       );
     }
 
+    if (goal <= 0) {
+      return (
+        <section className="card wealth-savings-empty" data-tour="wealth-savings">
+          <div className="wealth-savings-empty-copy">
+            <div className="block-title">
+              <h2>Votre épargne du mois</h2>
+              <button type="button" className="block-info" aria-label="Comprendre mon épargne" onClick={calc}>
+                <Info size={17}/>
+              </button>
+            </div>
+            <p>{!hasIncome
+              ? "Votre objectif sera calculé lorsque les revenus du mois seront enregistrés."
+              : "Aucun versement d’épargne prévu pour ce mois."}</p>
+            {totals.saved > 0 && <small>{money(totals.saved)} déjà versés ce mois-ci.</small>}
+          </div>
+          <button type="button" className="wealth-savings-configure" onClick={allocations}>
+            Configurer mon épargne <ChevronRight size={17}/>
+          </button>
+        </section>
+      );
+    }
+
     return (
       <section className="card savings-wealth-panel" data-tour="wealth-savings">
         <details key={selectedMonth + (done ? "-done" : "-pending")}
@@ -5079,12 +5101,23 @@ export default function App() {
     salaryReminder &&
     today() >= salaryPlannedDate &&
     !salaryReceivedThisMonth;
-  const wealth = s.accounts
-      .filter((a) => a.group === "wealth")
-      .reduce((n, a) => n + balance(s, a.id), 0),
-    travelBalance = s.accounts
-      .filter((a) => a.group === "travel")
-      .reduce((n, a) => n + balance(s, a.id), 0);
+  // Foyer uniquement : ne pas inclure les comptes privés ni les comptes archivés.
+  // Le total additionne chaque compte une seule fois (courant + placements + voyage).
+  const activeHouseholdAccounts = s.accounts.filter(
+    (a) => !a.archived && a.group !== "personal",
+  );
+  const householdAccountsTotal = activeHouseholdAccounts.reduce(
+    (sum, account) => sum + balance(s, account.id), 0,
+  );
+  const currentBalance = activeHouseholdAccounts
+    .filter((a) => a.group === "current")
+    .reduce((sum, a) => sum + balance(s, a.id), 0);
+  const wealth = activeHouseholdAccounts
+    .filter((a) => a.group === "wealth")
+    .reduce((sum, a) => sum + balance(s, a.id), 0);
+  const travelBalance = activeHouseholdAccounts
+    .filter((a) => a.group === "travel")
+    .reduce((sum, a) => sum + balance(s, a.id), 0);
   const titles: Record<string, string> = {
     home: "Un regard sur votre mois",
     budget: "Votre budget",
@@ -6779,205 +6812,123 @@ export default function App() {
           )}
 
           {route === "wealth" && (
-            <>
-              {savingsPanel("wealth")}
-              <div className="overview wealth-overview" data-tour="wealth-overview">
-                <section className="balance-card">
+            <div className="wealth-page-v2">
+              <section className="wealth-total-card" data-tour="wealth-overview" aria-label="Total de vos comptes du foyer">
+                <div className="wealth-total-header">
                   <div className="block-title">
-                  <span style={{ fontSize: ".9rem" }}>Comptes inclus dans le patrimoine</span>
-                  <button
-                    type="button"
-                    className="block-info"
-                    aria-label="Détail du calcul du patrimoine"
-                    title="Détail du calcul du patrimoine"
-                    onClick={() =>
-                      explain(
-                        "Comptes inclus",
-                        <>
-                          {s.accounts
-                            .filter((a) => a.group === "wealth")
-                            .map((a) => (
-                              <Row
-                                key={a.id}
-                                title={a.name}
-                                value={money(balance(s, a.id))}
-                              />
-                            ))}
-                          <p>
-                            Ce total exclut les comptes courants, les voyages,
-                            les prêts et les dettes. Il ne représente pas un
-                            patrimoine net.
-                          </p>
-                        </>,
-                      )
-                    }
-                  >
-                    <Info size={17} />
+                    <span>Total de vos comptes</span>
+                    <button
+                      type="button"
+                      className="block-info"
+                      aria-label="Comprendre le total des comptes"
+                      onClick={() => explain("Total de vos comptes", <>
+                        <p>Somme des soldes actuels de vos comptes courants, livrets, placements et épargne voyage. Chaque compte est compté une seule fois.</p>
+                        <Row title="Épargne et placements" value={money(wealth)}/>
+                        <Row title="Épargne voyage" value={money(travelBalance)}/>
+                        <Row title="Comptes courants" value={money(currentBalance)}/>
+                        <p>Les comptes personnels privés, les comptes archivés, les prêts et les dettes sont exclus. Ce montant n’est pas un patrimoine net.</p>
+                      </>)}
+                    >
+                      <Info size={17}/>
+                    </button>
+                  </div>
+                  <Wallet size={21} aria-hidden="true"/>
+                </div>
+                <strong className="wealth-total-amount">{money(householdAccountsTotal)}</strong>
+                <p>Comptes courants, épargne et placements · sans double comptage</p>
+              </section>
+
+              <div className="wealth-breakdown">
+                <section className="wealth-breakdown-card wealth-breakdown-travel">
+                  <Plane size={23} aria-hidden="true"/>
+                  <span>Épargne voyage</span>
+                  <strong>{money(travelBalance)}</strong>
+                  <button type="button" className="text" onClick={() => navigate("trips")}>Mes voyages <ChevronRight size={15}/></button>
+                </section>
+                <section className="wealth-breakdown-card wealth-breakdown-current">
+                  <Wallet size={23} aria-hidden="true"/>
+                  <span>Comptes courants</span>
+                  <strong>{money(currentBalance)}</strong>
+                  <small>Disponible à la banque aujourd’hui</small>
+                </section>
+              </div>
+
+              {savingsPanel("wealth")}
+
+              <section className="wealth-accounts-section" aria-label="Comptes du foyer">
+                <div className="section-head wealth-accounts-heading">
+                  <div>
+                    <h2>Mes comptes</h2>
+                    <p className="muted">Touchez un compte pour voir ses détails et ses opérations.</p>
+                  </div>
+                  <button type="button" className="primary wealth-add-account" onClick={() => editAccount()}>
+                    <Plus size={17}/> Ajouter
                   </button>
                 </div>
-                <div className="hero-number">{money(wealth)}</div>
-                </section>
-                <section className="metric travel-metric">
-                  <Plane />
-                  <small>Épargne voyage</small>
-                  <strong>{money(travelBalance)}</strong>
-                  <button className="text" onClick={() => navigate("trips")}>
-                    Voir mes voyages
-                  </button>
-                </section>
-                <section className="metric">
-                  <Target />
-                  <small>Pour les années à venir</small>
-                  <strong>Vos projections</strong>
-                  <button
-                    className="text"
-                    onClick={() => navigate("projection")}
-                  >
-                    Explorer mes projets
-                  </button>
-                </section>
-              </div>
-              <div className="section-head">
-                <h2>Tous vos comptes</h2>
-                <button className="primary" onClick={() => editAccount()}>
-                  <Plus size={17} />
-                  Compte
-                </button>
-              </div>
-              <div className="account-grid">
-                {s.accounts
-                  .filter((a) => !a.archived && a.group !== "personal")
-                  .map((a) => (
-                    <article className="card account" key={a.id}>
-                      <div className="account-heading">
-                        <span className="account-icon">
-                          {a.group === "travel" ? (
-                            <Plane />
-                          ) : a.group === "current" ? (
-                            <Wallet />
-                          ) : (
-                            <Coins />
-                          )}
+                <div className="wealth-accounts-list">
+                  {activeHouseholdAccounts.map((a) => (
+                    <details className={"wealth-account-row wealth-account-" + a.group} key={a.id}>
+                      <summary className="wealth-account-summary">
+                        <span className="wealth-account-icon">
+                          {a.group === "travel" ? <Plane size={22}/> : a.group === "current" ? <Wallet size={22}/> : <Coins size={22}/>}
                         </span>
-                        <div className="account-heading-copy"><h3>{a.name}</h3><strong className="large">{money(balance(s, a.id))}</strong></div>
-                        <button
-                          className="icon"
-                          aria-label={"Modifier " + a.name}
-                          onClick={() => editAccount(a)}
-                        >
-                          <Pencil size={17} />
-                        </button>
-                      </div>
-                      <p className="muted">
-                        {a.group === "current"
-                          ? "Compte courant"
-                          : `${a.rate} % estimés par an`}
-                      </p>
-
-                      {a.group ===
-                        "wealth" &&
-                        a.taxMode &&
-                        a.taxMode !==
-                          "none" &&
-                        (
-                          <small>
-                            Fiscalité projetée :{" "}
-                            {a.taxRate ??
-                              0}{" "}
-                            % ·{" "}
-                            {a.taxMode ===
-                            "yield"
-                              ? "sur les intérêts"
-                              : "à la sortie"}
-                          </small>
+                        <span className="wealth-account-name">
+                          <strong>{a.name}</strong>
+                          <small>{a.group === "current" ? "Compte courant" : a.group === "travel" ? "Épargne voyage" : "Épargne et placement"}</small>
+                        </span>
+                        <strong className="wealth-account-balance">{money(balance(s, a.id))}</strong>
+                        <ChevronRight className="wealth-account-chevron" size={18} aria-hidden="true"/>
+                      </summary>
+                      <div className="wealth-account-expanded">
+                        {a.group !== "current" && <p className="muted">Rendement annuel estimé : {a.rate} %</p>}
+                        {a.group === "wealth" && a.taxMode && a.taxMode !== "none" && (
+                          <small>Fiscalité projetée : {a.taxRate ?? 0} % · {a.taxMode === "yield" ? "sur les intérêts" : "à la sortie"}</small>
                         )}
-                      {a.cap > 0 && (
-                        <>
-                          <Progress
-                            value={
-                              a.capType === "balance"
-                                ? balance(s, a.id)
-                                : deposits(s, a.id)
-                            }
-                            max={a.cap}
-                          />
-                          <small>
-                            Plafond{" "}
-                            {a.capType === "balance"
-                              ? "de solde"
-                              : "de versements"}{" "}
-                            : {money(a.cap)}
-                          </small>
-                        </>
-                      )}
-                      <div className="account-actions">
-                        {a.group !== "current" && (
-                          <button
-                            className="primary compact"
-                            onClick={() => transfer(a)}
-                          >
-                            Épargner
+                        {a.cap > 0 && (
+                          <div className="wealth-account-cap">
+                            <Progress value={a.capType === "balance" ? balance(s, a.id) : deposits(s, a.id)} max={a.cap}/>
+                            <small>Plafond {a.capType === "balance" ? "de solde" : "de versements"} : {money(a.cap)}</small>
+                          </div>
+                        )}
+                        <div className="wealth-account-actions">
+                          {a.group !== "current" && <button type="button" className="primary compact" onClick={() => transfer(a)}>Épargner</button>}
+                          <button type="button" className="secondary compact" onClick={() => transfer(undefined, undefined, a)}>Virement</button>
+                          <button type="button" className="secondary compact" onClick={() => editAccount(a)}>
+                            <Pencil size={15}/> Modifier
                           </button>
-                        )}
-                        <button
-                          className="secondary compact"
-                          onClick={() => transfer(undefined, undefined, a)}
-                        >
-                          Virement
-                        </button>
-                        <button
-                          className="text"
-                          onClick={() =>
-                            explain(
-                              a.name + " · Historique",
-                              txRows(
-                                sortedTx.filter(
-                                  (t) => t.account === a.id || t.to === a.id,
-                                ),
-                              ),
-                            )
-                          }
-                        >
-                          Historique
-                        </button>
-                        <button
-                          className="text"
-                          onClick={() =>
-                            openForm(
-                              "Ajuster le solde",
-                              [
-                                field(
-                                  "balance",
-                                  "Solde réel constaté (€)",
-                                  balance(s, a.id) / 100,
-                                  "number",
-                                ),
-                                field("reason", "Motif de l’ajustement"),
-                              ],
-                              async (v) =>
-                                change(
-                                  (d) =>
-                                    d.transactions.push({
-                                      id: uid(),
-                                      type: "adjust",
-                                      account: a.id,
-                                      date: today(),
-                                      amount:
-                                        euro(v.balance) - balance(d, a.id),
-                                      description: "Ajustement : " + v.reason,
-                                    }),
-                                  "Solde ajusté",
-                                ),
-                            )
-                          }
-                        >
-                          Ajuster
-                        </button>
+                          <button type="button" className="text" onClick={() =>
+                            explain(a.name + " · Historique", txRows(sortedTx.filter(t => t.account === a.id || t.to === a.id)))
+                          }>Historique</button>
+                          <button type="button" className="text" onClick={() =>
+                            openForm("Ajuster le solde", [
+                              field("balance", "Solde réel constaté (€)", balance(s, a.id) / 100, "number"),
+                              field("reason", "Motif de l’ajustement"),
+                            ], async (v) => change((d) => d.transactions.push({
+                              id: uid(),
+                              type: "adjust",
+                              account: a.id,
+                              date: today(),
+                              amount: euro(v.balance) - balance(d, a.id),
+                              description: "Ajustement : " + v.reason,
+                            }), "Solde ajusté"))
+                          }>Ajuster le solde</button>
+                        </div>
                       </div>
-                    </article>
+                    </details>
                   ))}
-              </div>
-            </>
+                  {!activeHouseholdAccounts.length && <p className="muted wealth-account-empty">Aucun compte disponible. Ajoutez votre premier compte.</p>}
+                </div>
+              </section>
+
+              <button type="button" className="wealth-projection-link" onClick={() => navigate("projection")}>
+                <span className="wealth-projection-icon"><Target size={22}/></span>
+                <span className="wealth-projection-text">
+                  <strong>Préparer l’avenir</strong>
+                  <small>Explorer mes projections et mes projets</small>
+                </span>
+                <ArrowUpRight size={19} aria-hidden="true"/>
+              </button>
+            </div>
           )}
           {route === "projection" && (
             <>
