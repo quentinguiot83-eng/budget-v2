@@ -4105,88 +4105,58 @@ export default function App() {
         }, "Projet enregistré"),
     );
   }
-  function txDetails(t: Tx) {
-    const a = s.accounts.find((a) => a.id === t.account);
-    const isEditable = ["expense", "income"].includes(t.type) && !t.dueKey;
-    explain(
-      t.description,
-      <>
-        <div className="big-number">{money(t.amount)}</div>
-        <p>
-          {dateLabel(t.date)} · {a?.name}
-        </p>
-        <p>
-          {t.type === "transfer"
-            ? `Virement vers ${s.accounts.find((a) => a.id === t.to)?.name}. Aucun revenu ni dépense de consommation.`
-            : t.type === "expense"
-              ? a?.group === "personal"
-                ? "Déduit uniquement du solde du compte perso. Le budget du foyer a déjà été consommé lors du virement vers ce compte."
-                : t.trip
-                  ? "Déduit du compte et du budget voyage, sans impacter les enveloppes ordinaires."
-                  : "Déduit du compte et de la catégorie concernée."
-              : t.type === "loan"
-                ? "Déduit du compte courant. Créance créée."
-                : t.type === "repay"
-                  ? "Ajouté au compte et déduit du restant à récupérer."
-                  : "Ajouté au compte."}
-        </p>
-        {isEditable && (
-          <button
-            className="secondary"
-            onClick={() =>
-              operation(
-                t.type,
-                t.trip
-                  ? s.trips.find((v) => v.id === t.trip)
-                  : undefined,
-                t,
-              )
-            }
-          >
-            Modifier
-          </button>
-        )}
-        {isEditable && !t.trip && !t.fixed && (
-          <div className="flex">
-            <button className="secondary" onClick={() => duplicateTransaction(t)}>
-              <Plus size={15}/> Dupliquer
-            </button>
-            {s.accounts.some(a=>a.id===t.account&&a.group==="current"&&!a.archived) &&
-              (t.type==="income" || s.categories.some(v=>v.id===t.category&&!v.archived)) &&
-              <button className="secondary" onClick={() => void toggleQuickFavorite(t).catch(showError)}>
-                {s.quickFavorites?.some(f=>f.id===t.id)?"Retirer des favoris":"Ajouter aux favoris"}
-              </button>}
-          </div>
-        )}
-        <button
-          className="danger"
-          onClick={() =>
-            confirmAction(
-              "Supprimer cette opération ?",
-              `Le mouvement de ${money(t.amount)} sera annulé sur tous les comptes concernés. Une échéance liée redeviendra à valider.`,
-              async () =>
-                change((d) => {
-                  if (t.type === "loan") {
-                    if (
-                      d.transactions.some(
-                        (x) => x.type === "repay" && x.loanId === t.loanId,
-                      )
-                    )
-                      throw Error(
-                        "Supprimez d’abord les remboursements de ce prêt.",
-                      );
-                    d.loans = d.loans.filter((l) => l.id !== t.loanId);
-                    d.rules = d.rules.filter((r) => r.loanId !== t.loanId);
-                  }
-                  d.transactions = d.transactions.filter((x) => x.id !== t.id);
-                }, "Transaction supprimée"),
-            )
-          }
-        >
-          Supprimer
-        </button>
-      </>,
+  function deleteTransaction(t: Tx) {
+    confirmAction(
+      "Supprimer cette opération ?",
+      `Le mouvement de ${money(t.amount)} sera annulé sur tous les comptes concernés. Une échéance liée redeviendra à valider.`,
+      async () => change(d => {
+        if (t.type === "loan") {
+          if (d.transactions.some(x => x.type === "repay" && x.loanId === t.loanId))
+            throw Error("Supprimez d'abord les remboursements de ce prêt.");
+          d.loans = d.loans.filter(l => l.id !== t.loanId);
+          d.rules = d.rules.filter(r => r.loanId !== t.loanId);
+        }
+        d.transactions = d.transactions.filter(x => x.id !== t.id);
+      }, "Transaction supprimée"),
     );
+  }
+  function txDetails(t: Tx) {
+    const a = s.accounts.find(a => a.id === t.account);
+    const isEditable = ["expense", "income"].includes(t.type) && !t.dueKey;
+    explain(t.description, <>
+      <div className="big-number">{money(t.amount)}</div>
+      <p>{dateLabel(t.date)} · {a?.name}</p>
+      <p>{t.type === "transfer"
+        ? `Virement vers ${s.accounts.find(v => v.id === t.to)?.name}. Aucun revenu ni dépense de consommation.`
+        : t.type === "expense"
+          ? t.trip ? "Déduit du compte et du budget voyage." : "Déduit du compte et de la catégorie concernée."
+          : t.type === "loan" ? "Déduit du compte courant. Créance créée."
+          : t.type === "repay" ? "Ajouté au compte et déduit du restant à récupérer."
+          : "Ajouté au compte."}</p>
+      <details className="transaction-detail-options">
+        <summary>Actions sur l'opération</summary>
+        <div className="transaction-detail-options-body">
+          {isEditable && (
+            <button className="secondary compact" onClick={() => operation(t.type, t.trip ? s.trips.find(v => v.id === t.trip) : undefined, t)}>
+              <Pencil size={15}/> Modifier
+            </button>
+          )}
+          {isEditable && !t.trip && !t.fixed && (
+            <>
+              <button className="secondary compact" onClick={() => duplicateTransaction(t)}><Plus size={15}/> Dupliquer</button>
+              {s.accounts.some(v => v.id === t.account && v.group === "current" && !v.archived)
+                && (t.type === "income" || s.categories.some(v => v.id === t.category && !v.archived))
+                && <button className="secondary compact" onClick={() => void toggleQuickFavorite(t).catch(showError)}>
+                  {s.quickFavorites?.some(f => f.id === t.id) ? "Retirer des favoris" : "Ajouter aux favoris"}
+                </button>}
+            </>
+          )}
+          <button className="secondary compact danger-text" onClick={() => deleteTransaction(t)}>
+            <Trash2 size={15}/> Supprimer
+          </button>
+        </div>
+      </details>
+    </>);
   }
   function categoryVariableBudget(
     c: Category,
@@ -4489,8 +4459,16 @@ export default function App() {
   const txRows = (list: Tx[]) =>
     list.length ? (
       <SortableList items={list}>{ordered => ordered.map((t) => (
+        <SwipeActions key={t.id} label={t.description} className="transaction-swipe-row"
+          actions={[
+            ...(["expense", "income"].includes(t.type) && !t.dueKey ? [{
+              label: "Modifier", icon: <Pencil size={17}/>,
+              onClick: () => operation(t.type, t.trip ? s.trips.find(v => v.id === t.trip) : undefined, t),
+            }] : []),
+            { label: "Supprimer", icon: <Trash2 size={17}/>, tone: "danger" as const,
+              onClick: () => deleteTransaction(t) },
+          ]}>
         <Row
-          key={t.id}
           icon={
             t.type === "transfer" ? (
               <ArrowLeftRight />
@@ -4522,6 +4500,7 @@ export default function App() {
           }
           onClick={() => txDetails(t)}
         />
+        </SwipeActions>
       ))}</SortableList>
     ) : (
       <p className="muted padded">Aucune transaction sur cette période.</p>
