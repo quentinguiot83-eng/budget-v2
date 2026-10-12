@@ -4671,8 +4671,16 @@ export default function App() {
             ]}>
           <article
             className={`category${simple ? " category-compact" : ""}${isPersonal && !simple ? " category-personal" : ""}${displayBudget > 0 && displaySpent >= displayBudget ? " category-limit" : ""}${!simple ? " budget-clickable" : ""}`}
+            tabIndex={simple ? undefined : 0}
+            aria-label={simple ? undefined : "Voir les dépenses de " + c.name + " en " + monthLabel(selectedMonth)}
             onClick={event => {
               if (!simple && !(event.target as HTMLElement).closest("button, a, input, select, summary")) openBudgetTransactions(c.id);
+            }}
+            onKeyDown={event => {
+              if (!simple && event.currentTarget === event.target && (event.key === "Enter" || event.key === " ")) {
+                event.preventDefault();
+                openBudgetTransactions(c.id);
+              }
             }}
           >
 
