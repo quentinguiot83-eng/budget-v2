@@ -6858,7 +6858,9 @@ export default function App() {
                 </div>
                 <div className="wealth-accounts-list">
                   {activeHouseholdAccounts.map((a) => (
-                    <details className={"wealth-account-row wealth-account-" + a.group} key={a.id}>
+                    <SwipeActions key={a.id} label={a.name} className="account-swipe-row"
+                      actions={[{ label: "Modifier", icon: <Pencil size={17}/>, onClick: () => editAccount(a) }]}>
+                    <details className={"wealth-account-row wealth-account-" + a.group}>
                       <summary className="wealth-account-summary">
                         <span className="wealth-account-icon">
                           {a.group === "travel" ? <Plane size={22}/> : a.group === "current" ? <Wallet size={22}/> : <Coins size={22}/>}
@@ -6884,9 +6886,7 @@ export default function App() {
                         <div className="wealth-account-actions">
                           {a.group !== "current" && <button type="button" className="primary compact" onClick={() => transfer(a)}>Épargner</button>}
                           <button type="button" className="secondary compact" onClick={() => transfer(undefined, undefined, a)}>Virement</button>
-                          <button type="button" className="secondary compact" onClick={() => editAccount(a)}>
-                            <Pencil size={15}/> Modifier
-                          </button>
+
                           <button type="button" className="text" onClick={() =>
                             explain(a.name + " · Historique", txRows(sortedTx.filter(t => t.account === a.id || t.to === a.id)))
                           }>Historique</button>
@@ -6906,6 +6906,7 @@ export default function App() {
                         </div>
                       </div>
                     </details>
+                    </SwipeActions>
                   ))}
                   {!activeHouseholdAccounts.length && <p className="muted wealth-account-empty">Aucun compte disponible. Ajoutez votre premier compte.</p>}
                 </div>
