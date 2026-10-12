@@ -27,5 +27,20 @@ border-radius:21px;padding:20px 22px;background:linear-gradient(115deg,var(--wim
  .wimm-security-row{padding:12px}
  .wimm-security-actions button{flex:1 1 auto;font-size:.75rem}
 }
+
+.wimm-security-verify-action{display:inline-flex;align-items:center;justify-content:center;gap:9px;
+  justify-self:start;cursor:pointer;border:1px solid color-mix(in srgb,var(--wimm-green) 25%,var(--border));
+  background:var(--wimm-mint-wash);color:var(--wimm-green);padding:11px 13px;
+  border-radius:11px;font-weight:770;font-size:.78rem;position:relative}
+.wimm-security-verify-action input[type=file]{position:absolute;inset:0;width:100%;height:100%;
+  opacity:0;cursor:pointer}
+.wimm-security-verify-action:focus-within{outline:2px solid var(--wimm-green);outline-offset:2px}
+.wimm-security-validation{display:grid;gap:5px;border:1px solid color-mix(in srgb,var(--wimm-green) 28%,var(--border));
+ background:var(--wimm-mint-wash);padding:12px;border-radius:11px}
+.wimm-security-validation strong{font-size:.8rem;color:var(--wimm-green)}
+.wimm-security-validation span{font-size:.75rem;color:var(--ink);line-height:1.4}
+.wimm-security-validation span.wimm-security-foreign{color:var(--wimm-coral);font-weight:750}
+.wimm-security-validation small{font-size:.7rem;color:var(--muted);line-height:1.5}
+@media(max-width:560px){.wimm-security-verify-action{justify-self:stretch}}
 `;
 export default function DataProtectionStyles(){return <style data-wimm-data-security="v1">{styles}</style>;}
