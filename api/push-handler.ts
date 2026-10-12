@@ -84,7 +84,7 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
         const first = claimed[0];
         const payload = claimed.length === 1 ? { ...first, tag: first.key } : {
           title: `${claimed.length} alertes Wimm`, body: claimed.slice(0, 3).map(a => a.body).join(" ") + (claimed.length > 3 ? " Ouvre Wimm pour voir les autres." : ""),
-          url: claimed.every(a => a.kind === "dues" && a.url === "/?screen=calendar") ? "/?screen=calendar" : "/?screen=home", tag: "wimm-alerts",
+          url: claimed.some(a => a.kind === "reminder") ? "/?screen=add" : claimed.every(a => a.kind === "dues" && a.url === "/?screen=calendar") ? "/?screen=calendar" : "/?screen=home", tag: "wimm-alerts",
         };
         try {
           await webpush.sendNotification(d.subscription, JSON.stringify(payload), { TTL: 86400, timeout: 10000 });
