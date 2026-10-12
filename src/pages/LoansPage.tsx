@@ -1,4 +1,5 @@
 import { Row, BlockInfo } from "../ui";
+import { Trash2 } from "lucide-react";
 
 import {
   type State,
@@ -18,6 +19,8 @@ type LoansPageProps = {
     kind?: Rule["kind"],
   ) => void;
 
+  deleteCreditPlan: (rule: Rule) => void;
+
   newLoan: () => void;
 
   repay: (
@@ -28,6 +31,7 @@ type LoansPageProps = {
 export default function LoansPage({
   state,
   editRule,
+  deleteCreditPlan,
   newLoan,
   repay,
 }: LoansPageProps) {
@@ -155,17 +159,16 @@ export default function LoansPage({
 
                 </div>
 
-                <button
-                  className="secondary compact"
-                  onClick={() =>
-                    editRule(
-                      r,
-                      "credit",
-                    )
-                  }
-                >
-                  Modifier
-                </button>
+                <div className="credit-rule-actions">
+                  <button type="button" className="secondary compact"
+                    onClick={() => editRule(r, "credit")}>Modifier</button>
+                  <button type="button" className="secondary compact credit-rule-delete"
+                    aria-label={"Supprimer le crédit " + r.name}
+                    title={"Supprimer l'échéancier " + r.name}
+                    onClick={() => deleteCreditPlan(r)}>
+                    <Trash2 size={16}/><span>Supprimer</span>
+                  </button>
+                </div>
 
               </div>
             );
