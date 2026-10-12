@@ -1,4 +1,5 @@
 import { WimmWordmark } from "./WimmWordmark";
+import { revisePaymentPlan, removeCreditPlan } from "./creditSchedules";
 import SettingsNavigation from "./SettingsNavigation";
 import "./SettingsNavigation.css";
 import { SortableList } from "./SortableList";
@@ -2951,32 +2952,34 @@ export default function App() {
       async (v) => {
 
         await change((d) => {
-          if (
-            rule &&
-            d.transactions.some(
-              (t) => t.dueKey?.startsWith(rule.id + ":") && t.date >= v.start,
-            )
-          )
-            throw Error(
-              "Choisissez une date après les paiements déjà validés.",
-            );
-          if (rule)
-            d.rules.find((r) => r.id === rule.id)!.end = previousDate(v.start);
-          d.rules.push({
-            id: uid(),
+          const amount = euro(v.amount);
+          if (amount <= 0) throw Error("Le montant doit être supérieur à zéro.");
+          const changes = {
             name: v.name,
-            amount: euro(v.amount),
+            amount,
             account: v.account,
             category: v.category,
             start: v.start,
             interval: Number(v.interval),
             count: (rule?.kind || kind) === "credit" ? Number(v.count) : 0,
             kind: rule?.kind || kind,
-          });
-          if (euro(v.amount) <= 0)
-            throw Error("Le montant doit être supérieur à zéro.");
+          };
+          if (rule) {
+            revisePaymentPlan(d, rule.id, changes, uid());
+          } else {
+            d.rules.push({ id: uid(), ...changes });
+          }
         }, "Échéancier enregistré");
       },
+    );
+  }
+  function deleteCreditPlan(rule: Rule) {
+    confirmAction(
+      "Supprimer « " + rule.name + " » ?",
+      "Cet échéancier et ses prochaines mensualités seront supprimés. Les paiements déjà validés restent dans l’historique et ne seront pas recrédités.",
+      async () => change(d => {
+        removeCreditPlan(d, rule.id);
+      }, "Échéancier supprimé"),
     );
   }
   function payDue(due: Due) {
@@ -7498,6 +7501,7 @@ export default function App() {
             <LoansPage
               state={s}
               editRule={editRule}
+              deleteCreditPlan={deleteCreditPlan}
               newLoan={newLoan}
               repay={repay}
             />
