@@ -29,6 +29,7 @@ begin
   if p_backup is null or jsonb_typeof(p_backup) <> 'object'
       or octet_length(p_backup::text) > 20000000
       or p_backup->>'format' is distinct from 'wimm-manual-backup'
+      or p_backup->>'version' is null
       or p_backup->>'version' not in ('1','2') then
     raise exception 'Sauvegarde Wimm invalide ou trop volumineuse';
   end if;
@@ -37,7 +38,7 @@ begin
     raise exception 'Empreinte de sauvegarde absente';
   end if;
   scope := p_backup->>'scope';
-  if scope not in ('household','personal') then
+  if scope is null or scope not in ('household','personal') then
     raise exception 'La restauration de ce type de sauvegarde est indisponible';
   end if;
   saved_state := p_backup->'state';
