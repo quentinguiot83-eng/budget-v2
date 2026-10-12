@@ -81,10 +81,14 @@ export default function TripCoverEditor({
         <>
           <div className={"trip-edit-photo-preview" + (previewUrl ? " has-image" : "")}>
             {previewUrl ? (
-              <img src={previewUrl} alt={"Couverture de " + trip.name}
+              <img src={previewUrl} alt=""
+                onError={() => {
+                  setPreviewUrl("");
+                  setError("La photo ne peut pas être affichée. Fermez puis rouvrez la modification pour actualiser son accès.");
+                }}
                 style={{ objectPosition: "50% " + position + "%" }}/>
             ) : (
-              <div className="trip-edit-photo-fallback"><Plane size={27}/><span>Aucune photo</span></div>
+              <div className="trip-edit-photo-fallback"><Plane size={27}/><span>{hasCover ? "Aperçu indisponible" : "Aucune photo"}</span></div>
             )}
           </div>
           <div className="trip-edit-photo-actions">
