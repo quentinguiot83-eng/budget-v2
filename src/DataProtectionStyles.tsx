@@ -41,6 +41,11 @@ border-radius:21px;padding:20px 22px;background:linear-gradient(115deg,var(--wim
 .wimm-security-validation span{font-size:.75rem;color:var(--ink);line-height:1.4}
 .wimm-security-validation span.wimm-security-foreign{color:var(--wimm-coral);font-weight:750}
 .wimm-security-validation small{font-size:.7rem;color:var(--muted);line-height:1.5}
+.wimm-security-comparison{display:grid;gap:5px;margin-top:5px;padding:12px;
+ border:1px solid var(--border);border-radius:10px;background:var(--surface)}
+.wimm-security-comparison strong{font-size:.76rem;color:var(--ink)}
+.wimm-security-comparison span{font-size:.73rem;color:var(--muted);line-height:1.4}
+
 @media(max-width:560px){.wimm-security-verify-action{justify-self:stretch}}
 
 .wimm-history{display:grid;gap:14px;padding:21px 22px;border:1px solid var(--border);
