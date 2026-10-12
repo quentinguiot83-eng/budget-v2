@@ -141,7 +141,7 @@ export function reconcileBankRows(rows:BankRow[], transactions:Tx[], account:str
   const existing=transactions.filter(t=>t.account===account&&(t.type==="income"||t.type==="expense"));
   const exactCounts=new Map<string,number>(), possibleCounts=new Map<string,number>();
   for(const t of existing){
-    const sig=signature(t);
+    const sig=signature({date:t.date,type:t.type as "expense"|"income",amount:t.amount,description:t.description});
     exactCounts.set(sig,(exactCounts.get(sig)||0)+1);
     const approx=[t.date,t.type,t.amount].join("|");
     possibleCounts.set(approx,(possibleCounts.get(approx)||0)+1);
