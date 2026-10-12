@@ -7499,12 +7499,17 @@ export default function App() {
                               <button type="button" className="text danger-text" onClick={() => confirmAction(
                                 "Supprimer le voyage ?",
                                 "La suppression est possible seulement sans transaction liée. Sinon conservez-le pour garder son historique.",
-                                async () => change(d => {
-                                  if (d.transactions.some(x => x.trip === t.id))
-                                    throw Error("Ce voyage possède des transactions. Il est conservé pour votre historique.");
-                                  d.trips = d.trips.filter(x => x.id !== t.id);
-                                  setActiveTrip("");
-                                }, "Voyage supprimé")
+                                async () => {
+                                  await change(d => {
+                                    if (d.transactions.some(x => x.trip === t.id))
+                                      throw Error("Ce voyage possède des transactions. Il est conservé pour votre historique.");
+                                    d.trips = d.trips.filter(x => x.id !== t.id);
+                                    setActiveTrip("");
+                                  }, "Voyage supprimé");
+                                  if (t.coverPath) {
+                                    try { await deleteTripCover(t.coverPath); } catch { /* Clean up later if needed. */ }
+                                  }
+                                }
                               )}><Trash2 size={16}/> Supprimer</button>
                             </div>
                           </div>
