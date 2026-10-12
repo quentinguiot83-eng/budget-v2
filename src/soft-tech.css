@@ -1557,3 +1557,49 @@ body, #root { background: var(--soft-canvas); }
   .wimm-setup-footer button { flex:1 1 auto;font-size:.8rem;padding-inline:8px; }
 }
 @media(prefers-reduced-motion:reduce){.wimm-setup-track span{transition:none}}
+
+
+/* Configuration initiale : choix du module Professionnel, explicite et réversible. */
+.wimm-setup-professional { gap: 17px; }
+.wimm-setup-professional > .muted { margin:0; font-size:.86rem; line-height:1.58; }
+.wimm-setup-professional-options { display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px; }
+.wimm-setup-professional-choice {
+  position:relative;display:flex;flex-direction:column;align-items:flex-start;min-height:192px;gap:11px;
+  border-radius:19px;padding:19px 17px;text-align:left;
+  background:var(--surface);border:1.5px solid var(--border);color:var(--ink);
+  box-shadow:var(--wimm-card-shadow);transition:border-color .15s ease,background .15s ease,box-shadow .15s ease;
+}
+.wimm-setup-professional-choice:nth-child(1) .wimm-setup-professional-symbol {
+  background:var(--wimm-lavender-wash);color:var(--wimm-lavender);
+}
+.wimm-setup-professional-choice:nth-child(2) .wimm-setup-professional-symbol {
+  background:var(--wimm-mint-wash);color:var(--wimm-green);
+}
+.wimm-setup-professional-choice.chosen {
+  border-color:var(--wimm-green);
+  background:linear-gradient(135deg,var(--wimm-mint-wash),var(--surface) 75%);
+  box-shadow:0 0 0 2px color-mix(in srgb,var(--wimm-green) 14%,transparent),var(--wimm-card-shadow);
+}
+.wimm-setup-professional-choice:hover:not(.chosen) { border-color:color-mix(in srgb,var(--wimm-green) 48%,var(--border)); }
+.wimm-setup-professional-choice:focus-visible { outline:3px solid var(--wimm-green);outline-offset:3px; }
+.wimm-setup-professional-symbol {
+  width:46px;height:46px;border-radius:14px;display:grid;place-items:center;
+}
+.wimm-setup-professional-choice>strong { font-size:.94rem;font-weight:800;line-height:1.35;padding-right:9px; }
+.wimm-setup-professional-choice>small { color:var(--muted);font-size:.77rem;line-height:1.5;font-weight:500; }
+.wimm-setup-professional-mark {
+  position:absolute;right:15px;top:15px;border-radius:50%;
+  border:1.5px solid color-mix(in srgb,var(--wimm-green) 28%,var(--border));
+  background:var(--surface);width:27px;height:27px;display:grid;place-items:center;color:var(--wimm-green);
+}
+.wimm-setup-professional-choice.chosen .wimm-setup-professional-mark {
+  border-color:var(--wimm-green);background:var(--wimm-green);color:#fff;
+}
+@media(max-width:560px) {
+  .wimm-setup-professional-options { grid-template-columns:minmax(0,1fr);gap:10px; }
+  .wimm-setup-professional-choice { min-height:0;padding:14px 54px 14px 13px;gap:7px; }
+  .wimm-setup-professional-symbol {width:37px;height:37px;border-radius:11px;}
+  .wimm-setup-professional-symbol svg {width:21px;height:21px;}
+  .wimm-setup-professional-choice>strong { font-size:.86rem; }
+  .wimm-setup-professional-choice>small {font-size:.74rem;}
+}
