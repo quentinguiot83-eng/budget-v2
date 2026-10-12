@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from "react";
-import { ArrowLeft, ArrowRight, BadgeCheck, CalendarDays, Check, CircleHelp, Landmark, Plus, Trash2, Wallet } from "lucide-react";
+import { ArrowLeft, ArrowRight, BadgeCheck, BriefcaseBusiness, CalendarDays, Check, CircleHelp, Landmark, Plus, Trash2, UserRound, Wallet } from "lucide-react";
 import { month, today, type State, uid } from "./engine";
 import { seedStarterCategories } from "./starterCategories";
 
@@ -8,6 +8,7 @@ type ExtraAccount = { id: string; name: string; group: Group; opening: string; a
 type FixedCharge = { id: string; name: string; amount: string; category: string; first: string; interval: 1 | 3 | 12 };
 type VariableBudget = { id: string; name: string; icon: string; amount: string };
 export type InitialSetupDraft = {
+  professional: boolean | null;
   accountName: string; opening: string; asOf: string;
   salaryReceived: boolean; savingDone: boolean;
   extras: ExtraAccount[]; income: string; salaryDay: string;
@@ -21,6 +22,7 @@ const initialCategories = [
 ];
 
 const pages = [
+  { title: "Comment utiliserez-vous Wimm ?", subtitle: "Personnalisez votre expérience dès le départ.", icon: BriefcaseBusiness },
   { title: "Vos comptes et leurs soldes", subtitle: "Partez des montants réellement affichés par votre banque.", icon: Wallet },
   { title: "Vos revenus habituels", subtitle: "Ces montants servent à prévoir vos prochains mois.", icon: Landmark },
   { title: "Vos dépenses fixes", subtitle: "Wimm les comptera uniquement aux dates de leurs échéances.", icon: CalendarDays },
@@ -106,6 +108,7 @@ export default function SetupWizard({ householdName, onComplete }: {
 }) {
   const [page, setPage] = useState(0);
   const [draft, setDraft] = useState<InitialSetupDraft>(() => ({
+    professional: null,
     accountName: "Compte courant commun", opening: "0", asOf: today(),
     salaryReceived: false, savingDone: false,
     extras: [], income: "0", salaryDay: "27", salaryBudget: "next", salaryReminder: true,
@@ -122,35 +125,37 @@ export default function SetupWizard({ householdName, onComplete }: {
     patch({ categories: draft.categories.map(a => a.id === id ? { ...a, ...patchValue } : a) });
   function next() {
     try {
-      if (page === 0) {
+      if (page === 0 && draft.professional === null)
+        throw Error("Indiquez si vous souhaitez utiliser l’espace Professionnel.");
+      if (page === 1) {
         parseEuros(draft.opening, "solde courant", true);
         draft.extras.forEach(a => parseEuros(a.opening, a.name));
         if (!draft.accountName.trim()) throw Error("Indiquez le nom de votre compte courant.");
         if (!draft.asOf || draft.asOf > today()) throw Error("La date du solde doit être actuelle ou passée.");
       }
-      if (page === 1) {
+      if (page === 2) {
         parseEuros(draft.income, "revenus");
         if (!Number.isInteger(Number(draft.salaryDay)) || Number(draft.salaryDay) < 1 || Number(draft.salaryDay) > 31)
           throw Error("Indiquez un jour de versement valide (1 à 31).");
       }
-      if (page === 2) {
+      if (page === 3) {
         draft.fixed.forEach(x => {
           if (!x.name.trim() || !x.first || parseEuros(x.amount, x.name) <= 0) throw Error("Vérifiez les noms, dates et montants des dépenses fixes.");
         });
       }
-      if (page === 3) {
+      if (page === 4) {
         draft.categories.forEach(c => { if (!c.name.trim()) throw Error("Une catégorie n’a pas de nom."); parseEuros(c.amount, "budget " + c.name); });
         const total = draft.extras.reduce((n,a) => n + Number(a.allocation.replace(",", ".")), 0);
         if (!Number.isFinite(total) || total > 100 || draft.extras.some(a => Number(a.allocation.replace(",", ".")) < 0))
           throw Error("L’épargne doit être répartie entre 0 et 100 %.");
       }
       setError("");
-      setPage(p => Math.min(4, p + 1));
+      setPage(p => Math.min(5, p + 1));
     } catch (e) { setError(e instanceof Error ? e.message : "Vérifiez ces informations."); }
   }
   async function finish(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    if (page < 4) { next(); return; }
+    if (page < 5) { next(); return; }
     setWorking(true);
     try { await onComplete(draft); } catch (e) { setError(e instanceof Error ? e.message : "Enregistrement impossible."); setWorking(false); }
   }
@@ -171,11 +176,32 @@ export default function SetupWizard({ householdName, onComplete }: {
             <p>{pageMeta.subtitle}</p>
           </div>
         </div>
-        <div className="wimm-setup-progress" aria-label={"Étape " + (page + 2) + " sur 6"}>
-          <div><strong>Étape {page + 2} sur 6</strong><span>{page === 4 ? "Dernière vérification" : "Vous pourrez tout modifier plus tard"}</span></div>
-          <div className="wimm-setup-track"><span style={{ width: ((page + 2) / 6 * 100) + "%" }}/></div>
+        <div className="wimm-setup-progress" aria-label={"Étape " + (page + 2) + " sur 7"}>
+          <div><strong>Étape {page + 2} sur 7</strong><span>{page === 5 ? "Dernière vérification" : "Vous pourrez tout modifier plus tard"}</span></div>
+          <div className="wimm-setup-track"><span style={{ width: ((page + 2) / 7 * 100) + "%" }}/></div>
         </div>
-        {page === 0 && <div className="wimm-setup-body">
+        {page === 0 && <div className="wimm-setup-body wimm-setup-professional">
+          <h2>Souhaitez-vous utiliser Wimm pour une activité professionnelle ?</h2>
+          <p className="muted">Wimm peut aussi vous accompagner dans une activité indépendante, freelance, auto-entrepreneur ou entreprise. Les finances du foyer restent séparées de l'espace professionnel.</p>
+          <div className="wimm-setup-professional-options" role="group" aria-label="Utilisation professionnelle de Wimm">
+            <button type="button" className={"wimm-setup-professional-choice" + (draft.professional === true ? " chosen" : "")}
+              aria-pressed={draft.professional === true} onClick={() => patch({ professional: true })}>
+              <span className="wimm-setup-professional-symbol"><BriefcaseBusiness size={25}/></span>
+              <strong>Oui, j’ai une activité professionnelle</strong>
+              <small>Activer mon espace Pro : clients, devis et factures, rendez-vous, trésorerie et suivi de l’activité.</small>
+              <span className="wimm-setup-professional-mark">{draft.professional === true ? <Check size={17}/> : <span/>}</span>
+            </button>
+            <button type="button" className={"wimm-setup-professional-choice" + (draft.professional === false ? " chosen" : "")}
+              aria-pressed={draft.professional === false} onClick={() => patch({ professional: false })}>
+              <span className="wimm-setup-professional-symbol"><UserRound size={25}/></span>
+              <strong>Non, uniquement mes finances personnelles</strong>
+              <small>Gérer mon foyer, mes budgets, mon épargne et mes projets sans afficher l’espace Pro.</small>
+              <span className="wimm-setup-professional-mark">{draft.professional === false ? <Check size={17}/> : <span/>}</span>
+            </button>
+          </div>
+          <p className="wimm-setup-hint"><CircleHelp size={16}/> Vous pourrez activer ou masquer l’espace Professionnel plus tard dans les réglages. Un emploi salarié seul ne nécessite pas cet espace.</p>
+        </div>}
+        {page === 1 && <div className="wimm-setup-body">
           <h2>Votre compte principal</h2>
           <div className="wimm-setup-fields two">
             <label>Nom du compte<input required value={draft.accountName} onChange={e => patch({ accountName: e.target.value })}/></label>
@@ -200,7 +226,7 @@ export default function SetupWizard({ householdName, onComplete }: {
             {["Livret A","LEP","PEA","Livret Voyage","Autre compte"].map(name => <button key={name} type="button" disabled={name !== "Autre compte" && draft.extras.some(a=>a.name===name)} onClick={() => patch({ extras:[...draft.extras, { id:uid(),name:name==="Autre compte"?"":name,group:name==="Livret Voyage"?"travel":"wealth",opening:"0",allocation:"0" }] })}><Plus size={15}/> {name}</button>)}
           </div>
         </div>}
-        {page === 1 && <div className="wimm-setup-body">
+        {page === 2 && <div className="wimm-setup-body">
           <h2>Votre salaire et vos revenus</h2>
           <div className="wimm-setup-fields two">
             <label>Revenus mensuels habituels (€)<input {...amountInput} value={draft.income} onChange={e => patch({ income:e.target.value })}/></label>
@@ -210,7 +236,7 @@ export default function SetupWizard({ householdName, onComplete }: {
           <div className="wimm-setup-checks"><label><input type="checkbox" checked={draft.salaryReminder} onChange={e => patch({ salaryReminder:e.target.checked })}/><span>Me rappeler de confirmer la réception du salaire.</span></label></div>
           <p className="wimm-setup-hint"><CircleHelp size={16}/> Il s’agit d’une estimation pour les projections. Elle ne crée pas de revenu fictif dans vos transactions.</p>
         </div>}
-        {page === 2 && <div className="wimm-setup-body">
+        {page === 3 && <div className="wimm-setup-body">
           <div className="wimm-setup-subhead"><h2>Vos dépenses récurrentes</h2><button type="button" onClick={() => patch({ fixed:[...draft.fixed,{ id:uid(),name:"",amount:"0",category:"Maison",first:today(),interval:1 }] })}><Plus size={16}/> Ajouter</button></div>
           {draft.fixed.length === 0 && <div className="wimm-setup-empty"><CalendarDays size={25}/><strong>Aucune charge ajoutée</strong><span>Loyer, abonnements, assurance… Cette étape est facultative.</span></div>}
           {draft.fixed.map(x => <div key={x.id} className="wimm-setup-entry">
@@ -225,7 +251,7 @@ export default function SetupWizard({ householdName, onComplete }: {
           </div>)}
           <p className="wimm-setup-hint"><CircleHelp size={16}/> Wimm créera des échéances à confirmer, pas des dépenses déjà débitées.</p>
         </div>}
-        {page === 3 && <div className="wimm-setup-body">
+        {page === 4 && <div className="wimm-setup-body">
           <h2>Budgets variables mensuels</h2>
           {draft.categories.map(c=><div className="wimm-setup-budget-row" key={c.id}>
             <label>Catégorie<input required value={c.name} onChange={e=>updateCategory(c.id,{name:e.target.value})}/></label>
@@ -238,7 +264,8 @@ export default function SetupWizard({ householdName, onComplete }: {
           {draft.extras.map(a=><label className="wimm-setup-share" key={a.id}><span>{a.name||"Autre compte"}</span><span><input type="number" min="0" max="100" step="0.1" value={a.allocation} onChange={e=>updateExtra(a.id,{allocation:e.target.value})}/> %</span></label>)}
           {draft.extras.length>0 && <p className="wimm-setup-hint">Total affecté : <strong>{totalShares.toLocaleString("fr-FR")} %</strong>. Le reste demeure sur le compte courant dans les projections.</p>}
         </div>}
-        {page === 4 && <div className="wimm-setup-body">
+        {page === 5 && <div className="wimm-setup-body">
+          <div className="wimm-setup-review"><strong>Utilisation de Wimm</strong><span>{draft.professional ? "Finances du foyer + Espace Professionnel" : "Finances du foyer uniquement"}</span></div>
           <div className="wimm-setup-review"><strong>Compte courant</strong><span>{draft.accountName}<b>{formatEuro(draft.opening)}</b></span></div>
           <div className="wimm-setup-review"><strong>Autres comptes</strong><span>{draft.extras.length ? draft.extras.map(a=>a.name).join(", ") : "À ajouter plus tard"}</span></div>
           <div className="wimm-setup-review"><strong>Revenus habituels</strong><span>{formatEuro(draft.income)} / mois{draft.salaryReceived ? " · Salaire déjà compris" : ""}</span></div>
@@ -251,7 +278,7 @@ export default function SetupWizard({ householdName, onComplete }: {
         {error && <p className="wimm-setup-error" role="alert">{error}</p>}
         <div className="wimm-setup-footer">
           {page>0 ? <button type="button" className="secondary" disabled={working} onClick={()=>{setError("");setPage(p=>p-1)}}><ArrowLeft size={16}/> Retour</button> : <span className="wimm-setup-footer-note">Étapes suivantes facultatives</span>}
-          {page===4 ? <button className="primary" disabled={working} type="submit">{working?"Enregistrement…":"Terminer et découvrir Wimm"} <BadgeCheck size={18}/></button> :
+          {page===5 ? <button className="primary" disabled={working} type="submit">{working?"Enregistrement…":"Terminer et découvrir Wimm"} <BadgeCheck size={18}/></button> :
             <button type="button" className="primary" onClick={next}>Continuer <ArrowRight size={17}/></button>}
         </div>
       </form>
