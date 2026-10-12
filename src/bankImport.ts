@@ -139,14 +139,45 @@ export function normalizeBankLabel(v:string){
 function signature(r:Pick<BankRow,"date"|"type"|"amount"|"description">){
   return [r.date,r.type,r.amount,normalizeBankLabel(r.description)].join("|");
 }
+/** Possible matches in Wimm, never an automatic reconciliation decision.
+ * Same current account, direction and amount; booking dates may vary by two days.
+ * Return real transactions so the UI can name the suggested match and its category.
+ */
+export type BankDuplicateCandidate = {
+  transaction: Tx;
+  daysApart: number;
+  sameLabel: boolean;
+};
+
+export function findBankDuplicateCandidates(
+  row: Pick<BankRow,"date"|"type"|"amount"|"description">,
+  transactions: Tx[],
+  account: string,
+): BankDuplicateCandidate[] {
+  const day = Date.parse(row.date + "T00:00:00Z");
+  if (!Number.isFinite(day)) return [];
+  const label = normalizeBankLabel(row.description);
+  return transactions
+    .filter(t => t.account === account && t.type === row.type && t.amount === row.amount)
+    .map(t => ({
+      transaction: t,
+      daysApart: Math.round(Math.abs(Date.parse(t.date + "T00:00:00Z") - day) / 86400000),
+      sameLabel: normalizeBankLabel(t.description) === label,
+    }))
+    .filter(c => c.daysApart <= 2)
+    .sort((a,b) => {
+      // Name match first, then nearest banking date, then newest recorded movement.
+      if(a.sameLabel !== b.sameLabel) return a.sameLabel ? -1 : 1;
+      return a.daysApart - b.daysApart || b.transaction.date.localeCompare(a.transaction.date);
+    });
+}
+
 export function reconcileBankRows(rows:BankRow[], transactions:Tx[], account:string):ReconciledRow[]{
   const existing=transactions.filter(t=>t.account===account&&(t.type==="income"||t.type==="expense"));
-  const exactCounts=new Map<string,number>(), possibleCounts=new Map<string,number>();
+  const exactCounts=new Map<string,number>();
   for(const t of existing){
     const sig=signature({date:t.date,type:t.type as "expense"|"income",amount:t.amount,description:t.description});
     exactCounts.set(sig,(exactCounts.get(sig)||0)+1);
-    const approx=[t.date,t.type,t.amount].join("|");
-    possibleCounts.set(approx,(possibleCounts.get(approx)||0)+1);
   }
   const consumed=new Map<string,number>();
   const seen=new Map<string,number>();
@@ -158,12 +189,8 @@ export function reconcileBankRows(rows:BankRow[], transactions:Tx[], account:str
     const alreadyImported=existing.some(t=>t.bankImportKey===key);
     const matched=(consumed.get(sig)||0)<(exactCounts.get(sig)||0);
     if(matched)consumed.set(sig,(consumed.get(sig)||0)+1);
-    // Same amount and date with another label is only a warning, not proof of duplication.
-    const approx=[row.date,row.type,row.amount].join("|");
-    const currentDay=Date.parse(row.date+"T00:00:00Z");
-    const possible=!matched && ((possibleCounts.get(approx)||0)>0 || existing.some(t=>
-      t.type===row.type && t.amount===row.amount &&
-      Math.abs(Date.parse(t.date+"T00:00:00Z")-currentDay)<=2*86400000));
+    // A suggestion is only a warning; never silently merge two operations.
+    const possible=!matched && findBankDuplicateCandidates(row,existing,account).length>0;
     return {...row,key,status:alreadyImported||matched?"matched":possible?"possible":"new",
       matches:(exactCounts.get(sig)||0)};
   });
