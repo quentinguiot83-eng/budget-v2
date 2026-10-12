@@ -188,7 +188,7 @@ export default function SetupWizard({ householdName, onComplete }: {
               aria-pressed={draft.professional === true} onClick={() => patch({ professional: true })}>
               <span className="wimm-setup-professional-symbol"><BriefcaseBusiness size={25}/></span>
               <strong>Oui, j’ai une activité professionnelle</strong>
-              <small>Activer mon espace Pro : clients, devis et factures, rendez-vous, trésorerie et suivi de l’activité.</small>
+              <small>Activer mon espace Pro : clients, factures, rendez-vous, trésorerie et suivi de l’activité.</small>
               <span className="wimm-setup-professional-mark">{draft.professional === true ? <Check size={17}/> : <span/>}</span>
             </button>
             <button type="button" className={"wimm-setup-professional-choice" + (draft.professional === false ? " chosen" : "")}
