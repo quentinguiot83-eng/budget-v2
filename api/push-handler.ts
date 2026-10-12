@@ -29,9 +29,15 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
   if (!ready) return respond(503, { error: "Les notifications téléphone ne sont pas encore activées sur le serveur." });
   const authorization = req.headers.authorization || "";
   let userId: string | null = null;
+  let scheduledToken: string | null = null;
   try {
     if (action === "cron") {
-      if (!equal(authorization, `Bearer ${process.env.CRON_SECRET}`)) return respond(401, { error: "Accès refusé" });
+      // Keep existing Vercel CRON_SECRET support for the daily run.
+      if (!equal(authorization, `Bearer ${process.env.CRON_SECRET}`)) {
+        const m = /^Bearer ([a-f0-9]{8}-(?:[a-f0-9]{4}-){3}[a-f0-9]{12})$/i.exec(authorization);
+        if (!m) return respond(401, { error: "Accès refusé" });
+        scheduledToken = m[1];
+      }
     } else {
       if (!authorization.startsWith("Bearer ")) return respond(401, { error: "Connexion requise" });
       const auth = await fetch(url + "/auth/v1/user", { headers: { apikey: anonKey!, Authorization: authorization }, signal: AbortSignal.timeout(10000) });
@@ -46,6 +52,12 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
       if (!result.ok) throw Error("push_database_error");
       return result.json();
     };
+    if (scheduledToken) {
+      // One-use token minted by pg_cron; the service-role-only RPC consumes it atomically.
+      // A replayed or expired token must never reach the push dispatch.
+      const approved = await db("budget_push_cron_consume", { p_token: scheduledToken });
+      if (approved !== true) return respond(401, { error: "Accès refusé" });
+    }
     const devices = await db("budget_push_context", { p_user: userId }) as Device[];
     // web-push is CommonJS. Load it dynamically so Vercel's ESM runtime does not
     // fail while evaluating the serverless function before the handler runs.
