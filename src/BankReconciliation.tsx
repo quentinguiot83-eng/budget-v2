@@ -80,10 +80,16 @@ export default function BankReconciliation({state,onImport}:Props){
     setSelected(old=>old.includes(index)?old.filter(i=>i!==index):[...old,index]);setConfirm(false);
   }
   function markExisting(index:number,transactionId:string){
+    if(Object.entries(duplicateChoices).some(([other,d])=>
+      Number(other)!==index&&d.action==="skip"&&d.transactionId===transactionId)){
+      setError("Cette opération Wimm est déjà rapprochée avec une autre ligne du relevé.");return;
+    }
+    setError("");
     setDuplicateChoices(old=>({...old,[index]:{action:"skip",transactionId}}));
     setSelected(old=>old.filter(i=>i!==index));setConfirm(false);
   }
   function markToImport(index:number){
+    setError("");
     setDuplicateChoices(old=>({...old,[index]:{action:"import"}}));
     setSelected(old=>old.includes(index)?old:[...old,index]);setConfirm(false);
   }
@@ -161,10 +167,15 @@ export default function BankReconciliation({state,onImport}:Props){
                 <span>{candidates.length===1?"Cette opération Wimm pourrait correspondre :":
                   candidates.length+" opérations Wimm pourraient correspondre :"}</span>
               </div>
-              {(expandedCandidates.includes(row.index)?candidates:candidates.slice(0,1)).map(candidate=>{
+              {(expandedCandidates.includes(row.index)?candidates:
+                decision?.action==="skip"
+                  ? candidates.filter(c=>c.transaction.id===decision.transactionId).slice(0,1)
+                  : candidates.slice(0,1)).map(candidate=>{
                 const tx=candidate.transaction;
                 const categoryName=state.categories.find(c=>c.id===tx.category)?.name;
                 const isChosen=decision?.action==="skip"&&decision.transactionId===tx.id;
+                const usedElsewhere=Object.entries(duplicateChoices).some(([other,d])=>
+                  Number(other)!==row.index&&d.action==="skip"&&d.transactionId===tx.id);
                 return <div className={"wimm-bank-duplicate-candidate"+(isChosen?" selected":"")} key={tx.id}>
                   <div className="wimm-bank-duplicate-candidate-details">
                     <strong>{tx.description}</strong>
@@ -175,9 +186,10 @@ export default function BankReconciliation({state,onImport}:Props){
                       {candidate.sameLabel?" · Même libellé":""}</small>
                   </div>
                   <button type="button" className={"wimm-bank-duplicate-choice"+(isChosen?" selected":"")}
-                    aria-pressed={isChosen} disabled={busy}
+                    aria-pressed={isChosen} disabled={busy||usedElsewhere}
+                    title={usedElsewhere?"Déjà rapprochée avec une autre ligne du relevé":undefined}
                     onClick={()=>markExisting(row.index,tx.id)}>
-                    {isChosen?"✓ C’est cette opération":"C’est cette opération"}
+                    {isChosen?"✓ C’est cette opération":usedElsewhere?"Déjà rapprochée":"C’est cette opération"}
                   </button>
                 </div>;
               })}
