@@ -8107,21 +8107,45 @@ export default function App() {
           </aside>
         </div>
       )}
-      <nav className="bottom-nav" aria-label="Navigation principale" data-tour="mobile-nav">
-        {mobileNav.map((n) => (
-          <button
-            key={n.id}
-            data-tour={n.id === "add" ? "add-button" : undefined}
-            className={`${n.id === "add" ? "add-nav " : ""}${
-              route === n.id ? "active" : ""
-            }`}
-            onClick={() => navigate(n.id)}
-          >
-            {n.icon}
-            <span>{n.label}</span>
+      <nav className="bottom-nav" aria-label="Navigation principale mobile" data-tour="mobile-nav">
+        {mobileNav.map(n=>(
+          <button type="button" key={n.id} className={route===n.id?"active":""}
+            aria-current={route===n.id?"page":undefined} onClick={()=>navigate(n.id)}>
+            {n.icon}<span>{n.label}</span>
           </button>
         ))}
       </nav>
+      {mobileQuickAddOpen && (
+        <div className="quick-add-layer">
+          <button type="button" className="quick-add-backdrop" aria-label="Fermer les actions rapides"
+            onClick={()=>setMobileQuickAddOpen(false)}/>
+          <div className="quick-add-menu" role="dialog" aria-label="Ajouter une opération">
+            <strong>Ajouter une opération</strong>
+            <button type="button" onClick={()=>{setMobileQuickAddOpen(false);operation()}}>
+              <span className="quick-add-item-icon expense"><ArrowUpRight size={20}/></span>
+              <span><b>Une dépense</b><small>Achat, facture ou sortie</small></span><ChevronRight size={18}/>
+            </button>
+            <button type="button" onClick={()=>{setMobileQuickAddOpen(false);operation("income")}}>
+              <span className="quick-add-item-icon income"><ArrowDownLeft size={20}/></span>
+              <span><b>Un revenu</b><small>Salaire, prime, remboursement</small></span><ChevronRight size={18}/>
+            </button>
+            <button type="button" onClick={()=>{setMobileQuickAddOpen(false);transfer()}}>
+              <span className="quick-add-item-icon transfer"><ArrowLeftRight size={20}/></span>
+              <span><b>Un virement</b><small>Entre mes comptes</small></span><ChevronRight size={18}/>
+            </button>
+            <button type="button" onClick={()=>navigate("add")}>
+              <span className="quick-add-item-icon other"><Plus size={20}/></span>
+              <span><b>Autres opérations</b><small>Prêt, voyage, rapprochement…</small></span><ChevronRight size={18}/>
+            </button>
+          </div>
+        </div>
+      )}
+      <button type="button" className={mobileQuickAddOpen?"floating-add-button open":"floating-add-button"}
+        data-tour="add-button" aria-label={mobileQuickAddOpen?"Fermer l’ajout rapide":"Ajouter une opération"}
+        aria-haspopup="dialog" aria-expanded={mobileQuickAddOpen}
+        onClick={()=>setMobileQuickAddOpen(v=>!v)}>
+        {mobileQuickAddOpen?<X size={26}/>:<Plus size={28}/>}
+      </button>
       <OnboardingTutorial
         mode={tutorialMode}
         storageKey={`wimm-guide-${session?.user.id || "demo"}`}
