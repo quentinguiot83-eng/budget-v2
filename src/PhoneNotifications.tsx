@@ -35,6 +35,12 @@ export default function PhoneNotifications({ state }: { state: State }) {
   const [enabled, setEnabled] = useState(false);
   const [budgets, setBudgets] = useState(true);
   const [dues, setDues] = useState(true);
+  const [dailyReminder, setDailyReminder] = useState(false);
+  const [reminderTime, setReminderTime] = useState("20:00");
+  const [reminderTimezone, setReminderTimezone] = useState(() => {
+    try { return Intl.DateTimeFormat().resolvedOptions().timeZone || "Europe/Paris"; }
+    catch { return "Europe/Paris"; }
+  });
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   const supported = typeof window !== "undefined" && "Notification" in window && "serviceWorker" in navigator && "PushManager" in window;
@@ -54,7 +60,18 @@ export default function PhoneNotifications({ state }: { state: State }) {
         const subscription = await registration?.pushManager.getSubscription();
         if (subscription) {
           const status = await rpc("budget_push_device", { p_subscription: subscription.toJSON(), p_action: "status" });
-          if (!cancelled) { setDeviceId(status.id ?? null); setEnabled(!!status.enabled); setBudgets(status.budgets ?? true); setDues(status.dues ?? true); }
+          const reminder = status.enabled
+            ? await rpc("budget_push_reminder", { p_subscription: subscription.toJSON(), p_action: "status" })
+            : null;
+          if (!cancelled) {
+            setDeviceId(status.id ?? null);
+            setEnabled(!!status.enabled);
+            setBudgets(status.budgets ?? true);
+            setDues(status.dues ?? true);
+            setDailyReminder(reminder?.dailyReminder ?? false);
+            if (reminder?.time) setReminderTime(reminder.time);
+            if (reminder?.timezone) setReminderTimezone(reminder.timezone);
+          }
         }
       } catch (e) { if (!cancelled) setMessage(e instanceof Error ? e.message : "Vérification indisponible."); }
     })();
@@ -75,7 +92,17 @@ export default function PhoneNotifications({ state }: { state: State }) {
       const subscription = existing || await registration.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: key });
       const saved = await rpc("budget_push_device", { p_subscription: subscription.toJSON(), p_budgets: budgets, p_dues: dues,
         p_baseline: pushAlerts(state).filter(a => a.kind === "budgets").map(a => a.key) });
-      setDeviceId(saved.id); setEnabled(true); setMessage("Notifications activées sur cet appareil.");
+      setDeviceId(saved.id); setEnabled(true);
+      await rpc("budget_push_reminder", {
+        p_subscription: subscription.toJSON(),
+        p_action: "save",
+        p_enabled: dailyReminder,
+        p_time: reminderTime,
+        p_timezone: reminderTimezone,
+      });
+      setMessage(dailyReminder
+        ? "Préférences enregistrées. Le rappel quotidien est activé sur cet appareil."
+        : "Notifications activées sur cet appareil.");
     } catch (e) { setMessage(e instanceof Error ? e.message : "Activation impossible."); }
     finally { setBusy(false); }
   }
@@ -88,7 +115,7 @@ export default function PhoneNotifications({ state }: { state: State }) {
         await rpc("budget_push_device", { p_subscription: subscription.toJSON(), p_action: "delete" });
         await subscription.unsubscribe();
       }
-      setEnabled(false); setMessage("Notifications désactivées sur cet appareil.");
+      setEnabled(false); setDailyReminder(false); setMessage("Notifications désactivées sur cet appareil.");
     } catch (e) { setMessage(e instanceof Error ? e.message : "Désactivation impossible."); }
     finally { setBusy(false); }
   }
@@ -111,7 +138,7 @@ export default function PhoneNotifications({ state }: { state: State }) {
     finally { setBusy(false); }
   }
   return <section className="card">
-    <div className="section-head"><div className="block-title"><h2><Bell size={20} /> Notifications sur téléphone</h2><BlockInfo title="Notifications sur téléphone"><p className="muted">Choisis les alertes à recevoir sur cet appareil, même quand Wimm est fermée.</p><p className="muted">Une alerte par catégorie et par mois. Les dépenses fixes sont signalées le jour de leur échéance, le matin (heure de Paris), même si Wimm est fermée. Aucun rappel après validation.</p></BlockInfo></div></div>
+    <div className="section-head"><div className="block-title"><h2><Bell size={20} /> Notifications sur téléphone</h2><BlockInfo title="Notifications sur téléphone"><p className="muted">Choisis les alertes à recevoir sur cet appareil, même quand Wimm est fermée.</p><p className="muted">Les alertes de dépenses fixes sont envoyées le jour de l’échéance. Le rappel de saisie est indépendant des autres alertes, facultatif et limité à une fois par jour. Il utilise l’heure locale de cet appareil.</p></BlockInfo></div></div>
     
     {ios && !standalone ? <p>Dans Safari, ouvre Partager → Ajouter à l’écran d’accueil. Ouvre ensuite Wimm depuis sa nouvelle icône pour activer les notifications.</p>
       : !supported ? <p>Ce navigateur ne permet pas les notifications. Essaie depuis l’application Wimm ajoutée à l’écran d’accueil ou un navigateur compatible.</p>
@@ -119,6 +146,20 @@ export default function PhoneNotifications({ state }: { state: State }) {
         {config && !config.ready && <p className="muted">Les notifications téléphone seront disponibles une fois leur activation terminée.</p>}
         <label className="check-row"><input type="checkbox" checked={budgets} onChange={e => setBudgets(e.target.checked)} disabled={busy} /> Dépassements de budget</label>
         <label className="check-row"><input type="checkbox" checked={dues} onChange={e => setDues(e.target.checked)} disabled={busy} /> Dépenses fixes à valider et factures Pro à suivre</label>
+        <div className="wimm-daily-reminder-settings">
+          <label className="check-row">
+            <input type="checkbox" checked={dailyReminder} onChange={e => setDailyReminder(e.target.checked)} disabled={busy} />
+            <span><strong>Rappel quotidien de saisie</strong><small>Penser à enregistrer les transactions de la journée</small></span>
+          </label>
+          {dailyReminder && (
+            <div className="wimm-daily-reminder-time">
+              <label htmlFor="wimm-daily-reminder-time">Heure du rappel</label>
+              <input id="wimm-daily-reminder-time" type="time" value={reminderTime}
+                onChange={e => setReminderTime(e.target.value)} disabled={busy} required />
+              <small>Une notification par jour sur cet appareil · fuseau : {reminderTimezone.replaceAll("_"," ")}.</small>
+            </div>
+          )}
+        </div>
         
         <div className="flex">
           <button className="primary" disabled={busy || !config?.ready} onClick={() => void save()}>{busy ? "Patiente…" : enabled ? "Enregistrer mes choix" : "Activer sur cet appareil"}</button>
