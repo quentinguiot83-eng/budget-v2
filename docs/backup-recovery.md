@@ -31,19 +31,54 @@ L'historique privé est accessible à son propriétaire. Les photos/fichiers ext
 les factures et l'historique professionnel ne sont pas encore récupérés par ce
 mécanisme. **Ne jamais annoncer une restauration complète de ces données.**
 
-## Restaurer un export JSON téléchargé
+## Restaurer un export JSON téléchargé — phase 1
 
-**Pas encore disponible.** Le bouton « Vérifier une sauvegarde » est une
-vérification locale et une comparaison : il ne réimporte pas le fichier.
-La restauration depuis JSON ne devra être proposée qu'après implantation et tests
-d'un service côté serveur qui :
-- vérifie l'authentification, le propriétaire et l'identifiant du foyer ;
-- rejette un format incompatible, les objets invalides et les IDs inattendus ;
-- sauvegarde une version de l'état actuel avant toute écriture ;
-- vérifie la révision au moment de la transaction afin d'éviter les conflits ;
-- affiche un comparatif et requiert une confirmation explicite ;
-- restaure de manière atomique, avec possibilité de retour arrière ;
-- couvre ou signale séparément tous les fichiers et modules non restaurables.
+À partir de Wimm Réglages → Données et sécurité → Protection et sauvegardes :
 
-Les tests de fichiers fictifs n'utilisent jamais de données réelles.
-Aucune migration Supabase n'est exécutée dans cette phase.
+1. Télécharger d’abord une sauvegarde JSON de l’état actuel.
+2. Sélectionner une sauvegarde Wimm au format JSON pour vérifier son intégrité.
+3. Comparer le nombre d’opérations de cette sauvegarde au nombre actuel.
+4. Si la sauvegarde est du même foyer et si le compte dispose des droits nécessaires,
+   saisir exactement `RESTAURER`, puis confirmer.
+5. Le serveur revérifie **dans sa propre transaction** l’identité du foyer, la propriété
+   du budget commun, le type de données, la structure du document et la révision.
+6. Les triggers d’historique enregistrent l’état avant et après modification.
+   Un conflit inter-appareils bloque l’import sans écraser les changements distants.
+7. Les virements encore liés au module Pro sont protégés : si le fichier les
+   supprimerait, l’import est refusé sans modifier le budget.
+
+L’empreinte SHA-256 permet de détecter les modifications accidentelles, pas
+d’authentifier un fichier malveillant. La validation côté serveur est indépendante
+de l’empreinte calculée dans le navigateur.
+
+Les fichiers externes (photos/couvertures, stockage Supabase) et les données
+professionnelles sont **hors périmètre de restauration**. Aucune restauration
+automatique n’est déclenchée par la sélection d’un fichier.
+
+## Export professionnel — phase 1
+
+L’export professionnel est **en lecture seule**. Un endpoint SQL protégé par
+`auth.uid()` collecte les informations de toutes les entreprises appartenant
+au compte : entreprises, profil, comptes, coordonnées de facturation,
+clients, produits, transactions, devis et lignes, factures et lignes,
+paiements et rendez-vous.
+
+Les liens/tokens de calendrier et les fichiers stockés hors base sont
+délibérément exclus. Ils doivent faire l’objet d’une sauvegarde distincte,
+avec gestion de secrets et droits spécifique.
+
+**Important : l’export Pro ne constitue pas encore une procédure de restauration
+professionnelle.** Ne jamais réimporter directement ces objets en base,
+notamment les factures numérotées, sans restauration dédiée et tests d’intégrité.
+
+## Déploiement
+
+Le fichier `supabase/12-backup-json-restoration-and-pro-export.sql` est une
+**migration durable**. Ne pas le supprimer après exécution : il documente les
+fonctions RPC et droits installés. Il ne contient pas de requête de suppression
+ou de modification des données existantes ; il crée uniquement des fonctions
+et leurs permissions.
+
+Tester d’abord la migration sur base éphémère avec
+`npm test`, puis appliquer en production avant d’activer les boutons de
+restauration et de téléchargement Pro.
