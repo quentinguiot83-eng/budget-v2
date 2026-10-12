@@ -410,6 +410,15 @@ export default function App() {
     [expandedPersonalBudgets, setExpandedPersonalBudgets] = useState<Record<string, boolean>>({}),
     [settingsCategory, setSettingsCategory] = useState<string | null>(null),
     [settingsDetail, setSettingsDetail] = useState<string | null>(null);
+  // The full guided tour must start from predictable sections, even if the
+  // user previously left Projects on the future features tab or Settings open.
+  useEffect(() => {
+    if (!tutorialOpen || tutorialMode === "page") return;
+    setProjectsSection("trips");
+    setSettingsCategory(null);
+    setSettingsDetail(null);
+  }, [tutorialOpen, tutorialMode]);
+
   const tutorialAutoOpened = useRef(false);
   const busy = useRef(false),
     docRef = useRef(doc),
@@ -7425,16 +7434,16 @@ export default function App() {
                   <span className="tutorial-learning-icon"><CircleHelp size={25}/></span>
                   <div>
                     <span className="eyebrow">CENTRE D’APPRENTISSAGE</span>
-                    <h2>Découvrez tout ce que Wimm peut faire</h2>
-                    <p className="muted">Des explications courtes, directement sur les vrais écrans de votre application. Reprenez quand vous voulez.</p>
+                    <h2>Découvre Wimm à ton rythme</h2>
+                    <p className="muted">Un écran figé, une zone entourée et une explication courte. Les exemples ne modifient jamais tes données. Le mode Pro est facultatif.</p>
                   </div>
                 </div>
                 <div className="tutorial-learning-actions">
                   <button type="button" className="primary" onClick={() => { setSettingsCategory(null); setSettingsDetail(null); setTutorialMode("library"); setTutorialPage(null); setTutorialOpen(true); }}>
-                    <CircleHelp size={17}/> Explorer les 13 chapitres
+                    <CircleHelp size={17}/> Découvrir les 8 chapitres
                   </button>
                   <button type="button" className="secondary" onClick={() => { setSettingsCategory(null); setSettingsDetail(null); setTutorialMode("quick"); setTutorialPage(null); setTutorialOpen(true); }}>
-                    <ChevronRight size={17}/> Découverte rapide · 2 min
+                    <ChevronRight size={17}/> Découverte rapide · 6 étapes
                   </button>
                 </div>
               </section>

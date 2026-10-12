@@ -1,0 +1,70 @@
+/* Wimm tutorial v3: readable, no blur, one actionable spotlight, frozen app. */
+.live-tour.wimm-tour-v3 {z-index:380;pointer-events:auto;overflow:hidden;touch-action:none}
+.wimm-tour-v3 .wimm-tour-shield {position:fixed;inset:0;z-index:0;pointer-events:auto;background:transparent;touch-action:none}
+.wimm-tour-v3 .wimm-tour-shield.no-target {background:rgba(13,25,36,.28)}
+.wimm-tour-v3 .live-tour-highlight.wimm-tour-target {
+  position:fixed;z-index:1;display:block;margin:0;padding:0;
+  border:3px solid var(--wimm-green);border-radius:14px;
+  background:transparent!important;
+  box-shadow:0 0 0 9999px rgba(13,25,36,.28),0 0 0 4px color-mix(in srgb,var(--wimm-green) 25%,transparent);
+  transition:none!important;pointer-events:auto;cursor:pointer;touch-action:none;
+  -webkit-tap-highlight-color:transparent;
+}
+.wimm-tour-v3 .wimm-tour-target:focus-visible {outline:3px solid #fff;outline-offset:3px}
+.wimm-tour-v3 .wimm-tour-target-indicator {
+  position:absolute;bottom:calc(100% + 7px);right:0;padding:5px 9px;
+  border-radius:9px;color:#fff;background:var(--wimm-green);
+  font-size:.66rem;font-weight:800;line-height:1.15;white-space:nowrap;
+  pointer-events:none;
+}
+.wimm-tour-v3 .wimm-tour-target-indicator:empty {display:none}
+.wimm-tour-v3 .live-tour-popover {
+  z-index:3;left:auto;right:clamp(12px,4vw,46px);top:auto;
+  bottom:calc(25px + env(safe-area-inset-bottom,0px));
+  width:min(390px,calc(100vw - 24px));max-height:min(56dvh,500px);
+  box-sizing:border-box;padding:15px 17px;
+  border:1px solid color-mix(in srgb,var(--wimm-green) 28%,var(--border));
+  border-radius:19px;background:var(--surface);color:var(--ink);
+  box-shadow:0 18px 54px rgba(14,29,42,.27);
+  overflow-y:auto;overscroll-behavior:contain;touch-action:pan-y;
+}
+.wimm-tour-v3.tour-placement-top .live-tour-popover {top:calc(72px + env(safe-area-inset-top,0px));bottom:auto}
+.wimm-tour-v3 .live-tour-top>span {font-size:.72rem;font-weight:850;letter-spacing:0;text-transform:none;color:var(--wimm-green)}
+.wimm-tour-v3 .live-tour-progress {height:4px;margin:9px 0 12px;background:var(--accent-soft)}
+.wimm-tour-v3 .live-tour-progress i {background:var(--wimm-green)}
+.wimm-tour-v3 .live-tour-popover h2 {font-size:1.02rem;line-height:1.25;margin:0 0 6px;font-weight:850}
+.wimm-tour-v3 .live-tour-popover p {font-size:.85rem;line-height:1.45;margin:0 0 11px;color:var(--ink)}
+.wimm-tour-v3 .live-tour-actions {margin-top:12px;gap:7px}
+.wimm-tour-v3 .live-tour-actions button {min-height:40px;padding:8px 11px;border-radius:11px;font-size:.77rem;font-weight:750}
+.wimm-tour-v3 .live-tour-actions .primary {margin-left:auto}
+.wimm-tour-v3 .wimm-tour-step-skip {font-size:.74rem;line-height:1.2;text-decoration:underline;color:var(--wimm-green);text-align:right;margin-left:auto}
+.wimm-tour-v3 .wimm-tour-tap-hint {display:block;color:var(--wimm-green);font-weight:750;font-size:.72rem;line-height:1.4;margin:6px 0}
+.wimm-tour-v3 .wimm-tour-safety-note {font-size:.7rem;color:var(--muted)}
+.wimm-tour-v3 .wimm-tour-quit {display:block;margin:8px auto 0;padding:4px 10px;font-size:.72rem;color:var(--muted);text-decoration:underline}
+.wimm-tour-v3 .wimm-tour-demo {display:grid;gap:8px;padding:11px 12px;background:var(--accent-soft);border:1px solid var(--border);border-radius:13px}
+.wimm-tour-v3 .wimm-tour-demo-header {display:flex;align-items:center;gap:6px;flex-wrap:wrap;color:var(--wimm-green);font-size:.72rem}
+.wimm-tour-v3 .wimm-tour-demo-header>span {color:var(--muted);font-size:.66rem;margin-left:auto}
+.wimm-tour-v3 .wimm-tour-demo-fields {display:grid;gap:7px}
+.wimm-tour-v3 .wimm-tour-demo-field {display:flex;align-items:center;justify-content:space-between;gap:9px;padding:6px 0;border-top:1px solid var(--border);font-size:.73rem}
+.wimm-tour-v3 .wimm-tour-demo-field span {color:var(--muted)}
+.wimm-tour-v3 .wimm-tour-demo-field strong {text-align:right;font-size:.76rem;color:var(--ink)}
+.wimm-welcome-v3 .secondary.wide {width:100%;display:flex;align-items:center;justify-content:center;gap:9px;min-height:45px;border-radius:14px;font-size:.85rem;font-weight:800}
+.wimm-welcome-v3 .wimm-welcome-pillars>div {min-height:64px}
+.wimm-tutorial-library-v3 .wimm-library-quick {min-height:68px}
+@media(max-width:850px) {
+  .wimm-tour-v3 .live-tour-popover {
+    left:12px;right:12px;bottom:calc(91px + env(safe-area-inset-bottom,0px));
+    width:auto;max-height:47dvh;padding:12px 14px;border-radius:16px
+  }
+  .wimm-tour-v3.tour-placement-top .live-tour-popover {top:calc(88px + env(safe-area-inset-top,0px));bottom:auto}
+  .wimm-tour-v3 .live-tour-popover h2 {font-size:.96rem}
+  .wimm-tour-v3 .live-tour-popover p {font-size:.79rem;line-height:1.4}
+  .wimm-tour-v3 .live-tour-actions button {min-height:38px}
+}
+@media(max-width:380px) {
+  .wimm-tour-v3 .live-tour-popover {left:9px;right:9px;max-height:49dvh;padding:10px 12px}
+  .wimm-tour-v3 .live-tour-top>span {font-size:.67rem}
+}
+@media(prefers-reduced-motion:reduce) {
+  .wimm-tour-v3 .live-tour-popover,.wimm-tour-v3 .live-tour-highlight {transition:none!important}
+}
