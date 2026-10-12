@@ -142,49 +142,43 @@ const styles=String.raw`
   color:white;border-color:rgba(255,255,255,.32);background:rgba(0,0,0,.2);
 }
 .trips-cover-hero.has-cover .trips-cover-edit-trip svg {color:white;}
-.trips-cover-hero .trips-cover-controls {
-  display:flex;flex-wrap:wrap;align-items:center;gap:8px;position:relative;z-index:2;
-}
-.trips-cover-file-input {
-  position:absolute!important;width:1px!important;height:1px!important;
-  opacity:0;clip-path:inset(100%);overflow:hidden;pointer-events:none;
-}
-.trips-cover-action {
-  display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:37px;
-  padding:8px 11px;border-radius:11px;
-  font-size:.76rem;font-weight:760;line-height:1.2;
-  background:var(--surface);color:var(--wimm-green);border:1px solid color-mix(in srgb,var(--wimm-mint) 27%,var(--border));
-  box-shadow:0 2px 7px rgba(18,48,41,.05);
-  cursor:pointer;
-}
-.trips-cover-action:hover {background:var(--wimm-mint-wash);}
-.trips-cover-action:focus-visible,.trips-cover-file-input:focus-visible + .trips-cover-action {
-  outline:2px solid var(--wimm-green);outline-offset:2px;
-}
-.trips-cover-action.is-loading {opacity:.6;cursor:wait;}
-.trips-cover-hero.has-cover .trips-cover-action {
-  color:white;background:rgba(15,28,40,.44);border-color:rgba(255,255,255,.4);
-  backdrop-filter:blur(7px);
-}
-.trips-cover-hero.has-cover .trips-cover-action:hover {background:rgba(15,28,40,.68);}
-.trips-cover-action.trips-cover-remove {color:var(--wimm-coral);}
-.trips-cover-hero.has-cover .trips-cover-action.trips-cover-remove {color:#ffd8de;}
-.trips-cover-position {
-  position:relative;z-index:2;display:flex;align-items:center;gap:10px;
-  border-radius:12px;background:var(--surface);padding:10px 13px;
-  color:var(--ink);font-size:.76rem;font-weight:730;
-}
-.trips-cover-position label {white-space:nowrap;}
-.trips-cover-position input[type=range] {flex:1;min-width:45px;accent-color:var(--wimm-green);}
-.trips-cover-position button {flex:0 0 auto;padding:8px 11px;border-radius:9px;font-size:.76rem;}
 @media(max-width:560px){
   .trips-page-v2 .trips-cover-hero{min-height:219px;padding:15px;gap:13px;}
   .trips-cover-header {gap:9px;}
   .trips-cover-hero .trips-hero-content h2 {font-size:1.3rem;}
-  .trips-cover-action{min-height:34px;padding:7px 9px;font-size:.68rem;gap:5px;}
-  .trips-cover-action>svg{width:14px;height:14px;}
-  .trips-cover-position {flex-wrap:wrap;padding:10px;gap:8px;}
-  .trips-cover-position input[type=range]{flex:1 1 110px;}
+
+}
+
+/* Editing photos happens inside the trip edit modal, not over the cover. */
+.trips-page-v2 .trips-cover-hero {min-height:222px;}
+.trip-edit-photo {display:grid;gap:11px;margin:13px 0 14px;padding:15px;border:1px solid var(--border);
+  background:color-mix(in srgb,var(--wimm-mint-wash) 22%,var(--surface));border-radius:17px;min-width:0;}
+.trip-edit-photo-heading{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;}
+.trip-edit-photo-heading strong{font-weight:820;font-size:.9rem;color:var(--ink);}
+.trip-edit-photo-heading small{font-size:.74rem;color:var(--muted);}
+.trip-edit-photo-hint{margin:0;color:var(--muted);font-size:.79rem;line-height:1.45;}
+.trip-edit-photo-preview{width:100%;aspect-ratio:16/7;max-height:180px;min-height:100px;position:relative;
+  overflow:hidden;border-radius:14px;background:linear-gradient(120deg,var(--wimm-mint-wash),var(--wimm-blue-wash));border:1px solid var(--border);}
+.trip-edit-photo-preview img{display:block;width:100%;height:100%;object-fit:cover;}
+.trip-edit-photo-fallback{width:100%;height:100%;display:flex;gap:10px;align-items:center;justify-content:center;
+  color:var(--wimm-green);font-size:.82rem;font-weight:740;}
+.trip-edit-photo-actions{display:flex;flex-wrap:wrap;gap:7px;}
+.trip-edit-photo-actions button{display:inline-flex;align-items:center;justify-content:center;gap:6px;
+  border:1px solid var(--border);border-radius:10px;padding:8px 10px;min-height:36px;font-size:.74rem;
+  color:var(--wimm-green);background:var(--surface);font-weight:740;}
+.trip-edit-photo-actions button:hover{background:var(--wimm-mint-wash);}
+.trip-edit-photo-actions .trip-edit-photo-remove{color:var(--wimm-coral);}
+.trip-edit-photo-input{position:absolute!important;width:1px!important;height:1px!important;opacity:0;
+  clip-path:inset(100%);pointer-events:none;}
+.trip-edit-photo-position{border-top:1px solid var(--border);padding:12px 0 0;display:grid;gap:9px;}
+.trip-edit-photo-position label{font-size:.76rem;font-weight:730;color:var(--muted);}
+.trip-edit-photo-position input[type=range]{width:100%;accent-color:var(--wimm-green);}
+.trip-edit-photo-position button{justify-self:start;min-height:35px;padding:8px 11px;font-size:.75rem;border-radius:10px;}
+.trip-edit-photo .error{margin:0;font-size:.75rem;}
+@media(max-width:560px){
+  .trip-edit-photo{padding:12px;gap:9px;}
+  .trip-edit-photo-actions button{font-size:.7rem;min-height:35px;padding:7px 8px;}
+  .trip-edit-photo-actions button svg{width:15px;height:15px;}
 }
 `;
 export default function TripsPageStyles(){return <style data-wimm-trips="v2">{styles}</style>;}
