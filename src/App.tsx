@@ -6058,10 +6058,16 @@ export default function App() {
 
                       {(ps.budgets ?? []).map(
                         (b) => (
-                          <div
-                            className="rule-row"
-                            key={b.id}
-                          >
+                          <SwipeActions key={b.id} label={b.name} className="personal-budget-swipe-row" actions={[
+                            { label: "Modifier", icon: <Pencil size={17}/>, onClick: () => editPersonalBudget(b) },
+                            { label: "Supprimer", icon: <Trash2 size={17}/>, tone: "danger" as const, onClick: () => confirmAction(
+                              "Supprimer " + b.name + " ?",
+                              "Ce budget n'entrera plus dans les projections. Aucune dépense déjà enregistrée ne sera supprimée.",
+                              async () => changePersonal(d => {
+                                d.budgets = (d.budgets ?? []).filter(x => x.id !== b.id);
+                              }, "Budget perso supprimé")) },
+                          ]}>
+                          <div className="rule-row">
                             <div className="grow">
                               <strong>
                                 {b.name}
@@ -6088,51 +6094,9 @@ export default function App() {
                               </small>
                             </div>
 
-                            <button
-                              className="secondary compact"
-                              onClick={() =>
-                                editPersonalBudget(
-                                  b,
-                                )
-                              }
-                            >
-                              Modifier
-                            </button>
 
-                            <button
-                              className="icon"
-                              aria-label="Supprimer le budget perso"
-                              onClick={() =>
-                                confirmAction(
-                                  "Supprimer " +
-                                    b.name +
-                                    " ?",
-                                  "Il ne sera plus pris en compte dans vos projections futures. Cela ne modifie aucune dépense déjà enregistrée.",
-                                  async () =>
-                                    changePersonal(
-                                      (d) => {
-                                        d.budgets =
-                                          (
-                                            d.budgets ??
-                                            []
-                                          ).filter(
-                                            (
-                                              x,
-                                            ) =>
-                                              x.id !==
-                                              b.id,
-                                          );
-                                      },
-                                      "Budget perso supprimé",
-                                    ),
-                                )
-                              }
-                            >
-                              <Trash2
-                                size={16}
-                              />
-                            </button>
                           </div>
+                          </SwipeActions>
                         ),
                       )}
 
