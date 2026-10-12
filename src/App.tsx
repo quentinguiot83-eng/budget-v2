@@ -11,6 +11,7 @@ import TransactionSearch from "./TransactionSearch";
 import OnboardingTutorial from "./OnboardingTutorial";
 import WealthPageStyles from "./WealthPageStyles";
 import ProjectionPageStyles from "./ProjectionPageStyles";
+import TripsPageStyles from "./TripsPageStyles";
 import SetupWizard, { applyInitialSetup } from "./SetupWizard";
 import {
   lazy,
@@ -7144,390 +7145,261 @@ export default function App() {
             </div>
           )}
           {route === "trips" && (
-            <>
-              <div className="section-head">
-                <p className="muted">Vos aventures, avec un budget à part.</p>
-                <button className="primary" onClick={() => editTrip()}>
-                  <Plus size={17} />
-                  Voyage
+            <div className="trips-page-v2">
+              <TripsPageStyles />
+              <div className="trips-top-actions">
+                <p className="muted">Des projets de voyage, un budget maîtrisé.</p>
+                <button type="button" className="primary" onClick={() => editTrip()}>
+                  <Plus size={17}/> Nouveau voyage
                 </button>
               </div>
               {!s.trips.length ? (
-                <Empty
-                  title="Quel sera votre prochain départ ?"
-                  action={
-                    <button className="primary" onClick={() => editTrip()}>
-                      Préparer un voyage
-                    </button>
-                  }
-                >
-                  Estimez le budget, suivez les dépenses et son financement.
+                <Empty title="Quel sera votre prochain départ ?"
+                  action={<button className="primary" onClick={() => editTrip()}>Préparer un voyage</button>}>
+                  Prévoyez le budget, suivez les dépenses et son financement.
                 </Empty>
               ) : (
                 <>
-                  {s.trips.some((t) => !t.closedAt) && (
-                    <>
-                      <p className="eyebrow">VOYAGES ACTIFS</p>
+                  {s.trips.some(t => !t.closedAt) && (
+                    <section className="trips-active-picker" aria-label="Choisir un voyage actif">
+                      <div className="trips-section-heading">
+                        <strong>Mes voyages</strong>
+                        <small className="muted">{s.trips.filter(t => !t.closedAt).length} actif(s)</small>
+                      </div>
                       <div className="trip-tabs">
-                        {s.trips
-                          .filter((t) => !t.closedAt)
-                          .map((t) => (
-                            <button
-                              className={
-                                (
-                                  activeTrip ||
-                                  s.trips.find((x) => !x.closedAt)?.id ||
-                                  s.trips[0]?.id
-                                ) === t.id
-                                  ? "selected"
-                                  : ""
-                              }
-                              key={t.id}
-                              onClick={() => setActiveTrip(t.id)}
-                            >
-                              <Plane size={16} />
-                              {t.name}
+                        {s.trips.filter(t => !t.closedAt).map(t => {
+                          const selected = (activeTrip || s.trips.find(x => !x.closedAt)?.id || s.trips[0]?.id) === t.id;
+                          return (
+                            <button type="button" key={t.id} className={selected ? "selected" : ""}
+                              aria-pressed={selected} onClick={() => setActiveTrip(t.id)}>
+                              <Plane size={16}/>{t.name}
                             </button>
-                          ))}
+                          );
+                        })}
                       </div>
-                    </>
+                    </section>
                   )}
-
-                  {s.trips.some((t) => !!t.closedAt) && (
-                    <>
-                      <p className="eyebrow">VOYAGES TERMINÉS</p>
-
+                  {s.trips.some(t => !!t.closedAt) && (
+                    <details className="trips-archive-picker">
+                      <summary>
+                        <CalendarDays size={17}/>
+                        Voyages terminés ({s.trips.filter(t => !!t.closedAt).length})
+                        <ChevronRight size={17}/>
+                      </summary>
                       <div className="trip-tabs">
-                        {s.trips
-                          .filter((t) => !!t.closedAt)
-                          .map((t) => {
-                            const total = s.transactions
-                              .filter(
-                                (x) =>
-                                  x.trip === t.id &&
-                                  x.type === "expense",
-                              )
-                              .reduce((n, x) => n + x.amount, 0);
-
-                            return (
-                              <button
-                                className={
-                                  activeTrip === t.id
-                                    ? "selected"
-                                    : ""
-                                }
-                                key={t.id}
-                                onClick={() => setActiveTrip(t.id)}
-                              >
-                                <Plane size={16} />
-                                {t.name} · {money(total)}
-                              </button>
-                            );
-                          })}
+                        {s.trips.filter(t => !!t.closedAt).map(t => {
+                          const total = s.transactions.filter(x => x.trip === t.id && x.type === "expense")
+                            .reduce((n, x) => n + x.amount, 0);
+                          return (
+                            <button type="button" className={activeTrip === t.id ? "selected" : ""}
+                              aria-pressed={activeTrip === t.id} key={t.id} onClick={() => setActiveTrip(t.id)}>
+                              <Plane size={16}/>{t.name} · {money(total)}
+                            </button>
+                          );
+                        })}
                       </div>
-                    </>
+                    </details>
                   )}
                   {(() => {
-                    const t =
-                      s.trips.find((t) => t.id === activeTrip) ||
-                      s.trips.find((t) => !t.closedAt) ||
-                      s.trips[0];
-                    const tx = s.transactions.filter((x) => x.trip === t.id);
-                    const spent = tx
-                      .filter((x) => x.type === "expense")
-                      .reduce((n, x) => n + x.amount, 0);
-                    const transfers = tx.filter((x) => x.type === "transfer");
-                    const funded = transfers.reduce(
-                      (n, x) =>
-                        n +
-                        (s.accounts.find((a) => a.id === x.to)?.group ===
-                        "current"
-                          ? x.amount
-                          : -x.amount),
-                      0,
-                    );
+                    const t = s.trips.find(t => t.id === activeTrip) ||
+                      s.trips.find(t => !t.closedAt) || s.trips[0];
+                    const tx = s.transactions.filter(x => x.trip === t.id);
+                    const expenses = tx.filter(x => x.type === "expense");
+                    const spent = expenses.reduce((n, x) => n + x.amount, 0);
+                    const transfers = tx.filter(x => x.type === "transfer");
+                    const funded = transfers.reduce((n, x) =>
+                      n + (s.accounts.find(a => a.id === x.to)?.group === "current" ? x.amount : -x.amount), 0);
+                    const availableCategories = t.categories.filter(c => !c.archived || tx.some(x => x.tripCategory === c.id));
+                    const allocated = t.categories.filter(c => !c.archived).reduce((n, c) => n + c.budget, 0);
+                    const leftover = t.budget - spent;
                     return (
                       <>
-                        <section className="trip-hero">
-                          <span className="trip-icon">
-                            <Plane size={36} />
-                          </span>
-                          <div className="grow">
-                            <p className="eyebrow">
-                              VOTRE PROCHAINE PARENTHÈSE
-                            </p>
+                        <section className="trips-v2-hero" aria-label="Voyage sélectionné">
+                          <span className="trip-icon"><Plane size={27}/></span>
+                          <div className="trips-hero-content">
+                            <span className="trips-hero-status">
+                              {t.closedAt ? "Voyage terminé" :
+                                today() < t.start ? "Voyage à venir" :
+                                today() <= t.end ? "Voyage en cours" : "Voyage à clôturer"}
+                            </span>
                             <h2>{t.name}</h2>
-                            <p>
-                              {dateLabel(t.start)} — {dateLabel(t.end)}
-                            </p>
+                            <p>{dateLabel(t.start)} — {dateLabel(t.end)}</p>
                           </div>
                           {!t.closedAt && (
-                            <button
-                              className="icon"
-                              aria-label="Modifier le voyage"
-                              onClick={() => editTrip(t)}
-                            >
-                              <Pencil size={19} />
-                            </button>
+                            <button type="button" className="icon" aria-label={"Modifier le voyage " + t.name}
+                              onClick={() => editTrip(t)}><Pencil size={18}/></button>
                           )}
                         </section>
 
-                        {t.closedAt ? (
-                          <section className="card">
-                            <div className="section-head">
-                              <div>
-                                <h2>Voyage clôturé</h2>
-                                <p className="muted">
-                                  Clôturé le {dateLabel(t.closedAt)} · Coût total : {money(spent)}
-                                </p>
-                              </div>
-
-                              <button
-                                type="button"
-                                className="secondary"
-                                onClick={() =>
-                                  confirmAction(
-                                    "Réouvrir ce voyage ?",
-                                    "Vous pourrez de nouveau ajouter des dépenses et modifier ses enveloppes.",
-                                    async () =>
-                                      change((d) => {
-                                        const trip = d.trips.find(
-                                          (x) => x.id === t.id,
-                                        )!;
-                                        trip.closedAt = undefined;
-                                      }, "Voyage réouvert"),
-                                  )
-                                }
-                              >
-                                Réouvrir
-                              </button>
+                        <section className="trips-overview-card" aria-label="Budget du voyage">
+                          <div className="trips-budget-header">
+                            <div>
+                              <h2>Budget du voyage</h2>
+                              <strong className="trips-budget-spent">{money(spent)}</strong>
                             </div>
-                          </section>
-                        ) : (
-                          <section className="card trip-close-card">
-                            <div className="section-head">
-                              <div>
-                                <h2>Clôturer le voyage</h2>
-                                <p className="muted">
-                                  Vous pouvez le clôturer à tout moment, même avant sa date de fin prévue.
-                                </p>
-                              </div>
-
-                              <button
-                                type="button"
-                                className="secondary"
-                                onClick={() =>
-                                  confirmAction(
-                                    "Clôturer ce voyage ?",
-                                    "Il sera déplacé dans Voyages terminés. Son historique et son coût total resteront accessibles.",
-                                    async () =>
-                                      change((d) => {
-                                        const trip = d.trips.find(
-                                          (x) => x.id === t.id,
-                                        )!;
-                                        trip.closedAt = today();
-                                      }, "Voyage clôturé"),
-                                  )
-                                }
-                              >
-                                Clôturer
-                              </button>
-                            </div>
-                          </section>
-                        )}
-                        <div className="two-col">
-                          <section className="card">
-                            <h2>Budget du voyage</h2>
-                            <div className="split">
-                              <strong className="large">{money(spent)}</strong>
-                              <span>sur {money(t.budget)}</span>
-                            </div>
-                            <Progress value={spent} max={t.budget} />
-                            <p
-                              className={
-                                spent > t.budget ? "negative" : "muted"
-                              }
-                            >
-                              {spent > t.budget
-                                ? "Dépassement : " + money(spent - t.budget)
-                                : money(t.budget - spent) + " restants"}
-                            </p>
+                            <span className="trips-budget-target">dépensés sur {money(t.budget)}</span>
+                          </div>
+                          <Progress value={spent} max={t.budget}/>
+                          <div className="trips-budget-footer">
+                            <span className={"trips-budget-rest" + (leftover < 0 ? " negative" : "")}>
+                              {leftover < 0 ? "Dépassé de " + money(-leftover) : money(leftover) + " disponibles"}
+                            </span>
                             {!t.closedAt && (
-                              <button
-                                className="primary"
-                                onClick={() => operation("expense", t)}
-                              >
-                                <Plus size={17} />
-                                Ajouter une dépense
-                              </button>
-                            )}
-                          </section>
-                          <section className="card">
-                            <h2>Financement</h2>
-                            <div className="large">{money(funded)}</div>
-                            <p className="muted">
-                              Déjà transférés sur le compte courant
-                            </p>
-                            <p>
-                              {funded >= spent
-                                ? "Avance disponible : " + money(funded - spent)
-                                : "Dépenses non compensées : " +
-                                  money(spent - funded)}
-                            </p>
-                            {!t.closedAt && (
-                              <button
-                                className="secondary"
-                                onClick={() =>
-                                  transfer(
-                                    undefined,
-                                    t,
-                                    s.accounts.find((a) => a.group === "travel"),
-                                  )
-                                }
-                              >
-                                Financer le voyage
-                              </button>
-                            )}
-                          </section>
-                        </div>
-                        <section className="card trip-envelopes-card">
-                          <div className="section-head">
-                            <h2>Les enveloppes du voyage</h2>
-                            {!t.closedAt && (
-                              <button
-                                className="text"
-                                onClick={() => tripCategory(t)}
-                              >
-                                Ajouter une catégorie
+                              <button type="button" className="primary" onClick={() => operation("expense", t)}>
+                                <Plus size={17}/> Ajouter une dépense
                               </button>
                             )}
                           </div>
-                          {t.categories
-                            .filter(
-                              (c) =>
-                                !c.archived ||
-                                tx.some((x) => x.tripCategory === c.id),
-                            )
-                            .map((c, i) => {
-                              const paid = tx
-                                .filter(
-                                  (x) =>
-                                    x.type === "expense" &&
-                                    x.tripCategory === c.id,
-                                )
+                        </section>
+
+                        <section className="trips-financing-card" aria-label="Financement du voyage">
+                          <div className="trips-finance-copy">
+                            <h2>Financement</h2>
+                            <strong className="trips-finance-value">{money(funded)}</strong>
+                            <p>Transférés vers le compte courant pour ce voyage</p>
+                            <small>{funded >= spent
+                              ? "Avance disponible : " + money(funded - spent)
+                              : "Dépenses non compensées : " + money(spent - funded)}</small>
+                          </div>
+                          {!t.closedAt && (
+                            <button type="button" className="secondary" onClick={() => transfer(
+                              undefined, t, s.accounts.find(a => a.group === "travel")
+                            )}>Financer le voyage <ChevronRight size={16}/></button>
+                          )}
+                        </section>
+
+                        <section className="trips-categories-card" aria-label="Enveloppes du voyage">
+                          <div className="section-head">
+                            <h2>Mes enveloppes</h2>
+                            {!t.closedAt && (
+                              <button type="button" className="text" onClick={() => tripCategory(t)}>
+                                <Plus size={16}/> Ajouter
+                              </button>
+                            )}
+                          </div>
+                          <div className="trips-category-list">
+                            {availableCategories.map((c, i) => {
+                              const paid = expenses.filter(x => x.tripCategory === c.id)
                                 .reduce((n, x) => n + x.amount, 0);
                               return (
                                 <div className="trip-category" key={c.id}>
-                                  <div className="split">
-                                    <strong>
-                                      {c.name}
-                                      {c.archived ? " (archivée)" : ""}
-                                    </strong>
-                                    <span>
-                                      {money(paid)} / {money(c.budget)}
+                                  <div className="trips-category-top">
+                                    <strong className="trips-category-name">{c.name}{c.archived ? " (archivée)" : ""}</strong>
+                                    <span className="trips-category-amount">
+                                      {money(paid)} <small>/ {money(c.budget)}</small>
                                     </span>
                                     {!t.closedAt && (
-                                      <button
-                                        className="icon"
-                                        aria-label="Modifier la catégorie"
-                                        onClick={() => tripCategory(t, c)}
-                                      >
-                                        <Pencil size={15} />
-                                      </button>
-                                    )}
-                                    {!t.closedAt && (
-                                    <button
-                                      className="icon"
-                                      aria-label="Archiver la catégorie"
-                                      onClick={() =>
-                                        confirmAction(
-                                          "Archiver cette catégorie ?",
-                                          "Les dépenses passées restent consultables.",
-                                          async () =>
-                                            change((d) => {
-                                              d.trips
-                                                .find((x) => x.id === t.id)!
-                                                .categories.find(
-                                                  (x) => x.id === c.id,
-                                                )!.archived = true;
-                                            }, "Catégorie voyage archivée"),
-                                        )
-                                      }
-                                    >
-                                      <Trash2 size={15} />
-                                    </button>
+                                      <span className="trips-category-actions">
+                                        <button type="button" className="icon" aria-label={"Modifier la catégorie " + c.name}
+                                          onClick={() => tripCategory(t, c)}><Pencil size={15}/></button>
+                                        {!c.archived && (
+                                          <button type="button" className="icon" aria-label={"Archiver la catégorie " + c.name}
+                                            onClick={() => confirmAction(
+                                              "Archiver cette catégorie ?",
+                                              "Les dépenses passées restent consultables.",
+                                              async () => change(d => {
+                                                d.trips.find(x => x.id === t.id)!.categories
+                                                  .find(x => x.id === c.id)!.archived = true;
+                                              }, "Catégorie voyage archivée")
+                                            )}><Trash2 size={15}/></button>
+                                        )}
+                                      </span>
                                     )}
                                   </div>
-                                  <Progress
-                                    value={paid}
-                                    max={c.budget}
-                                    color={palette[i % 6]}
-                                  />
+                                  <Progress value={paid} max={c.budget} color={palette[i % 6]}/>
+                                  <small className={"trips-category-sub" + (paid > c.budget ? " negative" : "")}>
+                                    {paid > c.budget ? "Dépassé de " + money(paid - c.budget) :
+                                      money(c.budget - paid) + " restants"}
+                                  </small>
                                 </div>
                               );
                             })}
-                          <p className="muted">
-                            {t.budget -
-                              t.categories
-                                .filter((c) => !c.archived)
-                                .reduce((n, c) => n + c.budget, 0) >=
-                            0
-                              ? "Non réparti : "
-                              : "Enveloppes au-dessus du total : "}
-                            {money(
-                              Math.abs(
-                                t.budget -
-                                  t.categories
-                                    .filter((c) => !c.archived)
-                                    .reduce((n, c) => n + c.budget, 0),
-                              ),
+                            {!availableCategories.length && (
+                              <p className="trips-empty-categories">Aucune enveloppe pour le moment. Ajoutez des catégories pour répartir les dépenses du voyage.</p>
                             )}
-                          </p>
+                          </div>
+                          <div className="trips-unallocated">
+                            <span>{allocated <= t.budget ? "Budget non réparti" : "Enveloppes au-dessus du budget"}</span>
+                            <strong>{money(Math.abs(t.budget - allocated))}</strong>
+                          </div>
                         </section>
-                        <div className="two-col">
-                          <section className="card">
-                            <h2>Dépenses du voyage</h2>
-                            {txRows(
-                              [...tx]
-                                .filter((x) => x.type === "expense")
-                                .sort((a, b) => b.date.localeCompare(a.date)),
-                            )}
-                          </section>
-                          <section className="card">
-                            <h2>Virements effectués</h2>
-                            {txRows(transfers)}
-                          </section>
-                        </div>
-                        <button
-                          className="text danger-text"
-                          onClick={() =>
-                            confirmAction(
-                              "Supprimer le voyage ?",
-                              "La suppression est possible seulement sans transaction liée. Sinon conservez-le pour garder son historique.",
-                              async () =>
-                                change((d) => {
-                                  if (
-                                    d.transactions.some((x) => x.trip === t.id)
-                                  )
-                                    throw Error(
-                                      "Ce voyage possède des transactions. Il est conservé pour votre historique.",
-                                    );
-                                  d.trips = d.trips.filter(
-                                    (x) => x.id !== t.id,
-                                  );
+
+                        <details className="trips-disclosure" aria-label="Historique du voyage">
+                          <summary>
+                            <span className="trips-disclosure-icon"><CalendarDays size={20}/></span>
+                            <span className="trips-disclosure-copy">
+                              <strong>Historique du voyage</strong>
+                              <small>{expenses.length} dépense(s) · {transfers.length} virement(s)</small>
+                            </span>
+                            <ChevronRight size={18}/>
+                          </summary>
+                          <div className="trips-disclosure-content">
+                            <section className="trips-disclosure-section">
+                              <h3>Dépenses</h3>
+                              {txRows([...expenses].sort((a,b) => b.date.localeCompare(a.date)))}
+                            </section>
+                            <section className="trips-disclosure-section">
+                              <h3>Virements</h3>
+                              {txRows(transfers)}
+                            </section>
+                          </div>
+                        </details>
+
+                        <details className="trips-disclosure trips-management-card" aria-label="Gérer le voyage">
+                          <summary>
+                            <span className="trips-disclosure-icon"><SlidersHorizontal size={20}/></span>
+                            <span className="trips-disclosure-copy">
+                              <strong>Gérer le voyage</strong>
+                              <small>Modifier, clôturer ou supprimer</small>
+                            </span>
+                            <ChevronRight size={18}/>
+                          </summary>
+                          <div className="trips-disclosure-content trips-management-content">
+                            <p>{t.closedAt
+                              ? "Voyage clôturé le " + dateLabel(t.closedAt) + ". Son historique est conservé."
+                              : "Clôturez votre voyage lorsque vous le souhaitez. Les dépenses et les enveloppes resteront consultables."}</p>
+                            <div className="trips-management-actions">
+                              {t.closedAt ? (
+                                <button type="button" className="secondary" onClick={() => confirmAction(
+                                  "Réouvrir ce voyage ?",
+                                  "Vous pourrez de nouveau ajouter des dépenses et modifier ses enveloppes.",
+                                  async () => change(d => {
+                                    d.trips.find(x => x.id === t.id)!.closedAt = undefined;
+                                  }, "Voyage réouvert")
+                                )}>Réouvrir le voyage</button>
+                              ) : (
+                                <>
+                                  <button type="button" className="secondary" onClick={() => editTrip(t)}>
+                                    <Pencil size={16}/> Modifier
+                                  </button>
+                                  <button type="button" className="secondary" onClick={() => confirmAction(
+                                    "Clôturer ce voyage ?",
+                                    "Il sera déplacé dans Voyages terminés. Son historique et son coût total resteront accessibles.",
+                                    async () => change(d => {
+                                      d.trips.find(x => x.id === t.id)!.closedAt = today();
+                                    }, "Voyage clôturé")
+                                  )}>Clôturer le voyage</button>
+                                </>
+                              )}
+                              <button type="button" className="text danger-text" onClick={() => confirmAction(
+                                "Supprimer le voyage ?",
+                                "La suppression est possible seulement sans transaction liée. Sinon conservez-le pour garder son historique.",
+                                async () => change(d => {
+                                  if (d.transactions.some(x => x.trip === t.id))
+                                    throw Error("Ce voyage possède des transactions. Il est conservé pour votre historique.");
+                                  d.trips = d.trips.filter(x => x.id !== t.id);
                                   setActiveTrip("");
-                                }, "Voyage supprimé"),
-                            )
-                          }
-                        >
-                          Supprimer ce voyage
-                        </button>
+                                }, "Voyage supprimé")
+                              )}><Trash2 size={16}/> Supprimer</button>
+                            </div>
+                          </div>
+                        </details>
                       </>
                     );
                   })()}
                 </>
               )}
-            </>
+            </div>
           )}
           {route === "transactions" && (
             <TransactionSearch initialType={txFilter} state={s} month={selectedMonth} setMonth={setMonth} add={() => navigate("add")} rows={txRows}/>
