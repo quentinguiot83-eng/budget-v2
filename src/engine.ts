@@ -136,6 +136,12 @@ export type Trip = {
 
   id: string;
 
+  /** Chemin privé Supabase Storage, sans URL signée dans le budget. */
+  coverPath?: string;
+
+  /** Position verticale du visuel (0 à 100). */
+  coverPosition?: number;
+
   name: string;
 
   start: string;
