@@ -7,7 +7,6 @@ import {
   Plane,
   FileSpreadsheet,
 } from "lucide-react";
-import type { ReactNode } from "react";
 
 import { Row, BlockInfo } from "../ui";
 import type { Trip } from "../engine";
@@ -21,7 +20,6 @@ type AddPageProps = {
   ) => void;
   transfer: () => void;
   newLoan: () => void;
-  quickEntry: ReactNode;
   bankReconciliation: () => void;
 };
 
@@ -31,7 +29,6 @@ export default function AddPage({
   operation,
   transfer,
   newLoan,
-  quickEntry,
   bankReconciliation,
 }: AddPageProps) {
   return (
@@ -49,7 +46,6 @@ export default function AddPage({
         </button>
       </div>
 
-      {quickEntry}
       <div className="add-grid">
         {[
           {
