@@ -1,4 +1,4 @@
-import { useRef, useState, type PointerEvent, type ReactNode } from "react";
+import { useRef, useState, type PointerEvent, type CSSProperties, type ReactNode } from "react";
 import { MoreHorizontal } from "lucide-react";
 
 export type SwipeAction = {
@@ -46,6 +46,7 @@ export default function SwipeActions({ children, actions, className = "", label 
 
   return (
     <div className={`swipe-actions${opened ? " is-open" : ""} ${className}`}
+      style={{ "--swipe-distance": `${actions.length * 80}px` } as CSSProperties}
       onPointerDown={pointerStart} onPointerUp={pointerEnd}
       onPointerCancel={() => { start.current = null; }}
       onClickCapture={event => {
