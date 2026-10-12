@@ -82,12 +82,12 @@ export default function SettingsNavigation({
   if (!activeGroup) {
     return (
       <div className="wimm-settings-nav" aria-label="Catégories de réglages">
-        <div className="wimm-settings-menu" role="list">
+        <div className="wimm-settings-menu">
           {groups.map((group) => {
             const Icon = group.icon;
             return (
               <button type="button" className="wimm-settings-entry" key={group.id}
-                onClick={() => onCategory(group.id)} role="listitem">
+                onClick={() => onCategory(group.id)} data-settings-category={group.id}>
                 <span className="wimm-settings-entry-icon"><Icon size={22} aria-hidden="true" /></span>
                 <span className="wimm-settings-entry-copy">
                   <strong>{group.title}</strong>
@@ -122,7 +122,7 @@ export default function SettingsNavigation({
             const Icon = item.icon;
             return (
               <button type="button" className="wimm-settings-entry" key={item.id}
-                onClick={() => onDetail(item.id)} role="listitem">
+                onClick={() => onDetail(item.id)} data-settings-detail={item.id}>
                 <span className="wimm-settings-entry-icon"><Icon size={21} aria-hidden="true" /></span>
                 <span className="wimm-settings-entry-copy">
                   <strong>{item.title}</strong>
