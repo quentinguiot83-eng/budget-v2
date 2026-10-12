@@ -7780,6 +7780,9 @@ export default function App() {
                 household={{ id: doc.household.id, name: doc.household.name, revision: doc.revision, state: s }}
                 personal={personalDoc}
                 demo={demoEnabled}
+                isOwner={isOwner}
+                proEnabled={proEnabled}
+                onRestored={load}
               />
 )}
               {settingsDetail === "historique" && (
