@@ -74,9 +74,9 @@ function readDate(s:string):string{
   let m=v.match(/^(\d{4})-(\d{1,2})-(\d{1,2})(?:\s.*)?$/);
   if(m){year=+m[1];month=+m[2];day=+m[3];}
   else{
-    m=v.match(/^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{4})(?:\s.*)?$/);
+    m=v.match(/^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{2}|\d{4})(?:\s.*)?$/);
     if(!m)throw Error("Date bancaire non reconnue : "+v.slice(0,40));
-    day=+m[1];month=+m[2];year=+m[3];
+    day=+m[1];month=+m[2];year=m[3].length===2?2000+Number(m[3]):Number(m[3]);
   }
   const check=new Date(Date.UTC(year,month-1,day));
   if(year<2000||check.getUTCFullYear()!==year||check.getUTCMonth()!==month-1||check.getUTCDate()!==day)
@@ -96,6 +96,8 @@ export function readBankAmount(raw:string):number{
   }else if(s.includes(",")){
     if(/^\d{1,3}(,\d{3})+$/.test(s))s=s.replace(/,/g,"");
     else s=s.replace(",",".");
+  }else if(/^\d{1,3}(\.\d{3})+$/.test(s)){
+    s=s.replace(/\./g,"");
   }else if((s.match(/\./g)||[]).length>1){
     if(/^\d{1,3}(\.\d{3})+$/.test(s))s=s.replace(/\./g,"");
   }
@@ -158,7 +160,10 @@ export function reconcileBankRows(rows:BankRow[], transactions:Tx[], account:str
     if(matched)consumed.set(sig,(consumed.get(sig)||0)+1);
     // Same amount and date with another label is only a warning, not proof of duplication.
     const approx=[row.date,row.type,row.amount].join("|");
-    const possible=!matched && (possibleCounts.get(approx)||0)>0;
+    const currentDay=Date.parse(row.date+"T00:00:00Z");
+    const possible=!matched && ((possibleCounts.get(approx)||0)>0 || existing.some(t=>
+      t.type===row.type && t.amount===row.amount &&
+      Math.abs(Date.parse(t.date+"T00:00:00Z")-currentDay)<=2*86400000));
     return {...row,key,status:alreadyImported||matched?"matched":possible?"possible":"new",
       matches:(exactCounts.get(sig)||0)};
   });
