@@ -90,6 +90,10 @@ import {
 import { api, rpc } from "./api";
 import { Modal, Form, Progress, Empty, Row, BlockInfo, type Field } from "./ui";
 import AddPage from "./pages/AddPage";
+import QuickEntry, { type QuickDraft } from "./QuickEntry";
+import BankReconciliation, { type BankDraft } from "./BankReconciliation";
+import { reconcileBankRows, type BankRow } from "./bankImport";
+import { checkFavorite, favoriteFromTransaction } from "./quickEntry";
 import LoansPage from "./pages/LoansPage";
 import ProWorkspace from "./ProWorkspace";
 import {
@@ -578,6 +582,7 @@ export default function App() {
     "calendar",
     "transactions",
     "analysis",
+    "bank",
   ];
 
   function navigate(r: string) {
@@ -777,6 +782,90 @@ export default function App() {
       action,
     );
 
+  }
+
+  async function saveQuickTransaction(draft: QuickDraft) {
+    await change(d => {
+      if (draft.type !== "expense" && draft.type !== "income")
+        throw Error("Type d’opération invalide.");
+      d.transactions.push({ id: uid(), ...draft });
+    }, "Saisie rapide enregistrée");
+  }
+
+  async function removeQuickFavorite(id: string) {
+    await change(d => { d.quickFavorites=(d.quickFavorites||[]).filter(f=>f.id!==id); }, "Favori retiré");
+  }
+  async function toggleQuickFavorite(tx: Tx) {
+    const favorite = favoriteFromTransaction(tx);
+    await change(d => {
+      const list=d.quickFavorites||[];
+      if(list.some(f=>f.id===tx.id)){
+        d.quickFavorites=list.filter(f=>f.id!==tx.id);
+      }else{
+        checkFavorite(favorite,d.accounts,d.categories);
+        if(list.length>=30)throw Error("Maximum 30 favoris.");
+        d.quickFavorites=[...list,favorite];
+      }
+    }, "Favoris mis à jour");
+    setSheet(null);
+  }
+
+  async function importBankDrafts(drafts: BankDraft[], sourceRows: BankRow[], accountId: string) {
+    if(!drafts.length||drafts.length>2500)throw Error("Sélection bancaire invalide.");
+    await change(d => {
+      const target=d.accounts.find(a=>a.id===accountId&&!a.archived&&a.group==="current");
+      if(!target)throw Error("Ce compte courant n’est plus disponible.");
+      const refreshed=reconcileBankRows(sourceRows,d.transactions,accountId);
+      const eligible=new Map(refreshed.filter(r=>r.status!=="matched").map(r=>[r.key,r]));
+      const used=new Set<string>();
+      for(const draft of drafts){
+        const key=draft.bankImportKey;
+        if(!key||used.has(key)||!eligible.has(key))throw Error("Une opération existe déjà dans Wimm. Actualisez la comparaison.");
+        used.add(key);
+        const row=eligible.get(key)!;
+        if(draft.date!==row.date||draft.amount!==row.amount||draft.type!==row.type||
+           draft.account!==accountId||draft.description!==row.description)
+          throw Error("Le contenu d’une ligne ne correspond plus au relevé.");
+        if(draft.date<target.date||draft.date>today())throw Error("Opération en dehors de la période de ce compte.");
+        if(draft.type==="expense" && !d.categories.some(c=>c.id===draft.category&&!c.archived))
+          throw Error("Catégorie manquante ou archivée pour une dépense.");
+        // Imported credits are not assumed to be salary; internal transfers must be excluded manually.
+        d.transactions.push({...draft,id:uid(),incomeType:draft.type==="income"?"Autre":undefined});
+      }
+    }, "Rapprochement bancaire : "+drafts.length+" opération(s)");
+  }
+
+  function duplicateTransaction(t: Tx) {
+    if(!["expense","income"].includes(t.type)||!!t.dueKey||!!t.fixed||!!t.trip)
+      throw Error("Cette opération ne peut pas être dupliquée directement.");
+    const isExpense=t.type==="expense";
+    const categories=s.categories.filter(c=>!c.archived).map(c=>[c.id,c.name] as [string,string]);
+    openForm("Dupliquer une opération",[
+      amountField("amount","Montant (€)",t.amount),
+      field("date","Date",today(),"date"),
+      field("description","Libellé",t.description),
+      choice("account","Compte",accountOptions(),t.account),
+      ...(isExpense?[choice("category","Catégorie",categories,t.category||categories[0]?.[0])]:[
+        choice("incomeType","Type de revenu",[
+          ["Salaire","Salaire"],["Prime","Prime"],["Remboursement","Remboursement"],
+          ["Vente","Vente"],["Autre","Autre"]
+        ],t.incomeType||"Autre"),
+      ]),
+    ],async v=>{
+      const amount=euro(v.amount);
+      if(amount<=0)throw Error("Montant invalide.");
+      await change(d=>{
+        const duplicate:Tx={
+          id:uid(),type:t.type,date:v.date,description:v.description.trim(),
+          account:v.account,amount,
+          category:isExpense?v.category:undefined,
+          incomeType:isExpense?undefined:v.incomeType,
+          budgetMonth:!isExpense&&v.incomeType==="Salaire"?
+            (d.salaryBudget??"next")==="next"?shiftMonth(month(v.date),1):month(v.date):undefined,
+        };
+        d.transactions.push(duplicate);
+      },"Opération dupliquée");
+    },"Enregistrer la copie");
   }
 
   function openForm(
@@ -4026,6 +4115,18 @@ export default function App() {
             Modifier
           </button>
         )}
+        {isEditable && !t.trip && !t.fixed && (
+          <div className="flex">
+            <button className="secondary" onClick={() => duplicateTransaction(t)}>
+              <Plus size={15}/> Dupliquer
+            </button>
+            {s.accounts.some(a=>a.id===t.account&&a.group==="current"&&!a.archived) &&
+              (t.type==="income" || s.categories.some(v=>v.id===t.category&&!v.archived)) &&
+              <button className="secondary" onClick={() => void toggleQuickFavorite(t).catch(showError)}>
+                {s.quickFavorites?.some(f=>f.id===t.id)?"Retirer des favoris":"Ajouter aux favoris"}
+              </button>}
+          </div>
+        )}
         <button
           className="danger"
           onClick={() =>
@@ -5221,6 +5322,7 @@ export default function App() {
     calendar: "Calendrier des paiements",
     transactions: "Toutes les transactions",
     analysis: "Analyse financière",
+    bank: "Rapprochement bancaire",
     loans: "Crédits et prêts",
   };
   return (
@@ -7061,8 +7163,13 @@ export default function App() {
                 operation={operation}
                 transfer={transfer}
                 newLoan={newLoan}
+                quickEntry={<QuickEntry state={s} save={saveQuickTransaction} removeFavorite={removeQuickFavorite}/>}
+                bankReconciliation={() => navigate("bank")}
               />
             </div>
+          )}
+          {route === "bank" && (
+            <BankReconciliation state={s} onImport={importBankDrafts}/>
           )}
           {route === "trips" && (
             <div className="trips-page-v2">
