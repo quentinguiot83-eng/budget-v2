@@ -69,7 +69,7 @@ const chapters: Chapter[] = [
     step("wealth", ".savings-wealth-panel", "Confirmer les versements", "Validez les virements réellement effectués : le suivi et les soldes sont alors mis à jour."),
     step("wealth", ".account-grid", "Les hypothèses de rendement", "Les rendements servent aux simulations. Ce sont des hypothèses, pas des garanties.")
   ] },
-  { id: "trips", title: "Voyages", description: "Préparer, financer et suivre un séjour", duration: "1 min", steps: [
+  { id: "trips", title: "Projets", description: "Préparer, financer et suivre un séjour", duration: "1 min", steps: [
     step("trips", ".page-heading", "Créer un voyage", "Définissez les dates du séjour, son budget et les catégories de dépenses."),
     step("trips", ".trip-hero", "Suivre son financement", "Voyez ce qui est prévu, dépensé et réservé pour ce voyage."),
     step("trips", ".trip-tabs", "Suivre et clôturer", "Associez vos achats au voyage depuis Ajouter. Vous garderez l’historique une fois le séjour terminé.")
@@ -113,7 +113,7 @@ const chapters: Chapter[] = [
 const titles: Record<string, string> = {
   home: "Accueil", budget: "Budget", add: "Ajouter", fixed: "Dépenses fixes",
   calendar: "Calendrier", transactions: "Transactions", analysis: "Analyse financière",
-  wealth: "Patrimoine", trips: "Voyages", projection: "Projections", personal: "Compte perso",
+  wealth: "Patrimoine", trips: "Projets", projection: "Projections", personal: "Compte perso",
   loans: "Crédits et prêts", pro: "Professionnel", settings: "Réglages"
 };
 const emptyProgress = (): Progress => ({ quickStep: 0, quickDone: false, chapters: {}, completed: [] });

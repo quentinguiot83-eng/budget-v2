@@ -8,7 +8,7 @@ const ITEMS: { id: MenuId; label: string; hideable: boolean }[] = [
   { id: "personal", label: "Compte perso", hideable: true },
   { id: "add", label: "Ajouter", hideable: true },
   { id: "wealth", label: "Patrimoine", hideable: true },
-  { id: "trips", label: "Voyages", hideable: true },
+  { id: "trips", label: "Projets", hideable: true },
   { id: "pro", label: "Professionnel", hideable: true },
   { id: "projection", label: "Projections", hideable: true },
   { id: "loans", label: "Crédits et prêts", hideable: true },

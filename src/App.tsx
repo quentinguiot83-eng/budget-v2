@@ -397,6 +397,8 @@ export default function App() {
     [txFilter, setTxFilter] = useState(""),
     [proEnabled, setProEnabled] = useState(false),
     [mobileMenuOpen, setMobileMenuOpen] = useState(false),
+    [mobileQuickAddOpen, setMobileQuickAddOpen] = useState(false),
+    [projectsSection, setProjectsSection] = useState<"trips" | "other">("trips"),
     [tutorialOpen, setTutorialOpen] = useState(false),
     [tutorialPage, setTutorialPage] = useState<string | null>(null),
     [tutorialMode, setTutorialMode] = useState<"quick" | "library" | "page">("quick"),
@@ -623,6 +625,7 @@ export default function App() {
 
     setRoute(r);
     setMobileMenuOpen(false);
+    setMobileQuickAddOpen(false);
     window.scrollTo(0, 0);
   }
 
@@ -4465,57 +4468,39 @@ export default function App() {
       </>,
     );
   }
-  const nav = [
-    { id: "home", label: "Accueil", icon: <Home /> },
-    { id: "budget", label: "Budget", icon: <ChartNoAxesCombined /> },
-    { id: "personal", label: "Compte perso", icon: <UserRound /> },
-    { id: "add", label: "Ajouter", icon: <Plus /> },
-    { id: "wealth", label: "Patrimoine", icon: <Wallet /> },
-    { id: "trips", label: "Voyages", icon: <Plane /> },
-    ...(proEnabled
-      ? [{ id: "pro", label: "Professionnel", icon: <Briefcase /> }]
-      : []),
+  const desktopNavGroups = [
+    {title:"PRINCIPAL",items:[
+      {id:"home",label:"Accueil",icon:<Home/>},
+      {id:"budget",label:"Budget",icon:<ChartNoAxesCombined/>},
+      {id:"transactions",label:"Transactions",icon:<ArrowLeftRight/>},
+    ]},
+    {title:"FINANCES",items:[
+      {id:"wealth",label:"Patrimoine",icon:<Wallet/>},
+      {id:"fixed",label:"Dépenses fixes",icon:<CalendarDays/>},
+      {id:"loans",label:"Crédits et prêts",icon:<Coins/>},
+      {id:"personal",label:"Compte perso",icon:<UserRound/>},
+    ]},
+    {title:"PLANIFICATION",items:[
+      {id:"projection",label:"Projections",icon:<ChartNoAxesCombined/>},
+      {id:"trips",label:"Projets",icon:<Target/>},
+    ]},
   ];
   const mobileNav = [
-    { id: "home", label: "Accueil", icon: <Home /> },
-    { id: "budget", label: "Budget", icon: <ChartNoAxesCombined /> },
-    { id: "add", label: "Ajouter", icon: <Plus /> },
-    { id: "wealth", label: "Patrimoine", icon: <Wallet /> },
-    { id: "projection", label: "Projections", icon: <ChartNoAxesCombined /> },
+    {id:"home",label:"Accueil",icon:<Home/>},
+    {id:"budget",label:"Budget",icon:<ChartNoAxesCombined/>},
+    {id:"wealth",label:"Patrimoine",icon:<Wallet/>},
+    {id:"trips",label:"Projets",icon:<Target/>},
   ];
-
   const mobileDrawerItems = [
-    { id: "home", label: "Accueil", icon: <Home size={20} /> },
-    { id: "budget", label: "Budget", icon: <ChartNoAxesCombined size={20} /> },
-    !s.hidden.includes("personal") && {
-      id: "personal",
-      label: "Compte perso",
-      icon: <UserRound size={20} />,
-    },
-    { id: "add", label: "Ajouter", icon: <Plus size={20} /> },
-    { id: "wealth", label: "Patrimoine", icon: <Wallet size={20} /> },
-    !s.hidden.includes("trips") && {
-      id: "trips",
-      label: "Voyages",
-      icon: <Plane size={20} />,
-    },
-    proEnabled && {
-      id: "pro",
-      label: "Professionnel",
-      icon: <Briefcase size={20} />,
-    },
-    {
-      id: "projection",
-      label: "Projections",
-      icon: <ChartNoAxesCombined size={20} />,
-    },
-    !s.hidden.includes("loans") && {
-      id: "loans",
-      label: "Crédits et prêts",
-      icon: <Coins size={20} />,
-    },
-    { id: "settings", label: "Réglages", icon: <Settings size={20} /> },
-  ].filter((item) => item && !["budget", "add", "wealth", "projection"].includes(item.id)) as { id: string; label: string; icon: ReactNode }[];
+    {id:"home",label:"Accueil",icon:<Home size={20}/>},
+    !s.hidden.includes("personal") && {id:"personal",label:"Compte perso",icon:<UserRound size={20}/>},
+    {id:"transactions",label:"Transactions",icon:<ArrowLeftRight size={20}/>},
+    {id:"fixed",label:"Dépenses fixes",icon:<CalendarDays size={20}/>},
+    {id:"projection",label:"Projections",icon:<ChartNoAxesCombined size={20}/>},
+    {id:"analysis",label:"Analyse financière",icon:<ChartNoAxesCombined size={20}/>},
+    !s.hidden.includes("loans") && {id:"loans",label:"Crédits et prêts",icon:<Coins size={20}/>},
+    {id:"settings",label:"Réglages",icon:<Settings size={20}/>},
+  ].filter(Boolean) as {id:string;label:string;icon:ReactNode}[];
 
   const txRows = (list: Tx[]) =>
     list.length ? (
@@ -5347,7 +5332,7 @@ export default function App() {
     budget: "Votre budget",
     personal: "Compte perso",
     wealth: "Votre patrimoine",
-    trips: "Vos voyages",
+    trips: "Vos projets",
     pro: "Professionnel",
     projection: "Demain se prépare ici",
     add: "Ajouter une opération",
@@ -5366,28 +5351,21 @@ export default function App() {
           <WimmWordmark />
         </button>
         <p className="eyebrow">{doc.household.name}</p>
-        <nav data-tour="desktop-nav">
-          {nav
-            .filter((n) => !s.hidden.includes(n.id) && !["budget", "add", "wealth"].includes(n.id))
-            .map((n) => (
-              <button
-                key={n.id}
-                onClick={() => navigate(n.id)}
-                className={route === n.id ? "active" : ""}
-              >
-                {n.icon}
-                {n.label}
-              </button>
-            ))}
-          {!s.hidden.includes("loans") && (
-            <button
-              className={route === "loans" ? "active" : ""}
-              onClick={() => navigate("loans")}
-            >
-              <Coins />
-              Crédits et prêts
-            </button>
-          )}
+        <button type="button" className="desktop-quick-add" onClick={()=>navigate("add")}>
+          <Plus size={19}/> Ajouter une opération
+        </button>
+        <nav data-tour="desktop-nav" className="desktop-sidebar-nav" aria-label="Navigation ordinateur">
+          {desktopNavGroups.map(group=>(
+            <div className="desktop-nav-section" key={group.title}>
+              <span className="desktop-nav-section-heading">{group.title}</span>
+              {group.items.filter(item=>!s.hidden.includes(item.id)).map(item=>(
+                <button type="button" key={item.id} className={route===item.id?"active":""}
+                  aria-current={route===item.id?"page":undefined} onClick={()=>navigate(item.id)}>
+                  {item.icon}<span>{item.label}</span>
+                </button>
+              ))}
+            </div>
+          ))}
         </nav>
         <div className="sidebar-bottom">
           <button onClick={() => navigate("settings")}>
@@ -5403,15 +5381,6 @@ export default function App() {
         <header className="topbar soft-topbar">
           <div>
             <div className="mobile-brand mobile-brand-row">
-              <button
-                type="button"
-                className="mobile-menu-trigger"
-                aria-label="Ouvrir le menu"
-                aria-expanded={mobileMenuOpen}
-                onClick={() => setMobileMenuOpen(true)}
-              >
-                <Menu size={21} />
-              </button>
               <button className="soft-wordmark" onClick={() => navigate("home")} aria-label="Wimm — accueil"><WimmWordmark /></button>
             </div>
             <span className="eyebrow">{doc.household.name}</span>
@@ -5426,13 +5395,14 @@ export default function App() {
               <Bell size={21} />
               {alerts.length > 0 && <i>{alerts.length}</i>}
             </button>
-            <button
-              className="icon"
-              aria-label="Réglages"
-              onClick={() => navigate("settings")}
-            >
-              <Settings size={21} />
-            </button>
+            {proEnabled && <button type="button" className="wimm-pro-shortcut"
+              aria-label="Accéder à l'espace professionnel" aria-current={route==="pro"?"page":undefined}
+              onClick={()=>navigate("pro")}>PRO</button>}
+            <button type="button" className="icon desktop-settings-trigger" aria-label="Réglages"
+              onClick={()=>navigate("settings")}><Settings size={21}/></button>
+            <button type="button" className="icon mobile-profile-trigger"
+              aria-label="Ouvrir le menu du compte et des outils" aria-expanded={mobileMenuOpen}
+              onClick={()=>setMobileMenuOpen(true)}><UserRound size={21}/></button>
           </div>
         </header>
         {demoEnabled && (
@@ -5580,7 +5550,20 @@ export default function App() {
                 )}
               </section>
 
-              <div className="home-remaining-grid home-income-expenses">
+              {!s.hidden.includes("personal") && (
+                 <button type="button" className="home-personal-shortcut" onClick={()=>navigate("personal")}
+                   aria-label={ps.account?"Ouvrir mon compte perso":"Créer mon compte perso"}>
+                   <span className="home-personal-icon"><UserRound size={22}/></span>
+                   <span className="home-personal-copy">
+                     <small>Compte perso</small>
+                     <strong>{ps.account?money(personalBalance(ps,s,personalOwnerId)):"Configurer mon espace"}</strong>
+                     <small>{ps.account?"Mon espace privé":"Suivre mes dépenses personnelles"}</small>
+                   </span>
+                   <ChevronRight size={20}/>
+                 </button>
+               )}
+
+               <div className="home-remaining-grid home-income-expenses">
                 <section className="home-remaining-card home-income">
                   <span className="muted">Revenus du mois</span><strong>{money(totals.income)}</strong>
                   <button className="text" onClick={() => { navigate("transactions"); setTxFilter("income"); }}>Voir les revenus <ChevronRight size={14}/></button>
@@ -7205,8 +7188,31 @@ export default function App() {
             <BankReconciliation state={s} onImport={importBankDrafts}/>
           )}
           {route === "trips" && (
-            <div className="trips-page-v2">
-              <TripsPageStyles />
+            <div className="trips-page-v2 projects-page">
+              <TripsPageStyles/>
+              <div className="projects-type-switch" role="tablist" aria-label="Types de projets">
+                <button type="button" role="tab" aria-selected={projectsSection==="trips"}
+                  className={projectsSection==="trips"?"selected":""} onClick={()=>setProjectsSection("trips")}>
+                  <Plane size={18}/> Voyages
+                </button>
+                <button type="button" role="tab" aria-selected={projectsSection==="other"}
+                  className={projectsSection==="other"?"selected":""} onClick={()=>setProjectsSection("other")}>
+                  <Target size={18}/> Autres projets <small>Bientôt</small>
+                </button>
+              </div>
+              {projectsSection==="other" ? (
+                <section className="card projects-coming-soon">
+                  <span className="projects-future-icon"><Target size={29}/></span>
+                  <span className="badge">En développement</span>
+                  <h2>Vos futurs projets, au même endroit</h2>
+                  <p>Vous pourrez bientôt suivre d’autres projets : un achat immobilier, une voiture ou tout objectif d’épargne.</p>
+                  <p className="muted">Cette fonctionnalité n’est pas encore disponible. Vos voyages restent inchangés.</p>
+                  <button type="button" className="secondary" onClick={()=>setProjectsSection("trips")}>
+                    <Plane size={17}/> Voir mes voyages
+                  </button>
+                </section>
+              ) : (
+                <>
               <div className="trips-top-actions">
                 <p className="muted">Des projets de voyage, un budget maîtrisé.</p>
                 <button type="button" className="primary" onClick={() => editTrip()}>
@@ -7478,6 +7484,8 @@ export default function App() {
                       </>
                     );
                   })()}
+                </>
+              )}
                 </>
               )}
             </div>
@@ -7843,7 +7851,7 @@ export default function App() {
                     },
                     {
                       id: "trips",
-                      label: "Voyages",
+                      label: "Projets",
                       description:
                         "Préparez vos voyages, leurs budgets par catégorie et les dépenses associées.",
                     },
@@ -8099,21 +8107,45 @@ export default function App() {
           </aside>
         </div>
       )}
-      <nav className="bottom-nav" aria-label="Navigation principale" data-tour="mobile-nav">
-        {mobileNav.map((n) => (
-          <button
-            key={n.id}
-            data-tour={n.id === "add" ? "add-button" : undefined}
-            className={`${n.id === "add" ? "add-nav " : ""}${
-              route === n.id ? "active" : ""
-            }`}
-            onClick={() => navigate(n.id)}
-          >
-            {n.icon}
-            <span>{n.label}</span>
+      <nav className="bottom-nav" aria-label="Navigation principale mobile" data-tour="mobile-nav">
+        {mobileNav.map(n=>(
+          <button type="button" key={n.id} className={route===n.id?"active":""}
+            aria-current={route===n.id?"page":undefined} onClick={()=>navigate(n.id)}>
+            {n.icon}<span>{n.label}</span>
           </button>
         ))}
       </nav>
+      {mobileQuickAddOpen && (
+        <div className="quick-add-layer">
+          <button type="button" className="quick-add-backdrop" aria-label="Fermer les actions rapides"
+            onClick={()=>setMobileQuickAddOpen(false)}/>
+          <div className="quick-add-menu" role="dialog" aria-label="Ajouter une opération">
+            <strong>Ajouter une opération</strong>
+            <button type="button" onClick={()=>{setMobileQuickAddOpen(false);operation()}}>
+              <span className="quick-add-item-icon expense"><ArrowUpRight size={20}/></span>
+              <span><b>Une dépense</b><small>Achat, facture ou sortie</small></span><ChevronRight size={18}/>
+            </button>
+            <button type="button" onClick={()=>{setMobileQuickAddOpen(false);operation("income")}}>
+              <span className="quick-add-item-icon income"><ArrowDownLeft size={20}/></span>
+              <span><b>Un revenu</b><small>Salaire, prime, remboursement</small></span><ChevronRight size={18}/>
+            </button>
+            <button type="button" onClick={()=>{setMobileQuickAddOpen(false);transfer()}}>
+              <span className="quick-add-item-icon transfer"><ArrowLeftRight size={20}/></span>
+              <span><b>Un virement</b><small>Entre mes comptes</small></span><ChevronRight size={18}/>
+            </button>
+            <button type="button" onClick={()=>navigate("add")}>
+              <span className="quick-add-item-icon other"><Plus size={20}/></span>
+              <span><b>Autres opérations</b><small>Prêt, voyage, rapprochement…</small></span><ChevronRight size={18}/>
+            </button>
+          </div>
+        </div>
+      )}
+      <button type="button" className={mobileQuickAddOpen?"floating-add-button open":"floating-add-button"}
+        data-tour="add-button" aria-label={mobileQuickAddOpen?"Fermer l’ajout rapide":"Ajouter une opération"}
+        aria-haspopup="dialog" aria-expanded={mobileQuickAddOpen}
+        onClick={()=>setMobileQuickAddOpen(v=>!v)}>
+        {mobileQuickAddOpen?<X size={26}/>:<Plus size={28}/>}
+      </button>
       <OnboardingTutorial
         mode={tutorialMode}
         storageKey={`wimm-guide-${session?.user.id || "demo"}`}
