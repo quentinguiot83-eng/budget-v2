@@ -169,3 +169,21 @@
   .transaction-swipe-row .swipe-actions-content {padding-right:0}
 }
 @media(prefers-reduced-motion:reduce){.swipe-actions-content {transition:none!important}}
+
+/* Keep contextual menus unobstructed and row layout consistent. */
+@media(min-width:851px), (pointer:fine) {
+  .budget-category-list {overflow:visible!important}
+  .budget-category-list>.swipe-actions>.swipe-actions-content>.category {padding-right:40px!important}
+  .fixed-swipe-row>.swipe-actions-content,
+  .credit-swipe-row>.swipe-actions-content,
+  .personal-budget-swipe-row>.swipe-actions-content,
+  .project-swipe-row>.swipe-actions-content {padding-right:36px}
+  .swipe-actions-desktop-menu {display:block}
+}
+@media(max-width:850px) and (pointer:coarse) {
+  .budget-category-list>.swipe-actions>.swipe-actions-content>.category {padding-right:1px!important}
+  .fixed-swipe-row>.swipe-actions-content,
+  .credit-swipe-row>.swipe-actions-content,
+  .personal-budget-swipe-row>.swipe-actions-content,
+  .project-swipe-row>.swipe-actions-content {padding-right:0}
+}
