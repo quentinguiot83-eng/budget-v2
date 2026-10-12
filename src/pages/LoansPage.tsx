@@ -1,5 +1,6 @@
 import { Row, BlockInfo } from "../ui";
-import { Trash2 } from "lucide-react";
+import { Trash2, Pencil } from "lucide-react";
+import SwipeActions from "../SwipeActions";
 
 import {
   type State,
@@ -131,10 +132,12 @@ export default function LoansPage({
             }
 
             return (
-              <div
-                className="rule-row"
-                key={r.id}
-              >
+              <SwipeActions key={r.id} label={r.name} className="credit-swipe-row" actions={[
+                { label: "Modifier", icon: <Pencil size={17}/>, onClick: () => editRule(r, "credit") },
+                { label: "Supprimer", icon: <Trash2 size={17}/>, tone: "danger",
+                  onClick: () => deleteCreditPlan(r) },
+              ]}>
+              <div className="rule-row">
 
                 <div className="grow">
 
@@ -159,18 +162,10 @@ export default function LoansPage({
 
                 </div>
 
-                <div className="credit-rule-actions">
-                  <button type="button" className="secondary compact"
-                    onClick={() => editRule(r, "credit")}>Modifier</button>
-                  <button type="button" className="secondary compact credit-rule-delete"
-                    aria-label={"Supprimer le crédit " + r.name}
-                    title={"Supprimer l'échéancier " + r.name}
-                    onClick={() => deleteCreditPlan(r)}>
-                    <Trash2 size={16}/><span>Supprimer</span>
-                  </button>
-                </div>
+
 
               </div>
+              </SwipeActions>
             );
 
           })}
