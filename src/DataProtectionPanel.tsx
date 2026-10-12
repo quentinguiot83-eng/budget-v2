@@ -1,8 +1,8 @@
 import { useState } from "react";
-import { Download, FileJson, FileSpreadsheet, Info, LockKeyhole, ShieldCheck } from "lucide-react";
+import { Download, FileCheck2, FileJson, FileSpreadsheet, Info, LockKeyhole, ShieldCheck } from "lucide-react";
 import type { State } from "./engine";
 import type { PersonalState } from "./personal";
-import { createIntegrityExport, sendFile } from "./secureExport";
+import { createIntegrityExport, sendFile, verifyIntegrityExport, type VerifiedBackup } from "./secureExport";
 
 type Props = {
   household: { id: string; name: string; revision: number; state: State };
@@ -21,14 +21,19 @@ function csvField(value: unknown) {
   return '"' + v + '"';
 }
 
+function csvFieldNumber(value: string) { return '"' + value + '"'; }
+
 function makeCsv(rows: unknown[][]): string {
-  return "\ufeff" + rows.map(row => row.map(csvField).join(";")).join("\r\n");
+  return "\ufeff" + rows.map(row => row.map((value, index) =>
+    index === 3 && typeof value === "string" && /^-?\\d+,\\d{2}$/.test(value)
+      ? csvFieldNumber(value) : csvField(value)).join(";")).join("\r\n");
 }
 
 export default function DataProtectionPanel({ household, personal, demo }: Props) {
   const [busy, setBusy] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [verification, setVerification] = useState<VerifiedBackup | null>(null);
   const date = new Date().toISOString().slice(0, 10);
   const exportFile = async (kind: "household-json" | "household-csv" | "personal-json" | "personal-csv") => {
     if (busy) return;
@@ -69,8 +74,8 @@ export default function DataProtectionPanel({ household, personal, demo }: Props
         name = prefix + date + "-operations.csv";
         mime = "text/csv;charset=utf-8";
       }
-      await sendFile(name, output, mime);
-      setSuccess("Le fichier a été préparé. Enregistrez-le dans un emplacement privé et sécurisé.");
+      const completed = await sendFile(name, output, mime);
+      if (completed) setSuccess("Fichier préparé. Conservez-le dans un emplacement privé et protégé.");
     } catch (e) {
       setError(e instanceof Error ? e.message : "L’export a échoué. Réessayez.");
     } finally {
@@ -78,6 +83,22 @@ export default function DataProtectionPanel({ household, personal, demo }: Props
     }
   };
 
+  async function inspectBackup(file?: File) {
+    if (!file) return;
+    setVerification(null);
+    setError("");
+    setSuccess("");
+    if (file.size > 20 * 1024 * 1024) {
+      setError("Ce fichier dépasse la limite de vérification de 20 Mo.");
+      return;
+    }
+    try {
+      const result = await verifyIntegrityExport(await file.text());
+      setVerification(result);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Impossible de vérifier ce fichier.");
+    }
+  }
   return (
     <section className="card wimm-data-security" data-tour="data-security">
       <div className="wimm-data-security-head">
@@ -112,6 +133,36 @@ export default function DataProtectionPanel({ household, personal, demo }: Props
           <button type="button" className="secondary" disabled={!!busy || !personal}
             onClick={() => void exportFile("personal-csv")}><FileSpreadsheet size={15}/> Opérations CSV</button>
         </div>
+      </div>
+      <div className="wimm-security-row">
+        <div className="wimm-security-row-heading">
+          <FileCheck2 size={21}/>
+          <div>
+            <strong>Vérifier une sauvegarde</strong>
+            <small>Contrôlez un fichier JSON avant de le conserver</small>
+          </div>
+        </div>
+        <label className="wimm-security-verify-action">
+          <FileCheck2 size={16}/> Choisir une sauvegarde JSON
+          <input type="file" accept=".json,application/json"
+            aria-label="Vérifier un fichier de sauvegarde Wimm"
+            onChange={e => {
+              const file = e.currentTarget.files?.[0];
+              e.currentTarget.value = "";
+              void inspectBackup(file);
+            }}/>
+        </label>
+        {verification && <div className="wimm-security-validation" role="status">
+          <strong>Empreinte SHA-256 vérifiée</strong>
+          <span>{verification.scope === "household" ? "Données du foyer" :
+            verification.scope === "personal" ? "Compte personnel" : "Espace professionnel"}
+            {" · "}{new Date(verification.createdAt).toLocaleString("fr-FR")}
+            {verification.operationCount !== null ? " · " + verification.operationCount + " opérations" : ""}
+          </span>
+          {verification.householdId && verification.householdId !== household.id &&
+            <span className="wimm-security-foreign">Attention : cette sauvegarde provient d’un autre foyer.</span>}
+          <small>L’empreinte détecte les modifications accidentelles, pas une falsification volontaire. Vérifier un fichier ne restaure aucune donnée.</small>
+        </div>}
       </div>
       <div className="wimm-security-explainer">
         <Info size={17}/>
