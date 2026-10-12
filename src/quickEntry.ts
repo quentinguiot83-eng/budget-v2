@@ -41,7 +41,7 @@ export function checkFavorite(f:QuickFavorite,accounts:Account[],categories:Cate
   if(!Number.isSafeInteger(f.amount)||f.amount<=0)throw Error("Montant du favori invalide.");
 }
 export function favoriteFromTransaction(t:Tx):QuickFavorite{
-  if(!["expense","income"].includes(t.type)||t.dueKey||t.trip||t.fixed)
+  if((t.type!=="expense"&&t.type!=="income")||t.dueKey||t.trip||t.fixed)
     throw Error("Seules les dépenses et revenus ponctuels peuvent être ajoutés aux favoris.");
   return {id:t.id,type:t.type,description:t.description,account:t.account,category:t.category,amount:t.amount};
 }
