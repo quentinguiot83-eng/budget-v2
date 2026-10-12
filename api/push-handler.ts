@@ -1,10 +1,11 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
 import { timingSafeEqual } from "node:crypto";
 import { pushAlerts, validPushEndpoint, type DueInvoice } from "../src/pushAlerts.ts";
+import { dailyTransactionReminder } from "../src/dailyTransactionReminder.ts";
 import type { State } from "../src/engine.ts";
 
 type PushSubscriptionData = { endpoint: string; expirationTime?: number | null; keys: { p256dh: string; auth: string } };
-type Device = { id: string; userId: string; subscription: PushSubscriptionData; budgets: boolean; dues: boolean; state: State; invoices: DueInvoice[] };
+type Device = { id: string; userId: string; subscription: PushSubscriptionData; budgets: boolean; dues: boolean; dailyReminder?: boolean; reminderTime?: string; reminderTimezone?: string; state: State; invoices: DueInvoice[] };
 function equal(a: string, b: string) {
   const x = Buffer.from(a), y = Buffer.from(b);
   return x.length === y.length && timingSafeEqual(x, y);
@@ -58,7 +59,10 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
       await Promise.all(queue.slice(start, start + 5).map(async d => {
         if (!validPushEndpoint(d.subscription.endpoint)) return;
         let alerts = action === "test" ? [{ key: `test:${Math.floor(Date.now() / 60000)}`, kind: "test", title: "Notifications Wimm activées", body: "Ton téléphone est prêt à recevoir les alertes Wimm.", url: "/" }]
-          : pushAlerts(d.state, d.invoices).filter(a => a.kind === "budgets" ? d.budgets : d.dues);
+          : [
+              ...pushAlerts(d.state, d.invoices).filter(a => a.kind === "budgets" ? d.budgets : d.dues),
+              ...(() => { const reminder = dailyTransactionReminder(d); return reminder ? [reminder] : []; })(),
+            ];
         const claimed: typeof alerts = [];
         for (const a of alerts) {
           if (await db("budget_push_claim", { p_id: d.id, p_key: a.key })) claimed.push(a);
