@@ -104,9 +104,9 @@ const chapters: Chapter[] = [
     step("pro", ".prosuite-main", "Agenda et réserves", "Planifiez vos rendez-vous et suivez vos obligations de trésorerie.")
   ] },
   { id: "settings", title: "Réglages et Assistance", description: "Notifications, personnalisation et aide", duration: "45 s", steps: [
-    step("settings", "[data-tour='phone-notifications']", "Vos notifications", "Sur iPhone, activez les notifications de Wimm depuis l’app installée sur l’écran d’accueil."),
-    step("settings", ".appearance-choices", "Votre apparence", "Choisissez le thème clair, nuit ou automatique selon vos préférences."),
-    step("settings", "[data-tour='tutorial-settings']", "Retrouver de l’aide", "Relancez un chapitre ici, ou touchez le petit « i » en haut de chaque page.")
+    step("settings", "[data-settings-category='personnalisation']", "Personnaliser Wimm", "Touchez Personnalisation pour ouvrir Apparence, Notifications ou Rubriques affichées."),
+    step("settings", "[data-settings-category='donnees']", "Protéger vos données", "Les sauvegardes, l’historique et les options de sécurité se trouvent dans Données et sécurité."),
+    step("settings", "[data-settings-category='aide']", "Retrouver de l’aide", "Ouvrez Aide et informations pour relancer un chapitre. Le petit « i » reste accessible sur chaque écran.")
   ] }
 ];
 
