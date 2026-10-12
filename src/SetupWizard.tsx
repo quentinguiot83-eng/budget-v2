@@ -22,7 +22,7 @@ const initialCategories = [
 ];
 
 const pages = [
-  { title: "Comment utiliserez-vous Wimm ?", subtitle: "Personnalisez votre expérience dès le départ.", icon: BriefcaseBusiness },
+  { title: "Quel est votre profil ?", subtitle: "Choisissez le profil qui correspond à votre situation.", icon: UserRound },
   { title: "Vos comptes et leurs soldes", subtitle: "Partez des montants réellement affichés par votre banque.", icon: Wallet },
   { title: "Vos revenus habituels", subtitle: "Ces montants servent à prévoir vos prochains mois.", icon: Landmark },
   { title: "Vos dépenses fixes", subtitle: "Wimm les comptera uniquement aux dates de leurs échéances.", icon: CalendarDays },
@@ -126,7 +126,7 @@ export default function SetupWizard({ householdName, onComplete }: {
   function next() {
     try {
       if (page === 0 && draft.professional === null)
-        throw Error("Indiquez si vous souhaitez utiliser l’espace Professionnel.");
+        throw Error("Choisissez votre profil pour continuer.");
       if (page === 1) {
         parseEuros(draft.opening, "solde courant", true);
         draft.extras.forEach(a => parseEuros(a.opening, a.name));
@@ -181,25 +181,24 @@ export default function SetupWizard({ householdName, onComplete }: {
           <div className="wimm-setup-track"><span style={{ width: ((page + 2) / 7 * 100) + "%" }}/></div>
         </div>
         {page === 0 && <div className="wimm-setup-body wimm-setup-professional">
-          <h2>Souhaitez-vous utiliser Wimm pour une activité professionnelle ?</h2>
-          <p className="muted">Wimm peut aussi vous accompagner dans une activité indépendante, freelance, auto-entrepreneur ou entreprise. Les finances du foyer restent séparées de l'espace professionnel.</p>
-          <div className="wimm-setup-professional-options" role="group" aria-label="Utilisation professionnelle de Wimm">
-            <button type="button" className={"wimm-setup-professional-choice" + (draft.professional === true ? " chosen" : "")}
-              aria-pressed={draft.professional === true} onClick={() => patch({ professional: true })}>
-              <span className="wimm-setup-professional-symbol"><BriefcaseBusiness size={25}/></span>
-              <strong>Oui, j’ai une activité professionnelle</strong>
-              <small>Activer mon espace Pro : clients, factures, rendez-vous, trésorerie et suivi de l’activité.</small>
-              <span className="wimm-setup-professional-mark">{draft.professional === true ? <Check size={17}/> : <span/>}</span>
-            </button>
+          <p className="muted">Wimm s’adapte à votre situation et vous aide à mieux gérer votre argent.</p>
+          <div className="wimm-setup-professional-options" role="group" aria-label="Votre profil">
             <button type="button" className={"wimm-setup-professional-choice" + (draft.professional === false ? " chosen" : "")}
               aria-pressed={draft.professional === false} onClick={() => patch({ professional: false })}>
               <span className="wimm-setup-professional-symbol"><UserRound size={25}/></span>
-              <strong>Non, uniquement mes finances personnelles</strong>
-              <small>Gérer mon foyer, mes budgets, mon épargne et mes projets sans afficher l’espace Pro.</small>
+              <strong>Salarié</strong>
+              <small>Gérez votre budget, vos comptes, votre épargne et vos projets.</small>
               <span className="wimm-setup-professional-mark">{draft.professional === false ? <Check size={17}/> : <span/>}</span>
             </button>
+            <button type="button" className={"wimm-setup-professional-choice" + (draft.professional === true ? " chosen" : "")}
+              aria-pressed={draft.professional === true} onClick={() => patch({ professional: true })}>
+              <span className="wimm-setup-professional-symbol"><BriefcaseBusiness size={25}/></span>
+              <strong>J’ai une entreprise</strong>
+              <small>Retrouvez aussi l’espace Pro pour vos clients, factures, rendez-vous et trésorerie.</small>
+              <span className="wimm-setup-professional-mark">{draft.professional === true ? <Check size={17}/> : <span/>}</span>
+            </button>
           </div>
-          <p className="wimm-setup-hint"><CircleHelp size={16}/> Vous pourrez activer ou masquer l’espace Professionnel plus tard dans les réglages. Un emploi salarié seul ne nécessite pas cet espace.</p>
+          <p className="wimm-setup-hint"><CircleHelp size={16}/> Ce choix détermine l’affichage de l’espace Pro. Vous pourrez le modifier depuis les réglages.</p>
         </div>}
         {page === 1 && <div className="wimm-setup-body">
           <h2>Votre compte principal</h2>
@@ -265,7 +264,7 @@ export default function SetupWizard({ householdName, onComplete }: {
           {draft.extras.length>0 && <p className="wimm-setup-hint">Total affecté : <strong>{totalShares.toLocaleString("fr-FR")} %</strong>. Le reste demeure sur le compte courant dans les projections.</p>}
         </div>}
         {page === 5 && <div className="wimm-setup-body">
-          <div className="wimm-setup-review"><strong>Utilisation de Wimm</strong><span>{draft.professional ? "Finances du foyer + Espace Professionnel" : "Finances du foyer uniquement"}</span></div>
+          <div className="wimm-setup-review"><strong>Votre profil</strong><span>{draft.professional ? "J’ai une entreprise · Espace Pro activé" : "Salarié · Espace Pro masqué"}</span></div>
           <div className="wimm-setup-review"><strong>Compte courant</strong><span>{draft.accountName}<b>{formatEuro(draft.opening)}</b></span></div>
           <div className="wimm-setup-review"><strong>Autres comptes</strong><span>{draft.extras.length ? draft.extras.map(a=>a.name).join(", ") : "À ajouter plus tard"}</span></div>
           <div className="wimm-setup-review"><strong>Revenus habituels</strong><span>{formatEuro(draft.income)} / mois{draft.salaryReceived ? " · Salaire déjà compris" : ""}</span></div>
