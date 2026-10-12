@@ -120,8 +120,8 @@ export default function ProWorkspace({ native = false }: { native?: boolean } = 
         data: fresh,
       });
       const filename = "Wimm-pro-" + new Date().toISOString().slice(0, 10) + ".json";
-      await sendFile(filename, payload, "application/json;charset=utf-8");
-      setNotice("Fichier Pro préparé. Enregistrez-le dans un espace protégé. Cet export n'est pas une restauration automatique.");
+      const completed = await sendFile(filename, payload, "application/json;charset=utf-8");
+      if (completed) setNotice("Fichier Pro préparé. Enregistrez-le dans un espace protégé. Cet export n'est pas une restauration automatique.");
     } catch (e) {
       setError(e instanceof Error ? e.message : "Export Pro impossible");
     } finally {
