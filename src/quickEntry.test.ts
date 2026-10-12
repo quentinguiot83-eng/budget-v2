@@ -24,5 +24,5 @@ test("favorites reject invalid linked account or recurring transaction",()=>{
  const s=emptyState();
  const tx={id:"x",type:"expense" as const,date:today(),account:"unknown",amount:1200,description:"Test",fixed:true};
  assert.throws(()=>favoriteFromTransaction(tx),/ponctuels/);
- assert.throws(()=>checkFavorite({...tx,fixed:undefined},s.accounts,s.categories),/compte/);
+ assert.throws(()=>checkFavorite({id:tx.id,type:tx.type,...{description:tx.description,account:tx.account,amount:tx.amount}},s.accounts,s.categories),/compte/);
 });
