@@ -39,10 +39,11 @@ export const TUTORIAL_CHAPTERS: TourChapter[] = [
     s("budget", "[data-tour='budget-summary']", "Ton budget mensuel", "Les dépenses fixes et variables sont regroupées ici."),
     s("budget", ".budget-add-category", "Créer une catégorie", "Touche ce bouton pour créer une catégorie et fixer son budget.", true, "category"),
     s("budget", "[data-tour='budget-categories'] .budget-clickable, [data-tour='budget-categories']", "Voir ses dépenses", "Touche un budget pour afficher ses dépenses du mois sélectionné.", true),
-    s("budget", ".budget-quick-links button:nth-child(1)", "Les charges fixes", "Retrouve les abonnements, le loyer et les autres échéances programmées.", true),
-    s("budget", ".budget-quick-links button:nth-child(3)", "Le calendrier", "Tu peux contrôler et valider ici les paiements aux dates prévues.", true),
-    s("budget", ".budget-quick-links button:nth-child(2)", "Toutes les transactions", "Utilise les filtres pour retrouver une dépense ou un revenu.", true),
-    s("budget", "[data-tour='month-analysis-button']", "L'analyse financière", "Compare tes dépenses, découvre les catégories principales et les tendances.", true)
+    s("budget", ".budget-quick-links button:nth-child(1)", "Tes charges fixes", "Touche Fixes pour accéder aux dépenses et abonnements programmés.", true),
+    s("fixed", ".page-remaining-summary-fixed, .content .card", "Prévoir les dépenses fixes", "Les échéances trimestrielles et annuelles ne comptent que dans leur mois prévu."),
+    s("calendar", ".calendar-grid", "Ton calendrier", "Retrouve les échéances à venir et valide-les lorsqu'elles sont réellement débitées."),
+    s("transactions", ".transaction-search-top", "Tes transactions", "Cherche une opération et filtre-la par catégorie, date ou montant."),
+    s("analysis", ".analysis-overview-card, [data-tour='analysis']", "L'analyse financière", "Découvre où va ton argent et compare tes habitudes dans le temps.")
   ] },
   { id: "operations", title: "Ajouter", description: "Opérations, crédits et relevés", steps: [
     s("home", "[data-tour='add-button']", "Le bouton +", "Ajoute rapidement une dépense, un revenu ou un virement, depuis n'importe quelle page.", true),
