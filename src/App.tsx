@@ -12,7 +12,8 @@ import OnboardingTutorial from "./OnboardingTutorial";
 import WealthPageStyles from "./WealthPageStyles";
 import ProjectionPageStyles from "./ProjectionPageStyles";
 import TripsPageStyles from "./TripsPageStyles";
-import { deleteTripCover, uploadTripCover, useTripCoverUrls } from "./tripCovers";
+import TripCoverEditor from "./TripCoverEditor";
+import { deleteTripCover, uploadTripCover, useTripCoverUrls, TRIP_COVERS_BUCKET } from "./tripCovers";
 import SetupWizard, { applyInitialSetup } from "./SetupWizard";
 import {
   lazy,
@@ -385,8 +386,6 @@ export default function App() {
     [personalProjectionMonths, setPersonalProjectionMonths] = useState(24),
     [activeTrip, setActiveTrip] = useState(""),
     [coverUploading, setCoverUploading] = useState<string | null>(null),
-    [coverAdjustTrip, setCoverAdjustTrip] = useState<string | null>(null),
-    [coverAdjustment, setCoverAdjustment] = useState(50),
     [txFilter, setTxFilter] = useState(""),
     [proEnabled, setProEnabled] = useState(false),
     [mobileMenuOpen, setMobileMenuOpen] = useState(false),
@@ -777,6 +776,7 @@ export default function App() {
     fields: Field[],
     save: (v: Record<string, string>) => Promise<void>,
     label?: string,
+    extra?: ReactNode,
   ) {
     setSheet({
       title,
@@ -784,6 +784,7 @@ export default function App() {
         <Form
           fields={fields}
           label={label}
+          extra={extra}
           submit={async (v) => {
             await save(v);
             setSheet(null);
@@ -3734,35 +3735,42 @@ export default function App() {
       },
     );
   }
-  async function saveTripCover(t: Trip, file: File) {
-    if (demoEnabled) { setNotice("Les photos ne sont pas enregistrées dans le mode démonstration."); return; }
+  async function saveTripCover(t: Trip, file: File): Promise<string> {
+    if (demoEnabled) throw Error("Les photos ne sont pas enregistrées en mode démonstration.");
     const householdId = docRef.current?.household?.id;
     if (!householdId) throw Error("Foyer introuvable.");
-    if (coverUploading) return;
+    if (busy.current || coverUploading) throw Error("Un enregistrement est déjà en cours.");
     setCoverUploading(t.id);
-    let path = "";
+    let uploadedPath = "";
     try {
-      path = await uploadTripCover(file, householdId, t.id);
+      const oldPath = docRef.current?.state.trips.find(x => x.id === t.id)?.coverPath;
+      uploadedPath = await uploadTripCover(file, householdId, t.id);
       await change(d => {
-        const entry = d.trips.find(x => x.id === t.id);
-        if (!entry) throw Error("Ce voyage n’existe plus.");
-        entry.coverPath = path;
-        entry.coverPosition = 50;
+        const trip = d.trips.find(x => x.id === t.id);
+        if (!trip) throw Error("Voyage introuvable.");
+        trip.coverPath = uploadedPath;
+        trip.coverPosition = 50;
       }, "Photo de voyage modifiée");
-      setCoverAdjustTrip(null);
-      // The old private file is removed only after the new path is saved.
-      if (t.coverPath && t.coverPath !== path) {
-        try { await deleteTripCover(t.coverPath); } catch { /* Orphan cleanup can be retried later. */ }
+      if (oldPath && oldPath !== uploadedPath) {
+        try { await deleteTripCover(oldPath); } catch { /* Nettoyage ultérieur possible. */ }
       }
-    } catch (e) {
-      if (path) { try { await deleteTripCover(path); } catch { /* best effort */ } }
-      showError(e);
+      const { data } = await api.storage.from(TRIP_COVERS_BUCKET).createSignedUrl(uploadedPath, 60 * 30);
+      return data?.signedUrl || "";
+    } catch (error) {
+      // Ne supprime pas le fichier si son chemin a déjà été enregistré avec succès.
+      const persistedPath = docRef.current?.state.trips.find(x => x.id === t.id)?.coverPath;
+      if (uploadedPath && persistedPath !== uploadedPath) {
+        try { await deleteTripCover(uploadedPath); } catch { /* nettoyage best effort */ }
+      }
+      throw error;
     } finally {
       setCoverUploading(null);
     }
   }
-  async function removeTripCover(t: Trip) {
-    if (!t.coverPath || coverUploading) return;
+  async function removeTripCover(t: Trip): Promise<void> {
+    if (busy.current || coverUploading) throw Error("Un enregistrement est déjà en cours.");
+    const oldPath = docRef.current?.state.trips.find(x => x.id === t.id)?.coverPath;
+    if (!oldPath) return;
     setCoverUploading(t.id);
     try {
       await change(d => {
@@ -3771,20 +3779,17 @@ export default function App() {
         delete trip.coverPath;
         delete trip.coverPosition;
       }, "Photo de voyage supprimée");
-      setCoverAdjustTrip(null);
-      try { await deleteTripCover(t.coverPath); } catch { /* Metadata already removed; image is no longer visible. */ }
-    } catch (e) { showError(e); }
-    finally { setCoverUploading(null); }
+      try { await deleteTripCover(oldPath); } catch { /* ancienne image devenue invisible */ }
+    } finally {
+      setCoverUploading(null);
+    }
   }
-  async function saveTripCoverPosition(t: Trip) {
-    try {
-      await change(d => {
-        const trip = d.trips.find(x => x.id === t.id);
-        if (!trip) throw Error("Voyage introuvable.");
-        trip.coverPosition = Math.max(0, Math.min(100, coverAdjustment));
-      }, "Cadrage de la photo modifié");
-      setCoverAdjustTrip(null);
-    } catch (e) { showError(e); }
+  async function saveTripCoverPosition(t: Trip, position: number): Promise<void> {
+    await change(d => {
+      const trip = d.trips.find(x => x.id === t.id);
+      if (!trip) throw Error("Voyage introuvable.");
+      trip.coverPosition = Math.max(0, Math.min(100, position));
+    }, "Cadrage de la photo modifié");
   }
   function editTrip(t?: Trip) {
     openForm(
@@ -3813,21 +3818,22 @@ export default function App() {
           v.projectId === "none" ? undefined : v.projectId;
 
         await change((d) => {
+          const previous = d.trips.find(x => x.id === id);
           const entry: Trip = {
             id,
             name: v.name,
             start: v.start,
             end: v.end,
             budget: euro(v.budget),
-            categories: t?.categories || [
+            categories: previous?.categories || [
               { id: uid(), name: "Transport", budget: 0 },
               { id: uid(), name: "Hébergement", budget: 0 },
               { id: uid(), name: "Sur place", budget: 0 },
             ],
             projectId,
-            closedAt: t?.closedAt,
-            coverPath: t?.coverPath,
-            coverPosition: t?.coverPosition,
+            closedAt: previous?.closedAt,
+            coverPath: previous?.coverPath,
+            coverPosition: previous?.coverPosition,
           };
 
           if (
@@ -3844,6 +3850,14 @@ export default function App() {
 
         setActiveTrip(id);
       },
+      undefined,
+      <TripCoverEditor
+        trip={t}
+        initialUrl={t?.coverPath ? tripCoverUrls[t.coverPath] : undefined}
+        onUpload={file => saveTripCover(t!, file)}
+        onRemove={() => removeTripCover(t!)}
+        onReposition={position => saveTripCoverPosition(t!, position)}
+      />,
     );
   }
 
@@ -7287,7 +7301,7 @@ export default function App() {
                           {t.coverPath && tripCoverUrls[t.coverPath] && (
                             <img className="trips-cover-photo" src={tripCoverUrls[t.coverPath]}
                               alt={"Photo de couverture : " + t.name}
-                              style={{ objectPosition: "50% " + (coverAdjustTrip === t.id ? coverAdjustment : t.coverPosition ?? 50) + "%" }}/>
+                              style={{ objectPosition: "50% " + (t.coverPosition ?? 50) + "%" }}/>
                           )}
                           <div className="trips-cover-overlay"/>
                           <div className="trips-cover-header">
@@ -7307,43 +7321,6 @@ export default function App() {
                                 onClick={() => editTrip(t)}><Pencil size={18}/></button>
                             )}
                           </div>
-                          <div className="trips-cover-controls">
-                            <input id={"trip-cover-upload-" + t.id} className="trips-cover-file-input"
-                              type="file" accept="image/*,.heic,.heif"
-                              aria-label="Choisir une photo de voyage"
-                              disabled={coverUploading === t.id}
-                              onChange={e => {
-                                const file = e.target.files?.[0];
-                                e.currentTarget.value = "";
-                                if (file) void saveTripCover(t, file);
-                              }}/>
-                            <label htmlFor={"trip-cover-upload-" + t.id} className={"trips-cover-action" + (coverUploading === t.id ? " is-loading" : "")}>
-                              <ImagePlus size={17}/>
-                              {coverUploading === t.id ? "Enregistrement…" : t.coverPath ? "Changer la photo" : "Ajouter une photo"}
-                            </label>
-                            {t.coverPath && (
-                              <>
-                                <button type="button" className="trips-cover-action"
-                                  onClick={() => { setCoverAdjustment(t.coverPosition ?? 50); setCoverAdjustTrip(coverAdjustTrip === t.id ? null : t.id); }}
-                                  disabled={!!coverUploading}>
-                                  <MoveVertical size={16}/> Repositionner
-                                </button>
-                                <button type="button" className="trips-cover-action trips-cover-remove"
-                                  disabled={!!coverUploading} onClick={() => void removeTripCover(t)}>
-                                  <ImageOff size={16}/> Supprimer
-                                </button>
-                              </>
-                            )}
-                          </div>
-                          {coverAdjustTrip === t.id && t.coverPath && (
-                            <div className="trips-cover-position">
-                              <label htmlFor={"trip-cover-position-" + t.id}>Position verticale</label>
-                              <input id={"trip-cover-position-" + t.id} type="range"
-                                min={0} max={100} value={coverAdjustment}
-                                onChange={e => setCoverAdjustment(Number(e.target.value))}/>
-                              <button type="button" className="primary" onClick={() => void saveTripCoverPosition(t)}>Enregistrer</button>
-                            </div>
-                          )}
                         </section>
 
                         <section className="trips-overview-card" aria-label="Budget du voyage">
