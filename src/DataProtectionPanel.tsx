@@ -25,7 +25,7 @@ function csvFieldNumber(value: string) { return '"' + value + '"'; }
 
 function makeCsv(rows: unknown[][]): string {
   return "\ufeff" + rows.map(row => row.map((value, index) =>
-    index === 3 && typeof value === "string" && /^-?\\d+,\\d{2}$/.test(value)
+    index === 3 && typeof value === "string" && /^-?\d+,\d{2}$/.test(value)
       ? csvFieldNumber(value) : csvField(value)).join(";")).join("\r\n");
 }
 
