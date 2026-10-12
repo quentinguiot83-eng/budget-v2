@@ -1,5 +1,7 @@
 import { WimmWordmark } from "./WimmWordmark";
 import { revisePaymentPlan, removeCreditPlan } from "./creditSchedules";
+import SwipeActions from "./SwipeActions";
+import ConfirmActionContent from "./ConfirmActionContent";
 import SettingsNavigation from "./SettingsNavigation";
 import "./SettingsNavigation.css";
 import { SortableList } from "./SortableList";
@@ -397,6 +399,7 @@ export default function App() {
     [activeTrip, setActiveTrip] = useState(""),
     [coverUploading, setCoverUploading] = useState<string | null>(null),
     [txFilter, setTxFilter] = useState(""),
+    [txCategoryFilter, setTxCategoryFilter] = useState(""),
     [proEnabled, setProEnabled] = useState(false),
     [mobileQuickAddOpen, setMobileQuickAddOpen] = useState(false),
     [projectsSection, setProjectsSection] = useState<"trips" | "other">("trips"),
@@ -589,7 +592,7 @@ export default function App() {
   ];
 
   function navigate(r: string) {
-    if (r === "transactions") setTxFilter("");
+    if (r === "transactions") { setTxFilter(""); setTxCategoryFilter(""); }
     setSettingsCategory(null);
     setSettingsDetail(null);
 
@@ -891,29 +894,18 @@ export default function App() {
   function explain(title: string, body: ReactNode) {
     setSheet({ title, body: <div className="explanation">{body}</div> });
   }
-  function confirmAction(
-    title: string,
-    body: string,
-    action: () => Promise<void>,
-  ) {
+  function confirmAction(title: string, body: string, action: () => Promise<void>) {
     setSheet({
       title,
       body: (
-        <>
-          <p>{body}</p>
-          <Form
-            fields={[field("confirm", "Saisissez CONFIRMER pour continuer")]}
-            label="Confirmer"
-            submit={async (v) => {
-              if (v.confirm !== "CONFIRMER")
-                throw Error("Saisissez CONFIRMER.");
-              await action();
-              setSheet(null);
-            }}
-          />
-        </>
+        <ConfirmActionContent text={body} run={action} close={() => setSheet(null)} />
       ),
     });
+  }
+  function openBudgetTransactions(categoryId: string) {
+    navigate("transactions");
+    setTxFilter("expense");
+    setTxCategoryFilter(categoryId);
   }
   const accountOptions = (group?: string): [string, string][] =>
     s.accounts
@@ -941,11 +933,12 @@ export default function App() {
     if (!targets.length) { explain("Choisir une destination", <p>Créez d’abord une catégorie active compatible pour recevoir les dépenses et échéances de « {c.name} ».</p>); return; }
     openForm("Transférer et supprimer « " + c.name + " »", [
       choice("target", "Transférer vers", targets.map(target => [target.id, target.name] as [string,string]), targets[0].id),
-      field("confirmation", "Saisissez SUPPRIMER pour confirmer", "", "text", `${usage.transactions} opération(s) et ${usage.rules} échéance(s) seront réaffectées. Leurs montants et dates seront conservés. Le budget actuel de destination reste inchangé. Les prévisions figées seront regroupées sans changer leurs totaux.`),
+
     ], async v => {
-      if (v.confirmation !== "SUPPRIMER") throw Error("Saisissez SUPPRIMER pour confirmer.");
       await change(d => deleteArchivedCategory(d, c.id, v.target), "Historique transféré et catégorie supprimée");
-    }, "Transférer et supprimer");
+    }, "Oui, transférer et supprimer", (
+      <p>Êtes-vous sûr de vouloir supprimer cette catégorie ? {usage.transactions} opération(s) et {usage.rules} échéance(s) seront réaffectées à la catégorie sélectionnée. Les montants et dates seront conservés.</p>
+    ));
   }
   function editCategory(c?: Category) {
     openForm(
@@ -7479,7 +7472,7 @@ export default function App() {
             </div>
           )}
           {route === "transactions" && (
-            <TransactionSearch initialType={txFilter} state={s} month={selectedMonth} setMonth={setMonth} add={() => navigate("add")} rows={txRows}/>
+            <TransactionSearch initialType={txFilter} initialCategory={txCategoryFilter} state={s} month={selectedMonth} setMonth={setMonth} add={() => navigate("add")} rows={txRows}/>
           )}
           {route === "analysis" && (
             <div data-tour="analysis"><AnalysisDashboard state={s} selectedMonth={selectedMonth} /></div>
