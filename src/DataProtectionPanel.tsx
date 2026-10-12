@@ -35,6 +35,14 @@ export default function DataProtectionPanel({ household, personal, demo }: Props
   const [success, setSuccess] = useState("");
   const [verification, setVerification] = useState<VerifiedBackup | null>(null);
   const date = new Date().toISOString().slice(0, 10);
+  // Preview only: reading a backup never calls a database RPC or changes local state.
+  const comparable = verification?.householdId === household.id
+    ? verification.scope === "household"
+      ? { label: "Foyer", current: household.state.transactions.length }
+      : verification.scope === "personal" && personal
+        ? { label: "Compte privé", current: personal.state.transactions.length }
+        : null
+    : null;
   const exportFile = async (kind: "household-json" | "household-csv" | "personal-json" | "personal-csv") => {
     if (busy) return;
     setError("");
@@ -139,7 +147,7 @@ export default function DataProtectionPanel({ household, personal, demo }: Props
           <FileCheck2 size={21}/>
           <div>
             <strong>Vérifier une sauvegarde</strong>
-            <small>Contrôlez un fichier JSON avant de le conserver</small>
+            <small>Vérifiez l’intégrité et comparez les opérations avant toute restauration</small>
           </div>
         </div>
         <label className="wimm-security-verify-action">
@@ -153,7 +161,7 @@ export default function DataProtectionPanel({ household, personal, demo }: Props
             }}/>
         </label>
         {verification && <div className="wimm-security-validation" role="status">
-          <strong>Empreinte SHA-256 vérifiée</strong>
+          <strong>{verification.metadataProtected ? "Intégrité du fichier vérifiée" : "Ancien format : contenu vérifié"}</strong>
           <span>{verification.scope === "household" ? "Données du foyer" :
             verification.scope === "personal" ? "Compte personnel" : "Espace professionnel"}
             {" · "}{new Date(verification.createdAt).toLocaleString("fr-FR")}
@@ -161,7 +169,18 @@ export default function DataProtectionPanel({ household, personal, demo }: Props
           </span>
           {verification.householdId && verification.householdId !== household.id &&
             <span className="wimm-security-foreign">Attention : cette sauvegarde provient d’un autre foyer.</span>}
-          <small>L’empreinte détecte les modifications accidentelles, pas une falsification volontaire. Vérifier un fichier ne restaure aucune donnée.</small>
+          {verification.metadataProtected ? null :
+            <small>Ancienne sauvegarde : la date et la révision ne sont pas protégées par l’empreinte. Vous pouvez créer une nouvelle sauvegarde au format renforcé.</small>}
+          {comparable &&
+            <div className="wimm-security-comparison" aria-label="Comparaison sans restauration">
+              <strong>Comparaison avec {comparable.label.toLowerCase()}</strong>
+              <span>Dans Wimm actuellement : {comparable.current} opération(s)</span>
+              <span>Dans ce fichier : {verification.operationCount ?? "?"} opération(s)</span>
+              <span>Aucune modification effectuée : cette vérification ne restaure pas le fichier.</span>
+            </div>}
+          {verification.scope === "professional" &&
+            <small>La restauration Pro n’est pas encore disponible. Ce contrôle n’importe aucune facture ou transaction.</small>}
+          <small>L’empreinte détecte les modifications accidentelles, pas une falsification volontaire. Le fichier n’est jamais envoyé au serveur pour cette vérification.</small>
         </div>}
       </div>
       <div className="wimm-security-explainer">
