@@ -419,7 +419,7 @@ export default function App() {
   sessionRef.current = session;
   const s = doc?.state || emptyState();
   const ps = personalDoc?.state || emptyPersonalState();
-  const tripCoverUrls = useTripCoverUrls(s.trips, doc?.household?.id, !!session && !demoEnabled);
+  const { urls: tripCoverUrls, retryFailedImage } = useTripCoverUrls(s.trips, doc?.household?.id, !!session && !demoEnabled);
 
   /*
    * La projection est coûteuse, surtout sur 10 ou 30 ans.
@@ -7240,7 +7240,7 @@ export default function App() {
                             <button type="button" key={t.id} className={selected ? "selected" : ""}
                               aria-pressed={selected} onClick={() => setActiveTrip(t.id)}>
                               {t.coverPath && tripCoverUrls[t.coverPath]
-                                ? <img className="trips-tab-image" src={tripCoverUrls[t.coverPath]} alt="" loading="lazy"/>
+                                ? <img className="trips-tab-image" src={tripCoverUrls[t.coverPath]} alt="" loading="lazy" onError={() => t.coverPath && retryFailedImage(t.coverPath)}/>
                                 : <Plane size={16}/>}
                               {t.name}
                             </button>
@@ -7264,7 +7264,7 @@ export default function App() {
                             <button type="button" className={activeTrip === t.id ? "selected" : ""}
                               aria-pressed={activeTrip === t.id} key={t.id} onClick={() => setActiveTrip(t.id)}>
                               {t.coverPath && tripCoverUrls[t.coverPath]
-                                ? <img className="trips-tab-image" src={tripCoverUrls[t.coverPath]} alt="" loading="lazy"/>
+                                ? <img className="trips-tab-image" src={tripCoverUrls[t.coverPath]} alt="" loading="lazy" onError={() => t.coverPath && retryFailedImage(t.coverPath)}/>
                                 : <Plane size={16}/>}
                               {t.name} · {money(total)}
                             </button>
@@ -7291,7 +7291,7 @@ export default function App() {
                           aria-label="Voyage sélectionné">
                           {t.coverPath && tripCoverUrls[t.coverPath] && (
                             <img className="trips-cover-photo" src={tripCoverUrls[t.coverPath]}
-                              alt={"Photo de couverture : " + t.name}
+                              alt="" onError={() => t.coverPath && retryFailedImage(t.coverPath)}
                               style={{ objectPosition: "50% " + (t.coverPosition ?? 50) + "%" }}/>
                           )}
                           <div className="trips-cover-overlay"/>
