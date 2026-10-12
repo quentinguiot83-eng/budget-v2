@@ -45,6 +45,15 @@ border-radius:21px;padding:20px 22px;background:linear-gradient(115deg,var(--wim
  border:1px solid var(--border);border-radius:10px;background:var(--surface)}
 .wimm-security-comparison strong{font-size:.76rem;color:var(--ink)}
 .wimm-security-comparison span{font-size:.73rem;color:var(--muted);line-height:1.4}
+.wimm-security-restore{display:grid;gap:11px;padding:13px;margin-top:8px;background:var(--surface);
+ border:1px solid color-mix(in srgb,var(--wimm-coral) 45%,var(--border));border-radius:12px}
+.wimm-security-restore>strong{display:flex;gap:7px;align-items:center;color:var(--ink);font-size:.84rem}
+.wimm-security-restore>p{margin:0;line-height:1.5;font-size:.75rem}
+.wimm-security-restore>label{font-size:.78rem;color:var(--ink)}
+.wimm-security-restore>input{width:100%;border-radius:10px;padding:11px;
+ background:var(--surface);color:var(--ink);border:1px solid var(--border);font-size:1rem}
+.wimm-security-restore .wimm-history-confirm-actions>button{display:inline-flex;align-items:center;gap:6px;justify-content:center}
+
 
 @media(max-width:560px){.wimm-security-verify-action{justify-self:stretch}}
 
