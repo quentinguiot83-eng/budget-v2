@@ -8,6 +8,7 @@ import {
   ChevronLeft,
   ChevronRight,
   CreditCard,
+  Download,
   LayoutDashboard,
   Link2,
   Package,
@@ -22,6 +23,7 @@ import {
   X,
 } from "lucide-react";
 import { api, rpc } from "./api";
+import { createIntegrityExport, sendFile } from "./secureExport";
 import ProBillingV2 from "./ProBillingV2";
 import ProBusinessMenu from "./ProBusinessMenu";
 import ProCalendarSubscription from "./ProCalendarSubscription";
@@ -104,6 +106,28 @@ export default function ProWorkspace({ native = false }: { native?: boolean } = 
     }catch(e){setError(e instanceof Error?e.message:String(e));}
     finally{setBusy(false);}
   }
+  async function exportCurrentBusiness() {
+    if (busy || !suite) return;
+    setBusy(true);
+    setError("");
+    try {
+      // Reload to include the most recent changes from all devices.
+      const fresh = await rpc("budget_pro_suite_load") as Suite;
+      setSuite(fresh);
+      const payload = await createIntegrityExport({
+        scope: "professional",
+        businessId: fresh.activeBusinessId ?? null,
+        data: fresh,
+      });
+      const filename = "Wimm-pro-" + new Date().toISOString().slice(0, 10) + ".json";
+      await sendFile(filename, payload, "application/json;charset=utf-8");
+      setNotice("Fichier Pro préparé. Enregistrez-le dans un espace protégé. Cet export n'est pas une restauration automatique.");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Export Pro impossible");
+    } finally {
+      setBusy(false);
+    }
+  }
   async function enter(){ setOpen(true); setSection("dashboard"); await load(); }
   async function call(name:string,args?:Record<string,unknown>,message?:string){
     setBusy(true);setError("");
@@ -135,6 +159,10 @@ export default function ProWorkspace({ native = false }: { native?: boolean } = 
       <header className="prosuite-topbar">
         {!native&&<button className="prosuite-icon" onClick={()=>setOpen(false)}><ChevronLeft size={20}/></button>}
         <div className="prosuite-titleblock"><small>PROFESSIONNEL</small><div className="prosuite-business-title"><strong>{suite?.profile.businessName||"Espace professionnel"}</strong>{suite&&<ProBusinessMenu activeBusinessId={suite.activeBusinessId} businesses={suite.businesses??[]} onChanged={load}/>}</div></div>
+        {suite&&<button type="button" className="prosuite-icon" title="Exporter les données de l'entreprise active (JSON)"
+          aria-label="Exporter les données Pro" disabled={busy} onClick={()=>void exportCurrentBusiness()}>
+          <Download size={20}/>
+        </button>}
         {!native&&<button className="prosuite-icon" onClick={()=>setOpen(false)}><X size={20}/></button>}
       </header>
       <div className="prosuite-shell">
