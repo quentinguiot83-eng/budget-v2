@@ -63,6 +63,13 @@ test("duplicate same-amount same-label lines respect occurrence and reimport",()
   reconciled=reconcileBankRows(rows,[one,two],"current");
   assert.deepEqual(reconciled.map(x=>x.status),["matched","matched"]);
 });
+test("near-date same-amount entries are flagged as possible matches",()=>{
+  const table=parseBankCsv("Date;Libellé;Montant\\n13/10/26;CB CARREFOUR;-42,80");
+  const rows=convertBankRows(table,guessBankMapping(table.columns));
+  assert.equal(rows[0].date,"2026-10-13");
+  const existing:Tx={id:"old",account:"current",date:"2026-10-12",type:"expense",amount:4280,description:"Courses"};
+  assert.equal(reconcileBankRows(rows,[existing],"current")[0].status,"possible");
+});
 test("bank reconciliation never changes the original household state",()=>{
   const state=emptyState();const before=JSON.stringify(state);
   reconcileBankRows([{index:0,date:today(),type:"expense",description:"Foo",amount:300}],state.transactions,"current");
