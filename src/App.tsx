@@ -90,10 +90,10 @@ import {
 import { api, rpc } from "./api";
 import { Modal, Form, Progress, Empty, Row, BlockInfo, type Field } from "./ui";
 import AddPage from "./pages/AddPage";
-import QuickEntry, { type QuickDraft } from "./QuickEntry";
+import TransactionQuickAssist from "./TransactionQuickAssist";
 import BankReconciliation, { type BankDraft } from "./BankReconciliation";
-import { reconcileBankRows, type BankRow } from "./bankImport";
-import { checkFavorite, favoriteFromTransaction } from "./quickEntry";
+import { normalizeBankLabel, reconcileBankRows, type BankRow } from "./bankImport";
+import { checkFavorite, favoriteFromTransaction, quickSuggestions } from "./quickEntry";
 import LoansPage from "./pages/LoansPage";
 import ProWorkspace from "./ProWorkspace";
 import {
@@ -784,14 +784,6 @@ export default function App() {
 
   }
 
-  async function saveQuickTransaction(draft: QuickDraft) {
-    await change(d => {
-      if (draft.type !== "expense" && draft.type !== "income")
-        throw Error("Type d’opération invalide.");
-      d.transactions.push({ id: uid(), ...draft });
-    }, "Saisie rapide enregistrée");
-  }
-
   async function removeQuickFavorite(id: string) {
     await change(d => { d.quickFavorites=(d.quickFavorites||[]).filter(f=>f.id!==id); }, "Favori retiré");
   }
@@ -874,6 +866,8 @@ export default function App() {
     save: (v: Record<string, string>) => Promise<void>,
     label?: string,
     extra?: ReactNode,
+    assist?: (values: Record<string, string>, apply: (patch: Record<string, string>) => void) => ReactNode,
+    onFieldChange?: (name: string, value: string, values: Record<string, string>) => Record<string, string> | undefined,
   ) {
     setSheet({
       title,
@@ -882,6 +876,8 @@ export default function App() {
           fields={fields}
           label={label}
           extra={extra}
+          assist={assist}
+          onFieldChange={onFieldChange}
           submit={async (v) => {
             await save(v);
             setSheet(null);
@@ -3055,6 +3051,36 @@ export default function App() {
         : "Valider le paiement",
     );
   }
+  function transactionAssist(type: "expense" | "income") {
+    return {
+      render: (values: Record<string, string>, apply: (patch: Record<string, string>) => void) => (
+        <TransactionQuickAssist
+          state={s}
+          type={type}
+          values={values}
+          apply={apply}
+          removeFavorite={removeQuickFavorite}
+        />
+      ),
+      infer: (name: string, value: string, values: Record<string, string>) => {
+        if (name !== "description" || value.trim().length < 3 ||
+            (type === "expense" && values.expenseKind !== "once")) return undefined;
+        const suggestion = quickSuggestions(s, type, value, 1)[0];
+        if (!suggestion || normalizeBankLabel(suggestion.description) !== normalizeBankLabel(value))
+          return undefined;
+        const result: Record<string, string> = { account: suggestion.account };
+        if (type === "expense" && suggestion.category) result.category = suggestion.category;
+        if (type === "income") {
+          const source = s.transactions.find(t =>
+            t.type === "income" && normalizeBankLabel(t.description) === normalizeBankLabel(value)
+            && t.account === suggestion.account);
+          if (source?.incomeType) result.incomeType = source.incomeType;
+        }
+        return result;
+      },
+    };
+  }
+
   function operation(
     type: Tx["type"] = "expense",
     trip?: Trip,
@@ -3207,6 +3233,10 @@ export default function App() {
           );
 
         },
+        undefined,
+        undefined,
+        existing ? undefined : transactionAssist("income").render,
+        existing ? undefined : transactionAssist("income").infer,
       );
 
       return;
@@ -3665,6 +3695,10 @@ export default function App() {
         );
 
       },
+      undefined,
+      undefined,
+      transactionAssist("expense").render,
+      transactionAssist("expense").infer,
     );
 
   }
@@ -7163,7 +7197,6 @@ export default function App() {
                 operation={operation}
                 transfer={transfer}
                 newLoan={newLoan}
-                quickEntry={<QuickEntry state={s} save={saveQuickTransaction} removeFavorite={removeQuickFavorite}/>}
                 bankReconciliation={() => navigate("bank")}
               />
             </div>
