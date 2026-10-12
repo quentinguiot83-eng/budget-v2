@@ -50,7 +50,9 @@ const styles = String.raw`
 .projection-legend-line{width:21px;height:0;border-top:3px solid #38866c;display:inline-block;}
 .projection-legend-line.net {border-color:#8e95a8;border-top-style:dashed;}
 .projection-legend-line.travel {border-color:#7d8ed8;}
-.projection-chart-reading {margin-top:15px;border-radius:15px;padding:13px 15px;background:color-mix(in srgb,var(--wimm-blue-wash) 35%,var(--surface));border:1px solid var(--border);display:grid;gap:12px;}
+.projection-chart-v2 {touch-action:pan-y;cursor:crosshair;}
+.projection-chart-v2:focus-visible {outline:2px solid var(--wimm-green);outline-offset:3px;border-radius:9px;}
+.projection-chart-reading {margin-top:14px;padding:14px 0 0;background:transparent;border:0;border-top:1px solid var(--border);border-radius:0;display:grid;gap:13px;}
 .projection-chart-reading-header {display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:5px 10px;}
 .projection-chart-reading-header strong{font-size:.85rem;color:var(--ink);}
 .projection-chart-reading-header small{color:var(--muted);font-size:.7rem;}
@@ -58,7 +60,7 @@ const styles = String.raw`
 .projection-chart-reading-values>div{min-width:0;display:grid;gap:5px;}
 .projection-chart-reading-values span{font-size:.7rem;color:var(--muted);line-height:1.35;}
 .projection-chart-reading-values strong{font-size:.86rem;color:var(--ink);font-variant-numeric:tabular-nums;overflow-wrap:anywhere;}
-.projection-chart-reading input[type=range]{width:100%;accent-color:var(--wimm-green);cursor:pointer;height:22px;margin:0;}
+
 .projection-chart-note{font-size:.72rem;line-height:1.48;color:var(--muted);margin:12px 0 0;}
 .projection-dashboard-v2 .projection-warning {margin:0;}
 .projection-projects-card{display:grid;gap:13px;}
@@ -122,7 +124,7 @@ const styles = String.raw`
   .projection-chart-v2{height:235px;}
   .projection-legend-v2{gap:8px 11px;}
   .projection-legend-v2>span{font-size:.67rem;}
-  .projection-chart-reading{padding:11px;}
+  .projection-chart-reading{padding:13px 0 0;gap:11px;}
   .projection-chart-reading-values strong{font-size:.8rem;}
   .projection-project-row .projection-project-icon{width:35px;height:35px;flex-basis:35px;}
   .projection-project-row .icon{width:31px;flex-basis:31px;}
