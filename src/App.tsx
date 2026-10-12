@@ -1,5 +1,6 @@
 import { WimmWordmark } from "./WimmWordmark";
 import { revisePaymentPlan, removeCreditPlan } from "./creditSchedules";
+import { APP_VERSION_LABEL, APP_BUILD_ID, APP_BUILD_DATE_LABEL } from "./appVersion";
 import SwipeActions from "./SwipeActions";
 import ConfirmActionContent from "./ConfirmActionContent";
 import SettingsNavigation from "./SettingsNavigation";
@@ -7919,8 +7920,15 @@ export default function App() {
 <section className="card wimm-settings-info">
                 <h2>Wimm</h2>
                 <p>Where is my money?</p>
-                <p className="muted">Version 1.0.0 · Application de gestion de budget, patrimoine, voyages et finances personnelles.</p>
-                <p className="muted">Application web installable sur l’écran d’accueil de votre iPhone.</p>
+                <div className="wimm-release-card" aria-label="Version installée">
+                  <span className="wimm-release-label">Version de Wimm</span>
+                  <strong className="wimm-release-number">{APP_VERSION_LABEL}</strong>
+                  <span className="wimm-release-status">Version bêta</span>
+                  <span className="wimm-release-build">Compilation {APP_BUILD_ID}</span>
+                  <small className="muted">Construite le {APP_BUILD_DATE_LABEL}</small>
+                </div>
+                <p className="muted">Le numéro de version évolue à chaque nouvelle mise à jour publiée. La référence de compilation s'actualise automatiquement à chaque déploiement.</p>
+                <p className="muted">Application de gestion du budget, du patrimoine, des voyages et des finances personnelles, installable sur l'écran d'accueil de votre iPhone.</p>
               </section>
 )}
             </div>
@@ -7928,7 +7936,7 @@ export default function App() {
         </main>
         <footer className="page-footer">
           <span>
-            Wimm <span>·</span> Where is my money?
+            Wimm <span>·</span> Where is my money? <span className="wimm-footer-version">· {APP_VERSION_LABEL}</span>
           </span>
 
           <button
