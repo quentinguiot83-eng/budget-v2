@@ -9,6 +9,7 @@ import AnalysisDashboard from "./AnalysisDashboard";
 import { freezePastForecasts } from "./monthlyComparison";
 import TransactionSearch from "./TransactionSearch";
 import OnboardingTutorial from "./OnboardingTutorial";
+import WealthPageStyles from "./WealthPageStyles";
 import SetupWizard, { applyInitialSetup } from "./SetupWizard";
 import {
   lazy,
@@ -6813,6 +6814,7 @@ export default function App() {
 
           {route === "wealth" && (
             <div className="wealth-page-v2">
+              <WealthPageStyles/>
               <section className="wealth-total-card" data-tour="wealth-overview" aria-label="Total de vos comptes du foyer">
                 <div className="wealth-total-header">
                   <div className="block-title">
