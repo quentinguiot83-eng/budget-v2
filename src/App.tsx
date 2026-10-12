@@ -410,6 +410,15 @@ export default function App() {
     [expandedPersonalBudgets, setExpandedPersonalBudgets] = useState<Record<string, boolean>>({}),
     [settingsCategory, setSettingsCategory] = useState<string | null>(null),
     [settingsDetail, setSettingsDetail] = useState<string | null>(null);
+  // The full guided tour must start from predictable sections, even if the
+  // user previously left Projects on the future features tab or Settings open.
+  useEffect(() => {
+    if (!tutorialOpen || tutorialMode === "page") return;
+    setProjectsSection("trips");
+    setSettingsCategory(null);
+    setSettingsDetail(null);
+  }, [tutorialOpen, tutorialMode]);
+
   const tutorialAutoOpened = useRef(false);
   const busy = useRef(false),
     docRef = useRef(doc),
