@@ -5042,7 +5042,16 @@ export default function App() {
       <SetupWizard
         householdName={doc.household.name}
         onComplete={async (draft) => {
+          // First persist the household balances and budgets. The professional
+          // preference lives separately and must not invalidate the setup if
+          // the optional Pro service is temporarily unavailable.
           await change((state) => applyInitialSetup(state, draft), "Initialisation du foyer");
+          try {
+            await rpc("budget_pro_toggle", { p_enabled: draft.professional === true });
+            setProEnabled(draft.professional === true);
+          } catch {
+            setNotice("Foyer initialisé. Le choix de l’espace Pro n’a pas pu être enregistré : vérifiez-le dans Réglages.");
+          }
         }}
       />
     );
