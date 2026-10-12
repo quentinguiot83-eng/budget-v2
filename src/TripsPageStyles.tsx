@@ -111,5 +111,80 @@ const styles=String.raw`
  .trips-section-heading>strong{font-size:.68rem}
 }
 @media(prefers-reduced-motion:reduce){.trips-disclosure>summary>svg:last-child,.trips-archive-picker>summary svg:last-child{transition:none}}
+
+/* Photo de couverture facultative, format paysage et texte lisible. */
+.trips-page-v2 .trips-tab-image {
+  display:block;width:29px;height:29px;flex:0 0 29px;
+  border-radius:9px;object-fit:cover;border:1px solid color-mix(in srgb,var(--border) 70%,transparent);
+}
+.trips-page-v2 .trips-cover-hero {
+  position:relative;display:flex;flex-direction:column;align-items:stretch;justify-content:space-between;
+  gap:14px;min-height:218px;padding:21px;overflow:hidden;
+  border-radius:22px;background:linear-gradient(116deg,var(--wimm-mint-wash),var(--surface) 60%,var(--wimm-blue-wash));
+}
+.trips-cover-hero .trips-cover-photo {
+  position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;
+}
+.trips-cover-hero .trips-cover-overlay {display:none;}
+.trips-cover-hero.has-cover .trips-cover-overlay {
+  display:block;pointer-events:none;position:absolute;inset:0;z-index:1;
+  background:linear-gradient(180deg,rgba(15,28,40,.14),rgba(15,28,40,.42) 47%,rgba(10,24,31,.8));
+}
+.trips-cover-header {width:100%;display:flex;align-items:center;gap:13px;position:relative;z-index:2;min-width:0;}
+.trips-cover-hero .trips-hero-content {flex:1;min-width:0;}
+.trips-cover-hero.has-cover .trips-hero-content h2,
+.trips-cover-hero.has-cover .trips-hero-content p,
+.trips-cover-hero.has-cover .trips-hero-status {color:white;}
+.trips-cover-hero.has-cover .trip-icon {
+  background:rgba(255,255,255,.18);color:white;backdrop-filter:blur(5px);
+}
+.trips-cover-hero.has-cover .trips-cover-edit-trip {
+  color:white;border-color:rgba(255,255,255,.32);background:rgba(0,0,0,.2);
+}
+.trips-cover-hero.has-cover .trips-cover-edit-trip svg {color:white;}
+.trips-cover-hero .trips-cover-controls {
+  display:flex;flex-wrap:wrap;align-items:center;gap:8px;position:relative;z-index:2;
+}
+.trips-cover-file-input {
+  position:absolute!important;width:1px!important;height:1px!important;
+  opacity:0;clip-path:inset(100%);overflow:hidden;pointer-events:none;
+}
+.trips-cover-action {
+  display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:37px;
+  padding:8px 11px;border-radius:11px;
+  font-size:.76rem;font-weight:760;line-height:1.2;
+  background:var(--surface);color:var(--wimm-green);border:1px solid color-mix(in srgb,var(--wimm-mint) 27%,var(--border));
+  box-shadow:0 2px 7px rgba(18,48,41,.05);
+  cursor:pointer;
+}
+.trips-cover-action:hover {background:var(--wimm-mint-wash);}
+.trips-cover-action:focus-visible,.trips-cover-file-input:focus-visible + .trips-cover-action {
+  outline:2px solid var(--wimm-green);outline-offset:2px;
+}
+.trips-cover-action.is-loading {opacity:.6;cursor:wait;}
+.trips-cover-hero.has-cover .trips-cover-action {
+  color:white;background:rgba(15,28,40,.44);border-color:rgba(255,255,255,.4);
+  backdrop-filter:blur(7px);
+}
+.trips-cover-hero.has-cover .trips-cover-action:hover {background:rgba(15,28,40,.68);}
+.trips-cover-action.trips-cover-remove {color:var(--wimm-coral);}
+.trips-cover-hero.has-cover .trips-cover-action.trips-cover-remove {color:#ffd8de;}
+.trips-cover-position {
+  position:relative;z-index:2;display:flex;align-items:center;gap:10px;
+  border-radius:12px;background:var(--surface);padding:10px 13px;
+  color:var(--ink);font-size:.76rem;font-weight:730;
+}
+.trips-cover-position label {white-space:nowrap;}
+.trips-cover-position input[type=range] {flex:1;min-width:45px;accent-color:var(--wimm-green);}
+.trips-cover-position button {flex:0 0 auto;padding:8px 11px;border-radius:9px;font-size:.76rem;}
+@media(max-width:560px){
+  .trips-page-v2 .trips-cover-hero{min-height:219px;padding:15px;gap:13px;}
+  .trips-cover-header {gap:9px;}
+  .trips-cover-hero .trips-hero-content h2 {font-size:1.3rem;}
+  .trips-cover-action{min-height:34px;padding:7px 9px;font-size:.68rem;gap:5px;}
+  .trips-cover-action>svg{width:14px;height:14px;}
+  .trips-cover-position {flex-wrap:wrap;padding:10px;gap:8px;}
+  .trips-cover-position input[type=range]{flex:1 1 110px;}
+}
 `;
 export default function TripsPageStyles(){return <style data-wimm-trips="v2">{styles}</style>;}
