@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { api } from "./api";
 import type { Trip } from "./engine";
 
@@ -12,23 +12,59 @@ const PHOTO_TARGET_SIDE = 1800;
  */
 export function useTripCoverUrls(trips: Trip[], householdId: string | undefined, enabled: boolean) {
   const [urls, setUrls] = useState<Record<string, string>>({});
+  const [reload, setReload] = useState(0);
+  const lastRetry = useRef<Record<string, number>>({});
   const paths = useMemo(
     () => trips.map(t => t.coverPath).filter((p): p is string => !!p).sort().join("\n"),
     [trips],
   );
+
   useEffect(() => {
     let canceled = false;
     if (!enabled || !householdId || !paths) { setUrls({}); return; }
     const validPaths = paths.split("\n").filter(path => path.startsWith(householdId + "/"));
-    Promise.all(validPaths.map(async path => {
-      const { data, error } = await api.storage.from(TRIP_COVERS_BUCKET).createSignedUrl(path, 60 * 30);
-      return error || !data?.signedUrl ? null : ([path, data.signedUrl] as const);
-    })).then(entries => {
-      if (!canceled) setUrls(Object.fromEntries(entries.filter((e): e is readonly [string, string] => e !== null)));
-    }).catch(() => { if (!canceled) setUrls({}); });
-    return () => { canceled = true; };
-  }, [paths, householdId, enabled]);
-  return urls;
+    let requestNumber = 0;
+    const refresh = async () => {
+      const currentRequest = ++requestNumber;
+      try {
+        // Signed links expire even while the iPhone PWA stays open for hours.
+        const entries = await Promise.all(validPaths.map(async path => {
+          const { data, error } = await api.storage.from(TRIP_COVERS_BUCKET).createSignedUrl(path, 60 * 60);
+          return error || !data?.signedUrl ? null : ([path, data.signedUrl] as const);
+        }));
+        if (!canceled && currentRequest === requestNumber)
+          setUrls(Object.fromEntries(entries.filter((entry): entry is readonly [string, string] => entry !== null)));
+      } catch {
+        if (!canceled && currentRequest === requestNumber) setUrls({});
+      }
+    };
+    void refresh();
+    // Refresh before expiration, on Safari foregrounding and PWA reopening.
+    const timer = window.setInterval(() => void refresh(), 15 * 60 * 1000);
+    const onVisible = () => { if (document.visibilityState === "visible") void refresh(); };
+    document.addEventListener("visibilitychange", onVisible);
+    window.addEventListener("focus", onVisible);
+    window.addEventListener("pageshow", onVisible);
+    return () => {
+      canceled = true;
+      window.clearInterval(timer);
+      document.removeEventListener("visibilitychange", onVisible);
+      window.removeEventListener("focus", onVisible);
+      window.removeEventListener("pageshow", onVisible);
+    };
+  }, [paths, householdId, enabled, reload]);
+
+  const retryFailedImage = (path: string) => {
+    const time = Date.now();
+    if (time - (lastRetry.current[path] || 0) < 60_000) {
+      setUrls(current => { const next = { ...current }; delete next[path]; return next; });
+      return;
+    }
+    lastRetry.current[path] = time;
+    setUrls(current => { const next = { ...current }; delete next[path]; return next; });
+    setReload(value => value + 1);
+  };
+  return { urls, retryFailedImage };
 }
 
 export async function compressTripCover(file: File): Promise<Blob> {
