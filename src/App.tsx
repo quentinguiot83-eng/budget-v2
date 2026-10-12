@@ -5343,7 +5343,7 @@ export default function App() {
             {route === "personal" ? (
               <div className="personal-page-title-row">
                 <div className="block-title personal-page-title">
-                  {!(route === "settings" && settingsCategory) && <h1>{titles[route]}</h1>}
+                  <h1>{titles[route]}</h1>
                   <BlockInfo title="Votre compte personnel">
                     <p>Son solde, ses achats et son historique sont visibles uniquement depuis votre compte Wimm.</p>
                     <p>Les autres membres du foyer voient uniquement les virements depuis le compte commun et le budget personnel lié, sans accès aux opérations privées.</p>
@@ -5358,7 +5358,7 @@ export default function App() {
                 )}
               </div>
             ) : (
-              <h1>{titles[route]}</h1>
+              {!(route === "settings" && settingsCategory) && <h1>{titles[route]}</h1>}
             )}
 
           </div>
