@@ -4529,6 +4529,14 @@ export default function App() {
   const sortedTx = [...s.transactions].reverse().sort((a, b) =>
     b.date.localeCompare(a.date),
   );
+  function archiveBudgetCategory(c: Category) {
+    confirmAction("Archiver " + c.name + " ?", "Son historique reste disponible. Les charges fixes associées restent actives et doivent être arrêtées séparément si nécessaire.",
+      async () => change(d => {
+        const category = d.categories.find(x => x.id === c.id);
+        if (!category) throw Error("Catégorie introuvable.");
+        category.archived = selectedMonth;
+      }, "Catégorie archivée"));
+  }
   const historicalVariableOnly = !!totals.forecast && !totals.forecast.fixedCategories;
   const categoryCards = (
     simple = false,
@@ -4676,9 +4684,17 @@ export default function App() {
           : 0;
 
         return (
+          <SwipeActions key={c.id} label={c.name} className="budget-swipe-row"
+            actions={simple ? [] : [
+              { label: "Modifier", icon: <Pencil size={18}/>, onClick: () => editCategory(c) },
+              ...(!isPersonal && !c.archived ? [{ label: "Archiver", icon: <Trash2 size={18}/>,
+                tone: "danger" as const, onClick: () => archiveBudgetCategory(c) }] : []),
+            ]}>
           <article
-            className={`category${simple ? " category-compact" : ""}${isPersonal && !simple ? " category-personal" : ""}${displayBudget > 0 && displaySpent >= displayBudget ? " category-limit" : ""}`}
-            key={c.id}
+            className={`category${simple ? " category-compact" : ""}${isPersonal && !simple ? " category-personal" : ""}${displayBudget > 0 && displaySpent >= displayBudget ? " category-limit" : ""}${!simple ? " budget-clickable" : ""}`}
+            onClick={event => {
+              if (!simple && !(event.target as HTMLElement).closest("button, a, input, select, summary")) openBudgetTransactions(c.id);
+            }}
           >
 
             <div className="flex">
@@ -4722,13 +4738,8 @@ export default function App() {
                 </span>
               )}
 
-              {!simple && (
-                <div className={isPersonal ? "personal-budget-actions" : ""}>
-                  <button type="button" className="icon"
-                    aria-label={"Modifier " + c.name}
-                    onClick={() => editCategory(c)}>
-                    <Pencil size={17} />
-                  </button>
+              {!simple && isPersonal && (
+                <div className="personal-budget-actions">
                   {isPersonal && (
                     <button type="button" className="icon personal-budget-toggle"
                       aria-label={expandedPersonalBudgets[c.id]
@@ -4854,33 +4865,7 @@ export default function App() {
                       : money(displayBudget - displaySpent) + " restants"}
                   </small>
 
-                  <button
-                    className="text danger-text"
-                    onClick={() =>
-                      confirmAction(
-                        "Archiver " +
-                          c.name +
-                          " ?",
-                        "Son historique reste disponible. Les charges fixes associées restent actives et doivent être arrêtées séparément si nécessaire.",
-                        async () =>
-                          change(
-                            (d) => {
-                              d.categories.find(
-                                (
-                                  x,
-                                ) =>
-                                  x.id ===
-                                  c.id,
-                              )!.archived =
-                                selectedMonth;
-                            },
-                            "Catégorie archivée",
-                          ),
-                      )
-                    }
-                  >
-                    Archiver
-                  </button>
+
 
                 </div>
 
@@ -4888,6 +4873,7 @@ export default function App() {
             ) : null}
 
           </article>
+          </SwipeActions>
         );
 
       });
