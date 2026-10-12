@@ -6958,46 +6958,28 @@ export default function App() {
                     Projet
                   </button>
                 </div>
-                {s.projects.slice().sort((a,b) => a.date.localeCompare(b.date)).map((p) => (
-                  <div className="projection-project-row" key={p.id}>
-                    <span className="projection-project-icon"><Target size={20}/></span>
-                    <div className="grow">
-                      <strong>{p.name}</strong>
-                      <small>{dateLabel(p.date)} · {money(p.amount)}</small>
-                      <span className={"projection-project-status" + (p.settled ? " financed" : !p.active ? " excluded" : "")}>
-                        {p.settled ? "Financé" : p.active ? "Inclus" : "Exclu"}
-                      </span>
+                {s.projects.slice().sort((a,b) => a.date.localeCompare(b.date)).map(p => (
+                  <SwipeActions key={p.id} label={p.name} className="project-swipe-row"
+                    actions={[
+                      { label: "Modifier", icon: <Pencil size={17}/>, onClick: () => editProject(p) },
+                      { label: "Supprimer", icon: <Trash2 size={17}/>, tone: "danger" as const,
+                        onClick: () => confirmAction("Supprimer ce projet ?", "Aucune transaction réelle ne sera supprimée.",
+                          async () => change(d => {
+                            d.projects = d.projects.filter(x => x.id !== p.id);
+                            d.trips.forEach(t => { if (t.projectId === p.id) t.projectId = undefined; });
+                          }, "Projet supprimé")) },
+                    ]}>
+                    <div className="projection-project-row">
+                      <span className="projection-project-icon"><Target size={20}/></span>
+                      <div className="grow">
+                        <strong>{p.name}</strong>
+                        <small>{dateLabel(p.date)} · {money(p.amount)}</small>
+                        <span className={"projection-project-status" + (p.settled ? " financed" : !p.active ? " excluded" : "")}>
+                          {p.settled ? "Financé" : p.active ? "Inclus" : "Exclu"}
+                        </span>
+                      </div>
                     </div>
-                    <button
-                      className="icon"
-                      aria-label="Modifier le projet"
-                      onClick={() => editProject(p)}
-                    >
-                      <Pencil size={17} />
-                    </button>
-                    <button
-                      className="icon"
-                      aria-label="Supprimer le projet"
-                      onClick={() =>
-                        confirmAction(
-                          "Supprimer ce projet ?",
-                          "Aucune transaction réelle ne sera supprimée.",
-                          async () =>
-                            change((d) => {
-                              d.projects = d.projects.filter(
-                                (x) => x.id !== p.id,
-                              );
-                              d.trips.forEach((t) => {
-                                if (t.projectId === p.id)
-                                  t.projectId = undefined;
-                              });
-                            }, "Projet supprimé"),
-                        )
-                      }
-                    >
-                      <Trash2 size={17} />
-                    </button>
-                  </div>
+                  </SwipeActions>
                 ))}
                 {!s.projects.length && (
                   <p className="muted">
