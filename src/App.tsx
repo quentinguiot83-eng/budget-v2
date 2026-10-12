@@ -10,6 +10,7 @@ import { freezePastForecasts } from "./monthlyComparison";
 import TransactionSearch from "./TransactionSearch";
 import OnboardingTutorial from "./OnboardingTutorial";
 import WealthPageStyles from "./WealthPageStyles";
+import PersonalPageStyles from "./PersonalPageStyles";
 import ProjectionPageStyles from "./ProjectionPageStyles";
 import TripsPageStyles from "./TripsPageStyles";
 import TripCoverEditor from "./TripCoverEditor";
@@ -5868,285 +5869,390 @@ export default function App() {
                     ),
                 );
 
+                const activePrivateBudgets = (ps.budgets ?? []).filter(
+                  b => selectedMonth >= b.start && (!b.end || selectedMonth <= b.end)
+                );
+                const privateBudgetsTotal = activePrivateBudgets.reduce((n, b) => n + b.amount, 0);
+                const activeAdvances = s.transactions.filter(t =>
+                  t.type === "personal_transfer" &&
+                  t.personalOwner === personalOwnerId &&
+                  t.category === account.category &&
+                  t.personalKind === "advance"
+                );
+                const activePrivateRules = ps.rules.filter(r => !r.end || r.end >= today());
+                const projectionPreview = personalProjection(
+                  ps, s, personalOwnerId, personalProjectionMonths
+                ).at(-1);
+
                 return (
                   <>
-                    <div className="overview">
-
-                      <section className="balance-card">
-                        <div className="split">
-                          <span>
-                            {account.name}
-                          </span>
-                          <UserRound
-                            size={23}
-                          />
-                        </div>
-
-                        <div className="hero-number">
-                          {money(
-                            privateBalance,
-                          )}
-                        </div>
-
-                        <div className="split">
-                          <span>
-                            Solde privé actuel
-                          </span>
-
-                          <button
-                            onClick={() =>
-                              explain(
-                                "Confidentialité du compte perso",
-                                <>
-                                  <p>
-                                    Ce solde et
-                                    vos achats
-                                    personnels
-                                    sont stockés
-                                    séparément
-                                    pour votre
-                                    utilisateur.
-                                  </p>
-                                  <p>
-                                    Les autres
-                                    membres du
-                                    foyer voient
-                                    uniquement
-                                    l’impact des
-                                    virements sur
-                                    le compte
-                                    commun et
-                                    l’enveloppe
-                                    budgétaire.
-                                  </p>
-                                </>,
-                              )
-                            }
-                          >
-                            Privé{" "}
-                            <CircleHelp
-                              size={14}
-                            />
+                    <PersonalPageStyles/>
+                    <div className="personal-page-v2">
+                      <section className="personal-v2-hero" aria-label="Solde de votre compte personnel">
+                        <div className="personal-v2-hero-header">
+                          <span className="personal-v2-account"><Wallet size={19}/>{account.name}</span>
+                          <button type="button" className="personal-v2-private"
+                            onClick={() => explain("Confidentialité du compte perso", <>
+                              <p>Le solde et les opérations privées sont accessibles uniquement à votre compte Wimm.</p>
+                              <p>Les autres membres du foyer voient le budget lié et les virements depuis le compte commun, sans voir les dépenses personnelles.</p>
+                            </>)}>
+                            <UserRound size={15}/> Privé <CircleHelp size={14}/>
                           </button>
                         </div>
-                      </section>
-
-                      <section className="metric">
-                        <small>
-                          Budget lié
-                        </small>
-                        <strong>
-                          {category?.name ||
-                            "Non configuré"}
-                        </strong>
-                        <span className="muted">
-                          {money(
-                            envelope.base,
-                          )}{" "}
-                          / mois
-                        </span>
-
-                        {category && (
-                          <button
-                            className="text"
-                            onClick={() =>
-                              editCategory(
-                                category,
-                              )
-                            }
-                          >
-                            Modifier le budget
-                          </button>
-                        )}
-                      </section>
-
-                      <section className="metric">
-                        <small>
-                          Reste à virer
-                        </small>
-                        <strong>
-                          {money(
-                            envelope.remaining,
-                          )}
-                        </strong>
-                        <span className="muted">
-                          {envelope.carryIn >
-                          0
-                            ? `${money(
-                                envelope.carryIn,
-                              )} reportés`
-                            : "Aucun report"}
-                        </span>
-                      </section>
-
-                    </div>
-
-                    <div className="two-col">
-
-                      <section className="card">
-                        <div className="section-head">
-                          <h2>
-                            Enveloppe ·{" "}
-                            {monthLabel(
-                              selectedMonth,
-                            )}
-                          </h2>
+                        <div className="personal-v2-amount">
+                          <span>Solde privé actuel</span>
+                          <strong>{money(privateBalance)}</strong>
                         </div>
+                        <div className="personal-v2-totals">
+                          <div>
+                            <small>Budget lié au foyer</small>
+                            <strong>{money(envelope.base)} / mois</strong>
+                            <span>{category?.name || "Non configuré"}</span>
+                          </div>
+                          <div className="personal-v2-due">
+                            <small>Reste à virer</small>
+                            <strong>{money(envelope.remaining)}</strong>
+                            <span>{envelope.carryIn > 0 ? money(envelope.carryIn) + " reportés" : "Aucun report"}</span>
+                          </div>
+                        </div>
+                      </section>
 
-                        <Row
-                          title="Budget mensuel"
-                          value={money(
-                            envelope.base,
-                          )}
-                        />
-
-                        {envelope.carryIn >
-                          0 && (
-                          <Row
-                            title="Report précédent"
-                            value={
-                              "− " +
-                              money(
-                                envelope.carryIn,
-                              )
-                            }
-                          />
-                        )}
-
-                        <Row
-                          title="Disponible"
-                          value={money(
-                            envelope.available,
-                          )}
-                        />
-
-                        <Row
-                          title="Déjà engagé / viré"
-                          value={money(
-                            envelope.committed,
-                          )}
-                        />
-
-                        <Progress
-                          value={
-                            envelope.committed
-                          }
-                          max={Math.max(
-                            1,
-                            envelope.available,
-                          )}
-                        />
-
-                        <Row
-                          title="Reste à virer"
-                          value={money(
-                            envelope.remaining,
-                          )}
-                        />
-
-                        {envelope.carryOut >
-                          0 && (
-                          <p className="warning">
-                            Dépassement de{" "}
-                            {money(
-                              envelope.carryOut,
-                            )}{" "}
-                            reporté sur le mois
-                            suivant.
-                          </p>
-                        )}
-
-                        <button
-                          className="primary"
-                          onClick={() =>
-                            transferPersonal()
-                          }
-                        >
-                          <ArrowLeftRight
-                            size={17}
-                          />
-                          Virer mon budget
+                      <div className="personal-v2-quick-actions">
+                        <button type="button" className="primary" onClick={() => personalExpense()}>
+                          <Plus size={18}/> Ajouter une dépense
                         </button>
-                      </section>
+                        <button type="button" className="secondary" onClick={() => transferPersonal()}>
+                          <ArrowLeftRight size={18}/> Virer mon budget
+                        </button>
+                      </div>
 
-                      <section className="card">
-                        <div className="section-head">
+                      <details className="personal-v2-panel personal-v2-envelope">
+                        <summary>
+                          <span className="personal-v2-panel-icon"><Wallet size={21}/></span>
+                          <span className="personal-v2-panel-copy">
+                            <strong>Enveloppe du foyer · {monthLabel(selectedMonth)}</strong>
+                            <small>Budget, versements et reports</small>
+                          </span>
+                          <ChevronRight className="personal-v2-chevron"/>
+                        </summary>
+                        <div className="personal-v2-panel-content">
+                          <div className="personal-v2-month-overview">
+                            <Row title="Budget mensuel lié" value={money(envelope.base)}/>
+                            {envelope.carryIn > 0 && <Row title="Report précédent" value={"− " + money(envelope.carryIn)}/>}
+                            <Row title="Budget disponible" value={money(envelope.available)}/>
+                            <Row title="Déjà engagé / viré" value={money(envelope.committed)}/>
+                            <Progress value={envelope.committed} max={Math.max(1, envelope.available)}/>
+                            <Row title="Reste à virer" value={money(envelope.remaining)}/>
+                            {envelope.carryOut > 0 && <p className="warning">
+                              Dépassement de {money(envelope.carryOut)} reporté sur le mois suivant.
+                            </p>}
+                          </div>
+                          {category && <button type="button" className="text" onClick={() => editCategory(category)}>
+                            <Pencil size={15}/> Modifier le budget lié
+                          </button>}
+                        </div>
+                      </details>
+
+                      <details className="personal-v2-panel personal-v2-budget-panel">
+                        <summary>
+                          <span className="personal-v2-panel-icon"><Coins size={20}/></span>
+                          <span className="personal-v2-panel-copy">
+                            <strong>Mes budgets personnels</strong>
+                            <small>Prévisions uniquement · sans débit immédiat</small>
+                          </span>
+                          <span className="personal-v2-panel-side">
+                            <strong>{money(privateBudgetsTotal)}</strong>
+                            <small>par mois</small>
+                          </span>
+                          <ChevronRight className="personal-v2-chevron"/>
+                        </summary>
+                        <div className="personal-v2-panel-content">
+                          <section className="card personal-budgets-card">
+                      <div className="section-head">
+                        <div>
                           <h2>
-                            Gérer mon compte
+                            Budgets mensuels perso
                           </h2>
+
+                          <p className="muted">
+                            Ces montants servent uniquement à prévoir vos futures
+                            dépenses personnelles. Ils n’affectent pas le budget
+                            commun et ne modifient pas votre solde réel tant que
+                            vous n’avez pas réellement dépensé l’argent.
+                          </p>
                         </div>
 
                         <button
-                          className="primary wide"
+                          className="secondary"
                           onClick={() =>
-                            personalExpense()
+                            editPersonalBudget()
                           }
                         >
                           <Plus size={17} />
-                          Ajouter une dépense
-                          perso
+                          Budget
                         </button>
+                      </div>
 
-                        <button
-                          className="secondary wide"
-                          onClick={() =>
-                            transferPersonal()
-                          }
-                        >
-                          <ArrowLeftRight
-                            size={17}
-                          />
-                          Virer mon budget
-                        </button>
+                      {(ps.budgets ?? []).map(
+                        (b) => (
+                          <div
+                            className="rule-row"
+                            key={b.id}
+                          >
+                            <div className="grow">
+                              <strong>
+                                {b.name}
+                              </strong>
 
-                        <button
-                          className="secondary wide"
-                          onClick={() =>
-                            personalAdvance()
-                          }
-                        >
-                          <Coins size={17} />
-                          Faire une avance
-                        </button>
+                              <small>
+                                {money(
+                                  b.amount,
+                                )}{" "}
+                                / mois
+                              </small>
 
-                        <button
-                          className="secondary wide"
-                          onClick={() =>
-                            editPersonalRule()
-                          }
-                        >
-                          <CalendarDays size={17} />
-                          Paiement en plusieurs fois
-                        </button>
+                              <small>
+                                Dès{" "}
+                                {monthLabel(
+                                  b.start,
+                                )}
+                                {b.end
+                                  ? " · jusqu’à " +
+                                    monthLabel(
+                                      b.end,
+                                    )
+                                  : " · sans date de fin"}
+                              </small>
+                            </div>
 
-                        <button
-                          className="secondary wide"
-                          onClick={() =>
-                            adjustPersonalBalance()
-                          }
-                        >
-                          Ajuster le solde
-                        </button>
+                            <button
+                              className="secondary compact"
+                              onClick={() =>
+                                editPersonalBudget(
+                                  b,
+                                )
+                              }
+                            >
+                              Modifier
+                            </button>
 
-                        <button
-                          className="secondary wide"
-                          onClick={() =>
-                            editPersonalAccount()
-                          }
-                        >
-                          Paramétrer le compte
-                        </button>
+                            <button
+                              className="icon"
+                              aria-label="Supprimer le budget perso"
+                              onClick={() =>
+                                confirmAction(
+                                  "Supprimer " +
+                                    b.name +
+                                    " ?",
+                                  "Il ne sera plus pris en compte dans vos projections futures. Cela ne modifie aucune dépense déjà enregistrée.",
+                                  async () =>
+                                    changePersonal(
+                                      (d) => {
+                                        d.budgets =
+                                          (
+                                            d.budgets ??
+                                            []
+                                          ).filter(
+                                            (
+                                              x,
+                                            ) =>
+                                              x.id !==
+                                              b.id,
+                                          );
+                                      },
+                                      "Budget perso supprimé",
+                                    ),
+                                )
+                              }
+                            >
+                              <Trash2
+                                size={16}
+                              />
+                            </button>
+                          </div>
+                        ),
+                      )}
 
+                      {!(ps.budgets ?? [])
+                        .length && (
                         <p className="muted">
-                          Le compte perso est
-                          exclu du patrimoine et
-                          de l’épargne commune.
+                          Aucun budget mensuel personnel.
                         </p>
-                      </section>
+                      )}
 
-                    </div>
+                      {(ps.budgets ?? [])
+                        .length > 0 && (
+                        <Row
+                          title="Budgets actifs ce mois"
+                          value={money(
+                            (
+                              ps.budgets ??
+                              []
+                            )
+                              .filter(
+                                (b) =>
+                                  selectedMonth >=
+                                    b.start &&
+                                  (
+                                    !b.end ||
+                                    selectedMonth <=
+                                      b.end
+                                  ),
+                              )
+                              .reduce(
+                                (
+                                  n,
+                                  b,
+                                ) =>
+                                  n +
+                                  b.amount,
+                                0,
+                              ),
+                          )}
+                        />
+                      )}
+                    </section>
+                        </div>
+                      </details>
 
-                    <section className="card personal-advances-card">
+                      <details className="personal-v2-panel personal-v2-projection-panel">
+                        <summary>
+                          <span className="personal-v2-panel-icon"><ChartNoAxesCombined size={20}/></span>
+                          <span className="personal-v2-panel-copy">
+                            <strong>Mon argent à venir</strong>
+                            <small>Solde estimé en {projectionPreview ? monthLabel(projectionPreview.date) : "fin de période"}</small>
+                          </span>
+                          <span className="personal-v2-panel-side">
+                            <strong>{projectionPreview ? money(projectionPreview.balance) : "—"}</strong>
+                          </span>
+                          <ChevronRight className="personal-v2-chevron"/>
+                        </summary>
+                        <div className="personal-v2-panel-content">
+                          <section className="card">
+                      <div className="section-head">
+                        <div>
+                          <h2>
+                            Projection du compte perso
+                          </h2>
+                          <p className="muted">
+                            Projection basée sur votre solde actuel,
+                            les futurs virements de budget, vos avances,
+                            vos mensualités connues et vos budgets mensuels perso.
+                          </p>
+                        </div>
+
+                        <div className="pills">
+                          {[
+                            [6, "6 mois"],
+                            [12, "1 an"],
+                            [24, "2 ans"],
+                            [60, "5 ans"],
+                          ].map(
+                            ([value, label]) => (
+                              <button
+                                type="button"
+                                key={value}
+                                className={
+                                  personalProjectionMonths ===
+                                  value
+                                    ? "selected"
+                                    : ""
+                                }
+                                onClick={() =>
+                                  setPersonalProjectionMonths(
+                                    Number(
+                                      value,
+                                    ),
+                                  )
+                                }
+                              >
+                                {label}
+                              </button>
+                            ),
+                          )}
+                        </div>
+                      </div>
+
+                      {(() => {
+
+                        const data =
+                          personalProjection(
+                            ps,
+                            s,
+                            personalOwnerId,
+                            personalProjectionMonths,
+                          ).map(
+                            (p) => ({
+                              ...p,
+                              name:
+                                monthLabel(
+                                  p.date,
+                                ),
+                            }),
+                          );
+
+                        const last =
+                          data.at(-1);
+
+                        return (
+                          <>
+                            <div className="chart">
+                              <Suspense
+                                fallback={
+                                  <div className="chart-loading" />
+                                }
+                              >
+                                <LazyChart
+                                  kind="personal"
+                                  data={data}
+                                />
+                              </Suspense>
+                            </div>
+
+                            {last && (
+                              <div className="split">
+                                <span>
+                                  Solde projeté en{" "}
+                                  {monthLabel(
+                                    last.date,
+                                  )}
+                                </span>
+
+                                <strong className="large">
+                                  {money(
+                                    last.balance,
+                                  )}
+                                </strong>
+                              </div>
+                            )}
+
+                            <p className="footnote">
+                              Les budgets mensuels perso sont considérés comme des dépenses futures prévues.
+                              Les dépenses ponctuelles non budgétées ne peuvent pas être anticipées.
+                            </p>
+                          </>
+                        );
+
+                      })()}
+                    </section>
+                        </div>
+                      </details>
+
+                      <details className="personal-v2-panel personal-v2-commitments-panel">
+                        <summary>
+                          <span className="personal-v2-panel-icon"><CalendarDays size={20}/></span>
+                          <span className="personal-v2-panel-copy">
+                            <strong>Mes engagements</strong>
+                            <small>Avances et paiements en plusieurs fois</small>
+                          </span>
+                          <span className="personal-v2-panel-side">
+                            <strong>{activeAdvances.length + activePrivateRules.length}</strong>
+                            <small>enregistré(s)</small>
+                          </span>
+                          <ChevronRight className="personal-v2-chevron"/>
+                        </summary>
+                        <div className="personal-v2-panel-content">
+                          <section className="card personal-advances-card">
                       <div className="section-head">
                         <div>
                           <h2>
@@ -6499,265 +6605,39 @@ export default function App() {
                         </p>
                       )}
                     </section>
-
-
-                    <section className="card personal-budgets-card">
-                      <div className="section-head">
-                        <div>
-                          <h2>
-                            Budgets mensuels perso
-                          </h2>
-
-                          <p className="muted">
-                            Ces montants servent uniquement à prévoir vos futures
-                            dépenses personnelles. Ils n’affectent pas le budget
-                            commun et ne modifient pas votre solde réel tant que
-                            vous n’avez pas réellement dépensé l’argent.
-                          </p>
                         </div>
+                      </details>
 
-                        <button
-                          className="secondary"
-                          onClick={() =>
-                            editPersonalBudget()
-                          }
-                        >
-                          <Plus size={17} />
-                          Budget
-                        </button>
-                      </div>
-
-                      {(ps.budgets ?? []).map(
-                        (b) => (
-                          <div
-                            className="rule-row"
-                            key={b.id}
-                          >
-                            <div className="grow">
-                              <strong>
-                                {b.name}
-                              </strong>
-
-                              <small>
-                                {money(
-                                  b.amount,
-                                )}{" "}
-                                / mois
-                              </small>
-
-                              <small>
-                                Dès{" "}
-                                {monthLabel(
-                                  b.start,
-                                )}
-                                {b.end
-                                  ? " · jusqu’à " +
-                                    monthLabel(
-                                      b.end,
-                                    )
-                                  : " · sans date de fin"}
-                              </small>
-                            </div>
-
-                            <button
-                              className="secondary compact"
-                              onClick={() =>
-                                editPersonalBudget(
-                                  b,
-                                )
-                              }
-                            >
-                              Modifier
-                            </button>
-
-                            <button
-                              className="icon"
-                              aria-label="Supprimer le budget perso"
-                              onClick={() =>
-                                confirmAction(
-                                  "Supprimer " +
-                                    b.name +
-                                    " ?",
-                                  "Il ne sera plus pris en compte dans vos projections futures. Cela ne modifie aucune dépense déjà enregistrée.",
-                                  async () =>
-                                    changePersonal(
-                                      (d) => {
-                                        d.budgets =
-                                          (
-                                            d.budgets ??
-                                            []
-                                          ).filter(
-                                            (
-                                              x,
-                                            ) =>
-                                              x.id !==
-                                              b.id,
-                                          );
-                                      },
-                                      "Budget perso supprimé",
-                                    ),
-                                )
-                              }
-                            >
-                              <Trash2
-                                size={16}
-                              />
-                            </button>
-                          </div>
-                        ),
-                      )}
-
-                      {!(ps.budgets ?? [])
-                        .length && (
-                        <p className="muted">
-                          Aucun budget mensuel personnel.
-                        </p>
-                      )}
-
-                      {(ps.budgets ?? [])
-                        .length > 0 && (
-                        <Row
-                          title="Budgets actifs ce mois"
-                          value={money(
-                            (
-                              ps.budgets ??
-                              []
-                            )
-                              .filter(
-                                (b) =>
-                                  selectedMonth >=
-                                    b.start &&
-                                  (
-                                    !b.end ||
-                                    selectedMonth <=
-                                      b.end
-                                  ),
-                              )
-                              .reduce(
-                                (
-                                  n,
-                                  b,
-                                ) =>
-                                  n +
-                                  b.amount,
-                                0,
-                              ),
-                          )}
-                        />
-                      )}
-                    </section>
-
-
-                    <section className="card">
-                      <div className="section-head">
-                        <div>
-                          <h2>
-                            Projection du compte perso
-                          </h2>
-                          <p className="muted">
-                            Projection basée sur votre solde actuel,
-                            les futurs virements de budget, vos avances,
-                            vos mensualités connues et vos budgets mensuels perso.
-                          </p>
+                      <section className="personal-v2-history" aria-label="Historique des opérations personnelles">
+                        <div className="personal-v2-history-header">
+                          <h2>Dernières opérations</h2>
+                          <span>{history.length} mouvement{history.length > 1 ? "s" : ""}</span>
                         </div>
-
-                        <div className="pills">
-                          {[
-                            [6, "6 mois"],
-                            [12, "1 an"],
-                            [24, "2 ans"],
-                            [60, "5 ans"],
-                          ].map(
-                            ([value, label]) => (
-                              <button
-                                type="button"
-                                key={value}
-                                className={
-                                  personalProjectionMonths ===
-                                  value
-                                    ? "selected"
-                                    : ""
-                                }
-                                onClick={() =>
-                                  setPersonalProjectionMonths(
-                                    Number(
-                                      value,
-                                    ),
-                                  )
-                                }
-                              >
-                                {label}
-                              </button>
-                            ),
-                          )}
-                        </div>
-                      </div>
-
-                      {(() => {
-
-                        const data =
-                          personalProjection(
-                            ps,
-                            s,
-                            personalOwnerId,
-                            personalProjectionMonths,
-                          ).map(
-                            (p) => ({
-                              ...p,
-                              name:
-                                monthLabel(
-                                  p.date,
-                                ),
-                            }),
-                          );
-
-                        const last =
-                          data.at(-1);
-
-                        return (
-                          <>
-                            <div className="chart">
-                              <Suspense
-                                fallback={
-                                  <div className="chart-loading" />
-                                }
-                              >
-                                <LazyChart
-                                  kind="personal"
-                                  data={data}
-                                />
-                              </Suspense>
-                            </div>
-
-                            {last && (
-                              <div className="split">
-                                <span>
-                                  Solde projeté en{" "}
-                                  {monthLabel(
-                                    last.date,
-                                  )}
+                        {history.length ? (
+                          <div className="personal-v2-history-preview">
+                            {history.slice(0, 3).map(h => (
+                              <div key={h.id}>
+                                <span className={"personal-v2-history-icon" + (h.positive ? "" : " negative")}>
+                                  {h.positive ? <ArrowDownLeft size={17}/> : <ArrowUpRight size={17}/>}
                                 </span>
-
-                                <strong className="large">
-                                  {money(
-                                    last.balance,
-                                  )}
+                                <span className="personal-v2-history-name">
+                                  <strong>{h.title || "Mouvement personnel"}</strong>
+                                  <small>{dateLabel(h.date)}</small>
+                                </span>
+                                <strong className={"personal-v2-history-value" + (h.positive ? " positive" : "")}>
+                                  {h.positive ? "+" : "−"}{money(h.amount)}
                                 </strong>
                               </div>
-                            )}
-
-                            <p className="footnote">
-                              Les budgets mensuels perso sont considérés comme des dépenses futures prévues.
-                              Les dépenses ponctuelles non budgétées ne peuvent pas être anticipées.
-                            </p>
-                          </>
-                        );
-
-                      })()}
-                    </section>
-
-
-                    <section className="card personal-history-card">
+                            ))}
+                          </div>
+                        ) : <p className="personal-v2-history-empty">Aucun mouvement pour le moment.</p>}
+                        <details>
+                          <summary>
+                            <span>{history.length > 3 ? "Tout voir et trier" : "Afficher l’historique et les filtres"}</span>
+                            <ChevronRight size={17}/>
+                          </summary>
+                          <div className="personal-v2-history-full">
+                            <section className="card personal-history-card">
                       <div className="section-head">
                         <h2>
                           Historique privé
@@ -6881,9 +6761,18 @@ export default function App() {
                         </p>
                       )}
                     </section>
-
+                          </div>
+                        </details>
+                      </section>
+                      <p className="personal-v2-privacy-note">
+                        Les dépenses de ce compte ne sont pas incluses dans le patrimoine commun.
+                        Les budgets mensuels personnels sont des prévisions, pas des prélèvements.
+                      </p>
+                    </div>
                   </>
                 );
+
+
 
               })()}
             </>
