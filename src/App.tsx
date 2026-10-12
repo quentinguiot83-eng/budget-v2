@@ -1,5 +1,7 @@
 import { WimmWordmark } from "./WimmWordmark";
 import { revisePaymentPlan, removeCreditPlan } from "./creditSchedules";
+import SwipeActions from "./SwipeActions";
+import ConfirmActionContent from "./ConfirmActionContent";
 import SettingsNavigation from "./SettingsNavigation";
 import "./SettingsNavigation.css";
 import { SortableList } from "./SortableList";
@@ -397,6 +399,7 @@ export default function App() {
     [activeTrip, setActiveTrip] = useState(""),
     [coverUploading, setCoverUploading] = useState<string | null>(null),
     [txFilter, setTxFilter] = useState(""),
+    [txCategoryFilter, setTxCategoryFilter] = useState(""),
     [proEnabled, setProEnabled] = useState(false),
     [mobileQuickAddOpen, setMobileQuickAddOpen] = useState(false),
     [projectsSection, setProjectsSection] = useState<"trips" | "other">("trips"),
@@ -589,7 +592,7 @@ export default function App() {
   ];
 
   function navigate(r: string) {
-    if (r === "transactions") setTxFilter("");
+    if (r === "transactions") { setTxFilter(""); setTxCategoryFilter(""); }
     setSettingsCategory(null);
     setSettingsDetail(null);
 
@@ -891,29 +894,18 @@ export default function App() {
   function explain(title: string, body: ReactNode) {
     setSheet({ title, body: <div className="explanation">{body}</div> });
   }
-  function confirmAction(
-    title: string,
-    body: string,
-    action: () => Promise<void>,
-  ) {
+  function confirmAction(title: string, body: string, action: () => Promise<void>) {
     setSheet({
       title,
       body: (
-        <>
-          <p>{body}</p>
-          <Form
-            fields={[field("confirm", "Saisissez CONFIRMER pour continuer")]}
-            label="Confirmer"
-            submit={async (v) => {
-              if (v.confirm !== "CONFIRMER")
-                throw Error("Saisissez CONFIRMER.");
-              await action();
-              setSheet(null);
-            }}
-          />
-        </>
+        <ConfirmActionContent text={body} run={action} close={() => setSheet(null)} />
       ),
     });
+  }
+  function openBudgetTransactions(categoryId: string) {
+    navigate("transactions");
+    setTxFilter("expense");
+    setTxCategoryFilter(categoryId);
   }
   const accountOptions = (group?: string): [string, string][] =>
     s.accounts
@@ -941,11 +933,12 @@ export default function App() {
     if (!targets.length) { explain("Choisir une destination", <p>Créez d’abord une catégorie active compatible pour recevoir les dépenses et échéances de « {c.name} ».</p>); return; }
     openForm("Transférer et supprimer « " + c.name + " »", [
       choice("target", "Transférer vers", targets.map(target => [target.id, target.name] as [string,string]), targets[0].id),
-      field("confirmation", "Saisissez SUPPRIMER pour confirmer", "", "text", `${usage.transactions} opération(s) et ${usage.rules} échéance(s) seront réaffectées. Leurs montants et dates seront conservés. Le budget actuel de destination reste inchangé. Les prévisions figées seront regroupées sans changer leurs totaux.`),
+
     ], async v => {
-      if (v.confirmation !== "SUPPRIMER") throw Error("Saisissez SUPPRIMER pour confirmer.");
       await change(d => deleteArchivedCategory(d, c.id, v.target), "Historique transféré et catégorie supprimée");
-    }, "Transférer et supprimer");
+    }, "Oui, transférer et supprimer", (
+      <p>Êtes-vous sûr de vouloir supprimer cette catégorie ? {usage.transactions} opération(s) et {usage.rules} échéance(s) seront réaffectées à la catégorie sélectionnée. Les montants et dates seront conservés.</p>
+    ));
   }
   function editCategory(c?: Category) {
     openForm(
@@ -4112,88 +4105,58 @@ export default function App() {
         }, "Projet enregistré"),
     );
   }
-  function txDetails(t: Tx) {
-    const a = s.accounts.find((a) => a.id === t.account);
-    const isEditable = ["expense", "income"].includes(t.type) && !t.dueKey;
-    explain(
-      t.description,
-      <>
-        <div className="big-number">{money(t.amount)}</div>
-        <p>
-          {dateLabel(t.date)} · {a?.name}
-        </p>
-        <p>
-          {t.type === "transfer"
-            ? `Virement vers ${s.accounts.find((a) => a.id === t.to)?.name}. Aucun revenu ni dépense de consommation.`
-            : t.type === "expense"
-              ? a?.group === "personal"
-                ? "Déduit uniquement du solde du compte perso. Le budget du foyer a déjà été consommé lors du virement vers ce compte."
-                : t.trip
-                  ? "Déduit du compte et du budget voyage, sans impacter les enveloppes ordinaires."
-                  : "Déduit du compte et de la catégorie concernée."
-              : t.type === "loan"
-                ? "Déduit du compte courant. Créance créée."
-                : t.type === "repay"
-                  ? "Ajouté au compte et déduit du restant à récupérer."
-                  : "Ajouté au compte."}
-        </p>
-        {isEditable && (
-          <button
-            className="secondary"
-            onClick={() =>
-              operation(
-                t.type,
-                t.trip
-                  ? s.trips.find((v) => v.id === t.trip)
-                  : undefined,
-                t,
-              )
-            }
-          >
-            Modifier
-          </button>
-        )}
-        {isEditable && !t.trip && !t.fixed && (
-          <div className="flex">
-            <button className="secondary" onClick={() => duplicateTransaction(t)}>
-              <Plus size={15}/> Dupliquer
-            </button>
-            {s.accounts.some(a=>a.id===t.account&&a.group==="current"&&!a.archived) &&
-              (t.type==="income" || s.categories.some(v=>v.id===t.category&&!v.archived)) &&
-              <button className="secondary" onClick={() => void toggleQuickFavorite(t).catch(showError)}>
-                {s.quickFavorites?.some(f=>f.id===t.id)?"Retirer des favoris":"Ajouter aux favoris"}
-              </button>}
-          </div>
-        )}
-        <button
-          className="danger"
-          onClick={() =>
-            confirmAction(
-              "Supprimer cette opération ?",
-              `Le mouvement de ${money(t.amount)} sera annulé sur tous les comptes concernés. Une échéance liée redeviendra à valider.`,
-              async () =>
-                change((d) => {
-                  if (t.type === "loan") {
-                    if (
-                      d.transactions.some(
-                        (x) => x.type === "repay" && x.loanId === t.loanId,
-                      )
-                    )
-                      throw Error(
-                        "Supprimez d’abord les remboursements de ce prêt.",
-                      );
-                    d.loans = d.loans.filter((l) => l.id !== t.loanId);
-                    d.rules = d.rules.filter((r) => r.loanId !== t.loanId);
-                  }
-                  d.transactions = d.transactions.filter((x) => x.id !== t.id);
-                }, "Transaction supprimée"),
-            )
-          }
-        >
-          Supprimer
-        </button>
-      </>,
+  function deleteTransaction(t: Tx) {
+    confirmAction(
+      "Supprimer cette opération ?",
+      `Le mouvement de ${money(t.amount)} sera annulé sur tous les comptes concernés. Une échéance liée redeviendra à valider.`,
+      async () => change(d => {
+        if (t.type === "loan") {
+          if (d.transactions.some(x => x.type === "repay" && x.loanId === t.loanId))
+            throw Error("Supprimez d'abord les remboursements de ce prêt.");
+          d.loans = d.loans.filter(l => l.id !== t.loanId);
+          d.rules = d.rules.filter(r => r.loanId !== t.loanId);
+        }
+        d.transactions = d.transactions.filter(x => x.id !== t.id);
+      }, "Transaction supprimée"),
     );
+  }
+  function txDetails(t: Tx) {
+    const a = s.accounts.find(a => a.id === t.account);
+    const isEditable = ["expense", "income"].includes(t.type) && !t.dueKey;
+    explain(t.description, <>
+      <div className="big-number">{money(t.amount)}</div>
+      <p>{dateLabel(t.date)} · {a?.name}</p>
+      <p>{t.type === "transfer"
+        ? `Virement vers ${s.accounts.find(v => v.id === t.to)?.name}. Aucun revenu ni dépense de consommation.`
+        : t.type === "expense"
+          ? t.trip ? "Déduit du compte et du budget voyage." : "Déduit du compte et de la catégorie concernée."
+          : t.type === "loan" ? "Déduit du compte courant. Créance créée."
+          : t.type === "repay" ? "Ajouté au compte et déduit du restant à récupérer."
+          : "Ajouté au compte."}</p>
+      <details className="transaction-detail-options">
+        <summary>Actions sur l'opération</summary>
+        <div className="transaction-detail-options-body">
+          {isEditable && (
+            <button className="secondary compact" onClick={() => operation(t.type, t.trip ? s.trips.find(v => v.id === t.trip) : undefined, t)}>
+              <Pencil size={15}/> Modifier
+            </button>
+          )}
+          {isEditable && !t.trip && !t.fixed && (
+            <>
+              <button className="secondary compact" onClick={() => duplicateTransaction(t)}><Plus size={15}/> Dupliquer</button>
+              {s.accounts.some(v => v.id === t.account && v.group === "current" && !v.archived)
+                && (t.type === "income" || s.categories.some(v => v.id === t.category && !v.archived))
+                && <button className="secondary compact" onClick={() => void toggleQuickFavorite(t).catch(showError)}>
+                  {s.quickFavorites?.some(f => f.id === t.id) ? "Retirer des favoris" : "Ajouter aux favoris"}
+                </button>}
+            </>
+          )}
+          <button className="secondary compact danger-text" onClick={() => deleteTransaction(t)}>
+            <Trash2 size={15}/> Supprimer
+          </button>
+        </div>
+      </details>
+    </>);
   }
   function categoryVariableBudget(
     c: Category,
@@ -4496,8 +4459,16 @@ export default function App() {
   const txRows = (list: Tx[]) =>
     list.length ? (
       <SortableList items={list}>{ordered => ordered.map((t) => (
+        <SwipeActions key={t.id} label={t.description} className="transaction-swipe-row"
+          actions={[
+            ...(["expense", "income"].includes(t.type) && !t.dueKey ? [{
+              label: "Modifier", icon: <Pencil size={17}/>,
+              onClick: () => operation(t.type, t.trip ? s.trips.find(v => v.id === t.trip) : undefined, t),
+            }] : []),
+            { label: "Supprimer", icon: <Trash2 size={17}/>, tone: "danger" as const,
+              onClick: () => deleteTransaction(t) },
+          ]}>
         <Row
-          key={t.id}
           icon={
             t.type === "transfer" ? (
               <ArrowLeftRight />
@@ -4529,6 +4500,7 @@ export default function App() {
           }
           onClick={() => txDetails(t)}
         />
+        </SwipeActions>
       ))}</SortableList>
     ) : (
       <p className="muted padded">Aucune transaction sur cette période.</p>
@@ -4536,6 +4508,14 @@ export default function App() {
   const sortedTx = [...s.transactions].reverse().sort((a, b) =>
     b.date.localeCompare(a.date),
   );
+  function archiveBudgetCategory(c: Category) {
+    confirmAction("Archiver " + c.name + " ?", "Son historique reste disponible. Les charges fixes associées restent actives et doivent être arrêtées séparément si nécessaire.",
+      async () => change(d => {
+        const category = d.categories.find(x => x.id === c.id);
+        if (!category) throw Error("Catégorie introuvable.");
+        category.archived = selectedMonth;
+      }, "Catégorie archivée"));
+  }
   const historicalVariableOnly = !!totals.forecast && !totals.forecast.fixedCategories;
   const categoryCards = (
     simple = false,
@@ -4683,9 +4663,25 @@ export default function App() {
           : 0;
 
         return (
+          <SwipeActions key={c.id} label={c.name} className="budget-swipe-row"
+            actions={simple ? [] : [
+              { label: "Modifier", icon: <Pencil size={18}/>, onClick: () => editCategory(c) },
+              ...(!isPersonal && !c.archived ? [{ label: "Archiver", icon: <Trash2 size={18}/>,
+                tone: "danger" as const, onClick: () => archiveBudgetCategory(c) }] : []),
+            ]}>
           <article
-            className={`category${simple ? " category-compact" : ""}${isPersonal && !simple ? " category-personal" : ""}${displayBudget > 0 && displaySpent >= displayBudget ? " category-limit" : ""}`}
-            key={c.id}
+            className={`category${simple ? " category-compact" : ""}${isPersonal && !simple ? " category-personal" : ""}${displayBudget > 0 && displaySpent >= displayBudget ? " category-limit" : ""}${!simple ? " budget-clickable" : ""}`}
+            tabIndex={simple ? undefined : 0}
+            aria-label={simple ? undefined : "Voir les dépenses de " + c.name + " en " + monthLabel(selectedMonth)}
+            onClick={event => {
+              if (!simple && !(event.target as HTMLElement).closest("button, a, input, select, summary")) openBudgetTransactions(c.id);
+            }}
+            onKeyDown={event => {
+              if (!simple && event.currentTarget === event.target && (event.key === "Enter" || event.key === " ")) {
+                event.preventDefault();
+                openBudgetTransactions(c.id);
+              }
+            }}
           >
 
             <div className="flex">
@@ -4729,13 +4725,8 @@ export default function App() {
                 </span>
               )}
 
-              {!simple && (
-                <div className={isPersonal ? "personal-budget-actions" : ""}>
-                  <button type="button" className="icon"
-                    aria-label={"Modifier " + c.name}
-                    onClick={() => editCategory(c)}>
-                    <Pencil size={17} />
-                  </button>
+              {!simple && isPersonal && (
+                <div className="personal-budget-actions">
                   {isPersonal && (
                     <button type="button" className="icon personal-budget-toggle"
                       aria-label={expandedPersonalBudgets[c.id]
@@ -4861,33 +4852,7 @@ export default function App() {
                       : money(displayBudget - displaySpent) + " restants"}
                   </small>
 
-                  <button
-                    className="text danger-text"
-                    onClick={() =>
-                      confirmAction(
-                        "Archiver " +
-                          c.name +
-                          " ?",
-                        "Son historique reste disponible. Les charges fixes associées restent actives et doivent être arrêtées séparément si nécessaire.",
-                        async () =>
-                          change(
-                            (d) => {
-                              d.categories.find(
-                                (
-                                  x,
-                                ) =>
-                                  x.id ===
-                                  c.id,
-                              )!.archived =
-                                selectedMonth;
-                            },
-                            "Catégorie archivée",
-                          ),
-                      )
-                    }
-                  >
-                    Archiver
-                  </button>
+
 
                 </div>
 
@@ -4895,6 +4860,7 @@ export default function App() {
             ) : null}
 
           </article>
+          </SwipeActions>
         );
 
       });
@@ -5694,7 +5660,17 @@ export default function App() {
                       r.kind === "fixed" &&
                       (!r.end || r.end >= selectedMonth + "-01"),
                   )}>{ordered => ordered.map((r) => (
-                    <div className="rule-row" key={r.id}>
+                    <SwipeActions key={r.id} label={r.name} className="fixed-swipe-row" actions={[
+                      { label: "Modifier", icon: <Pencil size={17}/>, onClick: () => editRule(r) },
+                      { label: "Arrêter", icon: <Trash2 size={17}/>, tone: "danger" as const, onClick: () => confirmAction(
+                        "Arrêter " + r.name + " ?", "Les échéances futures seront arrêtées. Les paiements validés resteront dans l’historique.",
+                        async () => change(d => {
+                          const rule = d.rules.find(x => x.id === r.id);
+                          if (!rule) throw Error("Échéancier introuvable.");
+                          rule.end = previousDate(today());
+                        }, "Récurrence arrêtée")) },
+                    ]}>
+                    <div className="rule-row">
                       <div className="grow">
                         <strong>{r.name}</strong>
                         <small>
@@ -5707,31 +5683,9 @@ export default function App() {
                           · Dès le {dateLabel(r.start)}
                         </small>
                       </div>
-                      <button
-                        className="icon"
-                        aria-label="Modifier l’échéancier"
-                        onClick={() => editRule(r)}
-                      >
-                        <Pencil size={18} />
-                      </button>
-                      <button
-                        className="icon"
-                        aria-label="Arrêter la dépense fixe"
-                        onClick={() =>
-                          confirmAction(
-                            "Arrêter " + r.name + " ?",
-                            "Les échéances à partir d’aujourd’hui seront arrêtées. Les paiements validés resteront dans l’historique.",
-                            async () =>
-                              change((d) => {
-                                d.rules.find((x) => x.id === r.id)!.end =
-                                  previousDate(today());
-                              }, "Récurrence arrêtée"),
-                          )
-                        }
-                      >
-                        <Trash2 size={18} />
-                      </button>
+
                     </div>
+                    </SwipeActions>
                   ))}</SortableList>
                 {!s.rules.some((r) => r.kind === "fixed") && (
                   <Empty
@@ -6112,10 +6066,16 @@ export default function App() {
 
                       {(ps.budgets ?? []).map(
                         (b) => (
-                          <div
-                            className="rule-row"
-                            key={b.id}
-                          >
+                          <SwipeActions key={b.id} label={b.name} className="personal-budget-swipe-row" actions={[
+                            { label: "Modifier", icon: <Pencil size={17}/>, onClick: () => editPersonalBudget(b) },
+                            { label: "Supprimer", icon: <Trash2 size={17}/>, tone: "danger" as const, onClick: () => confirmAction(
+                              "Supprimer " + b.name + " ?",
+                              "Ce budget n'entrera plus dans les projections. Aucune dépense déjà enregistrée ne sera supprimée.",
+                              async () => changePersonal(d => {
+                                d.budgets = (d.budgets ?? []).filter(x => x.id !== b.id);
+                              }, "Budget perso supprimé")) },
+                          ]}>
+                          <div className="rule-row">
                             <div className="grow">
                               <strong>
                                 {b.name}
@@ -6142,51 +6102,9 @@ export default function App() {
                               </small>
                             </div>
 
-                            <button
-                              className="secondary compact"
-                              onClick={() =>
-                                editPersonalBudget(
-                                  b,
-                                )
-                              }
-                            >
-                              Modifier
-                            </button>
 
-                            <button
-                              className="icon"
-                              aria-label="Supprimer le budget perso"
-                              onClick={() =>
-                                confirmAction(
-                                  "Supprimer " +
-                                    b.name +
-                                    " ?",
-                                  "Il ne sera plus pris en compte dans vos projections futures. Cela ne modifie aucune dépense déjà enregistrée.",
-                                  async () =>
-                                    changePersonal(
-                                      (d) => {
-                                        d.budgets =
-                                          (
-                                            d.budgets ??
-                                            []
-                                          ).filter(
-                                            (
-                                              x,
-                                            ) =>
-                                              x.id !==
-                                              b.id,
-                                          );
-                                      },
-                                      "Budget perso supprimé",
-                                    ),
-                                )
-                              }
-                            >
-                              <Trash2
-                                size={16}
-                              />
-                            </button>
                           </div>
+                          </SwipeActions>
                         ),
                       )}
 
@@ -6900,7 +6818,9 @@ export default function App() {
                 </div>
                 <div className="wealth-accounts-list">
                   {activeHouseholdAccounts.map((a) => (
-                    <details className={"wealth-account-row wealth-account-" + a.group} key={a.id}>
+                    <SwipeActions key={a.id} label={a.name} className="account-swipe-row"
+                      actions={[{ label: "Modifier", icon: <Pencil size={17}/>, onClick: () => editAccount(a) }]}>
+                    <details className={"wealth-account-row wealth-account-" + a.group}>
                       <summary className="wealth-account-summary">
                         <span className="wealth-account-icon">
                           {a.group === "travel" ? <Plane size={22}/> : a.group === "current" ? <Wallet size={22}/> : <Coins size={22}/>}
@@ -6926,9 +6846,7 @@ export default function App() {
                         <div className="wealth-account-actions">
                           {a.group !== "current" && <button type="button" className="primary compact" onClick={() => transfer(a)}>Épargner</button>}
                           <button type="button" className="secondary compact" onClick={() => transfer(undefined, undefined, a)}>Virement</button>
-                          <button type="button" className="secondary compact" onClick={() => editAccount(a)}>
-                            <Pencil size={15}/> Modifier
-                          </button>
+
                           <button type="button" className="text" onClick={() =>
                             explain(a.name + " · Historique", txRows(sortedTx.filter(t => t.account === a.id || t.to === a.id)))
                           }>Historique</button>
@@ -6948,6 +6866,7 @@ export default function App() {
                         </div>
                       </div>
                     </details>
+                    </SwipeActions>
                   ))}
                   {!activeHouseholdAccounts.length && <p className="muted wealth-account-empty">Aucun compte disponible. Ajoutez votre premier compte.</p>}
                 </div>
@@ -7047,46 +6966,28 @@ export default function App() {
                     Projet
                   </button>
                 </div>
-                {s.projects.slice().sort((a,b) => a.date.localeCompare(b.date)).map((p) => (
-                  <div className="projection-project-row" key={p.id}>
-                    <span className="projection-project-icon"><Target size={20}/></span>
-                    <div className="grow">
-                      <strong>{p.name}</strong>
-                      <small>{dateLabel(p.date)} · {money(p.amount)}</small>
-                      <span className={"projection-project-status" + (p.settled ? " financed" : !p.active ? " excluded" : "")}>
-                        {p.settled ? "Financé" : p.active ? "Inclus" : "Exclu"}
-                      </span>
+                {s.projects.slice().sort((a,b) => a.date.localeCompare(b.date)).map(p => (
+                  <SwipeActions key={p.id} label={p.name} className="project-swipe-row"
+                    actions={[
+                      { label: "Modifier", icon: <Pencil size={17}/>, onClick: () => editProject(p) },
+                      { label: "Supprimer", icon: <Trash2 size={17}/>, tone: "danger" as const,
+                        onClick: () => confirmAction("Supprimer ce projet ?", "Aucune transaction réelle ne sera supprimée.",
+                          async () => change(d => {
+                            d.projects = d.projects.filter(x => x.id !== p.id);
+                            d.trips.forEach(t => { if (t.projectId === p.id) t.projectId = undefined; });
+                          }, "Projet supprimé")) },
+                    ]}>
+                    <div className="projection-project-row">
+                      <span className="projection-project-icon"><Target size={20}/></span>
+                      <div className="grow">
+                        <strong>{p.name}</strong>
+                        <small>{dateLabel(p.date)} · {money(p.amount)}</small>
+                        <span className={"projection-project-status" + (p.settled ? " financed" : !p.active ? " excluded" : "")}>
+                          {p.settled ? "Financé" : p.active ? "Inclus" : "Exclu"}
+                        </span>
+                      </div>
                     </div>
-                    <button
-                      className="icon"
-                      aria-label="Modifier le projet"
-                      onClick={() => editProject(p)}
-                    >
-                      <Pencil size={17} />
-                    </button>
-                    <button
-                      className="icon"
-                      aria-label="Supprimer le projet"
-                      onClick={() =>
-                        confirmAction(
-                          "Supprimer ce projet ?",
-                          "Aucune transaction réelle ne sera supprimée.",
-                          async () =>
-                            change((d) => {
-                              d.projects = d.projects.filter(
-                                (x) => x.id !== p.id,
-                              );
-                              d.trips.forEach((t) => {
-                                if (t.projectId === p.id)
-                                  t.projectId = undefined;
-                              });
-                            }, "Projet supprimé"),
-                        )
-                      }
-                    >
-                      <Trash2 size={17} />
-                    </button>
-                  </div>
+                  </SwipeActions>
                 ))}
                 {!s.projects.length && (
                   <p className="muted">
@@ -7479,7 +7380,7 @@ export default function App() {
             </div>
           )}
           {route === "transactions" && (
-            <TransactionSearch initialType={txFilter} state={s} month={selectedMonth} setMonth={setMonth} add={() => navigate("add")} rows={txRows}/>
+            <TransactionSearch initialType={txFilter} initialCategory={txCategoryFilter} state={s} month={selectedMonth} setMonth={setMonth} add={() => navigate("add")} rows={txRows}/>
           )}
           {route === "analysis" && (
             <div data-tour="analysis"><AnalysisDashboard state={s} selectedMonth={selectedMonth} /></div>

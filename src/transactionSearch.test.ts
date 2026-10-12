@@ -41,3 +41,11 @@ test("transfers are found through their destination account without duplication"
   const state = fixture();
   assert.deepEqual(filterTransactions(state, { ...filters, account: "old", query: "ancien livret" }).map(t => t.id), ["move"]);
 });
+
+test("opening a budget keeps its category and selected month while excluding other transactions", () => {
+  const state = fixture();
+  const onlyOctoberExpenses = { ...filters, type: "expense", category: "food", period: "month" as const, month: "2026-10" };
+  assert.deepEqual(filterTransactions(state, onlyOctoberExpenses).map(t => t.id), ["new"]);
+  assert.deepEqual(filterTransactions(state, { ...onlyOctoberExpenses, month: "2025-01" }).map(t => t.id), ["old"]);
+  assert.deepEqual(filterTransactions(state, { ...onlyOctoberExpenses, month: "2026-11" }).map(t => t.id), []);
+});

@@ -3,11 +3,11 @@ import { Search, SlidersHorizontal, Plus } from "lucide-react";
 import { month as currentMonth, type State, type Tx } from "./engine";
 import { amountInCents, filterTransactions, type TransactionFilters } from "./transactionSearch";
 
-export default function TransactionSearch({ state, month, setMonth, add, rows, initialType }: { initialType: string; state: State; month: string; setMonth: (month: string) => void; add: () => void; rows: (transactions: Tx[]) => ReactNode }) {
-  const defaults: TransactionFilters = { query: "", type: initialType, category: "", account: "", period: "month", month, from: "", to: "", min: "", max: "" };
+export default function TransactionSearch({ state, month, setMonth, add, rows, initialType, initialCategory = "" }: { initialType: string; initialCategory?: string; state: State; month: string; setMonth: (month: string) => void; add: () => void; rows: (transactions: Tx[]) => ReactNode }) {
+  const defaults: TransactionFilters = { query: "", type: initialType, category: initialCategory, account: "", period: "month", month, from: "", to: "", min: "", max: "" };
   const [filters, setFilters] = useState(defaults);
   const [expanded, setExpanded] = useState(false);
-  const [periodChoice, setPeriodChoice] = useState<"current" | "all" | "pick">("current");
+  const [periodChoice, setPeriodChoice] = useState<"current" | "all" | "pick">(month === currentMonth() ? "current" : "pick");
   const current = { ...filters, month };
   const results = useMemo(() => filterTransactions(state, { ...filters, month }), [state, filters, month]);
   function update<K extends keyof TransactionFilters>(key: K, value: TransactionFilters[K]) { setFilters(previous => ({ ...previous, [key]: value })); }
