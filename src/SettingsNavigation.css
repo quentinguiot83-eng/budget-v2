@@ -1,0 +1,137 @@
+/* Réglages Wimm : catégories, sous-catégories et écrans dédiés. */
+.settings-v2 {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding-bottom: 12px;
+}
+.settings-v2 > :not(.wimm-settings-nav) {
+  width: 100%;
+  max-width: 850px;
+}
+.wimm-settings-nav {
+  display: grid;
+  gap: 16px;
+  width: 100%;
+  max-width: 850px;
+}
+.wimm-settings-menu {
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 23px;
+  background: var(--surface);
+  box-shadow: var(--soft-shadow);
+}
+.wimm-settings-entry {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-height: 76px;
+  gap: 14px;
+  padding: 15px 20px;
+  border: none;
+  background: transparent;
+  color: var(--ink);
+  text-align: left;
+  transition: background .16s ease;
+}
+.wimm-settings-entry + .wimm-settings-entry {
+  border-top: 1px solid var(--border);
+}
+.wimm-settings-entry:hover, .wimm-settings-entry:focus-visible {
+  background: var(--accent-soft);
+}
+.wimm-settings-entry-icon {
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  flex: 0 0 46px;
+  border-radius: 15px;
+  background: var(--accent-soft);
+  color: var(--accent-deep);
+}
+.wimm-settings-entry-copy {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+  gap: 4px;
+}
+.wimm-settings-entry-copy strong {
+  color: var(--ink);
+  font-size: .97rem;
+  font-weight: 750;
+  line-height: 1.35;
+}
+.wimm-settings-entry-copy small {
+  color: var(--muted);
+  font-size: .79rem;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+.wimm-settings-chevron {
+  flex: 0 0 auto;
+  color: var(--muted);
+}
+.wimm-settings-heading {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  min-height: 58px;
+}
+.wimm-settings-back {
+  display: grid;
+  place-items: center;
+  width: 39px;
+  height: 39px;
+  flex: 0 0 39px;
+  border-radius: 50%;
+  background: var(--accent-soft);
+  color: var(--accent-deep);
+}
+.wimm-settings-back:hover {
+  filter: brightness(.96);
+}
+.wimm-settings-heading > div {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+.wimm-settings-heading small {
+  color: var(--muted);
+  font-size: .76rem;
+}
+.wimm-settings-heading h2 {
+  margin: 0;
+  color: var(--ink);
+  font-size: clamp(1.1rem, 3.6vw, 1.4rem);
+  line-height: 1.25;
+}
+.wimm-settings-version {
+  margin: 3px 0 0;
+  text-align: center;
+  font-size: .73rem;
+  color: var(--muted);
+}
+.settings-v2 .settings-appearance {
+  max-width: 850px;
+  grid-template-columns: minmax(0, 1fr);
+}
+.settings-v2 .wimm-settings-info {
+  display: grid;
+  gap: 11px;
+}
+.settings-v2 .wimm-settings-info p {
+  margin: 0;
+}
+.settings-v2 .wimm-settings-info h2 {
+  margin-bottom: 2px;
+}
+@media(max-width: 650px) {
+  .settings-v2 { gap: 16px; }
+  .wimm-settings-entry { min-height: 72px; padding: 13px 15px; gap: 12px; }
+  .wimm-settings-entry-icon { width: 43px; height: 43px; flex-basis: 43px; border-radius: 13px; }
+  .wimm-settings-entry-copy strong { font-size: .91rem; }
+  .wimm-settings-entry-copy small { font-size: .73rem; }
+  .wimm-settings-menu { border-radius: 21px; }
+}
