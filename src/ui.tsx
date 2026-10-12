@@ -72,10 +72,12 @@ export function Form({
   fields,
   submit,
   label = "Enregistrer",
+  extra,
 }: {
   fields: Field[];
   submit: (v: Record<string, string>) => Promise<void>;
   label?: string;
+  extra?: ReactNode;
 }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -218,6 +220,7 @@ export function Form({
             {f.hint && <small>{f.hint}</small>}
           </label>
         ))}
+        {extra}
         {error && (
           <p className="error" role="alert">
             {error}
