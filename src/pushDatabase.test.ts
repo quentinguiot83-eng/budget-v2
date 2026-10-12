@@ -30,17 +30,37 @@ test("PostgreSQL push migration: ownership, server-only data, atomic leases, exp
     const migration = await readFile(new URL("../supabase/11-phone-notifications.sql", import.meta.url), "utf8");
     await db.exec(migration);
     await db.exec(migration);
+    const reminderMigration = await readFile(new URL("../supabase/13-daily-transaction-reminders.sql", import.meta.url), "utf8");
+    await db.exec(reminderMigration);
+    await db.exec(reminderMigration);
     await db.exec(`set role authenticated; set request.jwt.claim.sub='${user}';`);
     const save = async () => db.query<{ value: { enabled: boolean; id: string } }>("select public.budget_push_device($1::jsonb,'save',true,true,$2::text[]) value", [JSON.stringify(subscription), ["budget:2026-10:food"]]);
     assert.equal((await save()).rows[0].value.enabled, true);
+    const pref = async () => db.query<{value:{dailyReminder:boolean;time:string;timezone:string}}>(
+      "select public.budget_push_reminder($1::jsonb,'status') value",[JSON.stringify(subscription)]);
+    assert.equal((await pref()).rows[0].value.dailyReminder,false,"reminder is off by default");
+    const savedReminder = await db.query<{value:{dailyReminder:boolean;time:string}}>(
+      "select public.budget_push_reminder($1::jsonb,'save',true,'20:45','Europe/Paris') value",[JSON.stringify(subscription)]);
+    assert.equal(savedReminder.rows[0].value.dailyReminder,true);
+    assert.equal((await pref()).rows[0].value.time,"20:45");
+    await assert.rejects(
+      db.query("select public.budget_push_reminder($1::jsonb,'save',true,'25:72','Europe/Paris')",[JSON.stringify(subscription)]),
+      /Heure ou fuseau/);
     await assert.rejects(() => db.query("select public.budget_push_context(null)"), /permission denied/);
     await assert.rejects(() => db.query("select * from budget_private.push_devices"), /permission denied/);
     await db.exec(`set request.jwt.claim.sub='${other}';`);
     await assert.rejects(save, /autre compte/);
+    await assert.rejects(
+      db.query("select public.budget_push_reminder($1::jsonb,'save',true,'21:00','Europe/Paris')",[JSON.stringify(subscription)]),
+      /Activez d’abord/);
     await db.exec("reset role; set role service_role;");
     const context = await db.query<{ value: { id: string; userId: string }[] }>("select public.budget_push_context(null) value");
     const id = context.rows[0].value[0].id;
     assert.equal(context.rows[0].value[0].userId, user);
+    const reminderContext = context.rows[0].value[0] as {dailyReminder?:boolean;reminderTime?:string;reminderTimezone?:string};
+    assert.equal(reminderContext.dailyReminder,true);
+    assert.equal(reminderContext.reminderTime,"20:45");
+    assert.equal(reminderContext.reminderTimezone,"Europe/Paris");
     const claim = async (key: string) => (await db.query<{ value: boolean }>("select public.budget_push_claim($1,$2) value", [id, key])).rows[0].value;
     assert.equal(await claim("budget:2026-10:food"), false, "activation seeds existing alerts");
     assert.equal(await claim("due:rent:2026-10-07"), true);

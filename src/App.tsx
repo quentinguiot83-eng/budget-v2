@@ -376,7 +376,7 @@ export default function App() {
         return "settings";
       }
       const screen = new URLSearchParams(location.search).get("screen");
-      return screen && ["home", "calendar", "pro"].includes(screen) ? screen : "home";
+      return screen && ["home", "calendar", "pro", "add"].includes(screen) ? screen : "home";
     }),
     [backRoute, setBackRoute] = useState<string | null>(null),
     [selectedMonth, setMonth] = useState(month()),

@@ -1,10 +1,11 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
 import { timingSafeEqual } from "node:crypto";
 import { pushAlerts, validPushEndpoint, type DueInvoice } from "../src/pushAlerts.ts";
+import { dailyTransactionReminder } from "../src/dailyTransactionReminder.ts";
 import type { State } from "../src/engine.ts";
 
 type PushSubscriptionData = { endpoint: string; expirationTime?: number | null; keys: { p256dh: string; auth: string } };
-type Device = { id: string; userId: string; subscription: PushSubscriptionData; budgets: boolean; dues: boolean; state: State; invoices: DueInvoice[] };
+type Device = { id: string; userId: string; subscription: PushSubscriptionData; budgets: boolean; dues: boolean; dailyReminder?: boolean; reminderTime?: string; reminderTimezone?: string; state: State; invoices: DueInvoice[] };
 function equal(a: string, b: string) {
   const x = Buffer.from(a), y = Buffer.from(b);
   return x.length === y.length && timingSafeEqual(x, y);
@@ -28,9 +29,15 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
   if (!ready) return respond(503, { error: "Les notifications téléphone ne sont pas encore activées sur le serveur." });
   const authorization = req.headers.authorization || "";
   let userId: string | null = null;
+  let scheduledToken: string | null = null;
   try {
     if (action === "cron") {
-      if (!equal(authorization, `Bearer ${process.env.CRON_SECRET}`)) return respond(401, { error: "Accès refusé" });
+      // Keep existing Vercel CRON_SECRET support for the daily run.
+      if (!equal(authorization, `Bearer ${process.env.CRON_SECRET}`)) {
+        const m = /^Bearer ([a-f0-9]{8}-(?:[a-f0-9]{4}-){3}[a-f0-9]{12})$/i.exec(authorization);
+        if (!m) return respond(401, { error: "Accès refusé" });
+        scheduledToken = m[1];
+      }
     } else {
       if (!authorization.startsWith("Bearer ")) return respond(401, { error: "Connexion requise" });
       const auth = await fetch(url + "/auth/v1/user", { headers: { apikey: anonKey!, Authorization: authorization }, signal: AbortSignal.timeout(10000) });
@@ -45,6 +52,12 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
       if (!result.ok) throw Error("push_database_error");
       return result.json();
     };
+    if (scheduledToken) {
+      // One-use token minted by pg_cron; the service-role-only RPC consumes it atomically.
+      // A replayed or expired token must never reach the push dispatch.
+      const approved = await db("budget_push_cron_consume", { p_token: scheduledToken });
+      if (approved !== true) return respond(401, { error: "Accès refusé" });
+    }
     const devices = await db("budget_push_context", { p_user: userId }) as Device[];
     // web-push is CommonJS. Load it dynamically so Vercel's ESM runtime does not
     // fail while evaluating the serverless function before the handler runs.
@@ -58,7 +71,10 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
       await Promise.all(queue.slice(start, start + 5).map(async d => {
         if (!validPushEndpoint(d.subscription.endpoint)) return;
         let alerts = action === "test" ? [{ key: `test:${Math.floor(Date.now() / 60000)}`, kind: "test", title: "Notifications Wimm activées", body: "Ton téléphone est prêt à recevoir les alertes Wimm.", url: "/" }]
-          : pushAlerts(d.state, d.invoices).filter(a => a.kind === "budgets" ? d.budgets : d.dues);
+          : [
+              ...pushAlerts(d.state, d.invoices).filter(a => a.kind === "budgets" ? d.budgets : d.dues),
+              ...(() => { const reminder = dailyTransactionReminder(d); return reminder ? [reminder] : []; })(),
+            ];
         const claimed: typeof alerts = [];
         for (const a of alerts) {
           if (await db("budget_push_claim", { p_id: d.id, p_key: a.key })) claimed.push(a);
@@ -68,7 +84,7 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
         const first = claimed[0];
         const payload = claimed.length === 1 ? { ...first, tag: first.key } : {
           title: `${claimed.length} alertes Wimm`, body: claimed.slice(0, 3).map(a => a.body).join(" ") + (claimed.length > 3 ? " Ouvre Wimm pour voir les autres." : ""),
-          url: claimed.every(a => a.kind === "dues" && a.url === "/?screen=calendar") ? "/?screen=calendar" : "/?screen=home", tag: "wimm-alerts",
+          url: claimed.some(a => a.kind === "reminder") ? "/?screen=add" : claimed.every(a => a.kind === "dues" && a.url === "/?screen=calendar") ? "/?screen=calendar" : "/?screen=home", tag: "wimm-alerts",
         };
         try {
           await webpush.sendNotification(d.subscription, JSON.stringify(payload), { TTL: 86400, timeout: 10000 });
