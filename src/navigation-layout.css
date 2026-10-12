@@ -159,12 +159,16 @@
   .swipe-actions {overflow:hidden;touch-action:pan-y}
   .swipe-actions-content {padding-right:0!important;transition:transform .17s ease;transform:translateX(0);touch-action:pan-y}
   .swipe-actions.is-open>.swipe-actions-content {transform:translateX(calc(-1 * var(--swipe-distance)))}
-  .swipe-actions-rail {position:absolute;inset:0 0 0 auto;z-index:0;display:flex;width:var(--swipe-distance);align-items:stretch;justify-content:flex-end;background:var(--surface)}
+  /* Hidden until a deliberate left swipe: never bleed through transparent rows. */
+  .swipe-actions-rail {position:absolute;inset:0 0 0 auto;z-index:0;display:flex;width:var(--swipe-distance);align-items:stretch;justify-content:flex-end;background:var(--surface);visibility:hidden}
+  .swipe-actions.is-open>.swipe-actions-rail {visibility:visible}
+  .swipe-actions>.swipe-actions-content {background:var(--surface)!important;isolation:isolate}
+  .budget-category-list>.swipe-actions>.swipe-actions-content>.category {background:var(--surface)!important}
   .swipe-actions-rail .swipe-action {display:flex;flex:0 0 80px;flex-direction:column;justify-content:center;align-items:center;gap:6px;text-align:center;background:var(--wimm-mint-wash);color:var(--wimm-green);font-size:.68rem;font-weight:770}
   .swipe-actions-rail .swipe-action.danger-action {background:color-mix(in srgb,var(--wimm-coral) 10%,var(--surface));color:var(--wimm-coral)}
   .swipe-actions-desktop-menu {display:none}
   .budget-category-list>.swipe-actions>.swipe-actions-content>.category {padding:15px 1px!important}
-  .budget-category-list>.swipe-actions.is-open>.swipe-actions-content {background:var(--surface)}
+  .budget-category-list>.swipe-actions.is-open>.swipe-actions-content {background:var(--surface)!important}
   .account-swipe-row .swipe-actions-content {padding-right:0}
   .transaction-swipe-row .swipe-actions-content {padding-right:0}
 }
