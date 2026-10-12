@@ -2,9 +2,11 @@
 
 ## Saisie rapide
 
-Dans l'onglet **Ajouter**, le premier bloc permet de créer en quelques secondes
-une dépense ou un revenu **ponctuel**. Choisissez le montant, le libellé,
-le compte courant, la catégorie (pour une dépense) et la date.
+Dans l'onglet **Ajouter**, appuyez sur **Une dépense** ou **Un revenu**.
+Les raccourcis et suggestions sont **intégrés au formulaire existant** :
+aucun second bloc « Saisie rapide » n'est affiché. Pour une dépense
+ponctuelle, laissez « Type de dépense : Ponctuelle ». Choisissez le montant,
+le libellé, le compte courant, la catégorie et la date.
 
 - Le libellé et la catégorie de vos opérations passées servent à proposer
   des suggestions. Elles ne sont ni envoyées à un modèle externe ni

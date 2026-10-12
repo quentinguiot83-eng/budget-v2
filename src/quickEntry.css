@@ -1,19 +1,18 @@
-.wimm-quick-entry{display:grid;gap:14px}
-.wimm-quick-entry .section-head{margin-bottom:0}
-.wimm-quick-type{display:flex;background:var(--accent-soft);border-radius:12px;padding:4px;gap:4px}
-.wimm-quick-type button{flex:1;padding:10px;border-radius:9px;font-weight:720;font-size:.84rem;color:var(--muted)}
-.wimm-quick-type button.active{background:var(--surface);color:var(--ink);box-shadow:0 1px 5px #00000010}
-.wimm-quick-form{display:grid;gap:12px}
-.wimm-quick-form label,.wimm-quick-form-grid label{display:grid;gap:6px;color:var(--ink);font-size:.79rem;font-weight:690}
-.wimm-quick-form input,.wimm-quick-form select{width:100%;min-width:0;min-height:43px;border:1px solid var(--border);background:var(--surface);color:var(--ink);border-radius:10px;padding:10px 12px;font-size:.94rem}
-.wimm-quick-form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px}
+/* Quick suggestions now live inside the existing expense/revenue form. */
+.wimm-inline-entry-assist{display:grid;gap:10px;margin:0 0 15px}
+.wimm-inline-entry-assist:empty{display:none}
 .wimm-quick-favorites,.wimm-quick-suggestions{display:grid;gap:9px}
-.wimm-quick-favorites>strong{display:flex;align-items:center;gap:7px;font-size:.8rem;color:var(--ink)}
-.wimm-quick-suggestions>small{color:var(--muted)}
-.wimm-quick-pills{display:flex;flex-wrap:wrap;gap:7px}
-.wimm-quick-pills>button,.wimm-quick-favorite{background:var(--accent-soft);border:1px solid var(--border);border-radius:999px;padding:7px 11px;font-size:.76rem;color:var(--ink)}
-.wimm-quick-favorite{display:inline-flex;align-items:center;padding:0;overflow:hidden}
-.wimm-quick-favorite button{padding:8px;font-size:.77rem}
+.wimm-quick-favorites>strong,.wimm-quick-suggestions>strong{
+  display:flex;align-items:center;gap:7px;font-size:.8rem;color:var(--ink);
+}
+.wimm-quick-suggestions>small{font-size:.71rem;color:var(--muted);line-height:1.45}
+.wimm-quick-pills{display:flex;flex-wrap:wrap;gap:7px;min-width:0}
+.wimm-quick-pills>button,.wimm-quick-favorite{
+  background:var(--accent-soft);border:1px solid var(--border);
+  border-radius:999px;padding:7px 11px;font-size:.76rem;color:var(--ink);
+}
+.wimm-quick-favorite{display:inline-flex;align-items:center;padding:0;overflow:hidden;min-width:0}
+.wimm-quick-favorite button{padding:8px;font-size:.77rem;white-space:normal;text-align:left}
 .wimm-quick-favorite button:last-child{padding:8px 10px 8px 3px}
 .wimm-quick-favorite button:disabled{opacity:.45}
-.wimm-quick-success{display:flex;align-items:center;gap:8px;color:var(--wimm-green,#28785c)}
+.wimm-inline-entry-assist .error{font-size:.76rem}
