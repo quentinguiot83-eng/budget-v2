@@ -1,0 +1,67 @@
+/* Wimm navigation adaptative — chargé après les anciens styles. */
+.mobile-profile-trigger,.floating-add-button,.quick-add-layer{display:none}
+.desktop-quick-add{display:flex;align-items:center;justify-content:center;gap:9px;width:100%;min-height:44px;margin:8px 0 17px;border-radius:13px;background:var(--action);color:#fff;font-weight:800;font-size:.82rem;box-shadow:0 5px 17px color-mix(in srgb,var(--action) 16%,transparent)}
+.sidebar .desktop-sidebar-nav{display:block;min-height:0;overflow:auto;scrollbar-width:thin}
+.desktop-nav-section{display:grid;gap:2px;margin-bottom:14px}
+.desktop-nav-section-heading{font-size:.64rem;font-weight:850;letter-spacing:.095em;color:var(--muted);margin:7px 12px 5px}
+.sidebar .desktop-sidebar-nav button{width:100%;min-height:40px;display:flex;gap:12px;align-items:center;padding:10px 12px}
+.sidebar .desktop-sidebar-nav button svg{width:19px;height:19px;flex-shrink:0}
+.sidebar .sidebar-bottom{padding-top:8px}
+.wimm-pro-shortcut{height:36px;min-width:36px;padding:0 6px;display:grid;place-items:center;border-radius:50%;background:var(--action);color:white;font-weight:850;font-size:.64rem;box-shadow:0 3px 11px color-mix(in srgb,var(--action) 18%,transparent)}
+.wimm-pro-shortcut[aria-current="page"]{outline:2px solid var(--wimm-green);outline-offset:2px}
+.home-personal-shortcut{display:flex;align-items:center;gap:13px;width:100%;text-align:left;padding:16px 18px;background:linear-gradient(110deg,var(--wimm-mint-wash),var(--surface));border:1px solid var(--border);color:var(--ink);border-radius:19px;box-shadow:var(--wimm-card-shadow)}
+.home-personal-shortcut:hover{border-color:var(--wimm-green)}
+.home-personal-icon{display:grid;place-items:center;width:46px;height:46px;flex-shrink:0;border-radius:15px;color:var(--wimm-green);background:color-mix(in srgb,var(--wimm-mint) 20%,var(--surface))}
+.home-personal-copy{display:grid;gap:3px;flex:1;min-width:0}
+.home-personal-copy small{font-size:.72rem;color:var(--muted)}
+.home-personal-copy strong{font-size:1.07rem;font-weight:850;font-variant-numeric:tabular-nums}
+.home-personal-shortcut>svg{color:var(--muted);flex-shrink:0}
+.projects-type-switch{display:grid;grid-template-columns:1fr 1fr;gap:6px;background:var(--wimm-mint-wash);border:1px solid var(--border);border-radius:16px;padding:6px}
+.projects-type-switch button{display:flex;align-items:center;justify-content:center;gap:6px;min-width:0;min-height:42px;padding:8px 5px;border-radius:11px;font-size:.8rem;font-weight:750;white-space:nowrap;color:var(--muted)}
+.projects-type-switch button.selected{background:var(--surface);color:var(--wimm-green);box-shadow:var(--wimm-card-shadow)}
+.projects-type-switch button small{font-size:.58rem;color:var(--muted)}
+.projects-coming-soon{display:flex;align-items:center;flex-direction:column;text-align:center;gap:13px;padding:40px min(7vw,38px);max-width:680px;margin:0 auto}
+.projects-future-icon{display:grid;place-items:center;width:67px;height:67px;border-radius:21px;color:var(--wimm-green);background:var(--wimm-mint-wash)}
+.projects-coming-soon h2{font-size:1.25rem;margin:0}
+.projects-coming-soon p{margin:0;max-width:450px;line-height:1.5}
+.projects-coming-soon button{display:flex;align-items:center;gap:8px}
+@media(min-width:851px){
+ .app .bottom-nav,.app .floating-add-button,.app .quick-add-layer{display:none!important}
+ .app .sidebar{overflow:hidden}
+}
+@media(max-width:850px){
+ .app .bottom-nav{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr));width:auto;left:12px;right:12px;transform:none;bottom:calc(9px + env(safe-area-inset-bottom));min-height:65px;padding:9px 6px!important;gap:0;border-radius:22px;z-index:55;box-sizing:border-box}
+ .app .bottom-nav button{display:flex;width:100%;min-width:0;align-items:center;justify-content:center;flex-direction:column;gap:4px;padding:5px 2px;font-size:.65rem;border-radius:12px}
+ .app .bottom-nav button.active{background:color-mix(in srgb,var(--wimm-mint) 14%,transparent);color:var(--wimm-green)}
+ .app .bottom-nav button svg{width:21px;height:21px;stroke-width:1.9}
+ .app .mobile-menu-trigger{display:none!important}
+ .app .mobile-brand-row{gap:0}
+ .app .soft-topbar .flex .desktop-settings-trigger{display:none!important}
+ .app .soft-topbar .flex .mobile-profile-trigger{display:grid!important;place-items:center;flex-shrink:0}
+ .app .soft-topbar>div:first-child>.eyebrow{margin-left:0;max-width:155px}
+ .app .floating-add-button{position:fixed;display:grid;place-items:center;right:calc(17px + env(safe-area-inset-right));bottom:calc(87px + env(safe-area-inset-bottom));width:55px;height:55px;border-radius:50%;background:var(--action);color:#fff;box-shadow:0 10px 24px color-mix(in srgb,var(--action) 27%,transparent),0 2px 6px rgba(0,0,0,.12);z-index:77;transition:transform .16s}
+ .app .floating-add-button:active{transform:scale(.94)}
+ .app .quick-add-layer{display:block;position:fixed;inset:0;z-index:76}
+ .app .quick-add-backdrop{position:absolute;inset:0;width:100%;height:100%;border:0;background:rgba(11,26,30,.33)}
+ .app .quick-add-menu{position:absolute;right:16px;bottom:calc(155px + env(safe-area-inset-bottom));width:min(355px,calc(100vw - 32px));background:var(--surface);color:var(--ink);border:1px solid var(--border);border-radius:20px;box-shadow:0 14px 42px rgba(0,0,0,.20);padding:12px;display:grid;gap:2px}
+ .app .quick-add-menu>strong{font-size:.86rem;padding:9px 10px 10px}
+ .app .quick-add-menu>button{display:flex;align-items:center;gap:11px;text-align:left;width:100%;min-height:59px;padding:8px;border-radius:12px}
+ .app .quick-add-menu>button:hover{background:var(--wimm-mint-wash)}
+ .app .quick-add-menu>button>span:nth-child(2){display:grid;gap:2px;flex:1}
+ .app .quick-add-menu b{font-size:.8rem}
+ .app .quick-add-menu small{font-size:.69rem;color:var(--muted)}
+ .app .quick-add-menu>button>svg{color:var(--muted)}
+ .app .quick-add-item-icon{width:39px;height:39px;display:grid;place-items:center;border-radius:12px;background:var(--wimm-mint-wash);color:var(--wimm-green)}
+ .app .quick-add-item-icon.expense{background:var(--wimm-coral-wash);color:var(--wimm-coral)}
+ .app .quick-add-item-icon.transfer{background:var(--wimm-blue-wash);color:var(--wimm-blue)}
+ .app .quick-add-item-icon.other{background:var(--wimm-lavender-wash);color:var(--wimm-lavender)}
+ .app .page-footer{padding-bottom:calc(128px + env(safe-area-inset-bottom))}
+}
+@media(max-width:390px){
+ .app .bottom-nav button{font-size:.60rem}
+ .app .soft-topbar>.flex{gap:3px}
+ .app .soft-topbar .icon{width:32px;height:32px}
+ .app .wimm-pro-shortcut{height:31px;min-width:31px;font-size:.56rem;padding:0 5px}
+ .projects-type-switch button{font-size:.70rem;gap:3px}
+ .projects-type-switch button small{font-size:.52rem}
+}
