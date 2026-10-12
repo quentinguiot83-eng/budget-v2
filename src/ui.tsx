@@ -73,11 +73,15 @@ export function Form({
   submit,
   label = "Enregistrer",
   extra,
+  assist,
+  onFieldChange,
 }: {
   fields: Field[];
   submit: (v: Record<string, string>) => Promise<void>;
   label?: string;
   extra?: ReactNode;
+  assist?: (values: Record<string, string>, apply: (patch: Record<string, string>) => void) => ReactNode;
+  onFieldChange?: (name: string, value: string) => Record<string, string> | undefined;
 }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -91,6 +95,14 @@ export function Form({
         ]),
       ),
   );
+
+  const patchValues = (patch: Record<string, string>) =>
+    setValues(current => ({ ...current, ...patch }));
+
+  const updateValue = (name: string, value: string) => {
+    const inferred = onFieldChange?.(name, value) ?? {};
+    setValues(current => ({ ...current, [name]: value, ...inferred }));
+  };
 
   const matchesVisibility = (
     rule: {
@@ -160,6 +172,7 @@ export function Form({
       }}
     >
       <fieldset disabled={busy}>
+        {assist?.(values, patchValues)}
         {visibleFields.map((f) => f.type === "emoji" && f.options ? (
           <div key={f.name} className="field">
             <span>{f.label}</span>
@@ -179,14 +192,9 @@ export function Form({
             {f.options ? (
               <select
                 name={f.name}
-                defaultValue={f.value ?? ""}
+                value={values[f.name] ?? ""}
                 required={f.required !== false}
-                onChange={(e) =>
-                  setValues((current) => ({
-                    ...current,
-                    [f.name]: e.target.value,
-                  }))
-                }
+                onChange={e => updateValue(f.name, e.target.value)}
               >
                 {f.options.map(([v, l]) => (
                   <option key={v} value={v}>
@@ -198,7 +206,7 @@ export function Form({
               <input
                 name={f.name}
                 type={f.type || "text"}
-                defaultValue={f.value ?? ""}
+                value={values[f.name] ?? ""}
                 required={f.required !== false}
                 min={f.min}
                 max={f.max}
@@ -208,13 +216,7 @@ export function Form({
                     ? "current-password"
                     : undefined
                 }
-                onChange={(e) =>
-                  setValues((current) => ({
-                    ...current,
-                    [f.name]:
-                      e.target.value,
-                  }))
-                }
+                onChange={e => updateValue(f.name, e.target.value)}
               />
             )}{" "}
             {f.hint && <small>{f.hint}</small>}
