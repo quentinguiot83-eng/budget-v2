@@ -5652,7 +5652,17 @@ export default function App() {
                       r.kind === "fixed" &&
                       (!r.end || r.end >= selectedMonth + "-01"),
                   )}>{ordered => ordered.map((r) => (
-                    <div className="rule-row" key={r.id}>
+                    <SwipeActions key={r.id} label={r.name} className="fixed-swipe-row" actions={[
+                      { label: "Modifier", icon: <Pencil size={17}/>, onClick: () => editRule(r) },
+                      { label: "Arrêter", icon: <Trash2 size={17}/>, tone: "danger" as const, onClick: () => confirmAction(
+                        "Arrêter " + r.name + " ?", "Les échéances futures seront arrêtées. Les paiements validés resteront dans l’historique.",
+                        async () => change(d => {
+                          const rule = d.rules.find(x => x.id === r.id);
+                          if (!rule) throw Error("Échéancier introuvable.");
+                          rule.end = previousDate(today());
+                        }, "Récurrence arrêtée")) },
+                    ]}>
+                    <div className="rule-row">
                       <div className="grow">
                         <strong>{r.name}</strong>
                         <small>
@@ -5665,31 +5675,9 @@ export default function App() {
                           · Dès le {dateLabel(r.start)}
                         </small>
                       </div>
-                      <button
-                        className="icon"
-                        aria-label="Modifier l’échéancier"
-                        onClick={() => editRule(r)}
-                      >
-                        <Pencil size={18} />
-                      </button>
-                      <button
-                        className="icon"
-                        aria-label="Arrêter la dépense fixe"
-                        onClick={() =>
-                          confirmAction(
-                            "Arrêter " + r.name + " ?",
-                            "Les échéances à partir d’aujourd’hui seront arrêtées. Les paiements validés resteront dans l’historique.",
-                            async () =>
-                              change((d) => {
-                                d.rules.find((x) => x.id === r.id)!.end =
-                                  previousDate(today());
-                              }, "Récurrence arrêtée"),
-                          )
-                        }
-                      >
-                        <Trash2 size={18} />
-                      </button>
+
                     </div>
+                    </SwipeActions>
                   ))}</SortableList>
                 {!s.rules.some((r) => r.kind === "fixed") && (
                   <Empty
