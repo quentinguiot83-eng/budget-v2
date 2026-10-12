@@ -1,4 +1,6 @@
 import { WimmWordmark } from "./WimmWordmark";
+import SettingsNavigation from "./SettingsNavigation";
+import "./SettingsNavigation.css";
 import { SortableList } from "./SortableList";
 import { applyAppearance, readAppearanceMode, type AppearanceMode } from "./appearance";
 import { CategoryGlyph } from "./CategoryGlyph";
@@ -394,7 +396,9 @@ export default function App() {
     [tutorialOpen, setTutorialOpen] = useState(false),
     [tutorialPage, setTutorialPage] = useState<string | null>(null),
     [tutorialMode, setTutorialMode] = useState<"quick" | "library" | "page">("quick"),
-    [expandedPersonalBudgets, setExpandedPersonalBudgets] = useState<Record<string, boolean>>({});
+    [expandedPersonalBudgets, setExpandedPersonalBudgets] = useState<Record<string, boolean>>({}),
+    [settingsCategory, setSettingsCategory] = useState<string | null>(null),
+    [settingsDetail, setSettingsDetail] = useState<string | null>(null);
   const tutorialAutoOpened = useRef(false);
   const busy = useRef(false),
     docRef = useRef(doc),
@@ -578,6 +582,8 @@ export default function App() {
 
   function navigate(r: string) {
     if (r === "transactions") setTxFilter("");
+    setSettingsCategory(null);
+    setSettingsDetail(null);
 
     const targetIsSubPage =
       subRoutes.includes(r);
@@ -5337,7 +5343,7 @@ export default function App() {
             {route === "personal" ? (
               <div className="personal-page-title-row">
                 <div className="block-title personal-page-title">
-                  <h1>{titles[route]}</h1>
+                  {!(route === "settings" && settingsCategory) && <h1>{titles[route]}</h1>}
                   <BlockInfo title="Votre compte personnel">
                     <p>Son solde, ses achats et son historique sont visibles uniquement depuis votre compte Wimm.</p>
                     <p>Les autres membres du foyer voient uniquement les virements depuis le compte commun et le budget personnel lié, sans accès aux opérations privées.</p>
@@ -7350,10 +7356,32 @@ export default function App() {
               repay={repay}
             />
           )}
+
           {route === "settings" && (
-            <>
-              {!demoEnabled && <div data-tour="phone-notifications"><PhoneNotifications state={s} /></div>}
-              <section className="card tutorial-settings-card tutorial-learning-hub" data-tour="tutorial-settings">
+            <div className="settings-v2">
+              <SettingsNavigation
+                category={settingsCategory}
+                detail={settingsDetail}
+                displayName={displayName}
+                householdName={doc.household.name}
+                membersCount={doc.members.length}
+                onCategory={(id) => { setSettingsCategory(id); setSettingsDetail(null); window.scrollTo(0, 0); }}
+                onDetail={(id) => { setSettingsDetail(id); window.scrollTo(0, 0); }}
+                onBack={() => {
+                  if (settingsDetail) setSettingsDetail(null);
+                  else setSettingsCategory(null);
+                  window.scrollTo(0, 0);
+                }}
+              />
+              {settingsDetail === "notifications" && (
+!demoEnabled ? (
+  <div data-tour="phone-notifications"><PhoneNotifications state={s} /></div>
+) : (
+  <section className="card"><p className="muted">Les notifications sont disponibles après connexion à votre compte Wimm.</p></section>
+)
+)}
+              {settingsDetail === "tutoriel" && (
+<section className="card tutorial-settings-card tutorial-learning-hub" data-tour="tutorial-settings">
                 <div className="tutorial-learning-head">
                   <span className="tutorial-learning-icon"><CircleHelp size={25}/></span>
                   <div>
@@ -7371,8 +7399,10 @@ export default function App() {
                   </button>
                 </div>
               </section>
-              <div className="two-col">
-                <section className="card">
+)}
+              {settingsDetail === "apparence" && (
+<div className="two-col settings-appearance">
+<section className="card">
                   <div className="section-head"><div className="block-title"><h2>Apparence</h2><BlockInfo title="Apparence"><p>Automatique suit le mode clair ou sombre choisi dans les réglages de votre téléphone. Clair et Nuit gardent le même thème à tout moment.</p></BlockInfo></div></div>
                   <div className="appearance-choices" role="group" aria-label="Apparence">
                     {([["light", "Clair"], ["dark", "Nuit"], ["auto", "Automatique"]] as const).map(([mode, label]) => (
@@ -7409,9 +7439,13 @@ export default function App() {
                     ))}
                   </div>
                 </section>
+</div>
+)}
+              {["profil", "connexion"].includes(settingsDetail || "") && (
                 <section className="card">
-                  <h2>Votre compte</h2>
-                  <p>{session?.user.email || "Aperçu de démonstration"}</p>
+  <h2>{settingsDetail === "connexion" ? "Connexion et accès" : "Votre compte"}</h2>
+  {settingsDetail === "profil" && (<>
+<p>{session?.user.email || "Aperçu de démonstration"}</p>
                   <div className="profile-name-row"><span>Nom affiché : <strong>{displayName || "Non renseigné"}</strong></span>
                     <button className="text" onClick={() => openForm("Votre nom affiché", [field("name", "Nom affiché", displayName)], async v => {
                       const name = v.name.trim();
@@ -7424,7 +7458,10 @@ export default function App() {
                       }
                     })}>Modifier</button>
                   </div>
-                  <button
+                  
+  </>)}
+  {settingsDetail === "connexion" && (<>
+<button
                     className="secondary"
                     onClick={() => {
                       if (demoEnabled) {
@@ -7441,9 +7478,12 @@ export default function App() {
                     Sur iPhone : Safari → Partager → Sur l’écran d’accueil. Une
                     connexion Internet est nécessaire pour enregistrer.
                   </p>
-                </section>
-              </div>
-              <section className="card">
+                
+  </>)}
+</section>
+              )}
+              {settingsDetail === "membres" && (
+<section className="card">
                 <div className="section-head">
                   <h2>{doc.household.name}</h2>
                   {isOwner && (
@@ -7553,7 +7593,9 @@ export default function App() {
                   </div>
                 )}
               </section>
-              <section className="card settings-salary-card">
+)}
+              {settingsDetail === "salaire" && (
+<section className="card settings-salary-card">
                 <div className="section-head">
                   <div>
                     <h2>Salaire</h2>
@@ -7565,7 +7607,7 @@ export default function App() {
 
                   <button
                     type="button"
-                    className="secondary"
+                    className="text settings-edit"
                     onClick={() =>
                       openForm(
                         "Réglages du salaire",
@@ -7619,7 +7661,7 @@ export default function App() {
                       )
                     }
                   >
-                    Modifier
+                    <Pencil size={16} /> Modifier
                   </button>
                 </div>
 
@@ -7642,8 +7684,9 @@ export default function App() {
                   value={salaryReminder ? "Activé" : "Désactivé"}
                 />
               </section>
-
-              <section className="card">
+)}
+              {settingsDetail === "rubriques" && (
+<section className="card">
                 <h2>Rubriques affichées</h2>
                 <p className="muted">
                   Choisissez les espaces utiles à votre quotidien. Masquer une
@@ -7719,7 +7762,9 @@ export default function App() {
                   </label>
                 </div>
               </section>
-              <section className="card archived-category-settings">
+)}
+              {settingsDetail === "archives" && (
+<section className="card archived-category-settings">
                 <h2>Catégories archivées</h2>
                 <p className="muted">Supprimez une catégorie inutilisée ou transférez son historique vers une catégorie active.</p>
                 {s.categories.filter(c => c.archived).map(c => {
@@ -7728,20 +7773,35 @@ export default function App() {
                 })}
                 {!s.categories.some(c => c.archived) && <p className="muted">Aucune catégorie archivée.</p>}
               </section>
-              <DataProtectionStyles/>
-              <DataProtectionPanel
+)}
+              {(settingsDetail === "sauvegardes" || settingsDetail === "historique") && <DataProtectionStyles />}
+              {settingsDetail === "sauvegardes" && (
+<DataProtectionPanel
                 household={{ id: doc.household.id, name: doc.household.name, revision: doc.revision, state: s }}
                 personal={personalDoc}
                 demo={demoEnabled}
               />
-              <VersionHistoryPanel
+)}
+              {settingsDetail === "historique" && (
+<VersionHistoryPanel
                 householdRevision={doc.revision}
                 personalRevision={personalDoc?.revision ?? null}
                 isOwner={isOwner}
                 demo={demoEnabled}
                 onRestored={load}
               />
-              <section className="card danger-zone">
+)}
+              {settingsDetail === "confidentialite" && (
+<section className="card wimm-settings-info">
+                <h2>Confidentialité de vos finances</h2>
+                <p>Vos comptes et opérations personnels sont séparés des données du foyer. Les autres membres du foyer ne peuvent pas consulter le détail de vos dépenses privées.</p>
+                <p className="muted">Les virements entre le foyer et le compte personnel restent visibles dans l’historique commun lorsque cela concerne le budget du foyer.</p>
+                <p>Les fichiers JSON et CSV téléchargés sont enregistrés sur votre appareil. Conservez ces exports dans un emplacement privé et protégé.</p>
+                <p className="muted">La gestion des sessions actives et la suppression du compte ne sont pas encore disponibles depuis cet écran.</p>
+              </section>
+)}
+              {settingsDetail === "reset" && (
+<section className="card danger-zone">
                 <h2>Réinitialisation</h2>
                 <p>
                   Remettre une enveloppe à zéro conserve les dépenses. Archiver
@@ -7813,7 +7873,16 @@ export default function App() {
                   </button>
                 )}
               </section>
-            </>
+)}
+              {settingsDetail === "apropos" && (
+<section className="card wimm-settings-info">
+                <h2>Wimm</h2>
+                <p>Where is my money?</p>
+                <p className="muted">Version 1.0.0 · Application de gestion de budget, patrimoine, voyages et finances personnelles.</p>
+                <p className="muted">Application web installable sur l’écran d’accueil de votre iPhone.</p>
+              </section>
+)}
+            </div>
           )}
         </main>
         <footer className="page-footer">
