@@ -123,5 +123,14 @@ const styles = String.raw`
  .personal-v2-history-value{font-size:.75rem}
 }
 @media(prefers-reduced-motion:reduce){.personal-v2-panel>summary>.personal-v2-chevron,.personal-v2-history>details>summary svg{transition:none}}
+
+.personal-projection-interactive{display:grid;gap:9px;min-width:0}
+.personal-projection-chart{height:255px;min-width:0;width:100%;touch-action:pan-y;cursor:crosshair}
+.personal-projection-chart:focus-visible{outline:2px solid var(--wimm-blue);outline-offset:3px;border-radius:8px}
+.personal-projection-readout{border-top:1px solid var(--border);padding-top:13px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.personal-projection-readout span{font-size:.8rem;color:var(--muted)}
+.personal-projection-readout strong{font-size:1.14rem;color:var(--ink);font-weight:850;font-variant-numeric:tabular-nums;text-align:right}
+.personal-projection-help{margin:0;font-size:.7rem;line-height:1.45;color:var(--muted)}
+@media(max-width:560px){.personal-projection-chart{height:226px}.personal-projection-readout strong{font-size:1rem}}
 `;
 export default function PersonalPageStyles(){return <style data-wimm-personal="v2">{styles}</style>;}
