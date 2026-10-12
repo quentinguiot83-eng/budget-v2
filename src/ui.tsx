@@ -81,7 +81,7 @@ export function Form({
   label?: string;
   extra?: ReactNode;
   assist?: (values: Record<string, string>, apply: (patch: Record<string, string>) => void) => ReactNode;
-  onFieldChange?: (name: string, value: string) => Record<string, string> | undefined;
+  onFieldChange?: (name: string, value: string, values: Record<string, string>) => Record<string, string> | undefined;
 }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -100,7 +100,7 @@ export function Form({
     setValues(current => ({ ...current, ...patch }));
 
   const updateValue = (name: string, value: string) => {
-    const inferred = onFieldChange?.(name, value) ?? {};
+    const inferred = onFieldChange?.(name, value, values) ?? {};
     setValues(current => ({ ...current, [name]: value, ...inferred }));
   };
 
