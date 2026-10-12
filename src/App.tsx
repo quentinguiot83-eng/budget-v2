@@ -5550,7 +5550,20 @@ export default function App() {
                 )}
               </section>
 
-              <div className="home-remaining-grid home-income-expenses">
+              {!s.hidden.includes("personal") && (
+                 <button type="button" className="home-personal-shortcut" onClick={()=>navigate("personal")}
+                   aria-label={ps.account?"Ouvrir mon compte perso":"Créer mon compte perso"}>
+                   <span className="home-personal-icon"><UserRound size={22}/></span>
+                   <span className="home-personal-copy">
+                     <small>Compte perso</small>
+                     <strong>{ps.account?money(personalBalance(ps,s,personalOwnerId)):"Configurer mon espace"}</strong>
+                     <small>{ps.account?"Mon espace privé":"Suivre mes dépenses personnelles"}</small>
+                   </span>
+                   <ChevronRight size={20}/>
+                 </button>
+               )}
+
+               <div className="home-remaining-grid home-income-expenses">
                 <section className="home-remaining-card home-income">
                   <span className="muted">Revenus du mois</span><strong>{money(totals.income)}</strong>
                   <button className="text" onClick={() => { navigate("transactions"); setTxFilter("income"); }}>Voir les revenus <ChevronRight size={14}/></button>
@@ -7175,8 +7188,31 @@ export default function App() {
             <BankReconciliation state={s} onImport={importBankDrafts}/>
           )}
           {route === "trips" && (
-            <div className="trips-page-v2">
-              <TripsPageStyles />
+            <div className="trips-page-v2 projects-page">
+              <TripsPageStyles/>
+              <div className="projects-type-switch" role="tablist" aria-label="Types de projets">
+                <button type="button" role="tab" aria-selected={projectsSection==="trips"}
+                  className={projectsSection==="trips"?"selected":""} onClick={()=>setProjectsSection("trips")}>
+                  <Plane size={18}/> Voyages
+                </button>
+                <button type="button" role="tab" aria-selected={projectsSection==="other"}
+                  className={projectsSection==="other"?"selected":""} onClick={()=>setProjectsSection("other")}>
+                  <Target size={18}/> Autres projets <small>Bientôt</small>
+                </button>
+              </div>
+              {projectsSection==="other" ? (
+                <section className="card projects-coming-soon">
+                  <span className="projects-future-icon"><Target size={29}/></span>
+                  <span className="badge">En développement</span>
+                  <h2>Vos futurs projets, au même endroit</h2>
+                  <p>Vous pourrez bientôt suivre d’autres projets : un achat immobilier, une voiture ou tout objectif d’épargne.</p>
+                  <p className="muted">Cette fonctionnalité n’est pas encore disponible. Vos voyages restent inchangés.</p>
+                  <button type="button" className="secondary" onClick={()=>setProjectsSection("trips")}>
+                    <Plane size={17}/> Voir mes voyages
+                  </button>
+                </section>
+              ) : (
+                <>
               <div className="trips-top-actions">
                 <p className="muted">Des projets de voyage, un budget maîtrisé.</p>
                 <button type="button" className="primary" onClick={() => editTrip()}>
@@ -7448,6 +7484,8 @@ export default function App() {
                       </>
                     );
                   })()}
+                </>
+              )}
                 </>
               )}
             </div>
@@ -7813,7 +7851,7 @@ export default function App() {
                     },
                     {
                       id: "trips",
-                      label: "Voyages",
+                      label: "Projets",
                       description:
                         "Préparez vos voyages, leurs budgets par catégorie et les dépenses associées.",
                     },
