@@ -135,3 +135,22 @@
   .wimm-settings-entry-copy small { font-size: .73rem; }
   .wimm-settings-menu { border-radius: 21px; }
 }
+
+/* Optional daily reminder alongside existing phone notification preferences. */
+.wimm-daily-reminder-settings {
+  display:grid; gap:12px; margin:15px 0; padding:14px 15px;
+  border:1px solid var(--border); border-radius:15px; background:var(--surface);
+}
+.wimm-daily-reminder-settings .check-row { display:flex;align-items:center;gap:11px;cursor:pointer; }
+.wimm-daily-reminder-settings .check-row span { display:grid;gap:4px; }
+.wimm-daily-reminder-settings .check-row strong { font-size:.88rem;color:var(--ink); }
+.wimm-daily-reminder-settings .check-row small,
+.wimm-daily-reminder-time small { font-size:.73rem;color:var(--muted);line-height:1.4; }
+.wimm-daily-reminder-time { display:grid;gap:8px;margin-left:29px; }
+.wimm-daily-reminder-time label { font-size:.8rem;font-weight:700;color:var(--ink); }
+.wimm-daily-reminder-time input[type=time] {
+  width:min(100%,220px); min-height:44px; padding:10px 12px;border-radius:11px;
+  border:1px solid var(--border);background:var(--surface);color:var(--ink);
+  font-size:1rem;color-scheme:normal;
+}
+@media(max-width:560px){.wimm-daily-reminder-settings{padding:12px}.wimm-daily-reminder-time{margin-left:0}}
