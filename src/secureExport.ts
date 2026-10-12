@@ -88,7 +88,7 @@ export async function verifyIntegrityExport(contents: string): Promise<VerifiedB
   const professional = payload.data as Record<string, unknown> | undefined;
   if ((scope === "household" || scope === "personal") &&
       (!state || typeof state !== "object" || Array.isArray(state) || !Array.isArray(state.transactions) ||
-      typeof payload.householdId !== "string" || !Number.isInteger(payload.revision)))
+      typeof payload.householdId !== "string" || (typeof payload.revision !== "number" || !Number.isInteger(payload.revision))))
     throw Error("Les données de la sauvegarde sont incomplètes.");
   if (scope === "professional" && (!professional || !Array.isArray(professional.transactions)))
     throw Error("Les données professionnelles sont incomplètes.");
