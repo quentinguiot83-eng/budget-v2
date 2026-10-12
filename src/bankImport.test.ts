@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { parseBankCsv, guessBankMapping, convertBankRows, reconcileBankRows, readBankAmount } from "./bankImport";
+import { parseBankCsv, guessBankMapping, convertBankRows, reconcileBankRows, findBankDuplicateCandidates, readBankAmount } from "./bankImport";
 import { emptyState, today, type Tx } from "./engine";
 const csv = "Date;Libellé;Montant\n12/10/2026;\"CARREFOUR;MARSEILLE\";-42,80\n11/10/2026;Virement reçu;+75,00";
 test("CSV with quoted semicolons, French decimals and header suggestions",()=>{
@@ -74,4 +74,45 @@ test("bank reconciliation never changes the original household state",()=>{
   const state=emptyState();const before=JSON.stringify(state);
   reconcileBankRows([{index:0,date:today(),type:"expense",description:"Foo",amount:300}],state.transactions,"current");
   assert.equal(JSON.stringify(state),before);
+});
+
+test("suggests the actual matching Wimm transactions with date, amount and category",()=>{
+  const csvRow={index:0,date:"2026-10-12",type:"expense" as const,amount:990,description:"Cotisation Offre METAL 10/2026"};
+  const current:Tx[]=[
+    {id:"fixed-1",type:"expense",account:"bank",date:"2026-10-12",description:"Abonnement Metal",amount:990,category:"subscriptions",fixed:true},
+    {id:"other-amount",type:"expense",account:"bank",date:"2026-10-12",description:"Abonnement Metal",amount:999},
+    {id:"other-account",type:"expense",account:"savings",date:"2026-10-12",description:"Cotisation Offre METAL 10/2026",amount:990},
+    {id:"other-type",type:"income",account:"bank",date:"2026-10-12",description:"Cotisation Offre METAL 10/2026",amount:990},
+    {id:"old",type:"expense",account:"bank",date:"2026-10-08",description:"Cotisation",amount:990},
+  ];
+  const candidates=findBankDuplicateCandidates(csvRow,current,"bank");
+  assert.deepEqual(candidates.map(c=>c.transaction.id),["fixed-1"]);
+  assert.equal(candidates[0].transaction.category,"subscriptions");
+  assert.equal(candidates[0].daysApart,0);
+  assert.equal(reconcileBankRows([csvRow],current,"bank")[0].status,"possible");
+});
+test("ranks stronger labels before date proximity and returns multiple distinct candidates",()=>{
+  const csvRow={index:0,date:"2026-10-12",type:"expense" as const,amount:799,description:"BOUYGUES TELECOM"};
+  const tx:Tx[]=[
+    {id:"A",type:"expense",account:"current",date:"2026-10-12",amount:799,description:"Téléphone"},
+    {id:"B",type:"expense",account:"current",date:"2026-10-11",amount:799,description:"Bouygues Telecom",category:"telecom"},
+    {id:"C",type:"expense",account:"current",date:"2026-10-14",amount:799,description:"Opérateur"},
+  ];
+  const candidates=findBankDuplicateCandidates(csvRow,tx,"current");
+  assert.deepEqual(candidates.map(c=>c.transaction.id),["B","A","C"]);
+  assert.equal(candidates[0].sameLabel,true);
+  assert.equal(candidates[0].daysApart,1);
+  assert.equal(candidates[1].daysApart,0);
+  assert.equal(candidates[2].daysApart,2);
+});
+test("duplicate suggestions are read-only and ignore amounts more than two days apart",()=>{
+  const row={index:0,date:"2026-10-12",type:"expense" as const,amount:899,description:"Orange"};
+  const tx:Tx[]=[
+    {id:"far",type:"expense",account:"current",date:"2026-10-09",amount:899,description:"Orange"},
+    {id:"near",type:"expense",account:"current",date:"2026-10-13",amount:899,description:"Mobile",category:"phone"},
+  ];
+  const snapshot=JSON.stringify(tx);
+  assert.deepEqual(findBankDuplicateCandidates(row,tx,"current").map(x=>x.transaction.id),["near"]);
+  assert.equal(JSON.stringify(tx),snapshot);
+  assert.deepEqual(findBankDuplicateCandidates(row,tx,"different account"),[]);
 });
