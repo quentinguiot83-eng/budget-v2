@@ -156,6 +156,44 @@ export default function BankReconciliation({state,onImport}:Props){
             <label className="wimm-bank-row-main"><input type="checkbox" disabled={!allowed||busy} checked={checked} onChange={()=>toggle(row.index)}/>
               <span><strong>{row.description}</strong><small>{row.date} · {row.type==="expense"?"Débit":"Crédit"} · {duplicateSummary}{row.date<accountStart?" · Avant solde initial":""}</small></span>
               <strong className={row.type==="income"?"positive":""}>{row.type==="expense"?"−":"+"}{money(row.amount)}</strong></label>
+            {row.status==="possible" && <div className="wimm-bank-duplicate-review">
+              <div className="wimm-bank-duplicate-heading"><AlertCircle size={16}/>
+                <span>{candidates.length===1?"Cette opération Wimm pourrait correspondre :":
+                  candidates.length+" opérations Wimm pourraient correspondre :"}</span>
+              </div>
+              {(expandedCandidates.includes(row.index)?candidates:candidates.slice(0,1)).map(candidate=>{
+                const tx=candidate.transaction;
+                const categoryName=state.categories.find(c=>c.id===tx.category)?.name;
+                const isChosen=decision?.action==="skip"&&decision.transactionId===tx.id;
+                return <div className={"wimm-bank-duplicate-candidate"+(isChosen?" selected":"")} key={tx.id}>
+                  <div className="wimm-bank-duplicate-candidate-details">
+                    <strong>{tx.description}</strong>
+                    <span>{tx.date} · {tx.type==="expense"?"Dépense":"Revenu"} · {money(tx.amount)}</span>
+                    <small>{categoryName || (tx.type==="income"?"Revenu sans catégorie":"Sans catégorie")}
+                      {tx.fixed?" · Dépense fixe":""}
+                      {candidate.daysApart===0?" · Même jour":candidate.daysApart===1?" · 1 jour d’écart":" · 2 jours d’écart"}
+                      {candidate.sameLabel?" · Même libellé":""}</small>
+                  </div>
+                  <button type="button" className={"wimm-bank-duplicate-choice"+(isChosen?" selected":"")}
+                    aria-pressed={isChosen} disabled={busy}
+                    onClick={()=>markExisting(row.index,tx.id)}>
+                    {isChosen?"✓ C’est cette opération":"C’est cette opération"}
+                  </button>
+                </div>;
+              })}
+              {candidates.length>1 && <button type="button" className="wimm-bank-duplicate-expand" disabled={busy}
+                onClick={()=>setExpandedCandidates(old=>old.includes(row.index)?old.filter(i=>i!==row.index):[...old,row.index])}>
+                {expandedCandidates.includes(row.index)?"Masquer les autres":"Voir les "+(candidates.length-1)+" autre(s) correspondance(s)"}
+              </button>}
+              <button type="button" className={"wimm-bank-duplicate-none"+(decision?.action==="import"?" selected":"")}
+                aria-pressed={decision?.action==="import"} disabled={busy||row.date<accountStart||row.date>today()}
+                onClick={()=>markToImport(row.index)}>
+                {decision?.action==="import"?"✓ Aucune ne correspond — à importer":"Aucune ne correspond → importer cette ligne"}
+              </button>
+              {decision?.action==="skip" && <small className="wimm-bank-duplicate-result">
+                Ligne rapprochée : elle ne sera pas importée. L’opération Wimm reste inchangée.
+              </small>}
+            </div>}
             {checked&&row.type==="expense"&&<label className="wimm-bank-category">Catégorie
               <select value={effectiveCategory(row)} onChange={e=>{setCategoriesByRow(old=>({...old,[row.index]:e.target.value}));setConfirm(false);}}>
                 <option value="">Choisir une catégorie…</option>
