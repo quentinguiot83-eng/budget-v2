@@ -5647,16 +5647,12 @@ export default function App() {
               </button>
               <div className="section-head budget-category-heading">
                 <div className="block-title">
-                  <h2>Mes budgets variables</h2>
-                  <BlockInfo title="Comprendre les enveloppes"><p>Un budget variable représente le montant réservé pour une catégorie. Il est indépendant du solde bancaire. Les catégories archivées restent dans l’historique.</p></BlockInfo>
+                  <h2>Mes budgets</h2>
+                  <BlockInfo title="Comprendre vos budgets"><p>Toutes vos catégories sont réunies dans cette liste : budgets variables, fixes ou mixtes. Les charges fixes ne sont prises en compte que dans leur mois d’échéance. Les catégories archivées restent accessibles dans l’historique.</p></BlockInfo>
                 </div>
                 <button className="secondary compact budget-add-category" type="button" onClick={() => editCategory()} aria-label="Ajouter une catégorie"><Plus size={18}/><span>Catégorie</span></button>
               </div>
-              <div className="category-grid budget-category-list" data-tour="budget-categories">{categoryCards(false, true)}</div>
-              <details className="budget-other-categories">
-                <summary>Autres catégories et budgets fixes <ChevronRight size={17}/></summary>
-                <div className="category-grid budget-category-list">{categoryCards(false, false, false, true)}</div>
-              </details>
+              <div className="category-grid budget-category-list" data-tour="budget-categories">{categoryCards(false)}</div>
               {!s.categories.length && (
                 <Empty
                   title="Un budget à votre mesure"
