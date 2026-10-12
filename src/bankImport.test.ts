@@ -57,7 +57,7 @@ test("duplicate same-amount same-label lines respect occurrence and reimport",()
   const rows=convertBankRows(table,guessBankMapping(table.columns));
   const one:Tx={id:"existing",type:"expense",date:"2026-10-12",amount:250,description:"Cafe",account:"current"};
   let reconciled=reconcileBankRows(rows,[one],"current");
-  assert.deepEqual(reconciled.map(x=>x.status),["matched","new"]);
+  assert.deepEqual(reconciled.map(x=>x.status),["matched","possible"]); // same amount on same day requires review
   assert.notEqual(reconciled[0].key,reconciled[1].key);
   const two={...one,id:"imported",bankImportKey:reconciled[1].key};
   reconciled=reconcileBankRows(rows,[one,two],"current");
