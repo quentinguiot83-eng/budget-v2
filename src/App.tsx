@@ -34,6 +34,7 @@ import type { Session } from "@supabase/supabase-js";
 import {
   Home,
   ChartNoAxesCombined,
+  TrendingUp,
   Plus,
   Wallet,
   Plane,
@@ -4490,6 +4491,7 @@ export default function App() {
     {id:"budget",label:"Budget",icon:<ChartNoAxesCombined/>},
     {id:"wealth",label:"Patrimoine",icon:<Wallet/>},
     {id:"trips",label:"Projets",icon:<Target/>},
+    {id:"projection",label:"Projections",icon:<TrendingUp/>},
   ];
   const mobileDrawerItems = [
     {id:"home",label:"Accueil",icon:<Home size={20}/>},
