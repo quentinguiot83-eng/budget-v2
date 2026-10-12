@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Download, FileJson, FileSpreadsheet, Info, LockKeyhole, ShieldCheck } from "lucide-react";
 import type { State } from "./engine";
 import type { PersonalState } from "./personal";
+import { createIntegrityExport, sendFile } from "./secureExport";
 
 type Props = {
   household: { id: string; name: string; revision: number; state: State };
@@ -22,49 +23,6 @@ function csvField(value: unknown) {
 
 function makeCsv(rows: unknown[][]): string {
   return "\ufeff" + rows.map(row => row.map(csvField).join(";")).join("\r\n");
-}
-
-async function createIntegrityExport(payload: Record<string, unknown>) {
-  const material = JSON.stringify(payload);
-  const bytes = new TextEncoder().encode(material);
-  const sha = await crypto.subtle.digest("SHA-256", bytes);
-  const hash = Array.from(new Uint8Array(sha), x => x.toString(16).padStart(2, "0")).join("");
-  return JSON.stringify({
-    format: "wimm-manual-backup",
-    version: 1,
-    createdAt: new Date().toISOString(),
-    integrity: { algorithm: "SHA-256", contentHash: hash },
-    ...payload,
-  }, null, 2);
-}
-
-async function sendFile(name: string, content: string, mime: string) {
-  const file = new File([content], name, { type: mime });
-  const navigatorWithShare = navigator as Navigator & {
-    canShare?: (data: { files: File[] }) => boolean;
-    share?: (data: { files: File[] }) => Promise<void>;
-  };
-  // iOS installed web apps support saving files through the native share sheet.
-  if (navigatorWithShare.share && navigatorWithShare.canShare?.({ files: [file] })) {
-    try {
-      await navigatorWithShare.share({ files: [file], title: "Sauvegarde Wimm" });
-      return;
-    } catch (error) {
-      if (error instanceof DOMException && error.name === "AbortError") return;
-      // Fallback: regular download.
-    }
-  }
-  const href = URL.createObjectURL(file);
-  try {
-    const anchor = document.createElement("a");
-    anchor.href = href;
-    anchor.download = name;
-    document.body.appendChild(anchor);
-    anchor.click();
-    anchor.remove();
-  } finally {
-    window.setTimeout(() => URL.revokeObjectURL(href), 60000);
-  }
 }
 
 export default function DataProtectionPanel({ household, personal, demo }: Props) {
