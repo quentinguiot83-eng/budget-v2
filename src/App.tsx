@@ -5358,7 +5358,7 @@ export default function App() {
                 )}
               </div>
             ) : (
-              {!(route === "settings" && settingsCategory) && <h1>{titles[route]}</h1>}
+              <>{!(route === "settings" && settingsCategory) && <h1>{titles[route]}</h1>}</>
             )}
 
           </div>
