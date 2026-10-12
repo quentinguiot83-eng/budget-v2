@@ -144,6 +144,7 @@ const LazyChart = lazy(
   () => import("./Charts"),
 );
 const LazyProjectionInteractive = lazy(() => import("./ProjectionInteractiveChart"));
+const LazyPersonalProjectionChart = lazy(() => import("./PersonalProjectionChart"));
 
 type PersonalDoc = {
   state: PersonalState;
@@ -6173,67 +6174,15 @@ export default function App() {
                         </div>
                       </div>
 
-                      {(() => {
-
-                        const data =
-                          personalProjection(
-                            ps,
-                            s,
-                            personalOwnerId,
-                            personalProjectionMonths,
-                          ).map(
-                            (p) => ({
-                              ...p,
-                              name:
-                                monthLabel(
-                                  p.date,
-                                ),
-                            }),
-                          );
-
-                        const last =
-                          data.at(-1);
-
-                        return (
-                          <>
-                            <div className="chart">
-                              <Suspense
-                                fallback={
-                                  <div className="chart-loading" />
-                                }
-                              >
-                                <LazyChart
-                                  kind="personal"
-                                  data={data}
-                                />
-                              </Suspense>
-                            </div>
-
-                            {last && (
-                              <div className="split">
-                                <span>
-                                  Solde projeté en{" "}
-                                  {monthLabel(
-                                    last.date,
-                                  )}
-                                </span>
-
-                                <strong className="large">
-                                  {money(
-                                    last.balance,
-                                  )}
-                                </strong>
-                              </div>
-                            )}
-
-                            <p className="footnote">
-                              Les budgets mensuels perso sont considérés comme des dépenses futures prévues.
-                              Les dépenses ponctuelles non budgétées ne peuvent pas être anticipées.
-                            </p>
-                          </>
-                        );
-
-                      })()}
+                      <Suspense fallback={<div className="chart-loading"/>}>
+                        <LazyPersonalProjectionChart points={personalProjection(
+                          ps, s, personalOwnerId, personalProjectionMonths
+                        )}/>
+                      </Suspense>
+                      <p className="footnote">
+                        Les budgets mensuels personnels sont des dépenses futures prévues.
+                        Les achats ponctuels imprévisibles ne sont pas inclus dans ce calcul.
+                      </p>
                     </section>
                         </div>
                       </details>
