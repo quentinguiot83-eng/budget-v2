@@ -10,6 +10,7 @@ import { freezePastForecasts } from "./monthlyComparison";
 import TransactionSearch from "./TransactionSearch";
 import OnboardingTutorial from "./OnboardingTutorial";
 import WealthPageStyles from "./WealthPageStyles";
+import ProjectionPageStyles from "./ProjectionPageStyles";
 import SetupWizard, { applyInitialSetup } from "./SetupWizard";
 import {
   lazy,
@@ -138,6 +139,7 @@ import {
 const LazyChart = lazy(
   () => import("./Charts"),
 );
+const LazyProjectionInteractive = lazy(() => import("./ProjectionInteractiveChart"));
 
 type PersonalDoc = {
   state: PersonalState;
@@ -5119,6 +5121,7 @@ export default function App() {
   const travelBalance = activeHouseholdAccounts
     .filter((a) => a.group === "travel")
     .reduce((sum, a) => sum + balance(s, a.id), 0);
+  const finalProjection = projectionData.at(-1);
   const titles: Record<string, string> = {
     home: "Un regard sur votre mois",
     budget: "Votre budget",
@@ -6933,31 +6936,43 @@ export default function App() {
             </div>
           )}
           {route === "projection" && (
-            <>
-              <div className="toolbar">
-                <button className="primary" onClick={allocations}>
-                  <SlidersHorizontal size={17} />
-                  Revenus et répartition
-                </button>
+            <div className="projection-dashboard-v2">
+              <ProjectionPageStyles/>
+              <div className="projection-topline">
+                <div className="pills" aria-label="Durée de la projection">
+                  {[1, 5, 10, 30].map(n => (
+                    <button type="button" key={n} className={years === n ? "selected" : ""}
+                      aria-pressed={years === n} onClick={() => setYears(n)}>
+                      {n} an{n > 1 ? "s" : ""}
+                    </button>
+                  ))}
+                </div>
               </div>
-              <div className="two-col projection-summary projection-summary-unified">
-                <section className="metric projection-stat-income">
-                  <div className="projection-stat-head"><span>Revenus mensuels estimés</span><Wallet size={17} aria-hidden="true"/></div>
-                  <strong>{money(s.income)}</strong>
-                  <small className="muted">Base de la projection</small>
+
+              <section className="projection-main-card">
+                <div className="projection-main-heading"><ChartNoAxesCombined size={19}/>Patrimoine global estimé dans {years} an{years > 1 ? "s" : ""}</div>
+                <strong className="projection-main-amount">{finalProjection ? money(finalProjection.total) : "—"}</strong>
+                <p>{finalProjection ? monthLabel(finalProjection.date) : "Simulation en cours"} · Avant fiscalité estimée · Comptes courants, placements et voyages inclus.</p>
+              </section>
+
+              <div className="projection-kpis">
+                <section className="projection-kpi">
+                  <Wallet size={21}/>
+                  <span>Hors épargne voyage</span>
+                  <strong>{finalProjection ? money(finalProjection.current + finalProjection.wealth) : "—"}</strong>
                 </section>
-                <section className="metric projection-stat-capacity">
-                  <div className="projection-stat-head">
-                    <span>Capacité d’épargne prévue</span>
-                    <button type="button" className="block-info" aria-label="Détail du calcul de la capacité prévue" title="Détail du calcul de la capacité prévue" onClick={calc}><Info size={17}/></button>
-                  </div>
-                  <strong>{money(totals.capacity)}</strong>
-                  <small className="muted">{monthLabel(selectedMonth)}</small>
+                <section className="projection-kpi">
+                  <Plane size={21}/>
+                  <span>Dont épargne voyage</span>
+                  <strong>{finalProjection ? money(finalProjection.travel) : "—"}</strong>
                 </section>
               </div>
-              <section className="card" data-tour="projection-chart">
-                <div className="section-head">
-                  <div className="block-title"><h2>Évolution estimée</h2><BlockInfo title="Comprendre les projections">
+
+              <section className="card projection-chart-card" data-tour="projection-chart">
+                <div className="projection-card-heading">
+                  <div className="block-title">
+                    <h2>Évolution estimée</h2>
+                    <BlockInfo title="Comprendre les projections">
                   <p>
                     Départ : soldes actuels. Simulation à partir du mois
                     prochain, revenus et budgets variables constants, charges à
@@ -6976,127 +6991,27 @@ export default function App() {
                   <p>
                     Les sommes non affectées à un placement restent sur le compte courant
                     et sont incluses dans la courbe Patrimoine. L’épargne dédiée
-                    aux voyages reste affichée séparément.
+                    aux voyages est incluse dans le patrimoine global et affichée séparément.
                     Les rendements sont des hypothèses, pas des garanties. Un
                     projet lié à un voyage est réduit des virements de
                     financement déjà effectués.
                   </p>
-<p>Les déficits ne sont pas automatiquement retirés de vos comptes d’épargne.</p></BlockInfo></div>
-                  <div className="pills">
-                    {[1, 5, 10, 30].map((n) => (
-                      <button
-                        key={n}
-                        className={years === n ? "selected" : ""}
-                        onClick={() => setYears(n)}
-                      >
-                        {n} an{n > 1 ? "s" : ""}
-                      </button>
-                    ))}
-
+<p>Les déficits ne sont pas automatiquement retirés de vos comptes d’épargne.</p></BlockInfo>
                   </div>
                 </div>
-                <div className="chart projection-chart">
-                  <Suspense
-                    fallback={
-                      <div className="chart-loading" />
-                    }
-                  >
-                    <LazyChart
-                      kind="projection"
-                      data={projectionData}
-                    />
-                  </Suspense>
-                </div>
-                {projectionData.at(-1)!.deficit > 0 && (
-                  <p className="warning">
+                <Suspense fallback={<div className="chart-loading"/>}>
+                  <LazyProjectionInteractive points={projectionData}/>
+                </Suspense>
+                {finalProjection && finalProjection.deficit > 0 && (
+                  <p className="warning projection-warning">
                     Financement manquant
-                    {projectionData.at(-1)!.deficitSince
-                      ? ` à partir de ${monthLabel(
-                          projectionData.at(-1)!.deficitSince!,
-                        )}`
-                      : ""}
-                    {" · "}
-                    Cumul : {money(projectionData.at(-1)!.deficit)}.
-
+                    {finalProjection.deficitSince ? " à partir de " + monthLabel(finalProjection.deficitSince) : ""}
+                    {" · "}Cumul : {money(finalProjection.deficit)}.
                   </p>
                 )}
-                <details>
-                  <summary>Valeurs annuelles</summary>
-                  <div className="projection-table-scroll">
-                    <table>
-                      <thead>
-                        <tr>
-                          <th>Date</th>
-                        <th>
-                          Patrimoine total
-                        </th>
-                        <th>
-                          Gains année précédente
-                        </th>
-                        <th>
-                          Après fiscalité
-                        </th>
-                        <th>Voyages</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {projectionData
-                        .filter(
-                          (p) =>
-                            p.date.endsWith("-01"),
-                        )
-                        .map((p) => (
-                        <tr key={p.date}>
-                          <td>{monthLabel(p.date)}</td>
-                          <td>
-                            <strong className="projection-table-main">
-                              {money(
-                                p.wealth +
-                                  p.current,
-                              )}
-                            </strong>
-                            <small className="projection-table-sub">
-                              Épargné : {money(
-                                p.savedTotal,
-                              )}
-                            </small>
-                          </td>
-
-                          <td>
-                            {p.interest > 0
-                              ? `+ ${money(
-                                  p.interest,
-                                )}`
-                              : "—"}
-                          </td>
-
-                          <td>
-                            <strong className="projection-table-main">
-                              {money(
-                                p.wealthNet +
-                                  p.current,
-                              )}
-                            </strong>
-                            <small className="projection-table-sub">
-                              Impact fiscal : − {money(
-                                p.taxEstimate,
-                              )}
-                            </small>
-                          </td>
-
-                          <td>
-                            {money(
-                              p.travel,
-                            )}
-                          </td>
-                        </tr>
-                      ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </details>
               </section>
-              <section className="card">
+
+              <section className="card projection-projects-card">
                 <div className="section-head">
                   <h2>Vos projets</h2>
                   <button className="primary" onClick={() => editProject()}>
@@ -7104,15 +7019,15 @@ export default function App() {
                     Projet
                   </button>
                 </div>
-                {s.projects.map((p) => (
-                  <div className="rule-row" key={p.id}>
-                    <Target size={20} />
+                {s.projects.slice().sort((a,b) => a.date.localeCompare(b.date)).map((p) => (
+                  <div className="projection-project-row" key={p.id}>
+                    <span className="projection-project-icon"><Target size={20}/></span>
                     <div className="grow">
                       <strong>{p.name}</strong>
-                      <small>
-                        {dateLabel(p.date)} · {money(p.amount)} ·{" "}
+                      <small>{dateLabel(p.date)} · {money(p.amount)}</small>
+                      <span className={"projection-project-status" + (p.settled ? " financed" : !p.active ? " excluded" : "")}>
                         {p.settled ? "Financé" : p.active ? "Inclus" : "Exclu"}
-                      </small>
+                      </span>
                     </div>
                     <button
                       className="icon"
@@ -7152,7 +7067,70 @@ export default function App() {
                   </p>
                 )}
               </section>
-            </>
+
+              <details className="card projection-annual-card">
+                <summary>
+                  <CalendarDays size={20}/>
+                  <span className="projection-annual-summary-copy">
+                    <strong>Détail des années</strong>
+                    <small>Soldes, versements, intérêts et fiscalité</small>
+                  </span>
+                  <ChevronRight size={19}/>
+                </summary>
+                <div className="projection-annual-mobile">
+                  {projectionData.filter(p => p.date.endsWith("-01")).map(p => (
+                    <details key={p.date} className="projection-year-card">
+                      <summary>
+                        <span>{monthLabel(p.date)}</span>
+                        <strong>{money(p.total)}</strong>
+                        <ChevronRight size={15}/>
+                      </summary>
+                      <div className="projection-year-details">
+                        <div><span>Après fiscalité</span><strong>{money(p.current + p.wealthNet + p.travel)}</strong></div>
+                        <div><span>Épargne investie cumulée</span><strong>{money(p.savedTotal)}</strong></div>
+                        <div><span>Intérêts année précédente</span><strong>{p.interest > 0 ? "+ " + money(p.interest) : "—"}</strong></div>
+                        <div><span>Fiscalité estimée</span><strong>{money(p.taxEstimate)}</strong></div>
+                        <div><span>Dont épargne voyage</span><strong>{money(p.travel)}</strong></div>
+                      </div>
+                    </details>
+                  ))}
+                </div>
+                <div className="projection-annual-table">
+                  <table>
+                    <thead><tr><th>Date</th><th>Patrimoine global</th><th>Après fiscalité</th><th>Intérêts année précédente</th><th>Épargne investie</th><th>Dont voyages</th></tr></thead>
+                    <tbody>
+                      {projectionData.filter(p => p.date.endsWith("-01")).map(p => (
+                        <tr key={p.date}>
+                          <td>{monthLabel(p.date)}</td>
+                          <td><strong>{money(p.total)}</strong></td>
+                          <td>{money(p.current + p.wealthNet + p.travel)}</td>
+                          <td>{p.interest > 0 ? "+ " + money(p.interest) : "—"}</td>
+                          <td>{money(p.savedTotal)}</td>
+                          <td>{money(p.travel)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </details>
+
+              <details className="projection-settings-card">
+                <summary><SlidersHorizontal size={18}/> Paramètres de simulation <ChevronRight size={18}/></summary>
+                <div className="projection-settings-details">
+                  <div className="projection-settings-metrics">
+                    <div><span>Revenus mensuels estimés</span><strong>{money(s.income)}</strong></div>
+                    <div><span>Capacité d’épargne prévue</span><strong>{money(totals.capacity)}</strong></div>
+                  </div>
+                  <p>La projection tient compte des comptes, rendements, charges et projets enregistrés. Les résultats sont des estimations, sans garantie.</p>
+                  <button type="button" className="primary" onClick={allocations}>
+                    <SlidersHorizontal size={17}/> Modifier revenus et répartition
+                  </button>
+                  <button type="button" className="text" onClick={calc}>
+                    <Info size={17}/> Voir les calculs
+                  </button>
+                </div>
+              </details>
+            </div>
           )}
           {route === "add" && (
             <div data-tour="add-page">
