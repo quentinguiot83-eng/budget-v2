@@ -7391,10 +7391,10 @@ export default function App() {
                   </div>
                 </div>
                 <div className="tutorial-learning-actions">
-                  <button type="button" className="primary" onClick={() => { setTutorialMode("library"); setTutorialPage(null); setTutorialOpen(true); }}>
+                  <button type="button" className="primary" onClick={() => { setSettingsCategory(null); setSettingsDetail(null); setTutorialMode("library"); setTutorialPage(null); setTutorialOpen(true); }}>
                     <CircleHelp size={17}/> Explorer les 13 chapitres
                   </button>
-                  <button type="button" className="secondary" onClick={() => { setTutorialMode("quick"); setTutorialPage(null); setTutorialOpen(true); }}>
+                  <button type="button" className="secondary" onClick={() => { setSettingsCategory(null); setSettingsDetail(null); setTutorialMode("quick"); setTutorialPage(null); setTutorialOpen(true); }}>
                     <ChevronRight size={17}/> Découverte rapide · 2 min
                   </button>
                 </div>
