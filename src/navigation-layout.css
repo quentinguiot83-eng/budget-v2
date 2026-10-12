@@ -30,8 +30,8 @@
  .app .sidebar{overflow:hidden}
 }
 @media(max-width:850px){
- .app .bottom-nav{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr));width:auto;left:12px;right:12px;transform:none;bottom:calc(9px + env(safe-area-inset-bottom));min-height:65px;padding:9px 6px!important;gap:0;border-radius:22px;z-index:55;box-sizing:border-box}
- .app .bottom-nav button{display:flex;width:100%;min-width:0;align-items:center;justify-content:center;flex-direction:column;gap:4px;padding:5px 2px;font-size:.65rem;border-radius:12px}
+ .app .bottom-nav{display:grid!important;grid-template-columns:repeat(5,minmax(0,1fr));width:auto;left:12px;right:12px;transform:none;bottom:calc(9px + env(safe-area-inset-bottom));min-height:65px;padding:9px 6px!important;gap:0;border-radius:22px;z-index:55;box-sizing:border-box}
+ .app .bottom-nav button{display:flex;width:100%;min-width:0;align-items:center;justify-content:center;flex-direction:column;gap:4px;padding:5px 1px;font-size:.62rem;border-radius:12px;white-space:nowrap}
  .app .bottom-nav button.active{background:color-mix(in srgb,var(--wimm-mint) 14%,transparent);color:var(--wimm-green)}
  .app .bottom-nav button svg{width:21px;height:21px;stroke-width:1.9}
  .app .mobile-menu-trigger{display:none!important}
@@ -58,7 +58,7 @@
  .app .page-footer{padding-bottom:calc(128px + env(safe-area-inset-bottom))}
 }
 @media(max-width:390px){
- .app .bottom-nav button{font-size:.60rem}
+ .app .bottom-nav button{font-size:.57rem}
  .app .soft-topbar>.flex{gap:3px}
  .app .soft-topbar .icon{width:32px;height:32px}
  .app .wimm-pro-shortcut{height:31px;min-width:31px;font-size:.56rem;padding:0 5px}
