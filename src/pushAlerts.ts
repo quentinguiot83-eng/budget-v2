@@ -1,6 +1,6 @@
 import { budgetOverruns, month, overdue, today, type State } from "./engine.ts";
 
-export type PushAlert = { key: string; kind: "budgets" | "dues"; title: string; body: string; url: string };
+export type PushAlert = { key: string; kind: "budgets" | "dues" | "reminder"; title: string; body: string; url: string };
 export type DueInvoice = { id: string; number: string; dueDate: string | null; status: string; businessName: string };
 const money = (v: number) => (v / 100).toLocaleString("fr-FR", { style: "currency", currency: "EUR" });
 
