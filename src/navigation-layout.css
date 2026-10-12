@@ -65,3 +65,61 @@
  .projects-type-switch button{font-size:.70rem;gap:3px}
  .projects-type-switch button small{font-size:.52rem}
 }
+
+/* Adaptive safe-area navigation for compact and Plus-sized iPhones. */
+@media (max-width:850px) {
+  .app .bottom-nav {
+    left:50%;
+    right:auto;
+    transform:translateX(-50%);
+    width:calc(100% - 24px - env(safe-area-inset-left,0px) - env(safe-area-inset-right,0px));
+    max-width:540px;
+    height:70px;
+    min-height:70px;
+    padding:8px 6px !important;
+    box-sizing:border-box;
+    bottom:calc(10px + env(safe-area-inset-bottom,0px));
+    grid-template-columns:repeat(5,minmax(0,1fr));
+  }
+  .app .bottom-nav button {
+    box-sizing:border-box;
+    min-width:0;
+    min-height:44px;
+    padding:4px 0;
+    overflow:hidden;
+    gap:5px;
+  }
+  .app .bottom-nav button span {
+    display:block;
+    width:100%;
+    text-align:center;
+    font-size:clamp(.54rem,2.45vw,.69rem);
+    line-height:1.2;
+    font-weight:650;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+  .app .bottom-nav button svg {width:clamp(19px,5.2vw,23px);height:clamp(19px,5.2vw,23px);flex-shrink:0;}
+  .app .floating-add-button {
+    right:max(calc(17px + env(safe-area-inset-right,0px)), calc((100vw - 540px)/2 + 17px));
+    bottom:calc(92px + env(safe-area-inset-bottom,0px));
+  }
+  .app .quick-add-menu {bottom:calc(157px + env(safe-area-inset-bottom,0px))}
+  .app .page-footer {padding-bottom:calc(137px + env(safe-area-inset-bottom,0px))}
+}
+@media (max-width:370px) {
+  .app .bottom-nav {width:calc(100% - 16px);padding-inline:3px!important}
+  .app .bottom-nav button span {font-size:.53rem}
+  .app .floating-add-button {width:49px;height:49px;bottom:calc(91px + env(safe-area-inset-bottom,0px))}
+}
+.credit-rule-actions {display:flex;align-items:center;justify-content:flex-end;flex-wrap:wrap;gap:7px}
+.credit-rule-actions .credit-rule-delete {display:inline-flex;align-items:center;justify-content:center;gap:5px;border:1px solid color-mix(in srgb,var(--wimm-coral) 18%,var(--border));color:var(--wimm-coral)}
+.credit-rule-actions .credit-rule-delete svg {flex-shrink:0}
+.loans-credits-card .rule-row {gap:12px;align-items:center}
+.loans-credits-card .rule-row .grow {min-width:0}
+@media (max-width:600px) {
+  .loans-credits-card .rule-row {display:grid;grid-template-columns:minmax(0,1fr) auto}
+  .loans-credits-card .credit-rule-actions {flex-direction:column;align-items:stretch}
+  .loans-credits-card .credit-rule-actions button {min-width:92px;min-height:35px;padding:7px 9px;font-size:.73rem}
+}
