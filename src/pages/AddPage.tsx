@@ -5,7 +5,9 @@ import {
   Users,
   ChevronRight,
   Plane,
+  FileSpreadsheet,
 } from "lucide-react";
+import type { ReactNode } from "react";
 
 import { Row, BlockInfo } from "../ui";
 import type { Trip } from "../engine";
@@ -19,6 +21,8 @@ type AddPageProps = {
   ) => void;
   transfer: () => void;
   newLoan: () => void;
+  quickEntry: ReactNode;
+  bankReconciliation: () => void;
 };
 
 export default function AddPage({
@@ -27,6 +31,8 @@ export default function AddPage({
   operation,
   transfer,
   newLoan,
+  quickEntry,
+  bankReconciliation,
 }: AddPageProps) {
   return (
     <div className="add-page-layout">
@@ -43,6 +49,7 @@ export default function AddPage({
         </button>
       </div>
 
+      {quickEntry}
       <div className="add-grid">
         {[
           {
@@ -130,8 +137,11 @@ export default function AddPage({
             ))}
         </section>
       )}
-
-
+      <section className="card">
+        <div className="section-head"><div className="block-title"><h2><FileSpreadsheet size={18}/> Rapprochement bancaire</h2></div></div>
+        <p className="muted">Importer un relevé CSV pour retrouver les opérations manquantes, sans doublons ni connexion à votre banque.</p>
+        <button className="secondary" type="button" onClick={bankReconciliation}>Comparer un relevé CSV <ChevronRight size={16}/></button>
+      </section>
     </div>
   );
 }

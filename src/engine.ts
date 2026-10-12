@@ -112,6 +112,9 @@ export type Tx = {
 
   dueKey?: string;
 
+  /** Stable bank CSV fingerprint; does not contain account credentials. */
+  bankImportKey?: string;
+
   fixed?: boolean;
 
   incomeType?: string;
@@ -215,6 +218,12 @@ export type MonthlyForecast = {
 export type State = {
 
   schema: 1;
+
+  /** Shared household shortcuts for recurring, manually entered operations. */
+  quickFavorites?: {
+    id: string; type: "expense" | "income"; description: string;
+    account: string; category?: string; amount: number;
+  }[];
 
   monthlyForecasts?: Record<string, MonthlyForecast>;
 
@@ -2152,6 +2161,20 @@ export function validate(s: State) {
   if (new Set(s.transactions.map((t) => t.id)).size !== s.transactions.length)
 
     throw Error("Opération déjà enregistrée.");
+
+  if(s.quickFavorites!==undefined){
+    if(!Array.isArray(s.quickFavorites)||s.quickFavorites.length>30)throw Error("Liste de favoris invalide.");
+    if(new Set(s.quickFavorites.map(f=>f.id)).size!==s.quickFavorites.length)
+      throw Error("Favori en double.");
+    for(const f of s.quickFavorites)if(
+      typeof f.id!=="string"||!f.id||!["expense","income"].includes(f.type)||
+      typeof f.description!=="string"||!f.description.trim()||f.description.length>180||
+      typeof f.account!=="string"||!Number.isSafeInteger(f.amount)||f.amount<=0
+    )throw Error("Favori invalide.");
+  }
+  const bankKeys=s.transactions.map(t=>t.bankImportKey).filter((key):key is string=>!!key);
+  if(bankKeys.some(key=>typeof key!=="string"||key.length>450)||new Set(bankKeys).size!==bankKeys.length)
+    throw Error("Opération bancaire importée en double.");
 
   const due = s.transactions.map((t) => t.dueKey).filter(Boolean);
 
