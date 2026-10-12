@@ -14,6 +14,7 @@ import PersonalPageStyles from "./PersonalPageStyles";
 import ProjectionPageStyles from "./ProjectionPageStyles";
 import TripsPageStyles from "./TripsPageStyles";
 import DataProtectionPanel from "./DataProtectionPanel";
+import VersionHistoryPanel from "./VersionHistoryPanel";
 import DataProtectionStyles from "./DataProtectionStyles";
 import TripCoverEditor from "./TripCoverEditor";
 import { deleteTripCover, uploadTripCover, useTripCoverUrls, TRIP_COVERS_BUCKET } from "./tripCovers";
@@ -7733,6 +7734,13 @@ export default function App() {
                 personal={personalDoc}
                 demo={demoEnabled}
               />
+              <VersionHistoryPanel
+                householdRevision={doc.revision}
+                personalRevision={personalDoc?.revision ?? null}
+                isOwner={isOwner}
+                demo={demoEnabled}
+                onRestored={load}
+              />
               <section className="card danger-zone">
                 <h2>Réinitialisation</h2>
                 <p>
@@ -7780,7 +7788,7 @@ export default function App() {
                             "Saisissez REINITIALISER",
                             "",
                             "text",
-                            `${s.transactions.length} opérations, ${s.accounts.length} comptes, catégories, voyages, prêts et projets seront supprimés pour tous les membres. Les comptes utilisateurs et le foyer restent.`,
+                            `${s.transactions.length} opérations, ${s.accounts.length} comptes, catégories, voyages, prêts et projets seront réinitialisés pour tous les membres. Les anciennes versions restent récupérables dans l’historique. Les comptes utilisateurs et le foyer restent.`,
                           ),
                         ],
                         async (v) => {
