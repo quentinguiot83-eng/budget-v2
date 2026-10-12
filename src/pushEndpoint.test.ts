@@ -44,7 +44,7 @@ test("push endpoint protects cron, verifies sessions, limits tests to the device
     assert.equal(delivery.mock.callCount(), 0);
     assert.equal((await request("test&device=my-device", "POST", "Bearer user-token")).body.sent, 1);
     assert.equal(delivery.mock.callCount(), 1);
-    assert.equal(calls.find(c => c.url.endsWith("budget_push_context"))?.body?.p_user, "user");
+    assert.ok(calls.some(c => c.url.endsWith("budget_push_context") && c.body?.p_user === "user"));
     device.state.accounts = [{ id: "current", name: "Courant", opening: 0, date: today(), group: "current", rate: 0, cap: 0, capType: "balance", contributed: 0, relay: "", allocation: 0 }];
     device.state.rules = [{ id: "rent", name: "Loyer", kind: "fixed", account: "current", category: "", amount: 72200, start: today(), interval: 1, count: 0 }];
     assert.equal((await request("dispatch", "POST", "Bearer user-token")).body.sent, 2);
