@@ -398,7 +398,6 @@ export default function App() {
     [coverUploading, setCoverUploading] = useState<string | null>(null),
     [txFilter, setTxFilter] = useState(""),
     [proEnabled, setProEnabled] = useState(false),
-    [mobileMenuOpen, setMobileMenuOpen] = useState(false),
     [mobileQuickAddOpen, setMobileQuickAddOpen] = useState(false),
     [projectsSection, setProjectsSection] = useState<"trips" | "other">("trips"),
     [tutorialOpen, setTutorialOpen] = useState(false),
@@ -626,7 +625,6 @@ export default function App() {
     }
 
     setRoute(r);
-    setMobileMenuOpen(false);
     setMobileQuickAddOpen(false);
     window.scrollTo(0, 0);
   }
@@ -638,7 +636,6 @@ export default function App() {
 
     setBackRoute(null);
     setRoute(target);
-    setMobileMenuOpen(false);
     window.scrollTo(0, 0);
 
   }
@@ -4496,17 +4493,6 @@ export default function App() {
     {id:"trips",label:"Projets",icon:<Target/>},
     {id:"projection",label:"Projections",icon:<TrendingUp/>},
   ];
-  const mobileDrawerItems = [
-    {id:"home",label:"Accueil",icon:<Home size={20}/>},
-    !s.hidden.includes("personal") && {id:"personal",label:"Compte perso",icon:<UserRound size={20}/>},
-    {id:"transactions",label:"Transactions",icon:<ArrowLeftRight size={20}/>},
-    {id:"fixed",label:"Dépenses fixes",icon:<CalendarDays size={20}/>},
-    {id:"projection",label:"Projections",icon:<ChartNoAxesCombined size={20}/>},
-    {id:"analysis",label:"Analyse financière",icon:<ChartNoAxesCombined size={20}/>},
-    !s.hidden.includes("loans") && {id:"loans",label:"Crédits et prêts",icon:<Coins size={20}/>},
-    {id:"settings",label:"Réglages",icon:<Settings size={20}/>},
-  ].filter(Boolean) as {id:string;label:string;icon:ReactNode}[];
-
   const txRows = (list: Tx[]) =>
     list.length ? (
       <SortableList items={list}>{ordered => ordered.map((t) => (
@@ -5406,8 +5392,9 @@ export default function App() {
             <button type="button" className="icon desktop-settings-trigger" aria-label="Réglages"
               onClick={()=>navigate("settings")}><Settings size={21}/></button>
             <button type="button" className="icon mobile-profile-trigger"
-              aria-label="Ouvrir le menu du compte et des outils" aria-expanded={mobileMenuOpen}
-              onClick={()=>setMobileMenuOpen(true)}><UserRound size={21}/></button>
+              aria-label="Réglages" onClick={()=>navigate("settings")}>
+              <Settings size={21}/>
+            </button>
           </div>
         </header>
         {demoEnabled && (
@@ -8057,58 +8044,6 @@ export default function App() {
           </button>
         </footer>
       </div>
-      {mobileMenuOpen && (
-        <div className="mobile-drawer-layer">
-          <button
-            type="button"
-            className="mobile-drawer-backdrop"
-            aria-label="Fermer le menu"
-            onClick={() => setMobileMenuOpen(false)}
-          />
-          <aside
-            className="mobile-drawer"
-            role="dialog"
-            aria-modal="true"
-            aria-label="Navigation"
-          >
-            <div className="mobile-drawer-head">
-              <button className="brand" onClick={() => navigate("home")}>
-                <WimmWordmark />
-              </button>
-              <button
-                type="button"
-                className="icon"
-                aria-label="Fermer le menu"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                <X size={22} />
-              </button>
-            </div>
-            <p className="eyebrow mobile-drawer-household">
-              {doc.household.name}
-            </p>
-            <nav className="mobile-drawer-nav">
-              {mobileDrawerItems.map((item) => (
-                <button
-                  key={item.id}
-                  type="button"
-                  className={route === item.id ? "active" : ""}
-                  onClick={() => navigate(item.id)}
-                >
-                  {item.icon}
-                  <span>{item.label}</span>
-                </button>
-              ))}
-            </nav>
-            <div className="mobile-drawer-footer">
-              <div className="user-dot">
-                {(session?.user.email || "Notre foyer").slice(0, 1).toUpperCase()}
-                <small>{session?.user.email || "Mode aperçu"}</small>
-              </div>
-            </div>
-          </aside>
-        </div>
-      )}
       <nav className="bottom-nav" aria-label="Navigation principale mobile" data-tour="mobile-nav">
         {mobileNav.map(n=>(
           <button type="button" key={n.id} className={route===n.id?"active":""}
