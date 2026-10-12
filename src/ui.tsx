@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { Fragment, useEffect, useRef, useState, type ReactNode } from "react";
 import { CategoryGlyph } from "./CategoryGlyph";
 import { X, ChevronRight, Info } from "lucide-react";
 export type Field = {
@@ -172,9 +172,9 @@ export function Form({
       }}
     >
       <fieldset disabled={busy}>
-        {assist?.(values, patchValues)}
-        {visibleFields.map((f) => f.type === "emoji" && f.options ? (
-          <div key={f.name} className="field">
+        {visibleFields.map((f) => <Fragment key={f.name}>
+          {f.type === "emoji" && f.options ? (
+          <div className="field">
             <span>{f.label}</span>
             <input type="hidden" name={f.name} value={values[f.name]} />
             <div className="emoji-picker" role="group" aria-label={f.label}>
@@ -187,7 +187,7 @@ export function Form({
             {f.hint && <small>{f.hint}</small>}
           </div>
         ) : (
-          <label key={f.name} className="field">
+          <label className="field">
             <span>{f.label}</span>
             {f.options ? (
               <select
@@ -221,7 +221,9 @@ export function Form({
             )}{" "}
             {f.hint && <small>{f.hint}</small>}
           </label>
-        ))}
+        )}
+          {f.name === "description" && assist?.(values, patchValues)}
+        </Fragment>)}
         {extra}
         {error && (
           <p className="error" role="alert">
