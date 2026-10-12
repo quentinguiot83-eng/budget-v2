@@ -154,3 +154,22 @@
   font-size:1rem;color-scheme:normal;
 }
 @media(max-width:560px){.wimm-daily-reminder-settings{padding:12px}.wimm-daily-reminder-time{margin-left:0}}
+
+
+/* Version Wimm : release number from package.json and automatic build metadata. */
+.wimm-release-card {
+  display: grid;
+  gap: 7px;
+  justify-items: start;
+  padding: clamp(17px, 4vw, 24px);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: var(--accent-soft);
+  overflow-wrap: anywhere;
+}
+.wimm-release-label {color: var(--muted);font-size: .79rem;font-weight: 650}
+.wimm-release-number {color: var(--ink);font-size: clamp(1.25rem, 4.5vw, 1.65rem);line-height: 1.25}
+.wimm-release-status {display: inline-flex;align-items: center;padding: 4px 9px;border-radius: 999px;background: var(--surface);color: var(--accent-deep);font-size: .72rem;font-weight: 750}
+.wimm-release-build {color: var(--ink);font-size: .77rem;font-weight: 600;font-variant-numeric: tabular-nums}
+.wimm-release-card small {font-size: .73rem}
+.wimm-footer-version {font-size: .76rem;color: var(--muted)}

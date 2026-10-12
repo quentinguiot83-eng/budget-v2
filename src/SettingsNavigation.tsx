@@ -1,4 +1,5 @@
 import type { LucideIcon } from "lucide-react";
+import { APP_VERSION_LABEL } from "./appVersion";
 import {
   Archive, Bell, BookOpen, CalendarDays, ChevronLeft, ChevronRight,
   CircleHelp, Download, History, Info, LayoutGrid, LockKeyhole,
@@ -99,7 +100,7 @@ export default function SettingsNavigation({
             );
           })}
         </div>
-        <p className="wimm-settings-version">Wimm · Version 1.0.0</p>
+        <p className="wimm-settings-version">Wimm · {APP_VERSION_LABEL}</p>
       </div>
     );
   }
