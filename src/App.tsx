@@ -13,6 +13,8 @@ import WealthPageStyles from "./WealthPageStyles";
 import PersonalPageStyles from "./PersonalPageStyles";
 import ProjectionPageStyles from "./ProjectionPageStyles";
 import TripsPageStyles from "./TripsPageStyles";
+import DataProtectionPanel from "./DataProtectionPanel";
+import DataProtectionStyles from "./DataProtectionStyles";
 import TripCoverEditor from "./TripCoverEditor";
 import { deleteTripCover, uploadTripCover, useTripCoverUrls, TRIP_COVERS_BUCKET } from "./tripCovers";
 import SetupWizard, { applyInitialSetup } from "./SetupWizard";
@@ -7725,6 +7727,12 @@ export default function App() {
                 })}
                 {!s.categories.some(c => c.archived) && <p className="muted">Aucune catégorie archivée.</p>}
               </section>
+              <DataProtectionStyles/>
+              <DataProtectionPanel
+                household={{ id: doc.household.id, name: doc.household.name, revision: doc.revision, state: s }}
+                personal={personalDoc}
+                demo={demoEnabled}
+              />
               <section className="card danger-zone">
                 <h2>Réinitialisation</h2>
                 <p>
