@@ -191,3 +191,134 @@
   .personal-budget-swipe-row>.swipe-actions-content,
   .project-swipe-row>.swipe-actions-content {padding-right:0}
 }
+
+
+/* Wimm — elevated quick-add button, with compact expanding actions. */
+@media (max-width: 850px) {
+  .app .floating-add-button {
+    width: 58px;
+    height: 58px;
+    border: 1px solid rgba(255,255,255,.34);
+    background: linear-gradient(145deg,
+      color-mix(in srgb, var(--action) 78%, white) 0%,
+      var(--action) 52%,
+      color-mix(in srgb, var(--action) 80%, #071633) 100%);
+    box-shadow: 0 13px 28px color-mix(in srgb, var(--action) 34%, transparent),
+                0 4px 10px rgba(17,32,62,.18),
+                inset 0 1px 1px rgba(255,255,255,.36);
+    isolation: isolate;
+    transition: transform .22s ease, box-shadow .22s ease, filter .22s ease;
+  }
+  .app .floating-add-button::before {
+    content: "";
+    position: absolute;
+    inset: 4px;
+    border-radius: inherit;
+    border: 1px solid rgba(255,255,255,.22);
+    pointer-events: none;
+  }
+  .app .floating-add-button .floating-add-symbol {
+    filter: drop-shadow(0 1px 2px rgba(0,0,0,.13));
+    transition: transform .24s cubic-bezier(.2,.8,.2,1);
+  }
+  .app .floating-add-button.open .floating-add-symbol { transform: rotate(45deg); }
+  .app .floating-add-button.open {
+    box-shadow: 0 9px 22px color-mix(in srgb, var(--action) 32%, transparent),
+                0 3px 8px rgba(17,32,62,.16),
+                inset 0 1px 1px rgba(255,255,255,.3);
+  }
+  .app .floating-add-button:active { transform: scale(.95); }
+  .app .quick-add-backdrop {
+    background: rgba(12,26,49,.18);
+    animation: wimm-quick-add-fade .2s ease both;
+  }
+  .app .quick-add-menu {
+    right: max(calc(17px + env(safe-area-inset-right,0px)), calc((100vw - 540px)/2 + 17px));
+    bottom: calc(163px + env(safe-area-inset-bottom,0px));
+    width: min(204px, calc(100vw - 34px));
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 9px;
+    background: transparent;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+  }
+  .app .quick-add-menu > .quick-add-primary-action {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 10px;
+    width: 175px;
+    min-height: 49px;
+    padding: 6px 13px 6px 6px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    background: var(--surface);
+    color: var(--ink);
+    font-size: .85rem;
+    font-weight: 780;
+    text-align: left;
+    box-shadow: 0 10px 26px rgba(20,35,58,.14), 0 3px 7px rgba(20,35,58,.065);
+    animation: wimm-quick-add-rise .24s cubic-bezier(.18,.85,.24,1) both;
+  }
+  .app .quick-add-menu > .quick-add-primary-action:nth-of-type(2) { animation-delay: 40ms; }
+  .app .quick-add-menu > .quick-add-primary-action .quick-add-item-icon {
+    display: grid;
+    place-items: center;
+    flex: none;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+  }
+  .app .quick-add-menu > .quick-add-primary-action:active {
+    transform: scale(.97);
+  }
+  .app .quick-add-menu > .quick-add-primary-action:focus-visible,
+  .app .quick-add-secondary-actions > button:focus-visible { outline: 3px solid var(--chart); outline-offset: 3px; }
+  .app .quick-add-secondary-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 7px;
+    animation: wimm-quick-add-rise .24s .08s cubic-bezier(.18,.85,.24,1) both;
+  }
+  .app .quick-add-secondary-actions > button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    min-height: 36px;
+    padding: 7px 10px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--surface) 92%, var(--accent-soft));
+    color: var(--ink);
+    font-size: .69rem;
+    font-weight: 720;
+    box-shadow: 0 7px 16px rgba(20,35,58,.09);
+  }
+  .app .quick-add-secondary-actions > button svg { color: var(--accent-deep); }
+}
+@media (max-width: 370px) {
+  .app .floating-add-button { width: 52px; height: 52px; }
+  .app .quick-add-menu { bottom: calc(152px + env(safe-area-inset-bottom,0px)); }
+}
+@keyframes wimm-quick-add-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes wimm-quick-add-rise {
+  from { opacity: 0; transform: translateY(12px) scale(.95); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .app .floating-add-button,
+  .app .floating-add-button .floating-add-symbol,
+  .app .quick-add-backdrop,
+  .app .quick-add-menu > .quick-add-primary-action,
+  .app .quick-add-secondary-actions { transition: none !important; animation: none !important; }
+}
