@@ -18,6 +18,7 @@ import OnboardingTutorial from "./OnboardingTutorial";
 import WealthPageStyles from "./WealthPageStyles";
 import PersonalPageStyles from "./PersonalPageStyles";
 import ProjectionPageStyles from "./ProjectionPageStyles";
+import { projectionMoney } from "./projectionMoney";
 import TripsPageStyles from "./TripsPageStyles";
 import DataProtectionPanel from "./DataProtectionPanel";
 import VersionHistoryPanel from "./VersionHistoryPanel";
@@ -4387,6 +4388,7 @@ export default function App() {
   }
 
   function calc() {
+    const displayMoney = route === "projection" ? projectionMoney : money;
     const incomeUsed = totals.plannedIncome;
     const capacityUsed = totals.capacity;
 
@@ -4396,7 +4398,7 @@ export default function App() {
         <p className="muted">La capacité varie selon les charges dues chaque mois. Ce calcul utilise les revenus estimés, les budgets et les échéances du mois sélectionné.</p>
         <Row
           title="Revenus mensuels estimés"
-          value={money(incomeUsed)}
+          value={displayMoney(incomeUsed)}
         />
 
         <p className="muted">
@@ -4405,7 +4407,7 @@ export default function App() {
 
         <Row
           title="Charges et mensualités dues"
-          value={"− " + money(totals.fixed)}
+          value={"− " + displayMoney(totals.fixed)}
         />
 
         {!totals.forecast && totals.scheduled.map((d) => (
@@ -4413,13 +4415,13 @@ export default function App() {
             key={d.key}
             title={d.rule.name}
             sub={dateLabel(d.date)}
-            value={money(d.rule.amount)}
+            value={displayMoney(d.rule.amount)}
           />
         ))}
 
         <Row
           title="Enveloppes variables"
-          value={"− " + money(totals.variable)}
+          value={"− " + displayMoney(totals.variable)}
         />
 
         {s.categories
@@ -4428,13 +4430,13 @@ export default function App() {
             <Row
               key={c.id}
               title={c.name}
-              value={money(categoryVariableBudget(c))}
+              value={displayMoney(categoryVariableBudget(c))}
             />
           ))}
 
         <Row
           title="Capacité d’épargne retenue"
-          value={money(capacityUsed)}
+          value={displayMoney(capacityUsed)}
         />
 
         <p>
@@ -4444,7 +4446,7 @@ export default function App() {
         </p>
 
         <p>
-          Le plan d’épargne prévisionnel est calculé à partir du revenu estimé pour ce mois, soit {money(incomeUsed)}.
+          Le plan d’épargne prévisionnel est calculé à partir du revenu estimé pour ce mois, soit {displayMoney(incomeUsed)}.
         </p>
 
         <p>
@@ -6921,7 +6923,7 @@ export default function App() {
 
               <section className="projection-main-card">
                 <div className="projection-main-heading"><ChartNoAxesCombined size={19}/>Patrimoine global estimé dans {years} an{years > 1 ? "s" : ""}</div>
-                <strong className="projection-main-amount">{finalProjection ? money(finalProjection.total) : "—"}</strong>
+                <strong className="projection-main-amount">{finalProjection ? projectionMoney(finalProjection.total) : "—"}</strong>
                 <p>{finalProjection ? monthLabel(finalProjection.date) : "Simulation en cours"} · Avant fiscalité estimée · Comptes courants, placements et voyages inclus.</p>
               </section>
 
@@ -6929,12 +6931,12 @@ export default function App() {
                 <section className="projection-kpi">
                   <Wallet size={21}/>
                   <span>Hors épargne voyage</span>
-                  <strong>{finalProjection ? money(finalProjection.current + finalProjection.wealth) : "—"}</strong>
+                  <strong>{finalProjection ? projectionMoney(finalProjection.current + finalProjection.wealth) : "—"}</strong>
                 </section>
                 <section className="projection-kpi">
                   <Plane size={21}/>
                   <span>Dont épargne voyage</span>
-                  <strong>{finalProjection ? money(finalProjection.travel) : "—"}</strong>
+                  <strong>{finalProjection ? projectionMoney(finalProjection.travel) : "—"}</strong>
                 </section>
               </div>
 
@@ -6976,7 +6978,7 @@ export default function App() {
                   <p className="warning projection-warning">
                     Financement manquant
                     {finalProjection.deficitSince ? " à partir de " + monthLabel(finalProjection.deficitSince) : ""}
-                    {" · "}Cumul : {money(finalProjection.deficit)}.
+                    {" · "}Cumul : {projectionMoney(finalProjection.deficit)}.
                   </p>
                 )}
               </section>
@@ -7004,7 +7006,7 @@ export default function App() {
                       <span className="projection-project-icon"><Target size={20}/></span>
                       <div className="grow">
                         <strong>{p.name}</strong>
-                        <small>{dateLabel(p.date)} · {money(p.amount)}</small>
+                        <small>{dateLabel(p.date)} · {projectionMoney(p.amount)}</small>
                         <span className={"projection-project-status" + (p.settled ? " financed" : !p.active ? " excluded" : "")}>
                           {p.settled ? "Financé" : p.active ? "Inclus" : "Exclu"}
                         </span>
@@ -7034,15 +7036,15 @@ export default function App() {
                     <details key={p.date} className="projection-year-card">
                       <summary>
                         <span>{monthLabel(p.date)}</span>
-                        <strong>{money(p.total)}</strong>
+                        <strong>{projectionMoney(p.total)}</strong>
                         <ChevronRight size={15}/>
                       </summary>
                       <div className="projection-year-details">
-                        <div><span>Après fiscalité</span><strong>{money(p.current + p.wealthNet + p.travel)}</strong></div>
-                        <div><span>Épargne investie cumulée</span><strong>{money(p.savedTotal)}</strong></div>
-                        <div><span>Intérêts année précédente</span><strong>{p.interest > 0 ? "+ " + money(p.interest) : "—"}</strong></div>
-                        <div><span>Fiscalité estimée</span><strong>{money(p.taxEstimate)}</strong></div>
-                        <div><span>Dont épargne voyage</span><strong>{money(p.travel)}</strong></div>
+                        <div><span>Après fiscalité</span><strong>{projectionMoney(p.current + p.wealthNet + p.travel)}</strong></div>
+                        <div><span>Épargne investie cumulée</span><strong>{projectionMoney(p.savedTotal)}</strong></div>
+                        <div><span>Intérêts année précédente</span><strong>{p.interest > 0 ? "+ " + projectionMoney(p.interest) : "—"}</strong></div>
+                        <div><span>Fiscalité estimée</span><strong>{projectionMoney(p.taxEstimate)}</strong></div>
+                        <div><span>Dont épargne voyage</span><strong>{projectionMoney(p.travel)}</strong></div>
                       </div>
                     </details>
                   ))}
@@ -7054,11 +7056,11 @@ export default function App() {
                       {projectionData.filter(p => p.date.endsWith("-01")).map(p => (
                         <tr key={p.date}>
                           <td>{monthLabel(p.date)}</td>
-                          <td><strong>{money(p.total)}</strong></td>
-                          <td>{money(p.current + p.wealthNet + p.travel)}</td>
-                          <td>{p.interest > 0 ? "+ " + money(p.interest) : "—"}</td>
-                          <td>{money(p.savedTotal)}</td>
-                          <td>{money(p.travel)}</td>
+                          <td><strong>{projectionMoney(p.total)}</strong></td>
+                          <td>{projectionMoney(p.current + p.wealthNet + p.travel)}</td>
+                          <td>{p.interest > 0 ? "+ " + projectionMoney(p.interest) : "—"}</td>
+                          <td>{projectionMoney(p.savedTotal)}</td>
+                          <td>{projectionMoney(p.travel)}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -7070,8 +7072,8 @@ export default function App() {
                 <summary><SlidersHorizontal size={18}/> Paramètres de simulation <ChevronRight size={18}/></summary>
                 <div className="projection-settings-details">
                   <div className="projection-settings-metrics">
-                    <div><span>Revenus mensuels estimés</span><strong>{money(s.income)}</strong></div>
-                    <div><span>Capacité d’épargne prévue</span><strong>{money(totals.capacity)}</strong></div>
+                    <div><span>Revenus mensuels estimés</span><strong>{projectionMoney(s.income)}</strong></div>
+                    <div><span>Capacité d’épargne prévue</span><strong>{projectionMoney(totals.capacity)}</strong></div>
                   </div>
                   <p>La projection tient compte des comptes, rendements, charges et projets enregistrés. Les résultats sont des estimations, sans garantie.</p>
                   <button type="button" className="primary" onClick={allocations}>
