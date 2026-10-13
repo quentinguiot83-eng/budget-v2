@@ -124,18 +124,18 @@ export default function OnboardingTutorial({
     setView(mode === "quick" ? "welcome" : mode === "library" ? "library" : "page");
   }, [open, mode, pageRoute]);
 
-  // Freeze the entire underlying app; all highlighted clicks are simulated.
+  // The shield intercepts taps and touches. Keep document scrolling available
+  // for programmatic focus changes while the app is visually frozen.
   useEffect(() => {
     if (!open || !guiding) return;
-    const body = document.body.style.overflow;
-    const html = document.documentElement.style.overflow;
-    document.body.style.overflow = "hidden";
-    document.documentElement.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = body;
-      document.documentElement.style.overflow = html;
+    const blockScrollKeys = (event: KeyboardEvent) => {
+      if (!["PageDown","PageUp","ArrowDown","ArrowUp","Home","End"," "].includes(event.key)) return;
+      if (panelRef.current?.contains(document.activeElement)) return;
+      event.preventDefault();
     };
-  }, [open, guiding]);
+    document.addEventListener("keydown",blockScrollKeys,{capture:true});
+    return () => document.removeEventListener("keydown",blockScrollKeys,{capture:true});
+  }, [open,guiding]);
 
   useEffect(() => {
     if (!open) return;
