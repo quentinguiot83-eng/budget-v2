@@ -10,6 +10,11 @@
     "test": "node --import tsx --test src/engine.test.ts src/calendarFeed.test.ts src/calendarEndpoint.test.ts src/transactionSearch.test.ts src/monthlyComparison.test.ts src/spendingAnalysis.test.ts src/categoryDeletion.test.ts src/pushAlerts.test.ts src/pushDatabase.test.ts src/pushEndpoint.test.ts src/starterCategories.test.ts src/analysisDashboard.test.ts src/secureExport.test.ts src/backupRestore.test.ts src/restoreSql.test.ts src/dailyTransactionReminder.test.ts src/nativeNotificationPlan.test.ts src/pushScheduler.test.ts src/bankImport.test.ts src/quickEntry.test.ts src/creditSchedules.test.ts src/TutorialContent.test.ts src/tutorialTargeting.test.ts"
   },
   "dependencies": {
+    "@aparajita/capacitor-biometric-auth": "10.0.0",
+    "@capacitor/app": "^8.0.1",
+    "@capacitor/core": "^8.0.1",
+    "@capacitor/ios": "^8.0.1",
+    "@capacitor/local-notifications": "^8.0.1",
     "@supabase/supabase-js": "^2.57.0",
     "jspdf": "^4.2.1",
     "lucide-react": "^0.468.0",
@@ -19,6 +24,7 @@
     "web-push": "^3.6.7"
   },
   "devDependencies": {
+    "@capacitor/cli": "^8.0.1",
     "@electric-sql/pglite": "^0.5.8",
     "@types/node": "^24.0.0",
     "@types/react": "^19.1.0",
