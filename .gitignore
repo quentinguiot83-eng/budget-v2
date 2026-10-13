@@ -30,3 +30,4 @@ ios/.swiftpm/
 
 # Disposable app-icon input (created by npm run ios:icon)
 .wimm-ios-assets/
+tsconfig.tsbuildinfo
