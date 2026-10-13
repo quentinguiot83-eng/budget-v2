@@ -73,3 +73,9 @@ Le script écrase seulement l'icône native générée, **pas** le splash screen
 ## Audit sécurité des dépendances
 
 Le générateur d'images tiers `@capacitor/assets` a été retiré des dépendances habituelles. Après récupération des changements GitHub, exécuter `npm install` sur le Mac pour purger le package-lock ; puis comparer `npm audit` et `npm audit --omit=dev`. Ne pas utiliser `npm audit fix --force` sans examen de chaque mise à jour.
+
+## Correctifs npm octobre 2026
+
+Deux dépendances indirectes d'outillage (non distribuées dans le bundle iPhone) sont désormais limitées par `overrides` dans `package.json` : `source-map-js@1.2.2` et `xcode > uuid@11.1.1` (dernière branche compatible CommonJS corrigée pour GHSA-w5hq-g745-h8pq). Ces limites sont nécessaires parce que `@capacitor/cli` utilise encore `xcode@3.0.1`, qui demande un `uuid` ancien. Ne pas utiliser `npm audit fix --force` pour ce problème.
+
+Après `git pull --ff-only`, exécuter `npm install`, `npm audit --omit=dev`, `npm audit`, `npm test`, `npm run build`, puis `npx cap sync ios`. Tester Face ID et les notifications sur un appareil réel avant de valider le nouveau package-lock sur la branche iOS.
