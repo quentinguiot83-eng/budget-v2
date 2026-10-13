@@ -2,7 +2,7 @@
 
 ## Principe
 
-La branche **feature/wimm-ios-capacitor** contient les sources React/Capacitor et le générateur d'icône iOS. Le répertoire `ios/`, créé **localement sur le Mac** avec `npx cap add ios`, doit aussi être poussé vers GitHub pour sauvegarder le projet Xcode. Aucun outil GitHub distant ne peut sauvegarder ce dossier qui n'a pas encore été envoyé depuis le Mac.
+La branche **feature/wimm-ios-capacitor** contient les sources React/Capacitor et le script local d'icône iOS. Le répertoire `ios/`, créé **localement sur le Mac** avec `npx cap add ios`, doit aussi être poussé vers GitHub pour sauvegarder le projet Xcode. Aucun outil GitHub distant ne peut sauvegarder ce dossier qui n'a pas encore été envoyé depuis le Mac.
 
 La branche `main` reste inchangée et la version Web Vercel n'est pas déployée.
 
@@ -18,7 +18,7 @@ cd ~/Desktop/Wimm-iOS
 git stash push -m "Version locale des dependances avant sauvegarde iOS" -- package.json package-lock.json
 git pull --ff-only
 
-# Installer le générateur de ressources ; actualiser le package-lock.
+# Mettre à jour les dépendances et le package-lock (le générateur d’icônes npm n’est plus requis).
 npm install
 
 # Lire l'image de référence public/wimm-icon.png et générer l'icône iOS
@@ -55,7 +55,7 @@ Au prochain clone, il ne sera plus nécessaire de recréer `ios/`. Il suffira de
 
 ## Icône et changements futurs
 
-- Source de vérité unique : `public/wimm-icon.png` (également utilisée par la PWA).
+- Source de vérité unique : `public/wimm-icon.png` (également utilisée par la PWA). La génération native utilise Swift/AppKit, inclus avec Xcode, sans dépendance npm supplémentaire.
 - Cible iOS : `ios/App/App/Assets.xcassets/AppIcon.appiconset/`.
 - Après un changement d'icône Web, faire `npm run ios:icon` puis `git add ios/App/App/Assets.xcassets/AppIcon.appiconset` et commit.
 - L'icône de l'écran d'accueil iOS ne change qu'après nouvelle installation depuis Xcode (et peut parfois rester en cache ; redémarrer le téléphone avant de supprimer l'app).
@@ -69,3 +69,7 @@ Le script écrase seulement l'icône native générée, **pas** le splash screen
 - Le projet Xcode (Swift, `Info.plist`, `.xcodeproj`, catalogues d'images) doit, lui, être versionné ; c'est l'objet de cette sauvegarde.
 - Avant chaque `git push`, vérifier `git diff --cached --name-only`.
 - Une icône PWA n'est pas automatiquement une icône native ; il faut régénérer les ressources iOS à chaque modification.
+
+## Audit sécurité des dépendances
+
+Le générateur d'images tiers `@capacitor/assets` a été retiré des dépendances habituelles. Après récupération des changements GitHub, exécuter `npm install` sur le Mac pour purger le package-lock ; puis comparer `npm audit` et `npm audit --omit=dev`. Ne pas utiliser `npm audit fix --force` sans examen de chaque mise à jour.
