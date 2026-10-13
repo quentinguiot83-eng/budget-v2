@@ -10,6 +10,7 @@ import { applyAppearance, readAppearanceMode, type AppearanceMode } from "./appe
 import { CategoryGlyph } from "./CategoryGlyph";
 import { seedStarterCategories } from "./starterCategories";
 import PhoneNotifications, { dispatchPhoneAlerts } from "./PhoneNotifications";
+import { isWimmNative, listenNativeNotificationNavigation, syncNativeNotifications } from "./nativeNotifications";
 import { categoryUsage, categoryReplacements, deleteArchivedCategory } from "./categoryDeletion";
 import AnalysisDashboard from "./FinancialAnalysisView";
 import { freezePastForecasts } from "./monthlyComparison";
@@ -539,6 +540,36 @@ export default function App() {
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
   }, [session?.user.id]);
+  // iOS : synchroniser les rappels sur le téléphone après connexion et chaque sauvegarde.
+  // Le navigateur Web continue d'utiliser le système de notifications push existant.
+  useEffect(() => {
+    if (!isWimmNative() || loading) return;
+    const refresh = () => {
+      void syncNativeNotifications(session?.user.id ?? null, doc?.state ?? null)
+        .catch(e => console.warn("Wimm native notifications", e));
+    };
+    refresh();
+    const onVisible = () => { if (document.visibilityState === "visible") refresh(); };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => document.removeEventListener("visibilitychange", onVisible);
+  }, [loading, session?.user.id, doc?.state]);
+
+  useEffect(() => {
+    if (!isWimmNative()) return;
+    let cancelled = false;
+    let listener: { remove(): Promise<void> } | null = null;
+    void listenNativeNotificationNavigation(screen => {
+      setRoute(screen);
+      setSettingsCategory(null);
+      setSettingsDetail(null);
+      window.scrollTo(0, 0);
+    }).then(handle => {
+      if (cancelled) void handle?.remove();
+      else listener = handle;
+    }).catch(e => console.warn("Wimm notification navigation", e));
+    return () => { cancelled = true; if (listener) void listener.remove(); };
+  }, []);
+
   // The guided discovery begins only after the first current account is configured.
   // "started" prevents the welcome panel reopening every time the app is launched.
   useEffect(() => {
@@ -7423,7 +7454,7 @@ export default function App() {
               />
               {settingsDetail === "notifications" && (
 !demoEnabled ? (
-  <div data-tour="phone-notifications"><PhoneNotifications state={s} /></div>
+  <div data-tour="phone-notifications"><PhoneNotifications state={s} userId={session?.user.id ?? ""} /></div>
 ) : (
   <section className="card"><p className="muted">Les notifications sont disponibles après connexion à votre compte Wimm.</p></section>
 )
