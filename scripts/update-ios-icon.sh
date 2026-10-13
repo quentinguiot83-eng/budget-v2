@@ -22,8 +22,10 @@ if ! command -v sips >/dev/null 2>&1; then
 fi
 WIDTH=$(sips -g pixelWidth "$ICON" | awk '/pixelWidth/ {print $2}')
 HEIGHT=$(sips -g pixelHeight "$ICON" | awk '/pixelHeight/ {print $2}')
-if [[ "$WIDTH" != "1024" || "$HEIGHT" != "1024" ]]; then
-  echo "Erreur : l'icone doit faire 1024x1024 pixels (actuel : ${WIDTH}x${HEIGHT})." >&2
+# Capacitor Assets accepte les images source de 1024 px ou davantage
+# et genere lui-meme le rendu iOS final en 1024 x 1024.
+if [[ ! "$WIDTH" =~ ^[0-9]+$ || ! "$HEIGHT" =~ ^[0-9]+$ || "$WIDTH" -lt 1024 || "$HEIGHT" -lt 1024 ]]; then
+  echo "Erreur : l'icone source doit mesurer au moins 1024x1024 pixels (actuel : ${WIDTH}x${HEIGHT})." >&2
   exit 1
 fi
 mkdir -p "$ASSET_DIR"
