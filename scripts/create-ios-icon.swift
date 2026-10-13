@@ -38,7 +38,7 @@ graphics.imageInterpolation = .high
 graphics.shouldAntialias = true
 NSColor(calibratedRed: 32.0 / 255.0, green: 35.0 / 255.0, blue: 49.0 / 255.0, alpha: 1.0).setFill()
 let rect = NSRect(x: 0, y: 0, width: side, height: side)
-rect.fill()
+NSBezierPath(rect: rect).fill()
 icon.draw(in: rect, from: .zero, operation: .sourceOver, fraction: 1.0,
           respectFlipped: false, hints: nil)
 graphics.flushGraphics()
