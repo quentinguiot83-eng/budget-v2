@@ -1,4 +1,6 @@
 import { BlockInfo } from "./ui";
+import { Capacitor } from "@capacitor/core";
+import NativePhoneNotifications from "./NativePhoneNotifications";
 import { useEffect, useState } from "react";
 import { Bell, BellOff } from "lucide-react";
 import { api, rpc } from "./api";
@@ -29,7 +31,7 @@ export async function dispatchPhoneAlerts() {
   } catch { /* Notification delivery must never fail a budget save. The daily worker catches missed alerts. */ }
 }
 
-export default function PhoneNotifications({ state }: { state: State }) {
+function WebPhoneNotifications({ state }: { state: State }) {
   const [config, setConfig] = useState<{ ready: boolean; publicKey: string | null } | null>(null);
   const [deviceId, setDeviceId] = useState<string | null>(null);
   const [enabled, setEnabled] = useState(false);
@@ -168,4 +170,11 @@ export default function PhoneNotifications({ state }: { state: State }) {
       </>}
     {message && <p role="status">{message}</p>}
   </section>;
+}
+
+
+export default function PhoneNotifications({ state, userId = "" }: { state: State; userId?: string }) {
+  return Capacitor.getPlatform() === "ios"
+    ? <NativePhoneNotifications state={state} userId={userId} />
+    : <WebPhoneNotifications state={state} />;
 }
