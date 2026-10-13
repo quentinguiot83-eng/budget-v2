@@ -1,39 +1,35 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Keep a single icon source in the repository for the PWA and the iOS app.
-# Generate ONLY the native icon; do not overwrite LaunchScreen/Splash assets.
+# Source de vérité : même icône que la PWA, sans installer de générateur npm.
 cd "$(dirname "$0")/.."
-
 ICON="public/wimm-icon.png"
-CATALOG="ios/App/App/Assets.xcassets/AppIcon.appiconset/Contents.json"
-ASSET_DIR=".wimm-ios-assets"
-if [[ ! -f "$ICON" ]]; then
-  echo "Erreur : icone Wimm introuvable dans $ICON" >&2
+CATALOG="ios/App/App/Assets.xcassets/AppIcon.appiconset"
+if [[ ! -f "$ICON" || ! -d "$CATALOG" ]]; then
+  echo "Erreur : icône Web ou catalogue iOS manquant." >&2
   exit 1
 fi
-if [[ ! -f "$CATALOG" ]]; then
-  echo "Erreur : projet iOS introuvable. Lance d'abord npx cap add ios." >&2
+if ! command -v swift >/dev/null 2>&1; then
+  echo "Erreur : Swift/Xcode est nécessaire sur ce Mac." >&2
   exit 1
 fi
 if ! command -v sips >/dev/null 2>&1; then
-  echo "Erreur : cette commande doit etre executee sur macOS." >&2
+  echo "Erreur : utilitaire macOS sips introuvable." >&2
   exit 1
 fi
 WIDTH=$(sips -g pixelWidth "$ICON" | awk '/pixelWidth/ {print $2}')
 HEIGHT=$(sips -g pixelHeight "$ICON" | awk '/pixelHeight/ {print $2}')
-# Capacitor Assets accepte les images source de 1024 px ou davantage
-# et genere lui-meme le rendu iOS final en 1024 x 1024.
 if [[ ! "$WIDTH" =~ ^[0-9]+$ || ! "$HEIGHT" =~ ^[0-9]+$ || "$WIDTH" -lt 1024 || "$HEIGHT" -lt 1024 ]]; then
-  echo "Erreur : l'icone source doit mesurer au moins 1024x1024 pixels (actuel : ${WIDTH}x${HEIGHT})." >&2
+  echo "Erreur : icône source trop petite (minimum 1024x1024, actuel : ${WIDTH}x${HEIGHT})." >&2
   exit 1
 fi
-mkdir -p "$ASSET_DIR"
-cp "$ICON" "$ASSET_DIR/icon-only.png"
 
-# The official generator flattens alpha for the iOS icon (required by Apple).
-# Existing opaque artwork is unchanged; transparency takes Wimm's dark background.
-npx capacitor-assets generate --ios --assetPath "$ASSET_DIR" --iconBackgroundColor '#202331'
+# La sortie est volontairement le fichier déjà référencé par Contents.json.
+OUTPUT="$CATALOG/AppIcon-512@2x.png"
+swift scripts/create-ios-icon.swift "$ICON" "$OUTPUT"
 
-rm -rf "$ASSET_DIR"
-echo "Icone iOS Wimm actualisee. Relance Xcode pour installer l'app."
+if [[ ! -s "$OUTPUT" ]]; then
+  echo "Erreur : l'icône générée est vide." >&2
+  exit 1
+fi
+echo "Icône Wimm préparée sans dépendance npm ; réinstalle l'app depuis Xcode."
