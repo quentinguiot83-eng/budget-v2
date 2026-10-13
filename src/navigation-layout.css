@@ -322,3 +322,138 @@
   .app .quick-add-menu > .quick-add-primary-action,
   .app .quick-add-secondary-actions { transition: none !important; animation: none !important; }
 }
+
+/* Wimm · densité visuelle harmonisée (octobre 2026)
+   Un en-tête mobile plus discret et des cartes cohérentes, sans modifier la
+   navigation, les données ou les composants du tutoriel. */
+:root:not([data-mode="dark"]) {
+  --wimm-card-shadow: 0 7px 22px rgba(43, 51, 84, .05), 0 2px 5px rgba(43, 51, 84, .02);
+}
+
+/* Espacement principal : la hiérarchie vient du contenu, pas de marges énormes. */
+.app .content,
+.app .content > .page-stack { gap: 18px; }
+.app .content > .card,
+.app .content > .two-col > .card,
+.app .wimm-home-clean > .card { border-radius: 19px; }
+.app .wimm-home-clean { gap: 16px; }
+.app .home-personal-shortcut { border-radius: 18px; padding: 14px 16px; }
+.app .home-personal-icon { width: 42px; height: 42px; border-radius: 13px; }
+.app .budget-month-tracker { border-radius: 21px; padding: 21px; }
+.app .budget-month-tracker-total { padding-bottom: 15px; }
+.app .budget-month-tracker-lines { padding-top: 15px; gap: 16px; }
+.app .budget-quick-links { margin: 4px 0 8px !important; }
+.app .budget-quick-links button { border-radius: 15px; }
+.app .budget-analysis-link { margin: 0 !important; border-radius: 16px; }
+.app .budget-category-heading { margin: 6px 0 4px; }
+.app .projection-dashboard-v2 { gap: 16px; }
+.app .projection-main-card { border-radius: 20px; }
+.app .projection-kpi { border-radius: 16px; }
+.app .projection-chart-card,
+.app .projection-projects-card,
+.app .projection-annual-card { border-radius: 19px; }
+.app .trips-page-v2 { gap: 14px; }
+.app .trips-overview-card,
+.app .trips-categories-card { border-radius: 19px; }
+.app .settings-v2,
+.app .wimm-settings-nav { gap: 15px; }
+.app .wimm-settings-menu { border-radius: 20px; }
+
+/* Navigation fixe : seules ses dimensions changent, les quatre raccourcis restent présents. */
+@media (min-width: 851px) {
+  .app .soft-topbar { height: 78px; min-height: 78px; }
+  .app .page-heading { padding-block: 19px 16px; }
+}
+
+@media (max-width: 850px) {
+  .app .soft-topbar {
+    box-sizing: border-box;
+    height: auto;
+    min-height: 60px;
+    padding-top: calc(7px + env(safe-area-inset-top, 0px));
+    padding-bottom: 7px;
+    border-bottom: 1px solid color-mix(in srgb, var(--border) 65%, transparent);
+  }
+  .app .soft-topbar > div:first-child { gap: 1px; }
+  .app .topbar .mobile-brand.mobile-brand-row { margin-bottom: 0; }
+  .app .soft-topbar .soft-wordmark .wimm-wordmark { width: 104px !important; }
+  .app .soft-topbar > div:first-child > .eyebrow {
+    font-size: .59rem;
+    line-height: 1.3;
+    margin-left: 0;
+    max-width: 138px;
+  }
+  .app .soft-topbar > .flex { gap: 4px; }
+  .app .soft-topbar .icon,
+  .app .soft-topbar .mobile-profile-trigger {
+    width: 38px;
+    height: 38px;
+    flex: 0 0 38px;
+  }
+  .app .soft-topbar .icon svg { width: 19px; height: 19px; }
+  .app .soft-topbar .wimm-pro-shortcut {
+    width: 38px;
+    height: 38px;
+    min-width: 38px;
+    font-size: .62rem;
+    padding-inline: 3px;
+  }
+  .app .page-heading { padding-block: 13px 13px; gap: 10px; }
+  .app .page-heading > .month-picker { margin-top: 8px; }
+  .app .content,
+  .app .content > .page-stack { gap: 15px; }
+  .app .wimm-home-clean { gap: 13px; }
+  .app .wimm-home-clean .home-balance-main {
+    padding: 18px;
+    min-height: 0;
+    border-radius: 21px;
+  }
+  .app .wimm-home-clean .home-balance-main .hero-number { margin: 12px 0 10px; }
+  .app .wimm-home-clean .home-balance-available {
+    margin-top: 13px;
+    padding: 13px 14px;
+    gap: 6px;
+    border-radius: 15px;
+  }
+  .app .home-personal-shortcut { padding: 12px 14px; gap: 11px; border-radius: 17px; }
+  .app .home-personal-icon { width: 40px; height: 40px; border-radius: 12px; }
+  .app .home-personal-copy { gap: 2px; }
+  .app .wimm-home-clean .home-income-expenses { gap: 10px; }
+  .app .wimm-home-clean .home-income-expenses .home-remaining-card {
+    padding: 14px 13px;
+    border-radius: 17px;
+    gap: 8px;
+  }
+  .app .wimm-home-clean .home-income::before,
+  .app .wimm-home-clean .home-expenses::before { margin-bottom: 0; }
+  .app .wimm-home-clean > .savings-home-summary { padding: 16px; }
+  .app .budget-month-tracker { padding: 17px; border-radius: 20px; }
+  .app .budget-month-tracker-total { padding-bottom: 12px; }
+  .app .budget-month-tracker-lines { padding-top: 13px; gap: 14px; }
+  .app .budget-month-tracker-line { gap: 8px; }
+  .app .budget-quick-links { gap: 9px !important; }
+  .app .budget-quick-links button { min-height: 61px; padding: 10px 5px !important; border-radius: 14px; }
+  .app .budget-analysis-link { padding: 12px 14px; }
+  .app .projection-dashboard-v2 { gap: 13px; }
+  .app .projection-main-card { padding: 17px; border-radius: 19px; }
+  .app .projection-kpi { padding: 12px; border-radius: 15px; }
+  .app .projection-chart-card,
+  .app .projection-projects-card,
+  .app .projection-annual-card { padding: 16px 14px; border-radius: 18px; }
+  .app .trips-overview-card,
+  .app .trips-categories-card { padding: 15px; border-radius: 18px; }
+  .app .trips-financing-card { padding: 14px; border-radius: 17px; }
+  .app .settings-v2,
+  .app .wimm-settings-nav { gap: 13px; }
+  .app .wimm-settings-entry { min-height: 69px; gap: 12px; padding: 12px 15px; }
+  .app .wimm-settings-entry-icon { width: 41px; height: 41px; flex-basis: 41px; border-radius: 13px; }
+}
+
+@media (max-width: 390px) {
+  .app .soft-topbar .soft-wordmark .wimm-wordmark { width: 92px !important; }
+  .app .soft-topbar > .flex { gap: 3px; }
+  .app .soft-topbar .icon,
+  .app .soft-topbar .mobile-profile-trigger { width: 35px; height: 35px; flex-basis: 35px; }
+  .app .soft-topbar .wimm-pro-shortcut { width: 35px; height: 35px; min-width: 35px; font-size: .56rem; }
+  .app .soft-topbar > div:first-child > .eyebrow { max-width: 115px; }
+}
