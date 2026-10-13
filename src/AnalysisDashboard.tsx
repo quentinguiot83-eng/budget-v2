@@ -205,7 +205,12 @@ export default function AnalysisDashboard({ state, selectedMonth }: { state: Sta
           <div className="analysis-pie-layout">
             <div className="analysis-pie-visual chart"><Suspense fallback={<div className="chart-loading" />}>
               <Chart kind="pie" data={chartCategories} palette={colors} />
-            </Suspense></div>
+            </Suspense>
+              <div className="analysis-pie-core" aria-hidden="true">
+                <strong>{Math.round(breakdownTotal / 100).toLocaleString("fr-FR")} €</strong>
+                <span>Total dépensé</span>
+              </div>
+            </div>
             <div className="analysis-category-list">
               {top.map((c, i) => {
                 const value = categoryAmount(c, breakdown);
