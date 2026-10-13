@@ -56,6 +56,7 @@ import {
   Utensils,
   CircleHelp,
   Info,
+  AlertTriangle,
   CalendarDays,
   List,
   SlidersHorizontal,
@@ -6975,11 +6976,23 @@ export default function App() {
                   <LazyProjectionInteractive points={projectionData}/>
                 </Suspense>
                 {finalProjection && finalProjection.deficit > 0 && (
-                  <p className="warning projection-warning">
-                    Financement manquant
-                    {finalProjection.deficitSince ? " à partir de " + monthLabel(finalProjection.deficitSince) : ""}
-                    {" · "}Cumul : {projectionMoney(finalProjection.deficit)}.
-                  </p>
+                  <aside className="projection-cashflow-alert" aria-label="Déficit de trésorerie prévu">
+                    <div className="projection-cashflow-alert-heading">
+                      <AlertTriangle size={18} aria-hidden="true"/>
+                      <strong>Déficit de trésorerie prévu</strong>
+                    </div>
+                    <div className="projection-cashflow-alert-details">
+                      <div>
+                        <span>Premier mois en déficit</span>
+                        <strong>{finalProjection.deficitSince ? monthLabel(finalProjection.deficitSince) : "Période simulée"}</strong>
+                      </div>
+                      <div>
+                        <span>Montant manquant cumulé</span>
+                        <strong>{projectionMoney(finalProjection.deficit)}</strong>
+                      </div>
+                    </div>
+                    <p>Ce manque concerne les dépenses et projets prévus que les comptes concernés ne suffisent pas à financer. Il ne signifie pas que le patrimoine global est négatif : les autres comptes ne sont pas automatiquement mobilisés.</p>
+                  </aside>
                 )}
               </section>
 
