@@ -1,0 +1,62 @@
+/* Native Face ID overlay. Keep the app switcher snapshot private. */
+html.wimm-ios-hiding-for-privacy { background: #202331 !important; }
+html.wimm-ios-hiding-for-privacy #root { visibility: hidden !important; }
+
+.wimm-native-face-gate {
+  position: fixed;
+  inset: 0;
+  z-index: 2147483000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: max(24px, env(safe-area-inset-top)) 24px max(24px, env(safe-area-inset-bottom));
+  background: #202331;
+  color: #f7f8fb;
+  text-align: center;
+}
+.wimm-native-face-gate-content {
+  width: min(100%, 360px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+.wimm-native-face-gate-symbol {
+  width: 76px;
+  height: 76px;
+  display: grid;
+  place-items: center;
+  border-radius: 24px;
+  background: #303649;
+  color: #e3e8f2;
+}
+.wimm-native-face-gate h1 { margin: 0; font-size: 2.1rem; color: #f7f8fb; }
+.wimm-native-face-gate p { margin: 0 0 12px; color: #c9cdd8; }
+.wimm-native-face-gate button.primary {
+  min-height: 48px;
+  width: 100%;
+  border-radius: 14px;
+  color: #fff;
+  background: #596c9c;
+}
+.wimm-native-face-gate .wimm-native-face-gate-error { color: #ffb1b5; font-size: .9rem; }
+.wimm-native-face-gate-logout {
+  color: #d1d4e0;
+  background: none;
+  border: 0;
+  padding: 12px;
+  text-decoration: underline;
+}
+.wimm-native-face-setting {
+  border: 1px solid var(--border, #dedfe5);
+  border-radius: 14px;
+  padding: 16px;
+  margin-bottom: 16px;
+}
+.wimm-native-face-setting h3 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+}
+.wimm-native-face-setting .check-row { margin-top: 12px; }
