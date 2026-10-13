@@ -61,8 +61,16 @@ const styles = String.raw`
 .projection-chart-reading-values span{font-size:.7rem;color:var(--muted);line-height:1.35;}
 .projection-chart-reading-values strong{font-size:.86rem;color:var(--ink);font-variant-numeric:tabular-nums;overflow-wrap:anywhere;}
 
-.projection-chart-note{font-size:.72rem;line-height:1.48;color:var(--muted);margin:12px 0 0;}
-.projection-dashboard-v2 .projection-warning {margin:0;}
+/* Explication de la courbe grise déjà présente dans la légende ; place au besoin de trésorerie. */
+.projection-cashflow-alert{margin-top:4px;padding:15px;display:grid;gap:12px;border-radius:16px;border:1px solid color-mix(in srgb,var(--wimm-amber) 24%,var(--border));background:var(--wimm-amber-wash);color:var(--ink);}
+.projection-cashflow-alert-heading{display:flex;align-items:center;gap:9px;min-width:0;}
+.projection-cashflow-alert-heading svg{flex:none;color:var(--wimm-amber);}
+.projection-cashflow-alert-heading strong{font-size:.86rem;font-weight:830;line-height:1.3;}
+.projection-cashflow-alert-details{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;}
+.projection-cashflow-alert-details>div{min-width:0;display:grid;gap:6px;padding:11px;border-radius:12px;border:1px solid color-mix(in srgb,var(--wimm-amber) 15%,var(--border));background:color-mix(in srgb,var(--surface) 78%,transparent);}
+.projection-cashflow-alert-details span{font-size:.69rem;line-height:1.35;color:var(--muted);}
+.projection-cashflow-alert-details strong{font-size:clamp(.82rem,2.8vw,.99rem);font-weight:820;color:var(--ink);line-height:1.25;font-variant-numeric:tabular-nums;overflow-wrap:anywhere;}
+.projection-cashflow-alert>p{margin:0;font-size:.73rem;line-height:1.52;color:var(--muted);}
 .projection-projects-card{display:grid;gap:13px;}
 .projection-projects-card .section-head {display:flex;justify-content:space-between;align-items:center;gap:12px;margin:0;}
 .projection-projects-card .section-head h2 {font-size:1.06rem;font-weight:840;margin:0;}
