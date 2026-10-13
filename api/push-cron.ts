@@ -1,10 +1,10 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
+import pushHandler from "../src/serverPushHandler.ts";
 
 export default async function cron(req: IncomingMessage, res: ServerResponse) {
   req.url = "/api/push?action=cron";
   try {
-    const { default: handler } = await import("./push.ts");
-    return await handler(req, res);
+    return await pushHandler(req, res);
   } catch (error) {
     console.error("wimm_push_cron_runtime_load_failed", error);
     if (!res.headersSent) {
