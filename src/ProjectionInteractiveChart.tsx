@@ -1,6 +1,7 @@
 import { useMemo, useState, type KeyboardEvent, type TouchEvent } from "react";
 import { CartesianGrid, Line, LineChart, ReferenceDot, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { monthLabel, money, type project } from "./engine";
+import { monthLabel, type project } from "./engine";
+import { projectionMoney } from "./projectionMoney";
 
 type ProjectionPoint = ReturnType<typeof project>[number];
 type ChartPoint = ProjectionPoint & { globalGross: number; globalNet: number };
@@ -111,9 +112,9 @@ export default function ProjectionInteractiveChart({ points }: { points: Project
           <small>Touchez le graphique pour explorer</small>
         </div>
         <div className="projection-chart-reading-values">
-          <div><span>Patrimoine total</span><strong>{money(active.globalGross)}</strong></div>
-          <div><span>Après fiscalité</span><strong>{money(active.globalNet)}</strong></div>
-          <div><span>Dont épargne voyage</span><strong>{money(active.travel)}</strong></div>
+          <div><span>Patrimoine total</span><strong>{projectionMoney(active.globalGross)}</strong></div>
+          <div><span>Après fiscalité</span><strong>{projectionMoney(active.globalNet)}</strong></div>
+          <div><span>Dont épargne voyage</span><strong>{projectionMoney(active.travel)}</strong></div>
         </div>
       </div>
       <p className="projection-chart-note">La courbe grise en pointillés représente l’estimation après fiscalité des placements. Les montants sont indicatifs.</p>
