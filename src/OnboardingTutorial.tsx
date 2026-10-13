@@ -207,44 +207,73 @@ export default function OnboardingTutorial({
 
   useLayoutEffect(() => {
     if (!open || !guiding || !current) return;
+    const key = [view, chapterId, stepIndex, current.route].join(":");
+    let cancelled = false;
     let timer = 0;
     let frame = 0;
     let observer: ResizeObserver | null = null;
+    let attempts = 0;
     let element: HTMLElement | null = null;
-    let inactive = false;
-    let retries = 0;
     setRect(null);
+    setLocatedKey("");
     setFound(true);
-    const measure = () => {
-      if (!inactive && element) {
-        const bounds = element.getBoundingClientRect();
-        setRect(bounds.width > 0 && bounds.height > 0 ? bounds : null);
+    if (route !== current.route) return;
+
+    function refresh() {
+      if (cancelled || !element) return;
+      const b = element.getBoundingClientRect();
+      if (b.width < 8 || b.height < 8) {setRect(null);return;}
+      setRect(b);
+      setLocatedKey(key);
+      const header = document.querySelector<HTMLElement>(".topbar")?.getBoundingClientRect().bottom ?? 75;
+      const cardHeight = panelRef.current?.getBoundingClientRect().height ?? 208;
+      const bottomSafe = window.innerWidth <= 850 ? 100 : 26;
+      const bottomCardTop = window.innerHeight - bottomSafe - cardHeight;
+      const topCardBottom = header + 14 + cardHeight;
+      const belowFits = b.bottom + 12 < bottomCardTop;
+      const aboveFits = b.top - 12 > topCardBottom;
+      setPlacement(belowFits ? "bottom" : aboveFits ? "top"
+        : (b.top + b.height / 2 > window.innerHeight / 2 ? "top" : "bottom"));
+    }
+
+    function locate() {
+      if (cancelled) return;
+      element = findVisibleTourTarget(current.target);
+      if (!element) {
+        if (++attempts < 11) {timer=window.setTimeout(locate,130);return;}
+        setFound(false);
+        setRect(null);
+        setLocatedKey(key);
+        return;
       }
-    };
-    const findTarget = () => {
-      if (inactive || route !== current.route) return;
-      element = document.querySelector<HTMLElement>(current.target);
-      if (!element && ++retries <= 16) {timer=window.setTimeout(findTarget,125);return;}
-      if (!element) {setFound(false);return;}
-      setFound(true);
-      const box = element.getBoundingClientRect();
-      const header = document.querySelector<HTMLElement>(".topbar")?.getBoundingClientRect().bottom || 65;
-      const margin = Math.min(window.innerHeight * .28, 180);
-      // Position the target above the explanatory card, without scrolling the app manually.
-      if (box.top < header + 12 || box.bottom > window.innerHeight - margin) {
-        window.scrollBy({top:box.top - header - 20,behavior:"instant"});
+      const b = element.getBoundingClientRect();
+      const topSafe = (document.querySelector<HTMLElement>(".topbar")?.getBoundingClientRect().bottom ?? 70) + 15;
+      const bottomSafe = window.innerWidth <= 850 ? 100 : 30;
+      const cardHeight = panelRef.current?.getBoundingClientRect().height ?? 205;
+      const focusBottom = Math.max(topSafe + 95, window.innerHeight - bottomSafe - cardHeight - 16);
+      const focusHeight = Math.max(90, focusBottom - topSafe);
+      if (b.top < topSafe || b.bottom > focusBottom) {
+        const idealTop = topSafe + Math.max(0,(focusHeight - Math.min(b.height,focusHeight))/3);
+        window.scrollBy({top:b.top - idealTop, behavior:"instant"});
       }
-      frame = window.requestAnimationFrame(measure);
-      observer = new ResizeObserver(measure);
+      frame = window.requestAnimationFrame(() => {
+        frame = window.requestAnimationFrame(refresh);
+      });
+      observer = new ResizeObserver(refresh);
       observer.observe(element);
-    };
-    timer=window.setTimeout(findTarget, 90);
-    window.addEventListener("resize",measure);
+    }
+    timer = window.setTimeout(locate,95);
+    window.addEventListener("resize",refresh);
+    window.addEventListener("scroll",refresh,true);
     return () => {
-      inactive=true;window.clearTimeout(timer);window.cancelAnimationFrame(frame);
-      observer?.disconnect();window.removeEventListener("resize",measure);
+      cancelled=true;
+      window.clearTimeout(timer);
+      window.cancelAnimationFrame(frame);
+      observer?.disconnect();
+      window.removeEventListener("resize",refresh);
+      window.removeEventListener("scroll",refresh,true);
     };
-  }, [open,guiding,route,current?.route,current?.target,stepIndex,view]);
+  }, [open,guiding,route,current?.route,current?.target,stepIndex,chapterId,view,showExample]);
 
   if (!open) return null;
 
