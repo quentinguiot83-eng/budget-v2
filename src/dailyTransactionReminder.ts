@@ -1,4 +1,4 @@
-import type { PushAlert } from "./pushAlerts";
+import type { PushAlert } from "./pushAlerts.ts";
 
 export type DailyReminderDevice = {
   dailyReminder?: boolean;
