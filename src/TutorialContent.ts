@@ -58,7 +58,7 @@ export const TUTORIAL_CHAPTERS: TourChapter[] = [
     s("wealth", ".wealth-add-account", "Ajouter un compte", "Crée un compte courant, un livret ou un placement.", true, "account"),
     s("wealth", ".wealth-accounts-list .wealth-account-summary", "Paramétrer un compte", "Définis son solde et, si nécessaire, son rendement, sa fiscalité et son plafond.", true, "account"),
     s("wealth", "[data-tour='wealth-savings']", "Ton épargne disponible", "Wimm estime l'épargne à répartir selon les revenus et les budgets."),
-    s("wealth", "[data-tour='wealth-savings'] .wealth-savings-configure, [data-tour='wealth-savings'] .savings-wealth-content button.text", "Répartir ton épargne", "Attribue un pourcentage de l'épargne disponible à chacun de tes comptes.", true, "saving")
+    s("wealth", "[data-tour='wealth-savings'] .wealth-savings-configure, [data-tour='wealth-savings'] .savings-wealth-content button.text, [data-tour='wealth-savings'] .savings-wealth-summary", "Répartir ton épargne", "Attribue un pourcentage de l'épargne disponible à chacun de tes comptes.", true, "saving")
   ] },
   { id: "trips", title: "Projets", description: "Préparer un voyage et son financement", steps: [
     s("trips", ".projects-type-switch", "Tes projets", "Les voyages disposent déjà d'un budget et de catégories dédiées."),
@@ -71,7 +71,7 @@ export const TUTORIAL_CHAPTERS: TourChapter[] = [
   { id: "projection", title: "Projections", description: "Comprendre ton avenir financier", steps: [
     s("projection", ".projection-main-card .projection-main-amount", "Ton avenir estimé", "Wimm simule l'évolution de ton patrimoine à partir de ta situation actuelle."),
     s("projection", ".projection-topline .pills", "Choisir la durée", "Visualise ton évolution sur 1, 5, 10 ou 30 ans.", true),
-    s("projection", ".projection-chart-card .projection-card-heading", "Lire le graphique", "Patrimoine global, épargne voyage et fiscalité estimée : ce sont des hypothèses, pas des garanties."),
+    s("projection", ".projection-chart-v2, .projection-legend-v2", "Lire le graphique", "Patrimoine global, épargne voyage et fiscalité estimée : ce sont des hypothèses, pas des garanties."),
     s("projection", ".projection-projects-card .section-head button", "Simuler un projet", "Ajoute un montant et une date pour mesurer son impact sur ton avenir financier.", true, "projectionProject"),
     s("projection", ".projection-settings-card summary", "Les paramètres", "Consulte ou ajuste les hypothèses prises en compte dans le calcul.")
   ] },
