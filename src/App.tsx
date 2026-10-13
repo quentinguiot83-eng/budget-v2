@@ -10,6 +10,7 @@ import { applyAppearance, readAppearanceMode, type AppearanceMode } from "./appe
 import { CategoryGlyph } from "./CategoryGlyph";
 import { seedStarterCategories } from "./starterCategories";
 import PhoneNotifications, { dispatchPhoneAlerts } from "./PhoneNotifications";
+import NativeFaceIdSettings from "./NativeFaceIdSettings";
 import { isWimmNative, listenNativeNotificationNavigation, syncNativeNotifications } from "./nativeNotifications";
 import { categoryUsage, categoryReplacements, deleteArchivedCategory } from "./categoryDeletion";
 import AnalysisDashboard from "./FinancialAnalysisView";
@@ -7540,6 +7541,7 @@ export default function App() {
                   
   </>)}
   {settingsDetail === "connexion" && (<>
+{session?.user.id && <NativeFaceIdSettings userId={session.user.id} />}
 <button
                     className="secondary"
                     onClick={() => {
