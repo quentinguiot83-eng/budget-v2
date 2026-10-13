@@ -1,8 +1,8 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
+import pushHandler from "../src/serverPushHandler.ts";
 
 export default async function handler(req: IncomingMessage, res: ServerResponse) {
   try {
-    const { default: pushHandler } = await import("./push-handler.ts");
     return await pushHandler(req, res);
   } catch (error) {
     console.error("wimm_push_runtime_load_failed", error);
