@@ -1,4 +1,32 @@
+# Node/Vite build outputs
 node_modules/
 dist/
-.env
 *.log
+
+# Secrets and local environment
+.env
+.env.*
+!.env.example
+*.p8
+*.p12
+*.mobileprovision
+*.cer
+*.pem
+*.key
+*.keystore
+
+# macOS/Xcode local state and generated native outputs
+.DS_Store
+**/xcuserdata/
+*.xcuserstate
+ios/DerivedData/
+ios/App/build/
+ios/App/Pods/
+ios/App/App/public/
+ios/App/App/capacitor.config.json
+ios/App/App/config.xml
+ios/App/.build/
+ios/.swiftpm/
+
+# Disposable app-icon input (created by npm run ios:icon)
+.wimm-ios-assets/
