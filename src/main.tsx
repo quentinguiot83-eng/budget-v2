@@ -8,6 +8,7 @@ import "./style.css";
 import "./soft-tech.css";
 import "./analysis-dashboard.css";
 import "./navigation-layout.css";
+import "./native-face-id.css";
 
 createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
