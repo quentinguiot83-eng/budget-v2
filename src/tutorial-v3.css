@@ -68,3 +68,55 @@
 @media(prefers-reduced-motion:reduce) {
   .wimm-tour-v3 .live-tour-popover,.wimm-tour-v3 .live-tour-highlight {transition:none!important}
 }
+
+/* v4: make the guide the strongest visual element, not an afterthought. */
+.wimm-tour-v3 .live-tour-highlight.wimm-tour-target {
+  border:3px solid #17ca92!important;
+  border-radius:15px;
+  box-shadow:
+    0 0 0 9999px rgba(11,18,30,.53),
+    0 0 0 5px rgba(23,202,146,.36),
+    0 0 26px rgba(23,202,146,.55);
+}
+.wimm-tour-v3 .wimm-tour-target-indicator {
+  right:0;
+  bottom:calc(100% + 10px);
+  padding:7px 12px;
+  background:#128365;
+  border:1px solid rgba(255,255,255,.55);
+  color:#fff;
+  font-size:.78rem;
+  box-shadow:0 5px 18px rgba(0,0,0,.24);
+}
+.wimm-tour-v3 .live-tour-popover {
+  border:2px solid var(--wimm-green);
+  box-shadow:0 20px 58px rgba(0,0,0,.35);
+  background:var(--surface);
+  padding:17px 19px;
+}
+.wimm-tour-v3 .live-tour-top>span {font-size:.8rem;font-weight:850}
+.wimm-tour-v3 .live-tour-popover h2 {font-size:1.16rem;font-weight:850;letter-spacing:-.02em}
+.wimm-tour-v3 .live-tour-popover p {font-size:.91rem;line-height:1.5}
+.wimm-tour-v3 .live-tour-progress {height:6px}
+.wimm-tour-v3 .wimm-tour-step-skip {
+  display:inline-flex;align-items:center;gap:5px;
+  background:var(--wimm-mint-wash);
+  padding:10px 13px;
+  border-radius:11px;
+  color:var(--wimm-green);
+  font-size:.82rem;
+  font-weight:800;
+  text-decoration:none;
+}
+.wimm-tour-v3 .wimm-tour-step-skip:focus-visible {outline:3px solid var(--wimm-green);outline-offset:2px}
+.wimm-tour-v3 .wimm-tour-tap-hint {font-size:.8rem}
+.wimm-tour-v3 .wimm-tour-missing-demo {
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  margin-top:10px;width:100%;
+}
+@media(max-width:850px) {
+  .wimm-tour-v3 .live-tour-popover {padding:15px 16px;max-height:44dvh}
+  .wimm-tour-v3 .live-tour-popover h2 {font-size:1.09rem}
+  .wimm-tour-v3 .live-tour-popover p {font-size:.87rem;line-height:1.46}
+  .wimm-tour-v3 .live-tour-actions button {min-height:42px}
+}

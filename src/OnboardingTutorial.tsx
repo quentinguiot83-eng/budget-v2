@@ -1,6 +1,7 @@
-import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { ArrowRight, BookOpen, Check, ChevronLeft, ChevronRight, Compass, Eye, CalendarCheck, TrendingUp, X } from "lucide-react";
 import { QUICK_TOUR_STEPS, TUTORIAL_CHAPTERS, TUTORIAL_PAGE_TITLES, type DemoKind, type TourStep } from "./TutorialContent";
+import { findVisibleTourTarget } from "./tutorialTargeting";
 import "./tutorial-v3.css";
 
 type Props = {
@@ -18,7 +19,7 @@ type Props = {
 };
 type View = "welcome" | "library" | "quick" | "full" | "chapter" | "page" | "finished";
 type Progress = {
-  version: 3;
+  version: 4;
   quickIndex: number;
   quickDone: boolean;
   fullIndex: number;
@@ -27,15 +28,15 @@ type Progress = {
   completed: string[];
 };
 const blank = (): Progress => ({
-  version: 3, quickIndex: 0, quickDone: false, fullIndex: 0, fullDone: false,
+  version: 4, quickIndex: 0, quickDone: false, fullIndex: 0, fullDone: false,
   chapters: {}, completed: []
 });
 function loadProgress(key: string): Progress {
   try {
     const parsed = JSON.parse(localStorage.getItem(key) || "null");
-    if (parsed?.version !== 3) return blank();
+    if (parsed?.version !== 4) return blank();
     return {
-      version: 3,
+      version: 4,
       quickIndex: typeof parsed.quickIndex === "number" ? parsed.quickIndex : 0,
       quickDone: parsed.quickDone === true,
       fullIndex: typeof parsed.fullIndex === "number" ? parsed.fullIndex : 0,
@@ -84,6 +85,8 @@ export default function OnboardingTutorial({
   const [chapterId, setChapterId] = useState("home");
   const [progress, setProgress] = useState<Progress>(() => loadProgress(storageKey));
   const [rect, setRect] = useState<DOMRect | null>(null);
+  const [locatedKey, setLocatedKey] = useState("");
+  const [placement, setPlacement] = useState<"top" | "bottom">("bottom");
   const [found, setFound] = useState(true);
   const [showExample, setShowExample] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
@@ -103,8 +106,12 @@ export default function OnboardingTutorial({
     : view === "page" ? (pageSteps.length ? pageSteps : fallbackPage) : [];
   const current = steps[Math.max(0, Math.min(stepIndex, steps.length - 1))];
   const guiding = view === "quick" || view === "full" || view === "chapter" || view === "page";
+  const fullChapter = view === "full" ? mainChapters.find(c => c.steps.includes(current)) : undefined;
+  const fullChapterIndex = fullChapter ? mainChapters.indexOf(fullChapter) : 0;
+  const chapterLocalIndex = fullChapter ? fullChapter.steps.indexOf(current) : stepIndex;
+  const chapterLocalTotal = fullChapter?.steps.length ?? steps.length;
   const chapterLabel = view === "chapter" ? currentChapter.title
-    : view === "full" ? mainChapters.find(c => c.steps.includes(current))?.title || "Visite complète"
+    : view === "full" ? "Chapitre " + (fullChapterIndex + 1) + "/" + mainChapters.length + " · " + (fullChapter?.title ?? "Visite complète")
     : view === "page" ? TUTORIAL_PAGE_TITLES[pageRoute || route] || "Aide" : "Découverte rapide";
 
   function store(next: Progress) {
@@ -121,18 +128,18 @@ export default function OnboardingTutorial({
     setView(mode === "quick" ? "welcome" : mode === "library" ? "library" : "page");
   }, [open, mode, pageRoute]);
 
-  // Freeze the entire underlying app; all highlighted clicks are simulated.
+  // The shield intercepts taps and touches. Keep document scrolling available
+  // for programmatic focus changes while the app is visually frozen.
   useEffect(() => {
     if (!open || !guiding) return;
-    const body = document.body.style.overflow;
-    const html = document.documentElement.style.overflow;
-    document.body.style.overflow = "hidden";
-    document.documentElement.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = body;
-      document.documentElement.style.overflow = html;
+    const blockScrollKeys = (event: KeyboardEvent) => {
+      if (!["PageDown","PageUp","ArrowDown","ArrowUp","Home","End"," "].includes(event.key)) return;
+      if (panelRef.current?.contains(document.activeElement)) return;
+      event.preventDefault();
     };
-  }, [open, guiding]);
+    document.addEventListener("keydown",blockScrollKeys,{capture:true});
+    return () => document.removeEventListener("keydown",blockScrollKeys,{capture:true});
+  }, [open,guiding]);
 
   useEffect(() => {
     if (!open) return;
@@ -204,44 +211,73 @@ export default function OnboardingTutorial({
 
   useLayoutEffect(() => {
     if (!open || !guiding || !current) return;
+    const key = [view, chapterId, stepIndex, current.route].join(":");
+    let cancelled = false;
     let timer = 0;
     let frame = 0;
     let observer: ResizeObserver | null = null;
+    let attempts = 0;
     let element: HTMLElement | null = null;
-    let inactive = false;
-    let retries = 0;
     setRect(null);
+    setLocatedKey("");
     setFound(true);
-    const measure = () => {
-      if (!inactive && element) {
-        const bounds = element.getBoundingClientRect();
-        setRect(bounds.width > 0 && bounds.height > 0 ? bounds : null);
+    if (route !== current.route) return;
+
+    function refresh() {
+      if (cancelled || !element) return;
+      const b = element.getBoundingClientRect();
+      if (b.width < 8 || b.height < 8) {setRect(null);return;}
+      setRect(b);
+      setLocatedKey(key);
+      const header = document.querySelector<HTMLElement>(".topbar")?.getBoundingClientRect().bottom ?? 75;
+      const cardHeight = panelRef.current?.getBoundingClientRect().height ?? 208;
+      const bottomSafe = window.innerWidth <= 850 ? 100 : 26;
+      const bottomCardTop = window.innerHeight - bottomSafe - cardHeight;
+      const topCardBottom = header + 14 + cardHeight;
+      const belowFits = b.bottom + 12 < bottomCardTop;
+      const aboveFits = b.top - 12 > topCardBottom;
+      setPlacement(belowFits ? "bottom" : aboveFits ? "top"
+        : (b.top + b.height / 2 > window.innerHeight / 2 ? "top" : "bottom"));
+    }
+
+    function locate() {
+      if (cancelled) return;
+      element = findVisibleTourTarget(current.target);
+      if (!element) {
+        if (++attempts < 11) {timer=window.setTimeout(locate,130);return;}
+        setFound(false);
+        setRect(null);
+        setLocatedKey(key);
+        return;
       }
-    };
-    const findTarget = () => {
-      if (inactive || route !== current.route) return;
-      element = document.querySelector<HTMLElement>(current.target);
-      if (!element && ++retries <= 16) {timer=window.setTimeout(findTarget,125);return;}
-      if (!element) {setFound(false);return;}
-      setFound(true);
-      const box = element.getBoundingClientRect();
-      const header = document.querySelector<HTMLElement>(".topbar")?.getBoundingClientRect().bottom || 65;
-      const margin = Math.min(window.innerHeight * .28, 180);
-      // Position the target above the explanatory card, without scrolling the app manually.
-      if (box.top < header + 12 || box.bottom > window.innerHeight - margin) {
-        window.scrollBy({top:box.top - header - 20,behavior:"instant"});
+      const b = element.getBoundingClientRect();
+      const topSafe = (document.querySelector<HTMLElement>(".topbar")?.getBoundingClientRect().bottom ?? 70) + 15;
+      const bottomSafe = window.innerWidth <= 850 ? 100 : 30;
+      const cardHeight = panelRef.current?.getBoundingClientRect().height ?? 205;
+      const focusBottom = Math.max(topSafe + 95, window.innerHeight - bottomSafe - cardHeight - 16);
+      const focusHeight = Math.max(90, focusBottom - topSafe);
+      if (b.top < topSafe || b.bottom > focusBottom) {
+        const idealTop = topSafe + Math.max(0,(focusHeight - Math.min(b.height,focusHeight))/3);
+        window.scrollBy({top:b.top - idealTop, behavior:"instant"});
       }
-      frame = window.requestAnimationFrame(measure);
-      observer = new ResizeObserver(measure);
+      frame = window.requestAnimationFrame(() => {
+        frame = window.requestAnimationFrame(refresh);
+      });
+      observer = new ResizeObserver(refresh);
       observer.observe(element);
-    };
-    timer=window.setTimeout(findTarget, 90);
-    window.addEventListener("resize",measure);
+    }
+    timer = window.setTimeout(locate,95);
+    window.addEventListener("resize",refresh);
+    window.addEventListener("scroll",refresh,true);
     return () => {
-      inactive=true;window.clearTimeout(timer);window.cancelAnimationFrame(frame);
-      observer?.disconnect();window.removeEventListener("resize",measure);
+      cancelled=true;
+      window.clearTimeout(timer);
+      window.cancelAnimationFrame(frame);
+      observer?.disconnect();
+      window.removeEventListener("resize",refresh);
+      window.removeEventListener("scroll",refresh,true);
     };
-  }, [open,guiding,route,current?.route,current?.target,stepIndex,view]);
+  }, [open,guiding,route,current?.route,current?.target,stepIndex,chapterId,view,showExample]);
 
   if (!open) return null;
 
@@ -316,18 +352,18 @@ export default function OnboardingTutorial({
 
   if (!current) return null;
   const pad=6;
-  const box = rect && {
+  const currentKey = [view, chapterId, stepIndex, current.route].join(":");
+  const box = route === current.route && locatedKey === currentKey && rect && {
     top:Math.max(4,rect.top-pad),
     left:Math.max(4,rect.left-pad),
     width:Math.max(0,Math.min(window.innerWidth-4,rect.right+pad)-Math.max(4,rect.left-pad)),
     height:Math.max(0,Math.min(window.innerHeight-4,rect.bottom+pad)-Math.max(4,rect.top-pad)),
   };
-  const placement = box && box.top > window.innerHeight*.55 ? "tour-placement-top" : "tour-placement-bottom";
+  const panelPlacement = placement === "top" ? "tour-placement-top" : "tour-placement-bottom";
   const needsTap = current.tap && found && !!box && !showExample;
-  const panelStyle: CSSProperties = {};
   const last=stepIndex >= steps.length-1;
   return (
-    <div className={"live-tour wimm-tour-v3 "+placement} role="dialog" aria-modal="true" aria-label="Tutoriel interactif Wimm">
+    <div className={"live-tour wimm-tour-v3 "+panelPlacement} role="dialog" aria-modal="true" aria-label="Tutoriel interactif Wimm">
       <div className={"wimm-tour-shield"+(!box?" no-target":"")} aria-hidden="true"/>
       {box && <button type="button" className="live-tour-highlight wimm-tour-target" style={box}
         onClick={spotlightClick} aria-label={"Zone guidée : "+current.title+" — toucher pour continuer"}>
@@ -335,20 +371,21 @@ export default function OnboardingTutorial({
       </button>}
       <div className="live-tour-popover" ref={panelRef}>
         <div className="live-tour-top">
-          <span>{chapterLabel} · {stepIndex+1}/{steps.length}</span>
+          <span>{chapterLabel} · {chapterLocalIndex+1}/{chapterLocalTotal}</span>
           <button type="button" className="icon" onClick={quit} aria-label="Quitter le tutoriel"><X size={18}/></button>
         </div>
-        <div className="live-tour-progress"><i style={{width:(((stepIndex+1)/steps.length)*100)+"%"}}/></div>
+        <div className="live-tour-progress"><i style={{width:(((chapterLocalIndex+1)/chapterLocalTotal)*100)+"%"}}/></div>
         <h2>{current.title}</h2>
         <p>{current.text}</p>
-        {!found && <small className="wimm-tour-unavailable">Cette zone n'est pas disponible sur ton compte pour le moment. Tu peux continuer.</small>}
+        {!found && <small className="wimm-tour-unavailable">Cette fonctionnalité n'apparaît pas sur cet écran. Aucune autre zone ne sera surlignée à sa place.</small>}
         {showExample && current.demo && <DemoExample kind={current.demo}/>}
         {!showExample && current.demo && <div className="wimm-tour-safety-note">Aperçu sans enregistrement de données.</div>}
         {needsTap && <small className="wimm-tour-tap-hint">Touche la zone entourée pour {current.demo?"voir un exemple":"continuer"}.</small>}
+        {!found && current.demo && !showExample && <button type="button" className="secondary wimm-tour-missing-demo" onClick={()=>setShowExample(true)}>Voir un exemple fictif <Eye size={15}/></button>}
         <div className="live-tour-actions">
           <button type="button" className="secondary" disabled={stepIndex===0} onClick={()=>go(-1)}><ChevronLeft size={16}/> Retour</button>
           {needsTap ? (
-            <button type="button" className="wimm-tour-step-skip" onClick={()=>go(1)}>Passer cette étape</button>
+            <button type="button" className="wimm-tour-step-skip" onClick={()=>go(1)}>Suivant <ChevronRight size={16}/></button>
           ) : (
             <button type="button" className="primary" onClick={()=>go(1)}>
               {last?"Terminer":"Suivant"} {last?<Check size={16}/>:<ChevronRight size={16}/>}
