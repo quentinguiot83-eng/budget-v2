@@ -19,7 +19,7 @@ type Props = {
 };
 type View = "welcome" | "library" | "quick" | "full" | "chapter" | "page" | "finished";
 type Progress = {
-  version: 3;
+  version: 4;
   quickIndex: number;
   quickDone: boolean;
   fullIndex: number;
@@ -28,15 +28,15 @@ type Progress = {
   completed: string[];
 };
 const blank = (): Progress => ({
-  version: 3, quickIndex: 0, quickDone: false, fullIndex: 0, fullDone: false,
+  version: 4, quickIndex: 0, quickDone: false, fullIndex: 0, fullDone: false,
   chapters: {}, completed: []
 });
 function loadProgress(key: string): Progress {
   try {
     const parsed = JSON.parse(localStorage.getItem(key) || "null");
-    if (parsed?.version !== 3) return blank();
+    if (parsed?.version !== 4) return blank();
     return {
-      version: 3,
+      version: 4,
       quickIndex: typeof parsed.quickIndex === "number" ? parsed.quickIndex : 0,
       quickDone: parsed.quickDone === true,
       fullIndex: typeof parsed.fullIndex === "number" ? parsed.fullIndex : 0,
@@ -106,8 +106,12 @@ export default function OnboardingTutorial({
     : view === "page" ? (pageSteps.length ? pageSteps : fallbackPage) : [];
   const current = steps[Math.max(0, Math.min(stepIndex, steps.length - 1))];
   const guiding = view === "quick" || view === "full" || view === "chapter" || view === "page";
+  const fullChapter = view === "full" ? mainChapters.find(c => c.steps.includes(current)) : undefined;
+  const fullChapterIndex = fullChapter ? mainChapters.indexOf(fullChapter) : 0;
+  const chapterLocalIndex = fullChapter ? fullChapter.steps.indexOf(current) : stepIndex;
+  const chapterLocalTotal = fullChapter?.steps.length ?? steps.length;
   const chapterLabel = view === "chapter" ? currentChapter.title
-    : view === "full" ? mainChapters.find(c => c.steps.includes(current))?.title || "Visite complète"
+    : view === "full" ? "Chapitre " + (fullChapterIndex + 1) + "/" + mainChapters.length + " · " + (fullChapter?.title ?? "Visite complète")
     : view === "page" ? TUTORIAL_PAGE_TITLES[pageRoute || route] || "Aide" : "Découverte rapide";
 
   function store(next: Progress) {
@@ -367,10 +371,10 @@ export default function OnboardingTutorial({
       </button>}
       <div className="live-tour-popover" ref={panelRef}>
         <div className="live-tour-top">
-          <span>{chapterLabel} · {stepIndex+1}/{steps.length}</span>
+          <span>{chapterLabel} · {chapterLocalIndex+1}/{chapterLocalTotal}</span>
           <button type="button" className="icon" onClick={quit} aria-label="Quitter le tutoriel"><X size={18}/></button>
         </div>
-        <div className="live-tour-progress"><i style={{width:(((stepIndex+1)/steps.length)*100)+"%"}}/></div>
+        <div className="live-tour-progress"><i style={{width:(((chapterLocalIndex+1)/chapterLocalTotal)*100)+"%"}}/></div>
         <h2>{current.title}</h2>
         <p>{current.text}</p>
         {!found && <small className="wimm-tour-unavailable">Cette fonctionnalité n'apparaît pas sur cet écran. Aucune autre zone ne sera surlignée à sa place.</small>}
