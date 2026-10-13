@@ -7,6 +7,8 @@ import "./style.css";
 import "./soft-tech.css";
 import "./analysis-dashboard.css";
 import "./navigation-layout.css";
+/* Aurora is intentionally loaded ONLY on the preview branch. */
+import "./aurora-preview.css";
 
 createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
