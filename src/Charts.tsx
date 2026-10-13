@@ -303,9 +303,13 @@ export default function Charts(
             data={props.data}
             dataKey="value"
             nameKey="name"
-            innerRadius="55%"
-            outerRadius="80%"
+            innerRadius="60%"
+            outerRadius="81%"
             paddingAngle={3}
+            cornerRadius={5}
+            stroke="var(--surface)"
+            strokeWidth={2}
+            isAnimationActive={false}
           >
             {props.data.map(
               (_, i) => (
@@ -385,6 +389,7 @@ export default function Charts(
         <CartesianGrid
           vertical={false}
           stroke="var(--border)"
+          strokeOpacity={0.48}
         />
 
         <XAxis
@@ -451,11 +456,13 @@ export default function Charts(
                       .length
                 ]
               }
-              type="linear"
-              strokeWidth={2.5}
-              dot={props.data.length <= 12 ? { r: 2 } : false}
-              activeDot={{ r: 4 }}
-              isAnimationActive={props.data.length <= 24}
+              type="monotone"
+              strokeWidth={3}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              dot={props.data.length <= 12 ? { r: 2.5 } : false}
+              activeDot={{ r: 5, stroke: "var(--surface)", strokeWidth: 2 }}
+              isAnimationActive={false}
             />
 
           ))}
