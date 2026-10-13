@@ -76,14 +76,22 @@ const styles = String.raw`/* Patrimoine v2 — chiffres du foyer, puis comptes e
 .wealth-accounts-heading p {margin:0;font-size:.74rem;line-height:1.4;}
 .wealth-add-account {display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:40px;border-radius:13px;padding:9px 14px;white-space:nowrap;font-size:.78rem;}
 .wealth-accounts-list {
+  display:block;min-width:0;
   border:1px solid var(--border);border-radius:20px;background:var(--surface);
   box-shadow:var(--wimm-card-shadow);overflow:hidden;
 }
-.wealth-account-row {display:block;min-width:0;background:var(--surface);}
-.wealth-account-row + .wealth-account-row {border-top:1px solid var(--border);}
+/* Un SwipeActions par compte : le séparateur est porté par son conteneur. */
+.wealth-accounts-list > .account-swipe-row {
+  display:block;margin:0;min-width:0;border-bottom:1px solid var(--border);
+}
+.wealth-accounts-list > .account-swipe-row:last-child {border-bottom:0;}
+.wealth-accounts-list > .account-swipe-row > .swipe-actions-content {min-width:0;}
+.wealth-account-row {display:block;min-width:0;margin:0;background:transparent;}
+.wealth-account-row:not([open]) > .wealth-account-expanded {display:none!important;}
+.wealth-account-row + .wealth-account-row {border-top:0;}
 .wealth-account-summary {
   display:flex;align-items:center;gap:13px;list-style:none;cursor:pointer;
-  min-width:0;min-height:80px;padding:14px 18px;
+  min-width:0;min-height:73px;padding:12px 18px;
   -webkit-tap-highlight-color:transparent;transition:background .15s ease;
 }
 .wealth-account-summary::-webkit-details-marker {display:none;}
