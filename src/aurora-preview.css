@@ -449,3 +449,383 @@ body:has(.app) #root {
     background-color: var(--surface) !important;
   }
 }
+
+/* Aurora V2 — finition des listes, formulaires et graphiques.
+   Les conteneurs de balayage restent fonctionnels mais cessent de forcer
+   de grandes bandes blanches dans des surfaces translucides. */
+.app .budget-category-list {
+  min-width: 0;
+  padding: 3px 14px !important;
+  background: var(--aurora-glass-strong) !important;
+  border: 1px solid var(--aurora-stroke) !important;
+  box-shadow: var(--aurora-drop);
+  border-radius: 21px;
+  overflow: hidden !important;
+}
+.app .budget-category-list > .swipe-actions {
+  min-width: 0;
+  margin: 0 !important;
+  border-bottom: 1px solid var(--aurora-separator);
+}
+.app .budget-category-list > .swipe-actions:last-child { border-bottom: 0; }
+.app .budget-category-list > .swipe-actions > .swipe-actions-content {
+  background: transparent !important;
+}
+.app .budget-category-list > .swipe-actions > .swipe-actions-content > .category {
+  min-height: 0 !important;
+  margin: 0 !important;
+  padding: 14px 2px !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+.app .budget-category-list .category .progress {
+  margin-top: 10px;
+  height: 6px;
+}
+.app .budget-category-list .category .meta { margin-top: 7px; }
+
+/* Patrimoine : une seule surface, des lignes de hauteur constante. */
+.app .wealth-accounts-list {
+  min-width: 0;
+  background: var(--aurora-glass-strong);
+  border: 1px solid var(--aurora-stroke);
+  border-radius: 21px;
+  box-shadow: var(--aurora-drop);
+  overflow: hidden;
+}
+.app .wealth-accounts-list > .account-swipe-row {
+  margin: 0 !important;
+  border-bottom: 1px solid var(--aurora-separator) !important;
+}
+.app .wealth-accounts-list > .account-swipe-row:last-child { border-bottom: 0 !important; }
+.app .wealth-accounts-list .account-swipe-row > .swipe-actions-content {
+  background: transparent !important;
+  padding-right: 0 !important;
+}
+.app .wealth-accounts-list .wealth-account-row {
+  margin: 0;
+  border: 0;
+  background: transparent !important;
+}
+.app .wealth-accounts-list .wealth-account-row:not([open]) > .wealth-account-expanded { display: none !important; }
+.app .wealth-accounts-list .wealth-account-summary {
+  box-sizing: border-box;
+  min-height: 73px;
+  padding: 12px 16px;
+  gap: 11px;
+}
+.app .wealth-accounts-list .wealth-account-expanded {
+  border-top: 1px solid var(--aurora-separator);
+  padding: 12px 16px 16px;
+}
+.app .wealth-accounts-list .wealth-account-icon {
+  width: 40px;
+  height: 40px;
+  flex-basis: 40px;
+}
+.app .wealth-accounts-list .wealth-account-row[open] > .wealth-account-summary {
+  background: color-mix(in srgb, var(--wimm-mint-wash) 42%, transparent);
+}
+@media (min-width: 851px), (pointer: fine) {
+  .app .wealth-accounts-list .wealth-account-summary { padding-right: 44px; }
+}
+
+/* Les rails des gestes sont masqués par une surface opaque lorsqu'une
+   ligne est ouverte. Le fond ne doit pas apparaître par transparence. */
+@media (max-width: 850px) and (pointer: coarse) {
+  .app .budget-category-list > .swipe-actions.is-open > .swipe-actions-content,
+  .app .wealth-accounts-list .account-swipe-row.is-open > .swipe-actions-content,
+  .app .transaction-search-results .transaction-swipe-row.is-open > .swipe-actions-content {
+    background: var(--surface) !important;
+  }
+  .app .budget-category-list > .swipe-actions.is-open > .swipe-actions-content > .category {
+    background: var(--surface) !important;
+  }
+}
+
+/* Transactions : aucun blanc à gauche du tri, tout s'aligne sur la liste. */
+.app .transaction-search-results { overflow: hidden; }
+.app .transaction-search-results > p:first-child {
+  margin: 0 0 10px;
+  padding: 0;
+  font-size: .77rem;
+}
+.app .transaction-search-results > .list-sort {
+  display: grid;
+  width: 100%;
+  grid-template-columns: auto minmax(0,1fr);
+  align-items: center;
+  justify-items: stretch;
+  gap: 9px;
+  margin: 0 0 7px;
+  padding: 0 0 12px;
+  border-bottom: 1px solid var(--aurora-separator);
+  color: var(--muted);
+}
+.app .transaction-search-results > .list-sort > span {
+  white-space: nowrap;
+  font-size: .78rem;
+}
+.app .transaction-search-results > .list-sort > select {
+  display: block;
+  justify-self: stretch;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: none;
+  min-width: 0;
+  min-height: 39px;
+  margin: 0;
+  border-color: var(--aurora-separator);
+  background: var(--aurora-glass-strong);
+  border-radius: 12px;
+  color: var(--ink);
+  font-size: .78rem;
+}
+.app .transaction-search-results > .transaction-swipe-row {
+  margin: 0;
+  border-bottom: 1px solid var(--aurora-separator);
+}
+.app .transaction-search-results > .transaction-swipe-row:last-of-type { border-bottom: 0; }
+.app .transaction-search-results .transaction-swipe-row .swipe-actions-content {
+  background: transparent !important;
+}
+.app .transaction-search-results .transaction-swipe-row .row {
+  box-sizing: border-box;
+  min-height: 65px;
+  margin: 0;
+  padding: 11px 0;
+  border-bottom: 0;
+  background: transparent;
+}
+.app .transaction-search-results .row-icon {
+  background: color-mix(in srgb, var(--wimm-blue-wash) 78%, var(--surface));
+}
+
+/* Projection : continuité entre la courbe et la lecture de l'année. */
+.app .projection-chart-card { overflow: hidden; }
+.app .projection-chart-v2 {
+  height: 285px;
+  margin-top: 12px;
+  padding: 4px 0 0;
+  border-radius: 13px;
+  touch-action: pan-y;
+}
+.app .projection-chart-v2 .recharts-cartesian-grid-horizontal line {
+  stroke-opacity: .48;
+}
+.app .projection-legend-v2 {
+  margin: 12px 0 0;
+  gap: 8px 17px;
+}
+.app .projection-legend-v2 > span {
+  font-size: .72rem;
+  line-height: 1.4;
+}
+.app .projection-legend-line {
+  width: 19px;
+  border-width: 3px;
+  border-color: #338c71;
+  border-radius: 99px;
+}
+.app .projection-legend-line.net { border-color: #9ba2b2; }
+.app .projection-legend-line.travel { border-color: #8585da; }
+.app .projection-chart-reading {
+  margin-top: 15px;
+  padding: 15px 0 0;
+  gap: 11px;
+  border-top: 1px solid var(--aurora-separator);
+}
+.app .projection-chart-reading-header {
+  align-items: baseline;
+}
+.app .projection-chart-reading-header strong { font-size: .87rem; }
+.app .projection-chart-reading-header small { font-size: .7rem; }
+.app .projection-chart-reading-values {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0,1fr));
+  gap: 8px;
+}
+.app .projection-chart-reading-values > div {
+  box-sizing: border-box;
+  min-width: 0;
+  display: grid;
+  align-content: start;
+  gap: 7px;
+  padding: 11px 10px;
+  background: var(--aurora-glass-soft);
+  border: 1px solid var(--aurora-stroke);
+  border-radius: 13px;
+}
+.app .projection-chart-reading-values > div::before {
+  content: "";
+  display: block;
+  width: 21px;
+  height: 3px;
+  border-radius: 99px;
+  background: #338c71;
+}
+.app .projection-chart-reading-values > .projection-reading-net::before { background: #9ba2b2; }
+.app .projection-chart-reading-values > .projection-reading-travel::before { background: #8585da; }
+.app .projection-chart-reading-values span { font-size: .68rem; line-height: 1.25; }
+.app .projection-chart-reading-values strong {
+  font-size: clamp(.72rem, 2.8vw, .88rem);
+  font-weight: 800;
+  line-height: 1.35;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+  color: var(--ink);
+}
+@media (max-width: 560px) {
+  .app .projection-chart-v2 { height: 263px; }
+  .app .projection-chart-reading-values { grid-template-columns: repeat(3,minmax(0,1fr)); }
+  .app .projection-chart-reading-values > div {
+    display: grid;
+    align-items: start;
+    padding: 10px 8px;
+    gap: 6px;
+  }
+  .app .projection-chart-reading-values span { font-size: .62rem; }
+  .app .projection-chart-reading-header small { font-size: .64rem; }
+}
+
+/* Analyse : centre du donut intégré, sans nouvelle légende redondante. */
+.app .analysis-pie-visual {
+  position: relative;
+  isolation: isolate;
+  overflow: visible;
+}
+.app .analysis-pie-core {
+  position: absolute;
+  z-index: 1;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%,-50%);
+  display: grid;
+  justify-items: center;
+  gap: 3px;
+  width: 53%;
+  text-align: center;
+  pointer-events: none;
+}
+.app .analysis-pie-core strong {
+  color: var(--ink);
+  font-size: clamp(.94rem, 3.4vw, 1.23rem);
+  font-weight: 850;
+  letter-spacing: -.045em;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.app .analysis-pie-core span {
+  color: var(--muted);
+  font-size: .64rem;
+  font-weight: 650;
+  line-height: 1.2;
+}
+.app .analysis-trend-visual .recharts-cartesian-grid-horizontal line {
+  stroke-opacity: .48;
+}
+.app .spending-analysis-tooltip {
+  border: 1px solid var(--aurora-stroke);
+  border-radius: 14px;
+  box-shadow: var(--aurora-drop);
+}
+
+/* Modales — éléments tactiles, champs doux et CTA cohérent avec Aurora. */
+.app dialog {
+  color: var(--ink);
+  background:
+    radial-gradient(ellipse at 100% 0%, color-mix(in srgb, var(--wimm-lavender-wash) 45%, transparent), transparent 68%),
+    var(--surface);
+  border: 1px solid var(--aurora-stroke);
+  box-shadow: 0 24px 70px rgba(27,41,76,.24);
+}
+.app dialog::backdrop {
+  background: rgba(24,31,52,.38);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+.app dialog .sheet > header {
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+.app dialog .sheet > header h2 {
+  line-height: 1.2;
+  letter-spacing: -.035em;
+  font-size: clamp(1.1rem, 4.8vw, 1.38rem);
+}
+.app dialog .sheet > header > .icon {
+  box-sizing: border-box;
+  width: 38px;
+  height: 38px;
+  flex: 0 0 38px;
+  padding: 8px;
+  color: var(--ink);
+  background: var(--aurora-glass-strong);
+  border: 1px solid var(--aurora-stroke);
+  border-radius: 13px;
+}
+.app dialog .sheet > header > .icon:focus-visible {
+  outline: 2px solid var(--wimm-green);
+  outline-offset: 2px;
+}
+.app dialog .sheet .field { gap: 8px; margin-bottom: 17px; }
+.app dialog .sheet .field > span { font-weight: 720; color: var(--ink); }
+.app dialog .sheet .field input,
+.app dialog .sheet .field textarea,
+.app dialog .sheet .field select {
+  min-height: 48px;
+  box-sizing: border-box;
+  padding: 11px 13px;
+  background: color-mix(in srgb, var(--surface) 88%, var(--wimm-mint-wash));
+  border: 1px solid color-mix(in srgb, var(--border) 86%, var(--wimm-blue));
+  border-radius: 13px;
+  color: var(--ink);
+  font-size: 16px;
+}
+.app dialog .sheet .field input:focus,
+.app dialog .sheet .field textarea:focus,
+.app dialog .sheet .field select:focus {
+  border-color: var(--wimm-green);
+  outline: 2px solid color-mix(in srgb, var(--wimm-green) 22%, transparent);
+  outline-offset: 1px;
+}
+.app dialog .sheet button.primary:not(:disabled) {
+  min-height: 50px;
+  border-radius: 15px;
+  color: white;
+  background: linear-gradient(140deg, #4fa88c, #327963 72%, #2b6d63);
+  box-shadow: 0 8px 17px rgba(47,126,100,.17);
+}
+:root[data-mode="dark"] .app dialog {
+  background: linear-gradient(130deg, #22283d, #27283e 62%, #283b3a);
+  border-color: var(--aurora-stroke);
+}
+:root[data-mode="dark"] .app dialog .sheet button.primary:not(:disabled) {
+  background: linear-gradient(140deg,#3e8a75,#276958);
+}
+@media (max-width: 850px) {
+  .app .soft-topbar {
+    min-height: 57px;
+    padding-top: calc(5px + env(safe-area-inset-top,0px));
+    padding-bottom: 5px;
+  }
+  .app .soft-topbar .soft-wordmark .wimm-wordmark { width: 99px !important; }
+  .app .floating-add-button {
+    box-shadow: 0 0 0 3px rgba(156,228,200,.17),
+                0 9px 23px rgba(34,118,97,.25),
+                0 2px 8px rgba(64,48,139,.10),
+                inset 0 1px 1px rgba(255,255,255,.5);
+  }
+  .app .floating-add-button::after { inset: -5px; box-shadow: 0 0 10px rgba(151,179,235,.1); }
+  .app dialog .sheet {
+    padding: 20px 19px calc(21px + env(safe-area-inset-bottom,0px));
+  }
+}
+@media (max-width: 390px) {
+  .app .soft-topbar .soft-wordmark .wimm-wordmark { width: 90px !important; }
+  .app .transaction-search-results > .list-sort { gap: 7px; }
+  .app .transaction-search-results > .list-sort > select { font-size: .72rem; }
+}
