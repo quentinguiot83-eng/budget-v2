@@ -1,6 +1,7 @@
-import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { ArrowRight, BookOpen, Check, ChevronLeft, ChevronRight, Compass, Eye, CalendarCheck, TrendingUp, X } from "lucide-react";
 import { QUICK_TOUR_STEPS, TUTORIAL_CHAPTERS, TUTORIAL_PAGE_TITLES, type DemoKind, type TourStep } from "./TutorialContent";
+import { findVisibleTourTarget } from "./tutorialTargeting";
 import "./tutorial-v3.css";
 
 type Props = {
@@ -84,6 +85,8 @@ export default function OnboardingTutorial({
   const [chapterId, setChapterId] = useState("home");
   const [progress, setProgress] = useState<Progress>(() => loadProgress(storageKey));
   const [rect, setRect] = useState<DOMRect | null>(null);
+  const [locatedKey, setLocatedKey] = useState("");
+  const [placement, setPlacement] = useState<"top" | "bottom">("bottom");
   const [found, setFound] = useState(true);
   const [showExample, setShowExample] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
@@ -316,18 +319,18 @@ export default function OnboardingTutorial({
 
   if (!current) return null;
   const pad=6;
-  const box = rect && {
+  const currentKey = [view, chapterId, stepIndex, current.route].join(":");
+  const box = route === current.route && locatedKey === currentKey && rect && {
     top:Math.max(4,rect.top-pad),
     left:Math.max(4,rect.left-pad),
     width:Math.max(0,Math.min(window.innerWidth-4,rect.right+pad)-Math.max(4,rect.left-pad)),
     height:Math.max(0,Math.min(window.innerHeight-4,rect.bottom+pad)-Math.max(4,rect.top-pad)),
   };
-  const placement = box && box.top > window.innerHeight*.55 ? "tour-placement-top" : "tour-placement-bottom";
+  const panelPlacement = placement === "top" ? "tour-placement-top" : "tour-placement-bottom";
   const needsTap = current.tap && found && !!box && !showExample;
-  const panelStyle: CSSProperties = {};
   const last=stepIndex >= steps.length-1;
   return (
-    <div className={"live-tour wimm-tour-v3 "+placement} role="dialog" aria-modal="true" aria-label="Tutoriel interactif Wimm">
+    <div className={"live-tour wimm-tour-v3 "+panelPlacement} role="dialog" aria-modal="true" aria-label="Tutoriel interactif Wimm">
       <div className={"wimm-tour-shield"+(!box?" no-target":"")} aria-hidden="true"/>
       {box && <button type="button" className="live-tour-highlight wimm-tour-target" style={box}
         onClick={spotlightClick} aria-label={"Zone guidée : "+current.title+" — toucher pour continuer"}>
@@ -341,14 +344,15 @@ export default function OnboardingTutorial({
         <div className="live-tour-progress"><i style={{width:(((stepIndex+1)/steps.length)*100)+"%"}}/></div>
         <h2>{current.title}</h2>
         <p>{current.text}</p>
-        {!found && <small className="wimm-tour-unavailable">Cette zone n'est pas disponible sur ton compte pour le moment. Tu peux continuer.</small>}
+        {!found && <small className="wimm-tour-unavailable">Cette fonctionnalité n'apparaît pas sur cet écran. Aucune autre zone ne sera surlignée à sa place.</small>}
         {showExample && current.demo && <DemoExample kind={current.demo}/>}
         {!showExample && current.demo && <div className="wimm-tour-safety-note">Aperçu sans enregistrement de données.</div>}
         {needsTap && <small className="wimm-tour-tap-hint">Touche la zone entourée pour {current.demo?"voir un exemple":"continuer"}.</small>}
+        {!found && current.demo && !showExample && <button type="button" className="secondary wimm-tour-missing-demo" onClick={()=>setShowExample(true)}>Voir un exemple fictif <Eye size={15}/></button>}
         <div className="live-tour-actions">
           <button type="button" className="secondary" disabled={stepIndex===0} onClick={()=>go(-1)}><ChevronLeft size={16}/> Retour</button>
           {needsTap ? (
-            <button type="button" className="wimm-tour-step-skip" onClick={()=>go(1)}>Passer cette étape</button>
+            <button type="button" className="wimm-tour-step-skip" onClick={()=>go(1)}>Suivant <ChevronRight size={16}/></button>
           ) : (
             <button type="button" className="primary" onClick={()=>go(1)}>
               {last?"Terminer":"Suivant"} {last?<Check size={16}/>:<ChevronRight size={16}/>}
