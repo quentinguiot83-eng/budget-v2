@@ -117,7 +117,6 @@ export default function ProjectionInteractiveChart({ points }: { points: Project
           <div><span>Dont épargne voyage</span><strong>{projectionMoney(active.travel)}</strong></div>
         </div>
       </div>
-      <p className="projection-chart-note">La courbe grise en pointillés représente l’estimation après fiscalité des placements. Les montants sont indicatifs.</p>
     </div>
   );
 }
