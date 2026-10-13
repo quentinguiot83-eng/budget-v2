@@ -45,6 +45,7 @@ export default function NativeFaceIdGate({ children }: { children: ReactNode }) 
   const [busy, setBusy] = useState(false);
   const [tryCount, setTryCount] = useState(0);
   const active = useRef(true);
+  const wasBackgrounded = useRef(false);
   const authenticating = useRef(false);
   const uid = useRef<string | null>(null);
 
@@ -81,14 +82,21 @@ export default function NativeFaceIdGate({ children }: { children: ReactNode }) 
       setPhase("locked");
     };
     const onActivity = (isActive: boolean) => {
+      // iOS may briefly deactivate the WebView while Face ID is on screen.
+      // Do not mistake that for the user leaving the app.
+      if (!isActive && authenticating.current) return;
       active.current = isActive;
       if (!isActive) {
+        wasBackgrounded.current = true;
         lockIfNecessary();
       } else {
         removePrivacyCover();
-        if (faceIdEnabledForUser(uid.current) && !authenticating.current) {
-          setPhase("locked");
-          setTryCount(n => n + 1);
+        if (wasBackgrounded.current && !authenticating.current) {
+          wasBackgrounded.current = false;
+          if (faceIdEnabledForUser(uid.current)) {
+            setPhase("locked");
+            setTryCount(n => n + 1);
+          }
         }
       }
     };
