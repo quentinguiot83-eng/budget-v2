@@ -1,0 +1,39 @@
+/* Neutral Aurora onboarding; scoped so existing screens and themes are untouched. */
+.progressive-setup {background:var(--soft-canvas)!important;color:var(--ink);}
+.progressive-setup .wimm-setup-shell {
+  border:1px solid var(--border);
+  background:color-mix(in srgb,var(--surface) 94%,transparent);
+  box-shadow:0 18px 52px rgba(25,32,44,.09);
+}
+.progressive-setup .wimm-setup-emblem {background:var(--soft-canvas);color:var(--ink);border:1px solid var(--border);}
+.progressive-setup .wimm-setup-heading .eyebrow,
+.progressive-setup .wimm-setup-progress strong {color:var(--muted);}
+.progressive-setup .wimm-setup-track {background:var(--border);}
+.progressive-setup .wimm-setup-track span {background:var(--ink);}
+.progressive-setup .wimm-setup-fields input:focus,
+.progressive-setup .wimm-setup-fields select:focus,
+.progressive-setup .wimm-setup-budget-row input:focus {outline:2px solid color-mix(in srgb,var(--ink) 20%,transparent);border-color:var(--ink);}
+.progressive-setup .wimm-setup-add,
+.progressive-setup .wimm-setup-chips button {color:var(--ink);background:var(--surface);border:1px solid var(--border);}
+.progressive-setup .wimm-setup-entry,.progressive-setup .wimm-setup-review {background:var(--soft-canvas);border:1px solid var(--border);}
+.progressive-setup .wimm-setup-ready {background:var(--soft-canvas);border:1px solid var(--border);color:var(--ink);}
+.progressive-setup .wimm-setup-hint svg {color:var(--muted);}
+.progressive-setup .wimm-setup-checks label {background:var(--soft-canvas);}
+.progressive-setup .wimm-setup-checks input {accent-color:var(--ink);}
+.progressive-details {border:1px solid var(--border);border-radius:16px;background:var(--surface);overflow:hidden;}
+.progressive-details summary {list-style:none;display:flex;justify-content:space-between;align-items:center;gap:10px;padding:14px 16px;font-size:.85rem;font-weight:760;cursor:pointer;}
+.progressive-details summary::-webkit-details-marker {display:none;}
+.progressive-details summary>span {display:flex;gap:6px;align-items:center;font-size:.74rem;color:var(--muted);font-weight:550;}
+.progressive-details[open] summary>span svg {transform:rotate(180deg);}
+.progressive-details-inner {border-top:1px solid var(--border);padding:14px;display:grid;gap:12px;}
+.progressive-setup .wimm-setup-budget-row {grid-template-columns:minmax(0,1.45fr) minmax(0,1fr) 28px;}
+.progressive-main-link {display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:13px 17px;border-radius:13px;text-decoration:none;}
+.progressive-done {justify-items:center;text-align:center;gap:15px;}
+.progressive-done>svg {color:var(--ink);}
+.progressive-done h1 {margin:0;}
+.progressive-done p {color:var(--muted);line-height:1.6;margin:0;}
+@media(max-width:620px){
+ .progressive-setup .wimm-setup-budget-row{grid-template-columns:minmax(0,1.45fr) minmax(0,1fr) 24px;}
+ .progressive-details summary{padding:13px;}
+ .progressive-details-inner{padding:11px;}
+}
