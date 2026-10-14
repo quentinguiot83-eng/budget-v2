@@ -757,3 +757,185 @@
     -webkit-backdrop-filter: none !important;
   }
 }
+
+
+/* Aurora polish: compact headings, real plain month label, theme-aware forms and neutral accounts. */
+/* All header / safe-area rules intentionally untouched and frozen. */
+
+/* Page and section hierarchy: avoid oversized editorial headings on iPhones. */
+.app .page-heading h1 {
+  font-size: clamp(1.35rem,2.8vw,1.73rem) !important;
+  letter-spacing: -.032em;
+  line-height: 1.22;
+}
+.app .content .section-head h2,
+.app .projection-card-heading h2,
+.app .projection-projects-card .section-head h2,
+.app .wealth-accounts-heading h2,
+.app .content .block-title h2 {
+  font-size: clamp(.98rem,2.1vw,1.1rem) !important;
+  line-height: 1.3;
+}
+@media (max-width: 560px) {
+  .app .page-heading h1 {
+    font-size: clamp(1.2rem,5.25vw,1.38rem) !important;
+    line-height: 1.24;
+  }
+  .app .page-heading .home-greeting { font-size: .85rem; }
+  .app .content .section-head h2,
+  .app .projection-card-heading h2,
+  .app .projection-projects-card .section-head h2,
+  .app .wealth-accounts-heading h2,
+  .app .content .block-title h2 {
+    font-size: .99rem !important;
+  }
+  .app dialog .sheet > header h2 { font-size: 1.13rem !important; }
+}
+
+/* iOS native month input cannot reliably lose its built-in field painting.
+   Keep it fully interactive but use an unboxed text label as the visible UI. */
+.app .page-heading > .month-picker {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+.app .month-picker .month-picker-current {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  width: 100%;
+  min-height: 44px;
+  padding: 0 4px;
+  background: transparent !important;
+  border: none !important;
+  outline: none;
+  box-shadow: none !important;
+  border-radius: 0;
+  cursor: pointer;
+  overflow: hidden;
+}
+.app .month-picker .month-picker-current > span {
+  display: block;
+  width: 100%;
+  color: var(--ink);
+  font-size: 1.06rem;
+  font-weight: 720;
+  text-align: center;
+  white-space: nowrap;
+  pointer-events: none;
+}
+.app .month-picker .month-picker-current > input[type="month"] {
+  position: absolute !important;
+  inset: 0;
+  height: 100% !important;
+  min-height: 100% !important;
+  width: 100% !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  opacity: 0 !important;
+  cursor: pointer;
+  border: 0 !important;
+  box-shadow: none !important;
+  background: transparent !important;
+  z-index: 1;
+}
+.app .month-picker .month-picker-current:focus-within {
+  outline: 2px solid var(--action);
+  outline-offset: 1px;
+  border-radius: 8px;
+}
+
+/* Accounts are one neutral glass panel, not tinted with the chosen wallpaper. */
+:root:not([data-mode="dark"]) .app .wealth-accounts-list {
+  background: rgba(255,255,255,.91) !important;
+  border: 1px solid rgba(255,255,255,.91) !important;
+  box-shadow: 0 12px 30px rgba(32,51,61,.075),inset 0 1px 0 rgba(255,255,255,.97) !important;
+  backdrop-filter: blur(25px) saturate(1.04) !important;
+  -webkit-backdrop-filter: blur(25px) saturate(1.04) !important;
+}
+:root[data-mode="dark"] .app .wealth-accounts-list {
+  background: rgba(44,52,57,.91) !important;
+  border: 1px solid rgba(235,241,238,.15) !important;
+  box-shadow: 0 12px 27px rgba(0,0,0,.15),inset 0 1px 0 rgba(255,255,255,.11) !important;
+  backdrop-filter: blur(24px) !important;
+  -webkit-backdrop-filter: blur(24px) !important;
+}
+.app .wealth-accounts-list .account-swipe-row:not(.is-open) > .swipe-actions-content,
+.app .wealth-accounts-list .account-swipe-row:not(.is-open) .wealth-account-row,
+.app .wealth-accounts-list .wealth-account-summary {
+  background: transparent !important;
+}
+:root:not([data-mode="dark"]) .app .wealth-accounts-list .wealth-account-row[open] > .wealth-account-summary,
+:root:not([data-mode="dark"]) .app .wealth-accounts-list .wealth-account-summary:hover {
+  background: rgba(238,242,243,.66) !important;
+}
+:root[data-mode="dark"] .app .wealth-accounts-list .wealth-account-row[open] > .wealth-account-summary,
+:root[data-mode="dark"] .app .wealth-accounts-list .wealth-account-summary:hover {
+  background: rgba(83,92,95,.27) !important;
+}
+
+/* Included means a project participates in the projection, not green income.
+   Theme tint only for "Inclus" and "Financé", orange still signals exclusion. */
+.app .projection-project-status:not(.excluded) {
+  color: var(--accent-deep) !important;
+  background: color-mix(in srgb,var(--aurora-tone) 18%,var(--surface)) !important;
+  border-radius: 9px;
+}
+:root[data-mode="dark"] .app .projection-project-status:not(.excluded) {
+  background: color-mix(in srgb,var(--aurora-tone) 23%,rgba(46,60,63,.78)) !important;
+}
+.app .projection-project-status.excluded {
+  color: var(--wimm-amber) !important;
+  background: var(--wimm-amber-wash) !important;
+}
+
+/* Transaction sheet: neutral body, selected theme for buttons, outlines,
+   switches and fields — semantic finance colors inside remain distinct. */
+:root:not([data-mode="dark"]) .app dialog {
+  background: #fff !important;
+  border-color: rgba(220,228,231,.82) !important;
+  box-shadow: 0 22px 65px rgba(29,41,50,.18) !important;
+}
+:root[data-mode="dark"] .app dialog {
+  background: #283135 !important;
+  border-color: rgba(233,243,237,.17) !important;
+  box-shadow: 0 22px 65px rgba(0,0,0,.31) !important;
+}
+:root:not([data-mode="dark"]) .app dialog .sheet .field :is(input,textarea,select) {
+  background: #fbfcfd !important;
+  border: 1px solid #dce3e9 !important;
+  color: var(--ink) !important;
+}
+:root[data-mode="dark"] .app dialog .sheet .field :is(input,textarea,select) {
+  background: #303a40 !important;
+  border: 1px solid #48545c !important;
+  color: var(--ink) !important;
+}
+.app dialog .sheet .field :is(input,textarea,select):focus {
+  border-color: var(--action) !important;
+  outline: 2px solid color-mix(in srgb,var(--action) 28%,transparent) !important;
+  outline-offset: 1px;
+}
+.app dialog .sheet > header > .icon {
+  color: var(--accent-deep) !important;
+  background: color-mix(in srgb,var(--aurora-tone) 10%,var(--surface)) !important;
+  border: 1px solid color-mix(in srgb,var(--aurora-tone) 44%,var(--border)) !important;
+}
+.app dialog .sheet > header > .icon:focus-visible {
+  outline: 2px solid var(--action) !important;
+}
+:root:not([data-mode="dark"]) .app dialog .sheet button.primary:not(:disabled),
+:root[data-mode="dark"] .app dialog .sheet button.primary:not(:disabled) {
+  color: #fff !important;
+  background: linear-gradient(130deg,
+    color-mix(in srgb,var(--action) 75%,#fff),
+    var(--action) 70%,
+    color-mix(in srgb,var(--action) 83%,#152524)) !important;
+  box-shadow: 0 8px 21px color-mix(in srgb,var(--action) 21%,transparent) !important;
+  border: 0 !important;
+}
+.app dialog :is(button,select,input[type="checkbox"],input[type="radio"]) {
+  accent-color: var(--action);
+}
