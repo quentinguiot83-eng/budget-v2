@@ -842,3 +842,78 @@ body:has(.app),body:has(.app) #root {background:#f0f0ef!important}
 :root:not([data-mode="dark"]) .app .wimm-home-clean .home-income-expenses .home-remaining-card {background:linear-gradient(145deg,rgba(241,246,255,.68),rgba(255,255,255,.43))!important}
 :root:not([data-mode="dark"]) .app .wimm-home-clean .home-income-expenses .home-expenses {background:linear-gradient(145deg,rgba(255,242,243,.70),rgba(255,255,255,.43))!important}
 :root:not([data-mode="dark"]) .app .bottom-nav {background:rgba(255,255,255,.68)!important;border:1px solid rgba(255,255,255,.84)!important;box-shadow:0 12px 32px rgba(35,40,50,.12),inset 0 1px 0 #fff!important;backdrop-filter:blur(25px) saturate(1.4);-webkit-backdrop-filter:blur(25px) saturate(1.4)}
+
+/* Aurora V2 — iPhone layout, compact lists and eucalyptus palette. */
+:root:not([data-mode="dark"]) .app {
+  --wimm-green:#487d70;
+  --wimm-mint:#a7c9bc;
+  --wimm-mint-wash:#e7f1ec;
+}
+:root:not([data-mode="dark"]) .app .soft-topbar {
+  background:rgba(245,245,243,.92)!important;
+  border:0!important;
+  box-shadow:0 5px 18px rgba(35,39,46,.045)!important;
+  backdrop-filter:blur(26px) saturate(1.3)!important;
+  -webkit-backdrop-filter:blur(26px) saturate(1.3)!important;
+  isolation:isolate;
+  z-index:100;
+}
+:root:not([data-mode="dark"]) .app .soft-topbar::before {
+  content:"";position:absolute;inset:0;z-index:-1;
+  background:rgba(245,245,243,.85);pointer-events:none;
+}
+:root:not([data-mode="dark"]) .app .wimm-pro-shortcut,
+:root:not([data-mode="dark"]) .app .floating-add-button {
+  background:linear-gradient(145deg,#65978a,#487d70 65%,#285f51)!important;
+  box-shadow:0 8px 22px rgba(40,95,81,.20),inset 0 1px 0 rgba(255,255,255,.3)!important;
+}
+:root:not([data-mode="dark"]) .app .floating-add-button::after {
+  border-color:rgba(101,151,138,.22)!important;
+  box-shadow:none!important;
+}
+:root:not([data-mode="dark"]) .app .bottom-nav button.active {
+  background:rgba(101,151,138,.14)!important;color:#285f51!important;
+}
+:root:not([data-mode="dark"]) .app .budget-category-list,
+:root:not([data-mode="dark"]) .app .wealth-accounts-list,
+:root:not([data-mode="dark"]) .app .transaction-search-results {
+  background:rgba(255,255,255,.48)!important;
+  border:1px solid rgba(255,255,255,.75)!important;
+  box-shadow:var(--aurora-drop)!important;
+  backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
+}
+:root:not([data-mode="dark"]) .app .wealth-accounts-list .wealth-account-summary {
+  min-height:62px;padding-block:9px;
+}
+:root:not([data-mode="dark"]) .app .budget-category-list .category {
+  padding-block:10px!important;
+}
+:root:not([data-mode="dark"]) .app .budget-category-list .category .progress {margin-top:7px}
+:root:not([data-mode="dark"]) .app .projection-projects-card,
+:root:not([data-mode="dark"]) .app .projection-projects-card > *,
+:root:not([data-mode="dark"]) .app .projection-projects-card .row,
+:root:not([data-mode="dark"]) .app .projection-projects-card .project-row {
+  background-color:transparent;
+}
+:root:not([data-mode="dark"]) .app .projection-projects-card .project-row,
+:root:not([data-mode="dark"]) .app .projection-projects-card .row {
+  border-bottom:1px solid rgba(100,110,120,.11);
+}
+:root:not([data-mode="dark"]) .app .fixed-expenses-list,
+:root:not([data-mode="dark"]) .app .recurring-list,
+:root:not([data-mode="dark"]) .app .fixed-expense-list {
+  background:rgba(255,255,255,.43)!important;
+  border-radius:18px;
+}
+:root:not([data-mode="dark"]) .app .fixed-expenses-list > *,
+:root:not([data-mode="dark"]) .app .recurring-list > *,
+:root:not([data-mode="dark"]) .app .fixed-expense-list > * {
+  background:transparent!important;
+  padding-block:12px!important;
+  margin-block:0!important;
+  border-bottom:1px solid rgba(100,110,120,.11);
+}
+@media(max-width:850px) {
+  .app .soft-topbar {position:sticky;top:0;z-index:100}
+  .app .soft-topbar .soft-wordmark {position:relative;z-index:2}
+}
