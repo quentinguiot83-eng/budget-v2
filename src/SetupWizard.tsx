@@ -77,7 +77,7 @@ export function applyInitialSetup(state: State, draft: InitialSetupDraft) {
     state.income = Math.round(sources.reduce((sum, source) =>
       sum + source.amount / (source.frequency === "quarterly" ? 3 : source.frequency === "annual" ? 12 : 1), 0));
     draft.salaryDay = String(sources.find(source => source.frequency === "monthly")?.day ?? 27);
-    draft.salaryReceived = sources.length > 0 && sources.every(source => source.received);
+    draft.salaryReceived = sources.length > 0 && sources.every(source => source.receivedMonths.includes(startMonth));
   } else {
     state.income = parseEuros(draft.income || "0", "revenus mensuels");
   }
