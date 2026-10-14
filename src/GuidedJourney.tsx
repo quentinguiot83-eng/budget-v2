@@ -50,10 +50,10 @@ const ALL_STEPS:JourneyStep[]=[
 ];
 const currentStep=(steps:JourneyStep[],id:string)=>steps.findIndex(x=>x.id===id);
 export default function GuidedJourney({
- route,navigate,state,enabled,proEnabled,completed
+ route,navigate,state,enabled,proEnabled,completed,preview=false
 }:{
  route:string;navigate:(route:string)=>void;state:State;enabled:boolean;proEnabled:boolean;
- completed:()=>void;
+ completed:()=>void;preview?:boolean;
 }){
   const [stepId,setStepId]=useState("welcome");
   const [done,setDone]=useState(false);
@@ -68,6 +68,7 @@ export default function GuidedJourney({
 
   useEffect(()=>{
     if(!enabled)return;
+    if(preview) {setLoaded(true);return;}
     let active=true;
     api.auth.getUser().then(({data})=>{
       if(!active)return;
@@ -76,7 +77,7 @@ export default function GuidedJourney({
       setStepId(resolved);setLoaded(true);
     }).catch(()=>{if(active)setLoaded(true);});
     return()=>{active=false;};
-  },[enabled,proEnabled]);
+  },[enabled,proEnabled,preview]);
 
   useEffect(()=>{
     if(!enabled||!opened||!stage||route!==stage.route)return;
@@ -110,13 +111,17 @@ export default function GuidedJourney({
     setBusy(true);setError("");
     try{
       if(idx===steps.length-1){
-        const {error}=await api.auth.updateUser({data:{wimm_journey_done:true,wimm_journey_step:"done"}});
-        if(error)throw error;
+        if(!preview) {
+          const {error}=await api.auth.updateUser({data:{wimm_journey_done:true,wimm_journey_step:"done"}});
+          if(error)throw error;
+        }
         setDone(true);completed();setOpened(false);
       }else{
         const next=steps[idx+1];
-        const {error}=await api.auth.updateUser({data:{wimm_journey_step:next.id}});
-        if(error)throw error;
+        if(!preview) {
+          const {error}=await api.auth.updateUser({data:{wimm_journey_step:next.id}});
+          if(error)throw error;
+        }
         setStepId(next.id);setDeclareNone(false);setOpened(true);
         navigate(next.route);
       }
