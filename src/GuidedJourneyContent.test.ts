@@ -14,7 +14,7 @@ test("chapters appear in strict sequence without reopening old chapters",()=>{
   const chapters=JOURNEY_STEPS.map(x=>x.chapter);
   const compressed=chapters.filter((x,i)=>i===0||chapters[i-1]!==x);
   assert.equal(new Set(compressed).size,compressed.length);
-  assert.deepEqual(compressed,["Découverte","Accueil","Budget","Dépenses fixes","Patrimoine","Projets","Projections","Ajouter","Mode Pro","Réglages","Fin"]);
+  assert.deepEqual(compressed,["Découverte","Accueil","Ajouter","Budget","Dépenses fixes","Patrimoine","Projets","Projections","Mode Pro","Réglages","Fin"]);
 });
 test("Pro explanation is conditional and last step remains completion",()=>{
   const pro=journeySteps(true);
@@ -42,4 +42,15 @@ test("each of the 58 onboarding explanations is brief, helpful and non-redundant
     assert.ok(copy.length>=30,step.id+" is not explanatory enough");
     assert.ok(!/ce bloc est grand|partie visible|utilisez .essayer. pour le parcourir/i.test(copy));
   }
+});
+
+test("the plus button is explained immediately after the home chapter",()=>{
+ const afterHome=JOURNEY_STEPS.findIndex(s=>s.id==="home-actions")+1;
+ assert.equal(JOURNEY_STEPS[afterHome].id,"add-button");
+ assert.equal(JOURNEY_STEPS[afterHome].chapter,"Ajouter");
+ const lastAdd=JOURNEY_STEPS.findLastIndex(s=>s.chapter==="Ajouter");
+ assert.equal(JOURNEY_STEPS[lastAdd+1].id,"budget-total");
+});
+test("the reconciliation guide uses simple user-facing terms",()=>{
+ assert.equal(JOURNEY_STEPS.find(s=>s.id==="wealth-reconcile")?.title,"Mettre à jour mes comptes");
 });
