@@ -25,6 +25,7 @@ export type TourLayoutInput = {
   gap?:number;
   margin?:number;
   pinned?:boolean;
+  preferredSide?:"top"|"bottom";
 };
 const clamp=(n:number,min:number,max:number)=>Math.max(min,Math.min(max,n));
 export function chooseTourPlacement(input:TourLayoutInput):TourPlacement {
@@ -55,7 +56,9 @@ export function chooseTourPlacement(input:TourLayoutInput):TourPlacement {
   ];
   const chosen=input.pinned
    ? candidates[1]
-   : candidates.reduce((best,option)=>{
+   : input.preferredSide
+     ? candidates.find(c=>c.side===input.preferredSide)!
+     : candidates.reduce((best,option)=>{
      const bestShift=Math.abs(input.target.top-desired(best.slot));
      const newShift=Math.abs(input.target.top-desired(option.slot));
      return newShift<bestShift?option:best;
