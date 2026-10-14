@@ -333,3 +333,162 @@
   backdrop-filter: blur(24px) saturate(1.1);
   -webkit-backdrop-filter: blur(24px) saturate(1.1);
 }
+
+
+/* Aurora V2 — cross-page theme coverage and continuous iOS-to-header gradient. */
+/*
+ * ProjectionPageStyles is a runtime <style>, so explicit scoped selectors and
+ * !important are intentional. Data semantics of chart traces remain untouched.
+ */
+
+/* Theme the formerly fixed mint horizon selector (all five presets). */
+:root:not([data-mode="dark"]) .app .projection-topline .pills,
+:root:not([data-mode="dark"]) .app .projects-type-switch,
+:root:not([data-mode="dark"]) .app .trips-page-v2 .trip-tabs {
+  background:
+    linear-gradient(135deg,
+      color-mix(in srgb,var(--aurora-tone-soft) 77%,rgba(255,255,255,.51)),
+      color-mix(in srgb,var(--aurora-tone) 17%,rgba(255,255,255,.57))) !important;
+  border: 1px solid rgba(255,255,255,.79) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.81),0 5px 17px rgba(40,58,58,.045);
+  backdrop-filter: blur(20px) saturate(1.22);
+  -webkit-backdrop-filter: blur(20px) saturate(1.22);
+}
+:root[data-mode="dark"] .app .projection-topline .pills,
+:root[data-mode="dark"] .app .projects-type-switch,
+:root[data-mode="dark"] .app .trips-page-v2 .trip-tabs {
+  background: color-mix(in srgb,var(--aurora-tone) 14%,rgba(40,54,58,.66)) !important;
+  border: 1px solid color-mix(in srgb,var(--aurora-tone) 21%,rgba(220,233,230,.16)) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.09),0 6px 20px rgba(0,0,0,.11);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+.app .projection-topline .pills button.selected,
+.app .projects-type-switch button.selected,
+.app .trips-page-v2 .trip-tabs button.selected {
+  color: var(--accent-deep) !important;
+  border-color: color-mix(in srgb,var(--aurora-tone) 32%,transparent) !important;
+  box-shadow: 0 5px 17px color-mix(in srgb,var(--aurora-tone) 14%,transparent),
+    inset 0 1px 0 rgba(255,255,255,.62) !important;
+}
+:root:not([data-mode="dark"]) .app .projection-topline .pills button.selected,
+:root:not([data-mode="dark"]) .app .projects-type-switch button.selected,
+:root:not([data-mode="dark"]) .app .trips-page-v2 .trip-tabs button.selected {
+  background: linear-gradient(135deg,rgba(255,255,255,.90),
+    color-mix(in srgb,var(--aurora-tone-soft) 41%,rgba(255,255,255,.83))) !important;
+}
+:root[data-mode="dark"] .app .projection-topline .pills button.selected,
+:root[data-mode="dark"] .app .projects-type-switch button.selected,
+:root[data-mode="dark"] .app .trips-page-v2 .trip-tabs button.selected {
+  background: color-mix(in srgb,var(--aurora-tone) 22%,rgba(54,67,70,.74)) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.13),0 5px 15px rgba(0,0,0,.10) !important;
+}
+.app .projection-topline .pills button:focus-visible,
+.app .trips-page-v2 .trip-tabs button:focus-visible {
+  outline: 2px solid var(--action) !important;
+  outline-offset: 2px;
+}
+
+/* Cover the projection cards excluded by the previous generic glass selector. */
+:root:not([data-mode="dark"]) .app :is(
+  .projection-kpis .projection-kpi,
+  .projection-dashboard-v2 .projection-annual-card,
+  .projection-dashboard-v2 .projection-settings-card,
+  .projection-dashboard-v2 .projection-year-card,
+  .wealth-breakdown-card,
+  .wealth-projection-link,
+  .budget-category-list,
+  .trips-disclosure,
+  .trips-v2-hero:not(.has-cover),
+  .trips-page-v2 .trip-tabs button
+) {
+  background:
+    linear-gradient(137deg,rgba(255,255,255,.67),rgba(255,255,255,.18)),
+    color-mix(in srgb,var(--aurora-tone) 11%,rgba(255,255,255,.43)) !important;
+  border-color: color-mix(in srgb,var(--aurora-tone) 14%,rgba(255,255,255,.83)) !important;
+  box-shadow: 0 12px 28px rgba(40,65,61,.075),
+    inset 0 1px 0 rgba(255,255,255,.95) !important;
+  backdrop-filter: blur(25px) saturate(1.25);
+  -webkit-backdrop-filter: blur(25px) saturate(1.25);
+}
+:root[data-mode="dark"] .app :is(
+  .projection-kpis .projection-kpi,
+  .projection-dashboard-v2 .projection-annual-card,
+  .projection-dashboard-v2 .projection-settings-card,
+  .projection-dashboard-v2 .projection-year-card,
+  .wealth-breakdown-card,
+  .wealth-projection-link,
+  .budget-category-list,
+  .trips-disclosure,
+  .trips-v2-hero:not(.has-cover)
+) {
+  background: color-mix(in srgb,var(--aurora-tone) 12%,rgba(47,62,65,.69)) !important;
+  border-color: color-mix(in srgb,var(--aurora-tone) 15%,rgba(203,229,222,.19)) !important;
+  box-shadow: 0 11px 27px rgba(0,0,0,.13),inset 0 1px 0 rgba(255,255,255,.12) !important;
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+}
+/* The main projection KPIs and actions belong to the selected theme. */
+.app .projection-main-heading svg,
+.app .projection-kpi:first-child > svg,
+.app .projection-card-heading .block-info,
+.app .projection-project-row .projection-project-icon,
+.app .projection-annual-card > summary svg:first-child,
+.app .projection-settings-card > summary svg:first-child,
+.app .wealth-total-header > svg,
+.app .wealth-breakdown-card > .text,
+.app .wealth-projection-link > svg,
+.app .wealth-projection-icon {
+  color: var(--accent-deep) !important;
+}
+.app .projection-project-row .projection-project-icon,
+.app .wealth-projection-icon {
+  background: color-mix(in srgb,var(--aurora-tone) 17%,var(--surface)) !important;
+}
+/* Keep the travel KPI and chart traces independently legible. */
+.app .projection-kpi:nth-child(2) > svg {
+  color: var(--wimm-blue);
+}
+
+/* A single color transition: system top is white, and fades into the themed
+   page THROUGH the header, with no gray strip at the safe-area boundary. */
+:root:not([data-mode="dark"]) #app-status-bar {
+  background: #fff !important;
+  background-image: none !important;
+}
+:root[data-mode="dark"] #app-status-bar {
+  background: linear-gradient(180deg,#0c1215 0%,#141d20 100%) !important;
+}
+@media (max-width: 850px) {
+  html:root:not([data-mode="dark"]) .app .main > header.topbar.soft-topbar {
+    background-color: #fff !important;
+    background-image: linear-gradient(180deg,
+      #fff 0%,
+      #fff 9%,
+      color-mix(in srgb,var(--aurora-tone-soft) 14%,#fff) 35%,
+      color-mix(in srgb,var(--aurora-tone) 7%,#fbfcfa) 64%,
+      color-mix(in srgb,var(--aurora-tone-soft) 35%,#f8faf8) 100%) !important;
+    box-shadow: none !important;
+    border-top: 0 !important;
+    border-bottom: 0 !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+  html:root[data-mode="dark"] .app .main > header.topbar.soft-topbar {
+    background-color: #141d20 !important;
+    background-image: linear-gradient(180deg,
+      #141d20 0%,
+      #171f22 28%,
+      color-mix(in srgb,var(--aurora-tone) 5%,#1b2528) 100%) !important;
+    box-shadow: none !important;
+    border: 0 !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+  /* Remove any legacy rectangle rendered over the continuous gradient. */
+  html:root .app .main > header.topbar.soft-topbar::before,
+  html:root .app .main > header.topbar.soft-topbar::after {
+    content: none !important;
+    display: none !important;
+  }
+}
