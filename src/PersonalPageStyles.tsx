@@ -20,21 +20,21 @@ const styles = String.raw`
 .personal-v2-totals small {font-size:.72rem;line-height:1.3;color:var(--muted)}
 .personal-v2-totals strong {font-size:1.05rem;line-height:1.3;color:var(--ink);font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
 .personal-v2-totals span {font-size:.7rem;color:var(--muted);overflow-wrap:anywhere}
-.personal-v2-totals .personal-v2-due strong {color:var(--wimm-green)}
+.personal-v2-totals .personal-v2-due strong {color:var(--accent-deep)}
 .personal-v2-quick-actions {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
 .personal-v2-quick-actions button {
   display:flex;align-items:center;justify-content:center;gap:8px;min-height:52px;min-width:0;
   text-align:center;border-radius:15px;font-size:.82rem;font-weight:780;line-height:1.25;padding:11px 12px
 }
 .personal-v2-quick-actions button svg {flex:0 0 auto}
-.personal-v2-quick-actions .primary {color:#fff;background:var(--wimm-green)}
-.personal-v2-quick-actions .secondary {background:var(--wimm-mint-wash);border:1px solid color-mix(in srgb,var(--wimm-green) 24%,var(--border));color:var(--wimm-green)}
+.personal-v2-quick-actions .primary {color:#fff;background:var(--action)}
+.personal-v2-quick-actions .secondary {background:var(--accent-soft);border:1px solid color-mix(in srgb,var(--action) 24%,var(--border));color:var(--accent-deep)}
 .personal-v2-panel {border:1px solid var(--border);background:var(--surface);border-radius:19px;
   box-shadow:var(--wimm-card-shadow);min-width:0;overflow:hidden}
 .personal-v2-panel>summary {display:flex;align-items:center;gap:11px;cursor:pointer;list-style:none;min-height:81px;padding:17px 18px}
 .personal-v2-panel>summary::-webkit-details-marker {display:none}
 .personal-v2-panel>summary::marker {content:""}
-.personal-v2-panel>summary:focus-visible{outline:2px solid var(--wimm-green);outline-offset:-3px}
+.personal-v2-panel>summary:focus-visible{outline:2px solid var(--action);outline-offset:-3px}
 .personal-v2-panel-icon {display:grid;place-items:center;width:41px;height:41px;flex:0 0 41px;border-radius:13px;
   background:var(--wimm-lavender-wash);color:var(--wimm-lavender)}
 .personal-v2-panel-copy {min-width:0;flex:1;display:grid;gap:5px}
@@ -71,7 +71,7 @@ const styles = String.raw`
 .personal-v2-projection-panel .pills {display:flex;flex-wrap:wrap;gap:5px;max-width:100%;margin-top:9px}
 .personal-v2-projection-panel .pills button {font-size:.74rem;padding:8px 11px}
 .personal-v2-projection-panel .footnote {color:var(--muted);font-size:.74rem;line-height:1.5}
-.personal-v2-commitments-panel .personal-v2-panel-icon{background:var(--wimm-mint-wash);color:var(--wimm-green)}
+.personal-v2-commitments-panel .personal-v2-panel-icon{background:var(--accent-soft);color:var(--accent-deep)}
 .personal-v2-commitments-panel .personal-advances-card,.personal-v2-commitments-panel .personal-installments-card{min-height:0}
 .personal-v2-history {display:grid;gap:12px;padding:17px 18px;background:var(--surface);border:1px solid var(--border);
   border-radius:19px;box-shadow:var(--wimm-card-shadow);min-width:0}
@@ -92,7 +92,7 @@ const styles = String.raw`
 .personal-v2-history-empty{color:var(--muted);font-size:.77rem;margin:4px 0}
 .personal-v2-history>details{border-top:1px solid var(--border);padding-top:10px;min-width:0}
 .personal-v2-history>details>summary{display:flex;align-items:center;justify-content:space-between;gap:7px;
-  cursor:pointer;list-style:none;color:var(--wimm-green);font-size:.79rem;font-weight:780;padding:6px 0}
+  cursor:pointer;list-style:none;color:var(--accent-deep);font-size:.79rem;font-weight:780;padding:6px 0}
 .personal-v2-history>details>summary::-webkit-details-marker{display:none}
 .personal-v2-history>details>summary svg{transition:transform .18s}
 .personal-v2-history>details[open]>summary svg{transform:rotate(90deg)}
