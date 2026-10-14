@@ -289,3 +289,47 @@
     backdrop-filter: none !important; -webkit-backdrop-filter: none !important;
   }
 }
+
+
+/* Theme accents must beat old mode-specific Wimm-green !important overrides. */
+:root:not([data-mode="dark"]) .app .wimm-pro-shortcut,
+:root:not([data-mode="dark"]) .app .floating-add-button,
+:root[data-mode="dark"] .app .wimm-pro-shortcut,
+:root[data-mode="dark"] .app .floating-add-button {
+  color: #fff !important;
+  background: linear-gradient(150deg,
+    color-mix(in srgb,var(--action) 76%,#fff) 0%,
+    var(--action) 64%,
+    color-mix(in srgb,var(--action) 80%,#172b28) 100%) !important;
+  box-shadow:
+    0 9px 24px color-mix(in srgb,var(--action) 23%,transparent),
+    inset 0 1px 0 rgba(255,255,255,.45),
+    0 0 0 3px rgba(255,255,255,.30) !important;
+}
+:root[data-mode="dark"] .app .wimm-pro-shortcut,
+:root[data-mode="dark"] .app .floating-add-button {
+  box-shadow:
+    0 8px 20px rgba(0,0,0,.17),
+    0 4px 18px color-mix(in srgb,var(--action) 15%,transparent),
+    inset 0 1px 0 rgba(255,255,255,.22) !important;
+}
+:root:not([data-mode="dark"]) .app :is(
+  .budget-category-list,.wealth-accounts-list,.transaction-search-results,
+  .wealth-breakdown-card,.fixed-expenses-list,.recurring-list,.fixed-expense-list
+) {
+  background: color-mix(in srgb,var(--aurora-tone) 10%,rgba(255,255,255,.51)) !important;
+  border: 1px solid rgba(255,255,255,.82) !important;
+  box-shadow: 0 11px 29px rgba(34,68,59,.075),inset 0 1px 0 rgba(255,255,255,.89) !important;
+  backdrop-filter: blur(25px) saturate(1.24);
+  -webkit-backdrop-filter: blur(25px) saturate(1.24);
+}
+:root[data-mode="dark"] .app :is(
+  .budget-category-list,.wealth-accounts-list,.transaction-search-results,
+  .wealth-breakdown-card,.fixed-expenses-list,.recurring-list,.fixed-expense-list
+) {
+  background: color-mix(in srgb,var(--aurora-tone) 10%,rgba(48,61,64,.70)) !important;
+  border: 1px solid rgba(194,222,216,.16) !important;
+  box-shadow: 0 12px 27px rgba(0,0,0,.13),inset 0 1px 0 rgba(255,255,255,.09) !important;
+  backdrop-filter: blur(24px) saturate(1.1);
+  -webkit-backdrop-filter: blur(24px) saturate(1.1);
+}
