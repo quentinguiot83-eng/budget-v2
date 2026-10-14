@@ -6958,12 +6958,14 @@ export default function App() {
                     <h2>Mes comptes</h2>
                     <p className="muted">Touchez un compte pour voir ses détails et ses opérations.</p>
                   </div>
-                  <button type="button" className="secondary wealth-reconcile-accounts" onClick={reconcileHouseholdAccounts}>
+                  <div className="wealth-accounts-heading-actions">
+                    <button type="button" className="secondary wealth-reconcile-accounts" onClick={reconcileHouseholdAccounts}>
                       <RefreshCw size={16}/> Mettre à jour mes comptes
                     </button>
                     <button type="button" className="primary wealth-add-account" onClick={() => editAccount()}>
-                    <Plus size={17}/> Ajouter
-                  </button>
+                      <Plus size={17}/> Ajouter
+                    </button>
+                  </div>
                 </div>
                 <div className="wealth-accounts-list">
                   {activeHouseholdAccounts.map((a) => (
