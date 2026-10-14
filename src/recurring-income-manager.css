@@ -1,0 +1,18 @@
+
+.recurring-incomes{display:grid;gap:14px}
+.recurring-incomes .section-head{align-items:flex-start}
+.recurring-incomes-row{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--border)}
+.recurring-incomes-row span{display:grid;gap:5px}
+.recurring-incomes-row span:last-child{text-align:right}
+.recurring-incomes-row strong{font-size:.89rem}
+.recurring-incomes-row small{font-size:.72rem;color:var(--muted)}
+.recurring-incomes-footer{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px;border:1px solid var(--border);border-radius:12px;background:var(--soft-canvas);font-size:.83rem}
+.recurring-incomes-edit{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;border:1px solid var(--border);border-radius:15px;padding:13px;background:var(--soft-canvas)}
+.recurring-incomes-edit label{display:grid;gap:6px;font-size:.76rem;font-weight:700}
+.recurring-incomes-edit input:not([type="checkbox"]),.recurring-incomes-edit select{min-height:41px;border-radius:10px;border:1px solid var(--border);padding:8px;background:var(--surface);color:var(--ink);width:100%;min-width:0}
+.recurring-incomes-edit .recurring-incomes-check{display:flex;align-items:center;gap:8px;grid-column:1/-1;font-weight:500}
+.recurring-incomes-check input{accent-color:var(--ink)}
+.recurring-incomes-edit .danger-text{justify-self:end;grid-column:1/-1;display:flex;gap:6px;align-items:center}
+.recurring-incomes-actions{display:flex;justify-content:flex-end;gap:8px}
+.recurring-incomes-actions button{display:flex;align-items:center;gap:7px}
+@media(max-width:620px){.recurring-incomes-edit{grid-template-columns:1fr}}
