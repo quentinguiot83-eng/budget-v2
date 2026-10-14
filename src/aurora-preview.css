@@ -951,19 +951,57 @@ body:has(.app),body:has(.app) #root {background:#f0f0ef!important}
  :root:not([data-mode="dark"]) .app .soft-topbar {padding-block:7px!important;min-height:62px}
 }
 
-/* Restore the mobile wordmark: keep the header above scrolling content. */
-@media(max-width:850px) {
- .app .main {position:relative;isolation:isolate}
- .app .main > .topbar.soft-topbar {
-   position:sticky!important;top:0!important;z-index:999!important;
-   display:flex!important;visibility:visible!important;opacity:1!important;
-   overflow:visible!important;min-height:72px!important;
- }
- .app .soft-topbar .mobile-brand,
- .app .soft-topbar .mobile-brand-row,
- .app .soft-topbar .soft-wordmark,
- .app .soft-topbar .wimm-wordmark {
-   display:flex!important;visibility:visible!important;opacity:1!important;
- }
- .app .soft-topbar .soft-wordmark {position:relative!important;z-index:2!important}
+
+/* Aurora mobile header: white iOS-safe surface, fixed visible branding. */
+@media (max-width:850px) {
+  :root:not([data-mode="dark"]) .app .main {
+    isolation:auto!important;
+  }
+  :root:not([data-mode="dark"]) .app .main > header.topbar.soft-topbar {
+    position:sticky!important;
+    top:0!important;
+    z-index:1100!important;
+    display:flex!important;
+    align-items:center!important;
+    justify-content:space-between!important;
+    visibility:visible!important;
+    opacity:1!important;
+    background:#fff!important;
+    background-color:#fff!important;
+    border:0!important;
+    box-shadow:none!important;
+    overflow:visible!important;
+    min-height:72px!important;
+    padding:8px 14px!important;
+    backdrop-filter:none!important;
+    -webkit-backdrop-filter:none!important;
+    transform:none!important;
+  }
+  :root:not([data-mode="dark"]) .app .main > header.topbar.soft-topbar::before {
+    content:none!important;
+    display:none!important;
+  }
+  :root:not([data-mode="dark"]) .app .main > header.topbar.soft-topbar > div:first-child {
+    display:flex!important;
+    visibility:visible!important;
+    opacity:1!important;
+    min-width:0;
+    flex-shrink:1;
+  }
+  :root:not([data-mode="dark"]) .app .main > header.topbar.soft-topbar .mobile-brand,
+  :root:not([data-mode="dark"]) .app .main > header.topbar.soft-topbar .mobile-brand-row,
+  :root:not([data-mode="dark"]) .app .main > header.topbar.soft-topbar .soft-wordmark {
+    display:flex!important;
+    visibility:visible!important;
+    opacity:1!important;
+    position:relative!important;
+    z-index:1!important;
+  }
+  :root:not([data-mode="dark"]) .app .main > header.topbar.soft-topbar .flex {
+    display:flex!important;
+    visibility:visible!important;
+    opacity:1!important;
+    align-items:center!important;
+    flex-shrink:0;
+  }
 }
