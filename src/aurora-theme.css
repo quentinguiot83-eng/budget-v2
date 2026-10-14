@@ -1140,3 +1140,42 @@
   outline: 2px solid var(--action) !important;
   outline-offset: 2px !important;
 }
+
+
+/* Wimm Aurora — iOS bottom bounce + semantic transaction arrows (2026-10-14). */
+/*
+ * The iPhone's rubber-band overscroll reveals HTML/BODY, NOT .app.
+ * Match that exposed canvas to the LAST color stop of the active wallpaper.
+ * Keep #app-status-bar and the already-approved top/header gradients unchanged.
+ */
+:root:not([data-mode="dark"]) {
+  --wimm-bottom-canvas: color-mix(in srgb, var(--aurora-tone) 15%, #f5f8f5);
+}
+:root[data-mode="dark"] {
+  --wimm-bottom-canvas: #1b2427;
+}
+html:root,
+html:root body,
+html:root body #root {
+  background-color: var(--wimm-bottom-canvas) !important;
+}
+/* Show the existing neutral/translucent nav above the theme-matched canvas. */
+
+/* Expense and income are stable semantic colors, independent of Appearance. */
+.app .transaction-search-results .transaction-swipe-row .row-icon:has(> .transaction-expense-arrow),
+.app .transaction-swipe-row .row-icon:has(> .transaction-expense-arrow) {
+  color: var(--wimm-coral) !important;
+  background: var(--wimm-coral-wash) !important;
+}
+.app .transaction-search-results .transaction-swipe-row .row-icon:has(> .transaction-income-arrow),
+.app .transaction-swipe-row .row-icon:has(> .transaction-income-arrow) {
+  color: var(--wimm-green) !important;
+  background: var(--wimm-mint-wash) !important;
+}
+.app .transaction-swipe-row .row-icon > .transaction-expense-arrow {
+  color: var(--wimm-coral) !important;
+}
+.app .transaction-swipe-row .row-icon > .transaction-income-arrow {
+  color: var(--wimm-green) !important;
+}
+/* Keep transfers and adjustments visually neutral. */
