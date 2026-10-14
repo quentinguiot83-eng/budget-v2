@@ -10,7 +10,7 @@ export function readAppearanceMode(): AppearanceMode {
 export function applyAppearance(mode: AppearanceMode) {
   const dark = mode === "dark" || (mode === "auto" && window.matchMedia("(prefers-color-scheme: dark)").matches);
   const root = document.documentElement;
-  const surface = dark ? "#202331" : "#ffffff";
+  const surface = dark ? "#0c1215" : "#ffffff";
   root.dataset.mode = dark ? "dark" : "light";
   root.style.colorScheme = dark ? "dark" : "light";
   root.style.setProperty("--status-bar-background", surface);
