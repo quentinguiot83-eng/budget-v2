@@ -1019,3 +1019,125 @@ body:has(.app),body:has(.app) #root {background:#f0f0ef!important}
     content:none!important;
   }
 }
+
+
+/* Aurora compact iPhone header + monthly selector — October 2026 test. */
+@media (max-width: 850px) {
+  /* Safe-area inset is applied once: inside the sticky header. */
+  .app .main > header.topbar.soft-topbar {
+    box-sizing: border-box !important;
+    height: calc(env(safe-area-inset-top, 0px) + 60px) !important;
+    min-height: calc(env(safe-area-inset-top, 0px) + 60px) !important;
+    padding: calc(env(safe-area-inset-top, 0px) + 2px) 16px 4px !important;
+    gap: 8px;
+  }
+
+  /* Keep the household name directly under the wordmark on all iPhones. */
+  .app .main > header.topbar.soft-topbar > div:first-child {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    justify-content: center !important;
+    flex: 1 1 auto !important;
+    gap: 2px !important;
+    min-width: 0;
+    max-width: none;
+  }
+  .app .main > header.topbar.soft-topbar .mobile-brand-row {
+    margin: 0 !important;
+    line-height: 1;
+  }
+  .app .main > header.topbar.soft-topbar .soft-wordmark {
+    line-height: 1;
+    padding: 0;
+  }
+  .app .main > header.topbar.soft-topbar .soft-wordmark .wimm-wordmark {
+    width: 96px !important;
+    max-width: 100%;
+  }
+  .app .main > header.topbar.soft-topbar > div:first-child > .eyebrow {
+    display: block;
+    margin: 0 !important;
+    max-width: 100% !important;
+    width: 100%;
+    font-size: .59rem;
+    line-height: 1.15;
+    font-weight: 650;
+    letter-spacing: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* Actions remain reachable, including the existing contextual tutorial. */
+  .app .main > header.topbar.soft-topbar > .flex {
+    gap: 2px !important;
+    flex: 0 0 auto;
+  }
+  .app .main > header.topbar.soft-topbar > .flex > .icon,
+  .app .main > header.topbar.soft-topbar > .flex > .mobile-profile-trigger {
+    width: 34px !important;
+    height: 34px !important;
+    flex: 0 0 34px !important;
+    border-radius: 12px;
+    padding: 0;
+  }
+  .app .main > header.topbar.soft-topbar > .flex > .icon svg,
+  .app .main > header.topbar.soft-topbar > .flex > .mobile-profile-trigger svg {
+    width: 19px;
+    height: 19px;
+  }
+  .app .main > header.topbar.soft-topbar .wimm-pro-shortcut {
+    width: 37px !important;
+    height: 37px !important;
+    min-width: 37px !important;
+    padding-inline: 0;
+    font-size: .61rem;
+  }
+
+  /* Eliminate the empty calendar-reset row when the selected month is current. */
+  .app .page-heading {
+    margin: 0 !important;
+    padding: 11px 0 10px !important;
+  }
+  .app .page-heading .home-greeting {
+    margin: 0 0 4px !important;
+  }
+  .app .page-heading h1 {
+    font-size: clamp(1.35rem, 5.4vw, 1.5rem);
+    line-height: 1.2;
+  }
+  .app .page-heading > .month-picker {
+    margin-top: 4px !important;
+    row-gap: 0;
+  }
+  .app .page-heading > .month-picker .month-reset:disabled {
+    display: none !important;
+  }
+}
+@media (max-width: 390px) {
+  .app .main > header.topbar.soft-topbar {
+    padding-inline: 12px !important;
+    gap: 5px;
+  }
+  .app .main > header.topbar.soft-topbar > .flex {
+    gap: 1px !important;
+  }
+  .app .main > header.topbar.soft-topbar .soft-wordmark .wimm-wordmark {
+    width: 90px !important;
+  }
+  .app .main > header.topbar.soft-topbar > div:first-child > .eyebrow {
+    font-size: .56rem;
+  }
+}
+
+/* Preserve the neutral white iOS status bar and header in light appearance. */
+@media (max-width: 850px) {
+  :root:not([data-mode="dark"]) .app .main > header.topbar.soft-topbar {
+    background: #fff !important;
+    border: 0 !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+}
