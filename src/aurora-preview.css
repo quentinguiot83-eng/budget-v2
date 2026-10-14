@@ -1302,7 +1302,7 @@ body:has(.app),body:has(.app) #root {background:#f0f0ef!important}
 }
 @media (max-width: 850px) {
   :root:not([data-mode="dark"]) .app .main > header.topbar.soft-topbar {
-    background: linear-gradient(180deg,#f7faf8 0%,#f0f7f3 58%,#eaf3ee 100%) !important;
+    background: linear-gradient(180deg,#f7faf8 0%,#f7faf8 env(safe-area-inset-top,0px),#eaf3ee 100%) !important;
     background-color: #f0f7f3 !important;
     box-shadow: none !important;
     border: 0 !important;
@@ -1313,7 +1313,7 @@ body:has(.app),body:has(.app) #root {background:#f0f0ef!important}
     position: sticky !important;
     top: 0 !important;
     z-index: 1100 !important;
-    background: linear-gradient(180deg,#172023 0%,#1b2829 100%) !important;
+    background: linear-gradient(180deg,#172023 0%,#172023 env(safe-area-inset-top,0px),#1b2829 100%) !important;
     background-color: #1b2829 !important;
     border: 0 !important;
     box-shadow: none !important;
@@ -1328,3 +1328,6 @@ body:has(.app),body:has(.app) #root {background:#f0f0ef!important}
     display: none !important;
   }
 }
+
+/* Keep the gradient status overlay above the sticky header, never over tappable controls. */
+#app-status-bar { z-index: 1200 !important; }
