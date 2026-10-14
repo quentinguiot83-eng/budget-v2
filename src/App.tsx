@@ -28,6 +28,7 @@ import { deleteTripCover, uploadTripCover, useTripCoverUrls, TRIP_COVERS_BUCKET 
 import { applyInitialSetup } from "./SetupWizard";
 import ProgressiveSetupWizard from "./ProgressiveSetupWizard";
 import GettingStartedChecklist from "./GettingStartedChecklist";
+import GuidedJourney from "./GuidedJourney";
 import {
   lazy,
   Suspense,
@@ -1425,6 +1426,34 @@ export default function App() {
           }
         }, "Compte enregistré");
       },
+    );
+  }
+  function reconcileHouseholdAccounts() {
+    const accounts = s.accounts.filter(a=>!a.archived && a.group!=="personal");
+    if(!accounts.length)return;
+    openForm("Réconcilier mes comptes",
+      accounts.map(a=>field("reconcile_"+a.id,a.name+" · solde bancaire réel (€)",balance(s,a.id)/100,"number",
+        "Un ajustement conserve vos transactions et explique la différence.")),
+      async values=>{
+        const deltas=accounts.map(a=>({
+          account:a,
+          actual:euro(values["reconcile_"+a.id]),
+        }));
+        if(deltas.some(x=>!Number.isSafeInteger(x.actual)||
+          (x.account.group!=="current"&&x.actual<0)))
+          throw Error("Vérifiez les soldes saisis. Un livret ou placement ne peut pas être négatif.");
+        await change(state=>{
+          for(const item of deltas){
+            const difference=item.actual-balance(state,item.account.id);
+            if(!difference)continue;
+            state.transactions.push({
+              id:uid(),type:"adjust",account:item.account.id,
+              date:today(),amount:difference,
+              description:"Réconciliation bancaire : solde réel vérifié"
+            });
+          }
+        },"Réconciliation des comptes");
+      }
     );
   }
   function editPersonalAccount() {
@@ -5243,10 +5272,18 @@ export default function App() {
               comptes et les opérations de ce foyer.
             </p>
             <Form
-              fields={[field("code", "Code d’invitation")]}
+              fields={[field("code", "Code d’invitation", new URLSearchParams(location.hash.replace(/^#/, "")).get("join") || "")]}
               label="Rejoindre"
               submit={async (v) => {
-                setDoc(await rpc("budget_join", { p_code: v.code }));
+                const joined = await rpc("budget_join", { p_code: v.code });
+                if (joined?.error) throw Error(joined.error);
+                setDoc(joined);
+                if (location.hash.startsWith("#join=")) history.replaceState(null,"",location.pathname+location.search);
+                const {error: onboardingError} = await api.auth.updateUser({
+                  data: {wimm_progressive_onboarding:true,wimm_journey_step:"welcome",wimm_journey_done:false,
+                    wimm_tutorial_started:true,wimm_tutorial_seen:true}
+                });
+                if(onboardingError)setNotice("Foyer rejoint. Le parcours de découverte est accessible dans l'aide.");
                 setError("");
               }}
             />
@@ -5272,7 +5309,7 @@ export default function App() {
           // Les nouveaux utilisateurs découvrent Wimm progressivement,
           // sans ouverture automatique de la longue visite guidée.
           const { error: progressError } = await api.auth.updateUser({
-            data: { wimm_progressive_onboarding: true, wimm_tutorial_started: true, wimm_tutorial_seen: true }
+            data: { wimm_progressive_onboarding: true, wimm_tutorial_started: true, wimm_tutorial_seen: true, wimm_journey_step: "welcome", wimm_journey_done: false }
           });
           if (progressError) setNotice("Configuration enregistrée. Votre guide de démarrage reste disponible dans les réglages.");
           try {
@@ -5507,6 +5544,17 @@ export default function App() {
           )}
         </div>
         <main className="content">
+          {session?.user.user_metadata?.wimm_progressive_onboarding === true &&
+            session?.user.user_metadata?.wimm_journey_done !== true && !demoEnabled && (
+              <GuidedJourney
+                route={route}
+                navigate={navigate}
+                state={s}
+                enabled={true}
+                proEnabled={proEnabled}
+                completed={() => setNotice("Votre compte est configuré ! Retrouvez le tutoriel dans Réglages.")}
+              />
+            )}
           {!current && !["settings", "wealth", "pro"].includes(route) && (
             <section className="card setup-card" data-tour="setup-account">
               <div>
@@ -5526,7 +5574,7 @@ export default function App() {
           {route === "pro" && <ProWorkspace native />}
           {route === "home" && (
             <div className="wimm-home-clean">
-              {(onboardingChecklistPreviewEnabled || session?.user.user_metadata?.wimm_progressive_onboarding === true) && (
+              {onboardingChecklistPreviewEnabled && (
                 <GettingStartedChecklist
                   state={s}
                   storageKey={`wimm-onboarding-checklist-${session?.user.id || "demo"}`}
@@ -6866,7 +6914,10 @@ export default function App() {
                     <h2>Mes comptes</h2>
                     <p className="muted">Touchez un compte pour voir ses détails et ses opérations.</p>
                   </div>
-                  <button type="button" className="primary wealth-add-account" onClick={() => editAccount()}>
+                  <button type="button" className="secondary wealth-reconcile-accounts" onClick={reconcileHouseholdAccounts}>
+                      <RefreshCw size={16}/> Réconcilier mes comptes
+                    </button>
+                    <button type="button" className="primary wealth-add-account" onClick={() => editAccount()}>
                     <Plus size={17}/> Ajouter
                   </button>
                 </div>
@@ -7673,12 +7724,23 @@ export default function App() {
                 )}
                 {invite && (
                   <div className="invite">
-                    <strong>Code à transmettre à votre partenaire</strong>
+                    <strong>Code ou lien à transmettre à votre partenaire</strong>
                     <code>{invite}</code>
                     <p>
                       Valable 7 jours, une seule utilisation. Générer un nouveau
                       code annule le précédent.
                     </p>
+                    <button type="button" className="secondary" onClick={async()=>{
+                      const url = location.origin + location.pathname + "#join=" + encodeURIComponent(invite);
+                      try {
+                        if (navigator.share) await navigator.share({
+                          title:"Rejoindre mon foyer Wimm",text:"Rejoins mon foyer Wimm avec ce lien sécurisé.",url
+                        });
+                        else { await navigator.clipboard.writeText(url);setNotice("Lien d’invitation copié"); }
+                      } catch(e) {if(!(e instanceof Error && e.name==="AbortError"))setNotice("Impossible de partager ce lien sur cet appareil.");}
+                    }}>
+                      <ArrowUpRight size={16}/> Partager un lien
+                    </button>
                     <button
                       className="secondary"
                       onClick={() =>
