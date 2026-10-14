@@ -55,10 +55,8 @@ export default function GuidedJourney({
  route:string;navigate:(route:string)=>void;state:State;enabled:boolean;proEnabled:boolean;
  completed:()=>void;
 }){
-  const [stepId,setStepId]=useState(()=>{
-    const saved=api.auth.getUser;
-    void saved;return "welcome";
-  });
+  const [stepId,setStepId]=useState("welcome");
+  const [done,setDone]=useState(false);
   const [opened,setOpened]=useState(true);
   const [busy,setBusy]=useState(false);
   const [declareNone,setDeclareNone]=useState(false);
@@ -97,7 +95,7 @@ export default function GuidedJourney({
     return cleanup;
   },[enabled,opened,route,stepId,proEnabled]);
 
-  if(!enabled||!loaded||!stage)return null;
+  if(!enabled||!loaded||!stage||done)return null;
   const present=route===stage.route;
   const alreadyHasBudgets=state.categories.some(c=>Object.values(c.budgets).some(v=>v>0));
   const alreadyHasFixed=state.rules.some(r=>r.kind==="fixed");
@@ -113,7 +111,7 @@ export default function GuidedJourney({
       if(idx===steps.length-1){
         const {error}=await api.auth.updateUser({data:{wimm_journey_done:true,wimm_journey_step:"done"}});
         if(error)throw error;
-        completed();setOpened(false);
+        setDone(true);completed();setOpened(false);
       }else{
         const next=steps[idx+1];
         const {error}=await api.auth.updateUser({data:{wimm_journey_step:next.id}});
