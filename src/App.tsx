@@ -48,6 +48,7 @@ import {
   ArrowDownLeft,
   ArrowLeftRight,
   ChevronLeft,
+  ChevronsLeft,
   ChevronRight,
   Minus,
   Bell,
@@ -5462,7 +5463,7 @@ export default function App() {
             "fixed",
           ].includes(route) && (
             <div className="month-picker">
-              <button className="month-reset icon" type="button" aria-label="Revenir au mois actuel" title="Revenir au mois actuel" disabled={selectedMonth === month()} onClick={() => setMonth(month())}><ChevronLeft size={16} /></button>
+              <button className="month-reset icon" type="button" aria-label="Revenir au mois actuel" title="Revenir au mois actuel" disabled={selectedMonth === month()} onClick={() => setMonth(month())}><ChevronsLeft size={19} strokeWidth={2.25} /></button>
 
               <button
                 className="icon"
