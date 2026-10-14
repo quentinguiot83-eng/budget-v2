@@ -1,159 +1,241 @@
-
-import { useEffect, useState } from "react";
-import { ArrowRight, Check, ChevronRight, Compass, LockKeyhole, X } from "lucide-react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
+import { ArrowLeft, ArrowRight, Check, Compass, Lightbulb, LockKeyhole, MousePointerClick, Pause, Play, X } from "lucide-react";
 import { api } from "./api";
 import type { State } from "./engine";
+import { findVisibleTourTarget } from "./tutorialTargeting";
+import { journeySteps, type JourneyStep } from "./GuidedJourneyContent";
 import "./guided-journey.css";
 
-type JourneyStep={id:string;route:string;title:string;description:string;help:string;target:string};
-const ALL_STEPS:JourneyStep[]=[
-  {id:"welcome",route:"home",title:"Bienvenue sur Wimm",
-   description:"Toutes vos finances, vos projets et votre patrimoine réunis au même endroit.",
-   help:"Découvrez votre solde, votre disponible jusqu'à la fin du mois et la synthèse du foyer.",
-   target:".home-balance-main"},
-  {id:"menu",route:"home",title:"Découvrir le menu",
-   description:"Chaque rubrique possède son rôle : Budget, Patrimoine, Projets et Projections. Le bouton + permet d'ajouter des opérations.",
-   help:"Le parcours présentera chaque rubrique dans l'ordre. Vous pouvez quitter et reprendre à tout moment.",
-   target:".bottom-nav,.desktop-sidebar-nav"},
-  {id:"budget",route:"budget",title:"Vos budgets et catégories",
-   description:"Créez ou modifiez vos catégories et attribuez-leur une enveloppe mensuelle.",
-   help:"Ouvrez une catégorie, fixez son budget puis revenez ici. Au moins une enveloppe supérieure à 0 € est nécessaire.",
-   target:"[data-tour='budget-categories'],.budget-month-tracker"},
-  {id:"fixed",route:"fixed",title:"Vos dépenses fixes",
-   description:"Enregistrez vos loyers, assurances et abonnements avec leurs dates réelles d'échéance.",
-   help:"Créez votre première dépense fixe, ou indiquez que vous n'en avez pas pour le moment.",
-   target:".page-remaining-summary-fixed,.fixed-expenses-list"},
-  {id:"wealth",route:"wealth",title:"Patrimoine et épargne",
-   description:"Ajoutez vos livrets et placements, leurs soldes, rendements, fiscalité et plafonds. Répartissez ensuite votre épargne mensuelle.",
-   help:"Ajoutez au moins un compte d'épargne, ou signalez que vous préférez le configurer plus tard.",
-   target:".wealth-accounts-list,[data-tour='wealth-savings']"},
-  {id:"trips",route:"trips",title:"Vos projets",
-   description:"Préparez un voyage ou un projet personnel, définissez son budget et son financement.",
-   help:"Vous pouvez créer un premier projet ou simplement découvrir les possibilités.",
-   target:".projects-type-switch,.trips-top-actions"},
-  {id:"projection",route:"projection",title:"Vos projections",
-   description:"Simulez l'évolution de vos finances selon votre épargne, vos charges et vos projets.",
-   help:"Les courbes sont des estimations, pas des garanties de rendement.",
-   target:".projection-chart-v2,.projection-main-card"},
-  {id:"add",route:"add",title:"Ajouter une opération",
-   description:"Le bouton + permet d'ajouter dépenses, revenus, virements et autres opérations.",
-   help:"Choisissez le type d'opération puis le compte, le montant et la catégorie. Vous pouvez revenir sans rien enregistrer.",
-   target:".add-grid,.add-page-layout"},
-  {id:"pro",route:"pro",title:"Votre espace Pro",
-   description:"Clients, factures, rendez-vous et trésorerie, séparés des finances personnelles.",
-   help:"Découvrez l'espace Pro et sa navigation.",
-   target:".prosuite-nav,.prosuite-metrics"},
-  {id:"settings",route:"settings",title:"Personnalisation et sécurité",
-   description:"Personnalisez le thème et les notifications ; gérez les membres du foyer, les sauvegardes et l'aide.",
-   help:"Retrouvez aussi le centre d'apprentissage pour rejouer une explication à tout moment.",
-   target:".wimm-settings-nav"}
-];
-const currentStep=(steps:JourneyStep[],id:string)=>steps.findIndex(x=>x.id===id);
+type Rect={top:number;left:number;width:number;height:number;bottom:number;right:number};
+type Geometry={focus:Rect|null;nav:Rect|null;found:boolean;w:number;h:number};
+const emptyGeometry:Geometry={focus:null,nav:null,found:true,w:0,h:0};
+function measure(el:HTMLElement|null,pad=5):Rect|null {
+  if(!el)return null;
+  const b=el.getBoundingClientRect();
+  const w=window.innerWidth,h=window.innerHeight;
+  if(b.width<8||b.height<8||b.bottom<0||b.top>h)return null;
+  const left=Math.max(3,b.left-pad),top=Math.max(3,b.top-pad);
+  const right=Math.min(w-3,b.right+pad),bottom=Math.min(h-3,b.bottom+pad);
+  if(right<=left||bottom<=top)return null;
+  return {left,top,right,bottom,width:right-left,height:bottom-top};
+}
+function navSelector(tab:string) {
+  const requested = tab==="add"?"[data-tour='add-button'],.desktop-quick-add"
+    :tab==="settings"?"[data-tour-route='settings'],.mobile-profile-trigger,.sidebar-bottom button"
+    :tab==="pro"?"[data-tour-route='pro'],.wimm-pro-shortcut"
+    :`[data-tour-route='${tab}']`;
+  return requested;
+}
+function makeRect(rect:Rect|null) {
+ if(!rect)return null;
+ return {left:rect.left,top:rect.top,width:rect.width,height:rect.height};
+}
+const chapterCount=(steps:JourneyStep[],name:string)=>steps.filter(x=>x.chapter===name).length;
+const chapterNumber=(steps:JourneyStep[],step:JourneyStep)=>steps.filter(x=>x.chapter===step.chapter).findIndex(x=>x.id===step.id)+1;
+
 export default function GuidedJourney({
- route,navigate,state,enabled,proEnabled,completed,preview=false
+  route,navigate,state,enabled,proEnabled,completed,preview=false
 }:{
- route:string;navigate:(route:string)=>void;state:State;enabled:boolean;proEnabled:boolean;
- completed:()=>void;preview?:boolean;
+  route:string;navigate:(route:string)=>void;state:State;enabled:boolean;proEnabled:boolean;
+  completed:()=>void;preview?:boolean;
 }){
+  const steps=useMemo(()=>journeySteps(proEnabled),[proEnabled]);
   const [stepId,setStepId]=useState("welcome");
-  const [done,setDone]=useState(false);
-  const [opened,setOpened]=useState(true);
-  const [busy,setBusy]=useState(false);
-  const [declareNone,setDeclareNone]=useState(false);
-  const [error,setError]=useState("");
   const [loaded,setLoaded]=useState(false);
-  const steps=ALL_STEPS.filter(s=>s.id!=="pro"||proEnabled);
-  const idx=Math.max(0,currentStep(steps,stepId));
-  const stage=steps[idx];
+  const [finished,setFinished]=useState(false);
+  const [paused,setPaused]=useState(false);
+  const [practicing,setPracticing]=useState(false);
+  const [busy,setBusy]=useState(false);
+  const [error,setError]=useState("");
+  const [defer,setDefer]=useState(false);
+  const [geometry,setGeometry]=useState<Geometry>(emptyGeometry);
+  const [topPanel,setTopPanel]=useState(false);
+  const targetRef=useRef<HTMLElement|null>(null);
+  const scrollKey=useRef("");
+  const index=Math.max(0,steps.findIndex(step=>step.id===stepId));
+  const stage=steps[index];
+  const located=route===stage.route;
+  const total=steps.length;
+  const chapterAt=chapterNumber(steps,stage);
+  const chapterSize=chapterCount(steps,stage.chapter);
+  const active=enabled&&loaded&&!finished;
+  const working=active&&!paused&&!practicing&&located;
+  const budgetSet=state.categories.some(c=>Object.values(c.budgets).some(v=>v>0));
+  const fixedSet=state.rules.some(r=>r.kind==="fixed");
+  const wealthSet=state.accounts.some(a=>a.group!=="current"&&!a.archived&&a.allocation>0);
+  const mustConfigure=(stage.id==="budget-category-list"&&!budgetSet)
+    ||(stage.id==="fixed-list"&&!fixedSet&&!defer)
+    ||(stage.id==="wealth-savings"&&!wealthSet&&!defer);
+  const progress=(index+1)/Math.max(1,total)*100;
 
   useEffect(()=>{
     if(!enabled)return;
-    if(preview) {setLoaded(true);return;}
-    let active=true;
+    if(preview){setLoaded(true);return;}
+    let mounted=true;
     api.auth.getUser().then(({data})=>{
-      if(!active)return;
-      const value=data.user?.user_metadata?.wimm_journey_step;
-      const resolved=typeof value==="string"&&steps.some(s=>s.id===value)?value:"welcome";
-      setStepId(resolved);setLoaded(true);
-    }).catch(()=>{if(active)setLoaded(true);});
-    return()=>{active=false;};
-  },[enabled,proEnabled,preview]);
+      if(!mounted)return;
+      const saved=data.user?.user_metadata?.wimm_journey_step;
+      let found=steps.find(s=>s.id===saved);
+      // Migrate the previous one-step-per-chapter guide without losing progress.
+      if(!found&&typeof saved==="string"){
+        const old:Record<string,string>={
+          budget:"budget-total",fixed:"fixed-summary",wealth:"wealth-overview",
+          trips:"trips-selector",projection:"projection-horizon",add:"add-button",
+          pro:"pro-overview",settings:"settings-profile",menu:"menu"
+        };
+        found=steps.find(s=>s.id===old[saved]);
+      }
+      setStepId(found?.id??"welcome");
+      setLoaded(true);
+    }).catch(()=>{if(mounted)setLoaded(true);});
+    return()=>{mounted=false;};
+  },[enabled,preview,steps]);
 
   useEffect(()=>{
-    if(!enabled||!opened||!stage||route!==stage.route)return;
-    const selector=stage.target.split(",").map(t=>t.trim());
-    const focus=()=>{
-      for(const s of selector){
-        const target=document.querySelector<HTMLElement>(s);
-        if(target&&target.getBoundingClientRect().width>0){
-          target.classList.add("wimm-journey-focus");
-          return ()=>target.classList.remove("wimm-journey-focus");
-        }
-      }
-      return ()=>{};
+    if(!active||paused||practicing)return;
+    if(!located)navigate(stage.route);
+  },[active,paused,practicing,located,stage.route,navigate]);
+
+  useEffect(()=>{
+    if(!working)return;
+    const escape=(event:KeyboardEvent)=>{if(event.key==="Escape"){event.preventDefault();setPaused(true);}};
+    document.addEventListener("keydown",escape);
+    return()=>document.removeEventListener("keydown",escape);
+  },[working]);
+
+  useLayoutEffect(()=>{
+    if(!working){targetRef.current=null;setGeometry(emptyGeometry);return;}
+    let cancelled=false;
+    let tries=0;
+    let timeout=0;
+    let frame=0;
+    let resizeObserver:ResizeObserver|null=null;
+    scrollKey.current="";
+    const refresh=()=>{
+      if(cancelled)return;
+      const focus=measure(targetRef.current);
+      const nav=measure(findVisibleTourTarget(navSelector(stage.nav)),4);
+      setGeometry({focus,nav,found:!!targetRef.current,w:window.innerWidth,h:window.innerHeight});
+      if(focus) setTopPanel(focus.top>window.innerHeight*.52);
     };
-    const cleanup=focus();
-    return cleanup;
-  },[enabled,opened,route,stepId,proEnabled]);
+    const locate=()=>{
+      if(cancelled)return;
+      const element=findVisibleTourTarget(stage.target);
+      const nav=findVisibleTourTarget(navSelector(stage.nav));
+      if(!element&&tries++<9){timeout=window.setTimeout(locate,145);return;}
+      targetRef.current=element;
+      if(element){
+        const key=stage.id;
+        if(scrollKey.current!==key){
+          scrollKey.current=key;
+          const rect=element.getBoundingClientRect();
+          const top=document.querySelector<HTMLElement>(".topbar")?.getBoundingClientRect().bottom??80;
+          // Scroll the target into the visible area, clear of header and bottom navigation.
+          if(rect.top<top+12||rect.bottom>window.innerHeight-120||
+             rect.top>window.innerHeight*.65)element.scrollIntoView({block:"center",behavior:"instant"});
+        }
+        resizeObserver=new ResizeObserver(refresh);
+        resizeObserver.observe(element);
+      }
+      if(nav)resizeObserver?.observe(nav);
+      frame=window.requestAnimationFrame(refresh);
+    };
+    timeout=window.setTimeout(locate,110);
+    window.addEventListener("resize",refresh);
+    window.addEventListener("scroll",refresh,true);
+    return()=>{
+      cancelled=true;
+      window.clearTimeout(timeout);
+      window.cancelAnimationFrame(frame);
+      resizeObserver?.disconnect();
+      window.removeEventListener("resize",refresh);
+      window.removeEventListener("scroll",refresh,true);
+      targetRef.current=null;
+    };
+  },[working,stage.id,stage.target,stage.nav,route]);
 
-  if(!enabled||!loaded||!stage||done)return null;
-  const present=route===stage.route;
-  const alreadyHasBudgets=state.categories.some(c=>Object.values(c.budgets).some(v=>v>0));
-  const alreadyHasFixed=state.rules.some(r=>r.kind==="fixed");
-  const alreadyHasSavings=state.accounts.some(a=>a.group!=="current"&&!a.archived);
-  const savingsAllocationConfigured=state.accounts.some(a=>a.group!=="current"&&!a.archived&&a.allocation>0);
-  const needsInput=(stage.id==="budget"&&!alreadyHasBudgets)
-   ||(stage.id==="fixed"&&!alreadyHasFixed&&!declareNone)
-   ||(stage.id==="wealth"&&!(alreadyHasSavings&&savingsAllocationConfigured)&&!declareNone);
-
-  async function advance(){
-    if(busy||needsInput)return;
+  async function setStep(next:number){
+    if(busy)return;
+    const idx=Math.min(total-1,Math.max(0,next));
+    if(idx===index&&next<total)return;
     setBusy(true);setError("");
     try{
-      if(idx===steps.length-1){
-        if(!preview) {
+      if(next>=total){
+        if(!preview){
           const {error}=await api.auth.updateUser({data:{wimm_journey_done:true,wimm_journey_step:"done"}});
           if(error)throw error;
         }
-        setDone(true);completed();setOpened(false);
-      }else{
-        const next=steps[idx+1];
-        if(!preview) {
-          const {error}=await api.auth.updateUser({data:{wimm_journey_step:next.id}});
-          if(error)throw error;
-        }
-        setStepId(next.id);setDeclareNone(false);setOpened(true);
-        navigate(next.route);
+        setFinished(true);completed();return;
       }
-    }catch(e){setError(e instanceof Error?e.message:"Impossible de mémoriser l'étape.");}
+      const candidate=steps[idx];
+      if(!preview){
+        const {error}=await api.auth.updateUser({data:{wimm_journey_step:candidate.id}});
+        if(error)throw error;
+      }
+      setStepId(candidate.id);
+      setDefer(false);setPracticing(false);setPaused(false);
+      if(route!==candidate.route)navigate(candidate.route);
+    }catch(e){setError(e instanceof Error?e.message:"Impossible d'enregistrer votre progression.");}
     finally{setBusy(false);}
   }
-  if(!opened)return <div className="wimm-journey-return">
-    <span><Compass size={17}/> Parcours guidé : {idx+1}/{steps.length} · {stage.title}</span>
-    <button type="button" className="secondary" onClick={()=>{setOpened(true);navigate(stage.route);}}>Reprendre <ArrowRight size={15}/></button>
-  </div>;
-  if(!present)return <div className="wimm-journey-return">
-    <span><LockKeyhole size={17}/> Étape à terminer : {idx+1}/{steps.length} · {stage.title}</span>
-    <button type="button" className="secondary" onClick={()=>navigate(stage.route)}>Revenir à l'étape <ArrowRight size={15}/></button>
-  </div>;
-  return <section className="wimm-journey-panel" aria-label="Parcours guidé de démarrage">
-    <div className="wimm-journey-heading">
-      <div><span className="wimm-journey-eyebrow"><Compass size={16}/> PARCOURS WIMM · {idx+1}/{steps.length}</span>
-        <h2>{stage.title}</h2></div>
-      <button type="button" aria-label="Mettre en pause le tutoriel" title="Reprendre plus tard" onClick={()=>setOpened(false)}><X size={18}/></button>
+  if(!active)return null;
+  if(paused||practicing||!located){
+    return <div className="wimm-journey-docked" role="status">
+      <span><Compass size={17}/> Découverte Wimm · {index+1}/{total}</span>
+      <strong>{stage.title}</strong>
+      <button type="button" onClick={()=>{
+        setPaused(false);setPracticing(false);
+        if(route!==stage.route)navigate(stage.route);
+      }}><Play size={15}/> Reprendre</button>
+      {practicing&&<button type="button" onClick={()=>void setStep(index+1)}>J'ai compris <ArrowRight size={15}/></button>}
+    </div>;
+  }
+  const nav=geometry.nav,focus=geometry.focus;
+  const bottomNav=!!document.querySelector(".bottom-nav") && !!findVisibleTourTarget(".bottom-nav");
+  const overlay=(
+    <div className="wimm-journey-overlay" role="dialog" aria-modal="true" aria-label="Découverte guidée Wimm">
+      <div className="wimm-journey-blocker" aria-hidden="true"/>
+      <svg className="wimm-journey-scrim" viewBox={`0 0 ${geometry.w||window.innerWidth} ${geometry.h||window.innerHeight}`} preserveAspectRatio="none" aria-hidden="true">
+        <defs>
+          <mask id="wimm-journey-window">
+            <rect x="0" y="0" width="100%" height="100%" fill="white"/>
+            {focus&&<rect x={focus.left} y={focus.top} width={focus.width} height={focus.height} rx="13" fill="black"/>}
+            {nav&&<rect x={nav.left} y={nav.top} width={nav.width} height={nav.height} rx="10" fill="black"/>}
+          </mask>
+        </defs>
+        <rect x="0" y="0" width="100%" height="100%" fill="rgba(13,17,30,.70)" mask="url(#wimm-journey-window)"/>
+      </svg>
+      {focus&&<div className="wimm-journey-ring" style={makeRect(focus)??undefined} aria-hidden="true"/>}
+      {nav&&<div className="wimm-journey-ring wimm-journey-ring-nav" style={makeRect(nav)??undefined} aria-hidden="true"/>}
+      <div className={`wimm-journey-flyout ${topPanel?"at-top":"at-bottom"} ${bottomNav?"has-mobile-nav":""}`}>
+        <header>
+          <span><Compass size={15}/> {stage.chapter.toUpperCase()} · {chapterAt}/{chapterSize}</span>
+          <button type="button" onClick={()=>setPaused(true)} title="Mettre en pause" aria-label="Mettre en pause la visite"><Pause size={18}/></button>
+        </header>
+        <div className="wimm-journey-progress"><span style={{width:progress+"%"}}/></div>
+        <div className="wimm-journey-flyout-title"><span>{index+1}/{total}</span><h2>{stage.title}</h2></div>
+        <p>{stage.description}</p>
+        <div className="wimm-journey-usage"><Lightbulb size={16}/><span>{stage.action}</span></div>
+        {!geometry.found&&<small className="wimm-journey-conditional">Ce bloc n'est pas affiché avec les données actuelles. Il apparaîtra lorsque la fonctionnalité sera configurée.</small>}
+        {(stage.id==="fixed-list"&&!fixedSet||stage.id==="wealth-savings"&&!wealthSet)&&
+          <label className="wimm-journey-optional">
+            <input type="checkbox" checked={defer} onChange={e=>setDefer(e.target.checked)}/>
+            Je configurerai cette fonctionnalité plus tard.
+          </label>}
+        {stage.id==="budget-category-list"&&!budgetSet&&<small className="wimm-journey-conditional">Créez au moins un budget pour poursuivre. Utilisez « Essayer » pour intervenir sur la page.</small>}
+        {!!error&&<p className="wimm-setup-error" role="alert">{error}</p>}
+        <footer>
+          <button type="button" className="wimm-journey-back" disabled={index===0||busy} onClick={()=>void setStep(index-1)}><ArrowLeft size={15}/> Retour</button>
+          <button type="button" className="wimm-journey-try" onClick={()=>setPracticing(true)}><MousePointerClick size={15}/> Essayer</button>
+          <button type="button" className="wimm-journey-next" disabled={busy||mustConfigure} onClick={()=>void setStep(index+1)}>
+            {busy?"Enregistrement…":index===total-1?"Terminer":"Suivant"}
+            {index===total-1?<Check size={15}/>:<ArrowRight size={15}/>}
+          </button>
+        </footer>
+        <button type="button" className="wimm-journey-later" onClick={()=>setPaused(true)}><X size={13}/> Reprendre plus tard</button>
+      </div>
     </div>
-    <div className="wimm-journey-progress"><span style={{width:((idx+1)/steps.length*100)+"%"}}/></div>
-    <p>{stage.description}</p><small>{stage.help}</small>
-    {stage.id==="fixed"&&!alreadyHasFixed&&<label className="wimm-journey-optional"><input type="checkbox" checked={declareNone} onChange={e=>setDeclareNone(e.target.checked)}/> Je n'ai pas de charges fixes à saisir pour le moment.</label>}
-    {stage.id==="wealth"&&!(alreadyHasSavings&&savingsAllocationConfigured)&&<label className="wimm-journey-optional"><input type="checkbox" checked={declareNone} onChange={e=>setDeclareNone(e.target.checked)}/> Je compléterai mon patrimoine ou ma répartition d'épargne plus tard.</label>}
-    {stage.id==="budget"&&!alreadyHasBudgets&&<span className="wimm-journey-note">Configurez au moins une enveloppe pour valider cette étape.</span>}
-    {error&&<p role="alert" className="wimm-setup-error">{error}</p>}
-    <div className="wimm-journey-actions">
-      <button type="button" className="secondary" onClick={()=>setOpened(false)}>Reprendre plus tard</button>
-      <button type="button" className="primary" disabled={busy||needsInput} onClick={()=>void advance()}>
-        {busy?"Enregistrement…":idx===steps.length-1?"Terminer ma configuration":"Étape suivante"}
-        {idx===steps.length-1?<Check size={16}/>:<ChevronRight size={16}/>}
-      </button>
-    </div>
-  </section>;
+  );
+  return createPortal(overlay,document.body);
 }
