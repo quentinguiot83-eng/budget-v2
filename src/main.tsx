@@ -9,6 +9,8 @@ import "./analysis-dashboard.css";
 import "./navigation-layout.css";
 /* Aurora is intentionally loaded ONLY on the preview branch. */
 import "./aurora-preview.css";
+/* Theme-aware, more pronounced Liquid Glass — preview only. */
+import "./aurora-theme.css";
 
 createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
