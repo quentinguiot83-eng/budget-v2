@@ -1003,7 +1003,7 @@
  */
 :root:not([data-mode="dark"]) .app .projection-projects-card,
 :root[data-mode="dark"] .app .projection-projects-card {
-  overflow: hidden;
+  overflow: visible; /* Keep the desktop edit/delete swipe menu unclipped. */
 }
 :root:not([data-mode="dark"]) .app .projection-projects-card > .project-swipe-row,
 :root[data-mode="dark"] .app .projection-projects-card > .project-swipe-row,
