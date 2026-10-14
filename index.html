@@ -32,8 +32,8 @@
         const dark = mode === "dark" || (mode === "auto" && matchMedia("(prefers-color-scheme: dark)").matches);
         document.documentElement.dataset.mode = dark ? "dark" : "light";
         document.documentElement.style.colorScheme = dark ? "dark" : "light";
-        document.documentElement.style.setProperty("--status-bar-background", dark ? "#202331" : "#ffffff");
-        document.querySelector('meta[name="theme-color"]').content = dark ? "#202331" : "#ffffff";
+        document.documentElement.style.setProperty("--status-bar-background", dark ? "#0c1215" : "#ffffff");
+        document.querySelector('meta[name="theme-color"]').content = dark ? "#0c1215" : "#ffffff";
       } catch {}
     </script>
     <meta
