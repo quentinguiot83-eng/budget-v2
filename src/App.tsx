@@ -5428,7 +5428,7 @@ export default function App() {
           <WimmWordmark />
         </button>
         <p className="eyebrow">{doc.household.name}</p>
-        <button type="button" className="desktop-quick-add" onClick={()=>navigate("add")}>
+        <button type="button" className="desktop-quick-add" data-tour-route="add" onClick={()=>navigate("add")}>
           <Plus size={19}/> Ajouter une opération
         </button>
         <nav data-tour="desktop-nav" className="desktop-sidebar-nav" aria-label="Navigation ordinateur">
@@ -5437,7 +5437,7 @@ export default function App() {
               <span className="desktop-nav-section-heading">{group.title}</span>
               {group.items.filter(item=>!s.hidden.includes(item.id)).map(item=>(
                 <button type="button" key={item.id} className={route===item.id?"active":""}
-                  aria-current={route===item.id?"page":undefined} onClick={()=>navigate(item.id)}>
+                  data-tour-route={item.id} aria-current={route===item.id?"page":undefined} onClick={()=>navigate(item.id)}>
                   {item.icon}<span>{item.label}</span>
                 </button>
               ))}
@@ -5472,12 +5472,12 @@ export default function App() {
               <Bell size={21} />
               {alerts.length > 0 && <i>{alerts.length}</i>}
             </button>
-            {proEnabled && <button type="button" className="wimm-pro-shortcut"
+            {proEnabled && <button type="button" className="wimm-pro-shortcut" data-tour-route="pro"
               aria-label="Accéder à l'espace professionnel" aria-current={route==="pro"?"page":undefined}
               onClick={()=>navigate("pro")}>PRO</button>}
-            <button type="button" className="icon desktop-settings-trigger" aria-label="Réglages"
+            <button type="button" className="icon desktop-settings-trigger" data-tour-route="settings" aria-label="Réglages"
               onClick={()=>navigate("settings")}><Settings size={21}/></button>
-            <button type="button" className="icon mobile-profile-trigger"
+            <button type="button" className="icon mobile-profile-trigger" data-tour-route="settings"
               aria-label="Réglages" onClick={()=>navigate("settings")}>
               <Settings size={21}/>
             </button>
@@ -8149,7 +8149,7 @@ export default function App() {
       <nav className="bottom-nav" aria-label="Navigation principale mobile" data-tour="mobile-nav">
         {mobileNav.map(n=>(
           <button type="button" key={n.id} className={route===n.id?"active":""}
-            aria-current={route===n.id?"page":undefined} onClick={()=>navigate(n.id)}>
+            data-tour-route={n.id} aria-current={route===n.id?"page":undefined} onClick={()=>navigate(n.id)}>
             {n.icon}<span>{n.label}</span>
           </button>
         ))}
@@ -8208,7 +8208,7 @@ export default function App() {
         ref={quickAddButtonRef}
         type="button"
         className={mobileQuickAddOpen ? "floating-add-button open" : "floating-add-button"}
-        data-tour="add-button"
+        data-tour="add-button" data-tour-route="add"
         aria-label={mobileQuickAddOpen ? "Fermer l’ajout rapide" : "Ajouter une opération"}
         aria-haspopup="dialog"
         aria-controls="wimm-quick-add-actions"
