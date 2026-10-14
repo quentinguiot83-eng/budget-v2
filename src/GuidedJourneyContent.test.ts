@@ -34,7 +34,7 @@ test("each main tab and required budget subpage is represented",()=>{
     assert.ok(navs.has(tab),tab);
 });
 
-test("each of the 58 onboarding explanations is brief, helpful and non-redundant",()=>{
+test("each onboarding explanation is brief, helpful and non-redundant",()=>{
   for(const step of JOURNEY_STEPS){
     const copy=JOURNEY_BRIEF[step.id];
     assert.ok(copy,step.id+" has no short explanation");
@@ -53,4 +53,12 @@ test("the plus button is explained immediately after the home chapter",()=>{
 });
 test("the reconciliation guide uses simple user-facing terms",()=>{
  assert.equal(JOURNEY_STEPS.find(s=>s.id==="wealth-reconcile")?.title,"Mettre à jour mes comptes");
+});
+
+test("account catch-up is discoverable inside Settings after household access",()=>{
+ const i=JOURNEY_STEPS.findIndex(s=>s.id==="settings-catchup");
+ assert.ok(i>0);
+ assert.equal(JOURNEY_STEPS[i-1].id,"settings-household");
+ assert.equal(JOURNEY_STEPS[i+1].id,"settings-security");
+ assert.match(JOURNEY_BRIEF["settings-catchup"],/Foyer et finances/);
 });
