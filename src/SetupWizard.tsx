@@ -93,7 +93,7 @@ export function applyInitialSetup(state: State, draft: InitialSetupDraft) {
 
   // Les catégories sont créées à partir du choix réel de l'utilisateur. Ne pas
   // ajouter les quatre anciennes valeurs si les noms ont été personnalisés.
-  if (draft.categories.length === 0) seedStarterCategories(state, startMonth);
+  // Respecter également le choix de supprimer toutes les catégories proposées.
   const categoryIds = new Map<string, string>();
   const categoryNames = new Set<string>();
   for (const c of draft.categories) {
