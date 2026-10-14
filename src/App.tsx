@@ -5469,12 +5469,15 @@ export default function App() {
                 <ChevronLeft size={18} />
               </button>
 
-              <input
-                type="month"
-                aria-label="Mois affiché"
-                value={selectedMonth}
-                onChange={(e) => e.target.value && setMonth(e.target.value)}
-              />
+              <label className="month-picker-current">
+                <span aria-hidden="true">{monthLabel(selectedMonth)}</span>
+                <input
+                  type="month"
+                  aria-label="Choisir le mois affiché"
+                  value={selectedMonth}
+                  onChange={(e) => e.target.value && setMonth(e.target.value)}
+                />
+              </label>
 
               <button
                 className="icon"
