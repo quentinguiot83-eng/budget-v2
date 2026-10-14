@@ -7,6 +7,8 @@ import "./style.css";
 import "./soft-tech.css";
 import "./analysis-dashboard.css";
 import "./navigation-layout.css";
+import "./aurora-preview.css";
+import "./aurora-theme.css";
 
 createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
