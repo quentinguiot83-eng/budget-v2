@@ -219,6 +219,7 @@ const amountField = (
 const demoEnabled = new URLSearchParams(location.search).get("demo") === "1";
 const onboardingPreviewEnabled = new URLSearchParams(location.search).get("onboarding_preview") === "1";
 const onboardingChecklistPreviewEnabled = new URLSearchParams(location.search).get("onboarding_checklist") === "1";
+const onboardingJourneyPreviewEnabled = demoEnabled && new URLSearchParams(location.search).get("onboarding_journey") === "1";
 const PENDING_INVITE_KEY = "wimm-pending-invite-v1";
 function pendingHouseholdInvitation() {
   const codeFromLink = new URLSearchParams(location.hash.replace(/^#/, "")).get("join");
@@ -5581,15 +5582,18 @@ export default function App() {
           )}
         </div>
         <main className="content">
-          {session?.user.user_metadata?.wimm_progressive_onboarding === true &&
-            session?.user.user_metadata?.wimm_journey_done !== true && !demoEnabled && (
+          {(onboardingJourneyPreviewEnabled || (session?.user.user_metadata?.wimm_progressive_onboarding === true &&
+            session?.user.user_metadata?.wimm_journey_done !== true && !demoEnabled)) && (
               <GuidedJourney
                 route={route}
                 navigate={navigate}
                 state={s}
                 enabled={true}
-                proEnabled={proEnabled}
-                completed={() => setNotice("Votre compte est configuré ! Retrouvez le tutoriel dans Réglages.")}
+                preview={onboardingJourneyPreviewEnabled}
+                proEnabled={onboardingJourneyPreviewEnabled ? true : proEnabled}
+                completed={() => setNotice(onboardingJourneyPreviewEnabled
+                  ? "Démonstration terminée, aucune donnée enregistrée."
+                  : "Votre compte est configuré ! Retrouvez le tutoriel dans Réglages.")}
               />
             )}
           {!current && !["settings", "wealth", "pro"].includes(route) && (
