@@ -5,7 +5,7 @@ import { seedStarterCategories } from "./starterCategories";
 
 type Group = "wealth" | "travel";
 type ExtraAccount = { id: string; name: string; group: Group; opening: string; allocation: string };
-type FixedCharge = { id: string; name: string; amount: string; category: string; first: string; interval: 1 | 3 | 12 };
+type FixedCharge = { id: string; name: string; amount: string; category: string; first: string; interval: 1 | 3 | 6 | 12 };
 type VariableBudget = { id: string; name: string; icon: string; amount: string };
 export type InitialSetupDraft = {
   professional: boolean | null;
@@ -72,7 +72,9 @@ export function applyInitialSetup(state: State, draft: InitialSetupDraft) {
   if (draft.salaryReceived && !state.salaryReceivedMonths.includes(startMonth)) state.salaryReceivedMonths.push(startMonth);
   if (draft.savingDone && !state.savingDoneMonths.includes(startMonth)) state.savingDoneMonths.push(startMonth);
 
-  seedStarterCategories(state, startMonth);
+  // Les catégories sont créées à partir du choix réel de l'utilisateur. Ne pas
+  // ajouter les quatre anciennes valeurs si les noms ont été personnalisés.
+  if (draft.categories.length === 0) seedStarterCategories(state, startMonth);
   const categoryIds = new Map<string, string>();
   const categoryNames = new Set<string>();
   for (const c of draft.categories) {
