@@ -42,3 +42,32 @@
  .wimm-journey-flyout>footer button{flex:1 1 auto}
 }
 @media(max-height:680px){.wimm-journey-flyout{max-height:48dvh}.wimm-journey-flyout.has-mobile-nav.at-bottom{bottom:calc(92px + env(safe-area-inset-bottom,0px))}}
+
+
+/* Adaptive placement: controlled by the visible viewport + target bounds,
+ * never by a fixed top/bottom breakpoint. Works with Safari's moving bars. */
+.wimm-journey-flyout.auto-placed {
+  bottom:auto!important;
+  top:12px;
+  visibility:hidden;
+  contain:layout style;
+  max-height:250px;
+  overscroll-behavior:contain;
+}
+.wimm-journey-flyout.auto-placed.ready {visibility:visible}
+.wimm-journey-flyout.auto-placed.compact {
+  padding:11px 13px!important;
+  border-radius:17px;
+}
+.wimm-journey-flyout.compact .wimm-journey-progress {margin:6px 0 9px}
+.wimm-journey-flyout.compact .wimm-journey-flyout-title {margin-bottom:6px}
+.wimm-journey-flyout.compact h2 {font-size:.94rem}
+.wimm-journey-flyout.compact p {font-size:.76rem;line-height:1.38;margin-bottom:7px}
+.wimm-journey-flyout.compact .wimm-journey-usage {padding:7px;font-size:.71rem;line-height:1.35}
+.wimm-journey-flyout.compact>footer {margin-top:8px}
+.wimm-journey-flyout.compact>footer button {min-height:33px;padding:6px 7px}
+.wimm-journey-flyout.compact .wimm-journey-later {margin:3px auto 0}
+@media(max-width:850px) {
+  .wimm-journey-flyout.auto-placed {max-height:220px}
+  .wimm-journey-flyout.compact>footer button {flex:1 1 25%}
+}
