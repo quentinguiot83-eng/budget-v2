@@ -25,7 +25,9 @@ import VersionHistoryPanel from "./VersionHistoryPanel";
 import DataProtectionStyles from "./DataProtectionStyles";
 import TripCoverEditor from "./TripCoverEditor";
 import { deleteTripCover, uploadTripCover, useTripCoverUrls, TRIP_COVERS_BUCKET } from "./tripCovers";
-import SetupWizard, { applyInitialSetup } from "./SetupWizard";
+import { applyInitialSetup } from "./SetupWizard";
+import ProgressiveSetupWizard from "./ProgressiveSetupWizard";
+import GettingStartedChecklist from "./GettingStartedChecklist";
 import {
   lazy,
   Suspense,
@@ -212,6 +214,8 @@ const amountField = (
   hint = "",
 ): Field => ({ ...field(name, label, cents / 100, "number", hint), min: 0 });
 const demoEnabled = new URLSearchParams(location.search).get("demo") === "1";
+const onboardingPreviewEnabled = new URLSearchParams(location.search).get("onboarding_preview") === "1";
+const onboardingChecklistPreviewEnabled = new URLSearchParams(location.search).get("onboarding_checklist") === "1";
 function demo(): Doc {
   const s = emptyState();
   const m = month();
@@ -5253,15 +5257,24 @@ export default function App() {
         </button>
       </main>
     );
-  if (!current) {
+  if (onboardingPreviewEnabled || !current) {
     return (
-      <SetupWizard
+      <ProgressiveSetupWizard
         householdName={doc.household.name}
+        storageKey={`wimm-setup-v2-${session?.user.id || "demo"}-${doc.household.id}`}
+        preview={onboardingPreviewEnabled}
         onComplete={async (draft) => {
+          tutorialAutoOpened.current = true;
           // First persist the household balances and budgets. The professional
           // preference lives separately and must not invalidate the setup if
           // the optional Pro service is temporarily unavailable.
           await change((state) => applyInitialSetup(state, draft), "Initialisation du foyer");
+          // Les nouveaux utilisateurs découvrent Wimm progressivement,
+          // sans ouverture automatique de la longue visite guidée.
+          const { error: progressError } = await api.auth.updateUser({
+            data: { wimm_progressive_onboarding: true, wimm_tutorial_started: true, wimm_tutorial_seen: true }
+          });
+          if (progressError) setNotice("Configuration enregistrée. Votre guide de démarrage reste disponible dans les réglages.");
           try {
             await rpc("budget_pro_toggle", { p_enabled: draft.professional === true });
             setProEnabled(draft.professional === true);
@@ -5513,6 +5526,15 @@ export default function App() {
           {route === "pro" && <ProWorkspace native />}
           {route === "home" && (
             <div className="wimm-home-clean">
+              {(onboardingChecklistPreviewEnabled || session?.user.user_metadata?.wimm_progressive_onboarding === true) && (
+                <GettingStartedChecklist
+                  state={s}
+                  storageKey={`wimm-onboarding-checklist-${session?.user.id || "demo"}`}
+                  preview={onboardingChecklistPreviewEnabled}
+                  onNavigate={navigate}
+                  onHelp={() => { setTutorialPage("home"); setTutorialMode("page"); setTutorialOpen(true); }}
+                />
+              )}
               <section className="balance-card home-balance-main" data-tour="home-overview">
                 <div className="split">
                   <div className="block-title">
