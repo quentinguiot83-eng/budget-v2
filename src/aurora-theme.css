@@ -1102,3 +1102,41 @@
   color: var(--muted) !important;
 }
 /* Keep chart lines and semantic positive/negative signals unchanged. */
+
+
+/* Aurora mobile sheet: constrained date fields and tidy close button. */
+/* Date/select controls may keep a WebKit intrinsic minimum width on iPhone. */
+@media (max-width:850px) {
+  .app dialog,
+  .app dialog .sheet,
+  .app dialog .sheet .field {
+    box-sizing: border-box;
+    min-width: 0;
+    max-width: 100%;
+  }
+  .app dialog .sheet .field :is(input,select,textarea) {
+    display: block;
+    box-sizing: border-box !important;
+    min-width: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+  .app dialog .sheet .field input[type="date"],
+  .app dialog .sheet .field input[type="month"] {
+    -webkit-appearance: none;
+    appearance: none;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    padding-inline: 12px !important;
+  }
+}
+/* Use one clean outline on keyboard focus, no nested double ring at rest. */
+.app dialog .sheet > header > .icon {
+  outline: none !important;
+  box-shadow: none !important;
+  border-width: 1px !important;
+}
+.app dialog .sheet > header > .icon:focus-visible {
+  outline: 2px solid var(--action) !important;
+  outline-offset: 2px !important;
+}
