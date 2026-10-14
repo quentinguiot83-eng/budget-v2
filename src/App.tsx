@@ -30,6 +30,7 @@ import ProgressiveSetupWizard from "./ProgressiveSetupWizard";
 import GettingStartedChecklist from "./GettingStartedChecklist";
 import GuidedJourney from "./GuidedJourney";
 import RecurringIncomeManager from "./RecurringIncomeManager";
+import JoinedFoyerProfile from "./JoinedFoyerProfile";
 import {
   lazy,
   Suspense,
@@ -5302,7 +5303,7 @@ export default function App() {
                 forgetPendingInvitation();
                 const {error: onboardingError} = await api.auth.updateUser({
                   data: {wimm_progressive_onboarding:true,wimm_journey_step:"welcome",wimm_journey_done:false,
-                    wimm_tutorial_started:true,wimm_tutorial_seen:true}
+                    wimm_tutorial_started:true,wimm_tutorial_seen:true,wimm_requires_profile:true}
                 });
                 if(onboardingError)setNotice("Foyer rejoint. Le parcours de découverte est accessible dans l'aide.");
                 setError("");
@@ -5315,6 +5316,21 @@ export default function App() {
         </button>
       </main>
     );
+  if (!onboardingPreviewEnabled && current && session?.user.user_metadata?.wimm_requires_profile === true) {
+    return <JoinedFoyerProfile onComplete={async professional=>{
+      try {
+        await rpc("budget_pro_toggle", {p_enabled:professional});
+        setProEnabled(professional);
+      } catch {
+        setNotice("Profil enregistré. Vérifiez les options du module Pro dans Réglages.");
+      }
+      const {data,error}=await api.auth.updateUser({
+        data:{wimm_requires_profile:false,wimm_profile_selected:true}
+      });
+      if(error)throw error;
+      if(data.user)setSession(previous=>previous?{...previous,user:data.user}:previous);
+    }}/>;
+  }
   if (onboardingPreviewEnabled || !current) {
     return (
       <ProgressiveSetupWizard
@@ -5330,7 +5346,7 @@ export default function App() {
           // Les nouveaux utilisateurs découvrent Wimm progressivement,
           // sans ouverture automatique de la longue visite guidée.
           const { error: progressError } = await api.auth.updateUser({
-            data: { wimm_progressive_onboarding: true, wimm_tutorial_started: true, wimm_tutorial_seen: true, wimm_journey_step: "welcome", wimm_journey_done: false }
+            data: { wimm_progressive_onboarding: true, wimm_tutorial_started: true, wimm_tutorial_seen: true, wimm_journey_step: "welcome", wimm_journey_done: false, wimm_profile_selected: true, wimm_requires_profile: false }
           });
           if (progressError) setNotice("Configuration enregistrée. Votre guide de démarrage reste disponible dans les réglages.");
           try {
