@@ -218,6 +218,26 @@ const amountField = (
 const demoEnabled = new URLSearchParams(location.search).get("demo") === "1";
 const onboardingPreviewEnabled = new URLSearchParams(location.search).get("onboarding_preview") === "1";
 const onboardingChecklistPreviewEnabled = new URLSearchParams(location.search).get("onboarding_checklist") === "1";
+const PENDING_INVITE_KEY = "wimm-pending-invite-v1";
+function pendingHouseholdInvitation() {
+  const codeFromLink = new URLSearchParams(location.hash.replace(/^#/, "")).get("join");
+  if (codeFromLink && /^[A-F0-9]{32}$/i.test(codeFromLink)) {
+    try { localStorage.setItem(PENDING_INVITE_KEY, JSON.stringify({code:codeFromLink.toUpperCase(),saved:Date.now()})); } catch {}
+    return codeFromLink.toUpperCase();
+  }
+  try {
+    const saved = JSON.parse(localStorage.getItem(PENDING_INVITE_KEY) || "null");
+    if (saved && typeof saved.code === "string" && /^[A-F0-9]{32}$/.test(saved.code) &&
+        Date.now() - Number(saved.saved) < 7*24*60*60*1000)
+      return saved.code;
+    localStorage.removeItem(PENDING_INVITE_KEY);
+  } catch {}
+  return "";
+}
+function forgetPendingInvitation() {
+  try { localStorage.removeItem(PENDING_INVITE_KEY); } catch {}
+  if (location.hash.startsWith("#join=")) history.replaceState(null,"",location.pathname+location.search);
+}
 function demo(): Doc {
   const s = emptyState();
   const m = month();
@@ -5273,13 +5293,13 @@ export default function App() {
               comptes et les opérations de ce foyer.
             </p>
             <Form
-              fields={[field("code", "Code d’invitation", new URLSearchParams(location.hash.replace(/^#/, "")).get("join") || "")]}
+              fields={[field("code", "Code d’invitation", pendingHouseholdInvitation())]}
               label="Rejoindre"
               submit={async (v) => {
                 const joined = await rpc("budget_join", { p_code: v.code });
                 if (joined?.error) throw Error(joined.error);
                 setDoc(joined);
-                if (location.hash.startsWith("#join=")) history.replaceState(null,"",location.pathname+location.search);
+                forgetPendingInvitation();
                 const {error: onboardingError} = await api.auth.updateUser({
                   data: {wimm_progressive_onboarding:true,wimm_journey_step:"welcome",wimm_journey_done:false,
                     wimm_tutorial_started:true,wimm_tutorial_seen:true}
