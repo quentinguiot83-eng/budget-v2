@@ -100,9 +100,10 @@ export default function GuidedJourney({
   const alreadyHasBudgets=state.categories.some(c=>Object.values(c.budgets).some(v=>v>0));
   const alreadyHasFixed=state.rules.some(r=>r.kind==="fixed");
   const alreadyHasSavings=state.accounts.some(a=>a.group!=="current"&&!a.archived);
+  const savingsAllocationConfigured=state.accounts.some(a=>a.group!=="current"&&!a.archived&&a.allocation>0);
   const needsInput=(stage.id==="budget"&&!alreadyHasBudgets)
    ||(stage.id==="fixed"&&!alreadyHasFixed&&!declareNone)
-   ||(stage.id==="wealth"&&!alreadyHasSavings&&!declareNone);
+   ||(stage.id==="wealth"&&!(alreadyHasSavings&&savingsAllocationConfigured)&&!declareNone);
 
   async function advance(){
     if(busy||needsInput)return;
@@ -139,7 +140,7 @@ export default function GuidedJourney({
     <div className="wimm-journey-progress"><span style={{width:((idx+1)/steps.length*100)+"%"}}/></div>
     <p>{stage.description}</p><small>{stage.help}</small>
     {stage.id==="fixed"&&!alreadyHasFixed&&<label className="wimm-journey-optional"><input type="checkbox" checked={declareNone} onChange={e=>setDeclareNone(e.target.checked)}/> Je n'ai pas de charges fixes à saisir pour le moment.</label>}
-    {stage.id==="wealth"&&!alreadyHasSavings&&<label className="wimm-journey-optional"><input type="checkbox" checked={declareNone} onChange={e=>setDeclareNone(e.target.checked)}/> Je compléterai mes comptes d'épargne plus tard.</label>}
+    {stage.id==="wealth"&&!(alreadyHasSavings&&savingsAllocationConfigured)&&<label className="wimm-journey-optional"><input type="checkbox" checked={declareNone} onChange={e=>setDeclareNone(e.target.checked)}/> Je compléterai mon patrimoine ou ma répartition d'épargne plus tard.</label>}
     {stage.id==="budget"&&!alreadyHasBudgets&&<span className="wimm-journey-note">Configurez au moins une enveloppe pour valider cette étape.</span>}
     {error&&<p role="alert" className="wimm-setup-error">{error}</p>}
     <div className="wimm-journey-actions">
