@@ -1179,3 +1179,102 @@ html:root body #root {
   color: var(--wimm-green) !important;
 }
 /* Keep transfers and adjustments visually neutral. */
+
+
+/* Aurora: theme-consistent learning/calendar/filter and genuinely neutral settings menu. */
+/* The hue chosen in Apparence should drive contextual actions, not imply income. */
+:root:not([data-mode="dark"]) .app .tutorial-learning-hub {
+  background:
+    linear-gradient(135deg,
+      color-mix(in srgb, var(--aurora-tone) 8%, #fff),
+      rgba(255,255,255,.96) 67%) !important;
+  border-color: rgba(255,255,255,.84) !important;
+}
+:root[data-mode="dark"] .app .tutorial-learning-hub {
+  background: linear-gradient(135deg,
+    color-mix(in srgb,var(--aurora-tone) 8%,#30393d),#30393d) !important;
+  border-color: rgba(222,232,229,.15) !important;
+}
+.app .tutorial-learning-hub .tutorial-learning-icon {
+  color: var(--accent-deep) !important;
+  background: color-mix(in srgb,var(--aurora-tone) 12%,var(--surface)) !important;
+}
+.app .tutorial-learning-hub .tutorial-learning-head .eyebrow {
+  color: var(--accent-deep) !important;
+}
+:root[data-mode="dark"] .app .tutorial-learning-hub .tutorial-learning-icon {
+  background: color-mix(in srgb,var(--aurora-tone) 20%,#374044) !important;
+}
+:root:not([data-mode="dark"]) .app .transaction-search-period select {
+  background: color-mix(in srgb,var(--aurora-tone) 9%,#fff) !important;
+  color: var(--ink) !important;
+  border-color: var(--border) !important;
+}
+:root[data-mode="dark"] .app .transaction-search-period select {
+  background: color-mix(in srgb,var(--aurora-tone) 13%,#333c41) !important;
+  color: var(--ink) !important;
+  border-color: rgba(224,234,229,.17) !important;
+}
+/* The current date belongs to the selected theme (not permanent green).
+   Other date states and payment/alert colors stay intact. */
+:root:not([data-mode="dark"]) .app .calendar-grid .day.today {
+  background: color-mix(in srgb,var(--aurora-tone) 10%,#fff) !important;
+  border-color: color-mix(in srgb,var(--aurora-tone) 40%,var(--border)) !important;
+  box-shadow: 0 0 0 2px color-mix(in srgb,var(--aurora-tone) 12%,transparent) !important;
+}
+:root[data-mode="dark"] .app .calendar-grid .day.today {
+  background: color-mix(in srgb,var(--aurora-tone) 15%,#303a40) !important;
+  border-color: color-mix(in srgb,var(--aurora-tone) 40%,#4b565b) !important;
+  box-shadow: 0 0 0 2px color-mix(in srgb,var(--aurora-tone) 15%,transparent) !important;
+}
+.app .calendar-grid .day.today > strong {
+  background: var(--action) !important;
+  color: #fff !important;
+  box-shadow: 0 3px 9px color-mix(in srgb,var(--aurora-tone) 17%,transparent) !important;
+}
+.app .calendar-grid .day.today.has-due > small { color: var(--accent-deep) !important; }
+
+/* Keep the whole settings menu genuinely neutral instead of wallpaper-tinted
+   translucent tiles. The icons retain the chosen accent, not colored tiles. */
+:root:not([data-mode="dark"]) .app .wimm-settings-menu {
+  background: #ffffff !important;
+  background-image: none !important;
+  border: 1px solid rgba(234,237,241,.97) !important;
+  box-shadow: 0 13px 28px rgba(37,52,59,.075),inset 0 1px 0 #fff !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+:root[data-mode="dark"] .app .wimm-settings-menu {
+  background: #303a3f !important;
+  background-image: none !important;
+  border: 1px solid rgba(220,231,228,.14) !important;
+  box-shadow: 0 12px 28px rgba(0,0,0,.16),inset 0 1px 0 rgba(255,255,255,.06) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+:root:not([data-mode="dark"]) .app .wimm-settings-menu > .wimm-settings-entry {
+  background: transparent !important;
+  background-image: none !important;
+}
+:root[data-mode="dark"] .app .wimm-settings-menu > .wimm-settings-entry {
+  background: transparent !important;
+  background-image: none !important;
+}
+:root:not([data-mode="dark"]) .app .wimm-settings-menu .wimm-settings-entry-icon {
+  background: #f0f2f5 !important;
+  color: var(--accent-deep) !important;
+}
+:root[data-mode="dark"] .app .wimm-settings-menu .wimm-settings-entry-icon {
+  background: #3a444a !important;
+  color: var(--accent-deep) !important;
+}
+/* Navigation must keep a visible keyboard focus even with neutral backgrounds. */
+.app .wimm-settings-menu > .wimm-settings-entry:focus-visible {
+  outline: 2px solid var(--action) !important;
+  outline-offset: -3px !important;
+}
+/* The return-to-today chevrons have a subtly distinct, accessible hit area.
+   Do not modify the already-approved top Wimm/iOS header. */
+.app .page-heading .month-picker > .month-reset:not(:disabled) {
+  color: var(--accent-deep) !important;
+}
