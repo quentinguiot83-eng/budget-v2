@@ -48,7 +48,7 @@ test("the plus button is explained immediately after the home chapter",()=>{
  const afterHome=JOURNEY_STEPS.findIndex(s=>s.id==="home-actions")+1;
  assert.equal(JOURNEY_STEPS[afterHome].id,"add-button");
  assert.equal(JOURNEY_STEPS[afterHome].chapter,"Ajouter");
- const lastAdd=JOURNEY_STEPS.findLastIndex(s=>s.chapter==="Ajouter");
+ const lastAdd=JOURNEY_STEPS.reduce((last,step,i)=>step.chapter==="Ajouter"?i:last,-1);
  assert.equal(JOURNEY_STEPS[lastAdd+1].id,"budget-total");
 });
 test("the reconciliation guide uses simple user-facing terms",()=>{
