@@ -1278,3 +1278,118 @@ html:root body #root {
 .app .page-heading .month-picker > .month-reset:not(:disabled) {
   color: var(--accent-deep) !important;
 }
+
+
+/* Aurora maintenance: desktop header + remaining non-semantic green accents (2026-10-14). */
+/* Do NOT restyle the approved iPhone header: this repair applies above 850px. */
+@media (min-width: 851px) {
+  html:root .app .main > header.topbar.soft-topbar {
+    position: relative !important;
+    top: auto !important;
+    z-index: 1;
+    background: transparent !important;
+    background-color: transparent !important;
+    background-image: none !important;
+    border: 0 !important;
+    border-bottom: 0 !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+  html:root .app .main > header.topbar.soft-topbar::before,
+  html:root .app .main > header.topbar.soft-topbar::after {
+    content: none !important;
+    display: none !important;
+  }
+}
+/* A page-specific green PRO ring was inherited from the previous palette. */
+.app .wimm-pro-shortcut[aria-current="page"] {
+  outline: 2px solid var(--action) !important;
+  outline-offset: 2px;
+}
+.app .wimm-pro-shortcut:focus-visible {
+  outline-color: var(--action) !important;
+}
+
+/* Fixed charges are informational, not income: remove permanent green glass. */
+:root:not([data-mode="dark"]) .app .page-remaining-summary-fixed {
+  background: linear-gradient(133deg,rgba(255,255,255,.91),rgba(255,255,255,.73)) !important;
+  border: 1px solid rgba(255,255,255,.88) !important;
+  box-shadow: 0 12px 29px rgba(41,55,63,.08),inset 0 1px 0 rgba(255,255,255,.94) !important;
+}
+:root[data-mode="dark"] .app .page-remaining-summary-fixed {
+  background: linear-gradient(134deg,#323b40,#2c353a) !important;
+  border: 1px solid rgba(221,232,228,.15) !important;
+  box-shadow: 0 12px 29px rgba(0,0,0,.14),inset 0 1px 0 rgba(255,255,255,.09) !important;
+}
+/* "Disponible" is not an incoming transaction. Match the chosen accent. */
+.app .wimm-home-clean .home-balance-available strong {
+  color: var(--accent-deep) !important;
+}
+/* Other navigation/action accents should be theme-selected, not mint. */
+.app :is(
+  .trip-hero .trip-icon,
+  .travel-metric > svg,
+  .trips-page-v2 .trip-tabs button.selected,
+  .trips-page-v2 .trip-tabs button.active,
+  .projects-future-icon,
+  .projects-type-switch button.selected,
+  .transaction-detail-options > summary
+) {
+  color: var(--accent-deep) !important;
+}
+:root:not([data-mode="dark"]) .app :is(.projects-future-icon,.trip-hero .trip-icon) {
+  background: color-mix(in srgb,var(--aurora-tone) 12%,#fff) !important;
+}
+:root[data-mode="dark"] .app :is(.projects-future-icon,.trip-hero .trip-icon) {
+  background: color-mix(in srgb,var(--aurora-tone) 13%,#353f44) !important;
+}
+
+/* Pro workspace follows the same rule as the main app: neutral surfaces,
+   colored selected actions, green only for revenue and red for spending. */
+.app .prosuite-native.prosuite-layer {
+  --pro-green: var(--action);
+}
+:root:not([data-mode="dark"]) .app .prosuite-native :is(
+  .prosuite-topbar,.prosuite-nav,.prosuite-metric,.prosuite-shortcuts button
+) {
+  border-color: rgba(225,231,234,.89) !important;
+  box-shadow: 0 9px 24px rgba(38,55,62,.07) !important;
+}
+:root:not([data-mode="dark"]) .app .prosuite-native .prosuite-topbar {
+  background: rgba(255,255,255,.82) !important;
+  background-image: none !important;
+}
+:root:not([data-mode="dark"]) .app .prosuite-native .prosuite-nav {
+  background: rgba(255,255,255,.74) !important;
+}
+:root:not([data-mode="dark"]) .app .prosuite-native .prosuite-metric:nth-child(n+3),
+:root:not([data-mode="dark"]) .app .prosuite-native .prosuite-shortcuts button {
+  background: rgba(255,255,255,.85) !important;
+  background-image: none !important;
+}
+:root[data-mode="dark"] .app .prosuite-native .prosuite-topbar,
+:root[data-mode="dark"] .app .prosuite-native .prosuite-nav,
+:root[data-mode="dark"] .app .prosuite-native .prosuite-metric:nth-child(n+3),
+:root[data-mode="dark"] .app .prosuite-native .prosuite-shortcuts button {
+  background: rgba(46,56,60,.89) !important;
+  background-image: none !important;
+  border-color: rgba(222,231,229,.16) !important;
+}
+.app .prosuite-native .prosuite-nav button.active {
+  color: var(--accent-deep) !important;
+  background: color-mix(in srgb,var(--aurora-tone) 11%,var(--surface)) !important;
+  box-shadow: inset 0 1px 0 color-mix(in srgb,var(--aurora-tone) 11%,transparent) !important;
+}
+.app .prosuite-native .prosuite-pagehead > div > span {
+  color: var(--accent-deep) !important;
+}
+.app .prosuite-native .prosuite-shortcuts svg {
+  color: var(--accent-deep) !important;
+}
+.app .prosuite-native .prosuite-client-avatar,
+.app .prosuite-native .prosuite-product-icon {
+  color: var(--accent-deep) !important;
+  background: color-mix(in srgb,var(--aurora-tone) 13%,var(--surface)) !important;
+}
+/* The first two professional metrics remain SEMANTIC financial indicators. */
