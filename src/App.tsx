@@ -1457,7 +1457,7 @@ export default function App() {
   function reconcileHouseholdAccounts() {
     const accounts = s.accounts.filter(a=>!a.archived && a.group!=="personal");
     if(!accounts.length)return;
-    openForm("Réconcilier mes comptes",
+    openForm("Mettre à jour mes comptes",
       accounts.map(a=>field("reconcile_"+a.id,a.name+" · solde bancaire réel (€)",balance(s,a.id)/100,"number",
         "Un ajustement conserve vos transactions et explique la différence.")),
       async values=>{
@@ -6959,7 +6959,7 @@ export default function App() {
                     <p className="muted">Touchez un compte pour voir ses détails et ses opérations.</p>
                   </div>
                   <button type="button" className="secondary wealth-reconcile-accounts" onClick={reconcileHouseholdAccounts}>
-                      <RefreshCw size={16}/> Réconcilier mes comptes
+                      <RefreshCw size={16}/> Mettre à jour mes comptes
                     </button>
                     <button type="button" className="primary wealth-add-account" onClick={() => editAccount()}>
                     <Plus size={17}/> Ajouter
@@ -7804,6 +7804,28 @@ export default function App() {
                 )}
               </section>
 )}
+              {settingsDetail === "mise-a-jour-comptes" && (
+                <section className="card wimm-settings-account-refresh">
+                  <div className="section-head">
+                    <div className="block-title"><h2>Vos comptes ne sont plus à jour ?</h2></div>
+                    <RefreshCw size={20} aria-hidden="true" />
+                  </div>
+                  <p>
+                    Vous avez oublié de saisir des transactions depuis quelque temps et
+                    vos soldes ne correspondent plus à ceux de votre banque ?
+                    Vous pouvez les mettre à jour ici.
+                  </p>
+                  <p className="muted">
+                    Wimm enregistre seulement la différence pour retrouver le bon solde.
+                    Vos anciennes transactions restent conservées, mais les dépenses
+                    oubliées ne sont pas recréées automatiquement.
+                  </p>
+                  <button type="button" className="primary"
+                    onClick={reconcileHouseholdAccounts}>
+                    <RefreshCw size={17} /> Mettre à jour mes comptes
+                  </button>
+                </section>
+              )}
               {settingsDetail === "salaire" && (
                 <RecurringIncomeManager
                   sources={s.incomeSources || []}
