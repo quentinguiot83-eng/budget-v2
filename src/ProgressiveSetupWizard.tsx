@@ -115,7 +115,7 @@ export default function ProgressiveSetupWizard({
     <section className="wimm-setup-shell progressive-done">
       <CheckCircle2 size={45}/><h1>Bienvenue sur Wimm !</h1>
       <p>Fin de la simulation. Aucun de ces montants n'a été enregistré.</p>
-      <a className="primary progressive-main-link" href="?demo=1&onboarding_checklist=1">Découvrir la démonstration <ArrowRight size={17}/></a>
+      <a className="primary progressive-main-link" href="?demo=1&onboarding_journey=1">Découvrir la démonstration <ArrowRight size={17}/></a>
       <button type="button" className="secondary" onClick={()=>{setDraft(emptyDraft());setPage(0);setFinished(false);}}>Recommencer</button>
     </section>
   </main>;
