@@ -1,10 +1,10 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { ArrowLeft, ArrowRight, Check, Compass, Lightbulb, LockKeyhole, MousePointerClick, Pause, Play, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, Compass, MousePointerClick, Pause, Play } from "lucide-react";
 import { api } from "./api";
 import type { State } from "./engine";
 import { findVisibleTourTarget } from "./tutorialTargeting";
-import { journeySteps, type JourneyStep } from "./GuidedJourneyContent";
+import { JOURNEY_BRIEF, journeySteps, type JourneyStep } from "./GuidedJourneyContent";
 import { chooseTourPlacement, clipTourBounds, type TourPlacement } from "./guidedJourneyLayout";
 import "./guided-journey.css";
 
@@ -53,7 +53,7 @@ export default function GuidedJourney({
   const [geometry,setGeometry]=useState<Geometry>(emptyGeometry);
   const [placement,setPlacement]=useState<TourPlacement|null>(null);
   const panelRef=useRef<HTMLDivElement|null>(null);
-  const fullHeightRef=useRef(325);
+  const fullHeightRef=useRef(230);
   const sideRef=useRef<"top"|"bottom"|null>(null);
   const targetRef=useRef<HTMLElement|null>(null);
 
@@ -112,7 +112,9 @@ export default function GuidedJourney({
     if(!working){targetRef.current=null;setGeometry(emptyGeometry);setPlacement(null);return;}
     let cancelled=false, attempts=0, timeout=0,frame=0;
     let observer:ResizeObserver|null=null;
-    fullHeightRef.current=Math.max(180,panelRef.current?.scrollHeight??325);
+    // Read the natural content size, then place it without crushing the text.
+    if(panelRef.current)panelRef.current.scrollTop=0;
+    fullHeightRef.current=Math.max(175,panelRef.current?.scrollHeight??230);
     sideRef.current=null;
     setPlacement(null);setGeometry(emptyGeometry);
     const scrollIntoSlot=(delta:number,element:HTMLElement)=>{
@@ -145,7 +147,7 @@ export default function GuidedJourney({
         navigationTop:navBar?.getBoundingClientRect().top??null,
         target:b?{top:b.top,bottom:b.bottom}:{top:vt+85,bottom:vt+130},
         fullPanelHeight:fullHeightRef.current,
-        compactPanelHeight:Math.min(205,Math.max(130,(vb-vt)*.29)),
+        compactPanelHeight:Math.min(236,Math.max(182,(vb-vt)*.34)),
         pinned,preferredSide:sideRef.current??undefined
       });
       sideRef.current??=plan.side;
@@ -254,31 +256,28 @@ export default function GuidedJourney({
       <div ref={panelRef} className={"wimm-journey-flyout auto-placed"+(placement?.compact?" compact":"")+(placement?" ready":"")}
         style={placement?{top:placement.panelTop,maxHeight:placement.panelHeight}:undefined}>
         <header>
-          <span><Compass size={15}/> {stage.chapter.toUpperCase()} · {chapterAt}/{chapterSize}</span>
-          <button type="button" onClick={()=>setPaused(true)} title="Mettre en pause" aria-label="Mettre en pause la visite"><Pause size={18}/></button>
+          <span>{stage.chapter} · {chapterAt}/{chapterSize}</span>
+          <button type="button" onClick={()=>setPaused(true)} title="Reprendre plus tard" aria-label="Mettre en pause le tutoriel"><Pause size={17}/></button>
         </header>
         <div className="wimm-journey-progress"><span style={{width:progress+"%"}}/></div>
-        <div className="wimm-journey-flyout-title"><span>{index+1}/{total}</span><h2>{stage.title}</h2></div>
-        <p>{stage.description}</p>
-        <div className="wimm-journey-usage"><Lightbulb size={16}/><span>{stage.action}</span></div>
-        {!geometry.found&&<small className="wimm-journey-conditional">Ce bloc n'est pas affiché avec les données actuelles. Il apparaîtra lorsque la fonctionnalité sera configurée.</small>}
-        {placement?.clipped&&stage.id!=="menu"&&<small className="wimm-journey-conditional">Ce bloc est grand : Wimm éclaire uniquement sa partie visible, sans la masquer. Utilisez « Essayer » pour le parcourir librement.</small>}
+        <div className="wimm-journey-flyout-title"><h2>{stage.title}</h2><span>{index+1}/{total}</span></div>
+        <p>{JOURNEY_BRIEF[stage.id]??stage.description}</p>
+        {!geometry.found&&<small className="wimm-journey-conditional">Ce bloc apparaîtra une fois configuré.</small>}
         {(stage.id==="fixed-list"&&!fixedSet||stage.id==="wealth-savings"&&!wealthSet)&&
           <label className="wimm-journey-optional">
             <input type="checkbox" checked={defer} onChange={e=>setDefer(e.target.checked)}/>
-            Je configurerai cette fonctionnalité plus tard.
+            Je le configurerai plus tard.
           </label>}
-        {stage.id==="budget-category-list"&&!budgetSet&&<small className="wimm-journey-conditional">Créez au moins un budget pour poursuivre. Utilisez « Essayer » pour intervenir sur la page.</small>}
+        {stage.id==="budget-category-list"&&!budgetSet&&<small className="wimm-journey-conditional">Créez une enveloppe pour continuer.</small>}
         {!!error&&<p className="wimm-setup-error" role="alert">{error}</p>}
         <footer>
-          <button type="button" className="wimm-journey-back" disabled={index===0||busy} onClick={()=>void setStep(index-1)}><ArrowLeft size={15}/> Retour</button>
+          <button type="button" className="wimm-journey-back" disabled={index===0||busy} onClick={()=>void setStep(index-1)}><ArrowLeft size={16}/><span>Retour</span></button>
           <button type="button" className="wimm-journey-try" onClick={()=>setPracticing(true)}><MousePointerClick size={15}/> Essayer</button>
           <button type="button" className="wimm-journey-next" disabled={busy||mustConfigure} onClick={()=>void setStep(index+1)}>
-            {busy?"Enregistrement…":index===total-1?"Terminer":"Suivant"}
-            {index===total-1?<Check size={15}/>:<ArrowRight size={15}/>}
+            {busy?"Patientez…":index===total-1?"Terminer":"Suivant"}
+            {index===total-1?<Check size={16}/>:<ArrowRight size={16}/>}
           </button>
         </footer>
-        <button type="button" className="wimm-journey-later" onClick={()=>setPaused(true)}><X size={13}/> Reprendre plus tard</button>
       </div>
     </div>
   );
