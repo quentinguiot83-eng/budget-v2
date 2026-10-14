@@ -950,3 +950,20 @@ body:has(.app),body:has(.app) #root {background:#f0f0ef!important}
 @media(max-width:850px) {
  :root:not([data-mode="dark"]) .app .soft-topbar {padding-block:7px!important;min-height:62px}
 }
+
+/* Restore the mobile wordmark: keep the header above scrolling content. */
+@media(max-width:850px) {
+ .app .main {position:relative;isolation:isolate}
+ .app .main > .topbar.soft-topbar {
+   position:sticky!important;top:0!important;z-index:999!important;
+   display:flex!important;visibility:visible!important;opacity:1!important;
+   overflow:visible!important;min-height:72px!important;
+ }
+ .app .soft-topbar .mobile-brand,
+ .app .soft-topbar .mobile-brand-row,
+ .app .soft-topbar .soft-wordmark,
+ .app .soft-topbar .wimm-wordmark {
+   display:flex!important;visibility:visible!important;opacity:1!important;
+ }
+ .app .soft-topbar .soft-wordmark {position:relative!important;z-index:2!important}
+}
