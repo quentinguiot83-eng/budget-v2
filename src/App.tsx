@@ -4499,7 +4499,9 @@ export default function App() {
             t.type === "transfer" ? (
               <ArrowLeftRight />
             ) : ["income", "repay"].includes(t.type) ? (
-              <ArrowDownLeft />
+              <ArrowDownLeft className="transaction-income-arrow" />
+            ) : t.type === "expense" ? (
+              <ArrowUpRight className="transaction-expense-arrow" />
             ) : (
               <ArrowUpRight />
             )
