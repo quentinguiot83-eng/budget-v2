@@ -917,3 +917,36 @@ body:has(.app),body:has(.app) #root {background:#f0f0ef!important}
   .app .soft-topbar {position:sticky;top:0;z-index:100}
   .app .soft-topbar .soft-wordmark {position:relative;z-index:2}
 }
+
+/* Exact component selectors: projections rows and unified neutral header. */
+:root:not([data-mode="dark"]) .app .projection-projects-card .project-swipe-row,
+:root:not([data-mode="dark"]) .app .projection-projects-card .project-swipe-row .swipe-actions-content,
+:root:not([data-mode="dark"]) .app .projection-projects-card .projection-project-row {
+  background:transparent!important;
+  background-color:transparent!important;
+  box-shadow:none!important;
+}
+:root:not([data-mode="dark"]) .app .projection-projects-card .project-swipe-row {
+  border:0!important;
+  border-bottom:1px solid rgba(88,99,108,.13)!important;
+  margin:0!important;
+}
+:root:not([data-mode="dark"]) .app .projection-projects-card .project-swipe-row:last-of-type {border-bottom:0!important}
+:root:not([data-mode="dark"]) .app .projection-projects-card .projection-project-row {
+  padding:13px 4px!important;
+  border:0!important;
+  border-radius:0!important;
+}
+:root:not([data-mode="dark"]) .app .projection-projects-card {
+  background:rgba(255,255,255,.48)!important;
+  border-color:rgba(255,255,255,.76)!important;
+}
+:root:not([data-mode="dark"]) .app .soft-topbar {
+  background:#f0f0ef!important;
+  box-shadow:none!important;
+  border:0!important;
+}
+:root:not([data-mode="dark"]) .app .soft-topbar::before {background:#f0f0ef!important}
+@media(max-width:850px) {
+ :root:not([data-mode="dark"]) .app .soft-topbar {padding-block:7px!important;min-height:62px}
+}
