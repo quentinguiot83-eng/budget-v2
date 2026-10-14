@@ -240,6 +240,9 @@ function forgetPendingInvitation() {
   try { localStorage.removeItem(PENDING_INVITE_KEY); } catch {}
   if (location.hash.startsWith("#join=")) history.replaceState(null,"",location.pathname+location.search);
 }
+// Capturer l'invitation dès l'ouverture du lien, y compris avant la création
+// du compte et la validation de l'e-mail (le hash peut changer à l'authentification).
+if (!demoEnabled) pendingHouseholdInvitation();
 function demo(): Doc {
   const s = emptyState();
   const m = month();
