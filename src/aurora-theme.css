@@ -1,0 +1,1142 @@
+/*
+ * Wimm Aurora Preview — Liquid Glass accent system
+ * Loaded AFTER aurora-preview.css, only on design/wimm-aurora-preview.
+ * Keep semantic colors (income / expenses / warnings) distinct from theme.
+ */
+:root {
+  --aurora-tone: #729eca;
+  --aurora-tone-soft: #e8f1fa;
+}
+:root[data-theme="blue"] {
+  --aurora-tone: #729eca;
+  --aurora-tone-soft: #e8f1fa;
+}
+:root[data-theme="lavender"] {
+  --aurora-tone: #ac93cc;
+  --aurora-tone-soft: #f0eafa;
+}
+:root[data-theme="sage"] {
+  --aurora-tone: #70ac94;
+  --aurora-tone-soft: #e5f2ea;
+}
+:root[data-theme="rose"] {
+  --aurora-tone: #ca8da8;
+  --aurora-tone-soft: #f9ebf2;
+}
+:root[data-theme="peach"] {
+  --aurora-tone: #ce9b77;
+  --aurora-tone-soft: #f9efe6;
+}
+
+/* A visible yet quiet hue shift on every page — not an opaque color overlay. */
+:root:not([data-mode="dark"]) .app {
+  background:
+    radial-gradient(ellipse 80% 43% at 77% 20%,
+      color-mix(in srgb, var(--aurora-tone) 23%, transparent), transparent 78%),
+    radial-gradient(ellipse 75% 54% at 6% 76%,
+      color-mix(in srgb, var(--aurora-tone) 13%, transparent), transparent 81%),
+    linear-gradient(156deg,
+      color-mix(in srgb, var(--aurora-tone-soft) 53%, #f8faf8) 0%,
+      color-mix(in srgb, var(--aurora-tone) 12%, #f1f6f2) 53%,
+      color-mix(in srgb, var(--aurora-tone-soft) 47%, #eef4f0) 100%) !important;
+  background-attachment: fixed !important;
+}
+:root[data-mode="dark"] .app {
+  background:
+    radial-gradient(ellipse 82% 50% at 77% 22%,
+      color-mix(in srgb, var(--aurora-tone) 12%, transparent), transparent 78%),
+    radial-gradient(ellipse 74% 40% at 5% 78%,
+      color-mix(in srgb, var(--aurora-tone) 8%, transparent), transparent 82%),
+    linear-gradient(155deg,#1a2225 0%,
+      color-mix(in srgb, var(--aurora-tone) 5%, #1c2528) 48%,
+      #182125 100%) !important;
+  background-attachment: fixed !important;
+}
+
+/* Soft white / near-black iOS fade uses the SAME hue as the active theme. */
+:root:not([data-mode="dark"]) #app-status-bar {
+  background: linear-gradient(180deg, #fff 0%,
+    color-mix(in srgb, var(--aurora-tone) 4%, #fff) 100%) !important;
+}
+:root[data-mode="dark"] #app-status-bar {
+  background: linear-gradient(180deg, #0c1215 0%,
+    color-mix(in srgb, var(--aurora-tone) 5%, #172023) 100%) !important;
+}
+@media (max-width: 850px) {
+  :root:not([data-mode="dark"]) .app .main > header.topbar.soft-topbar {
+    background: linear-gradient(180deg,
+      color-mix(in srgb, var(--aurora-tone) 4%, #fff) 0%,
+      color-mix(in srgb, var(--aurora-tone) 5%, #f7faf8) 32%,
+      color-mix(in srgb, var(--aurora-tone) 9%, #eff6f1) 100%) !important;
+    background-color: #f7faf8 !important;
+  }
+  :root[data-mode="dark"] .app .main > header.topbar.soft-topbar {
+    background: linear-gradient(180deg,
+      color-mix(in srgb, var(--aurora-tone) 5%, #172023) 0%,
+      color-mix(in srgb, var(--aurora-tone) 7%, #1b2829) 100%) !important;
+  }
+}
+
+/* The large panels: clearer rim, brighter inner highlight, more depth, less opacity. */
+:root:not([data-mode="dark"]) .app :is(
+  .wimm-home-clean .home-balance-main,
+  .home-personal-shortcut,
+  .wimm-home-clean > .savings-home-summary,
+  .wealth-total-card,
+  .projection-main-card,
+  .budget-month-tracker,
+  .projection-chart-card,
+  .projection-projects-card,
+  .trips-overview-card,
+  .trips-financing-card,
+  .trips-categories-card,
+  .wimm-settings-menu,
+  .wimm-settings-entry,
+  .content > .card:not(.home-alerts):not(.budget-overrun-alert):not(.danger-zone),
+  .analysis-dashboard .card
+) {
+  background:
+    linear-gradient(137deg,rgba(255,255,255,.70) 0%,rgba(255,255,255,.10) 44%,rgba(255,255,255,.28) 100%),
+    color-mix(in srgb, var(--aurora-tone) 12%, rgba(255,255,255,.33)) !important;
+  border: 1px solid rgba(255,255,255,.90) !important;
+  box-shadow:
+    0 17px 37px rgba(32,67,60,.105),
+    0 3px 9px color-mix(in srgb, var(--aurora-tone) 8%, transparent),
+    inset 0 1.5px 0 rgba(255,255,255,.98),
+    inset 1px 0 0 rgba(255,255,255,.57),
+    inset 0 -1px 0 rgba(255,255,255,.37) !important;
+  backdrop-filter: blur(32px) saturate(1.35) !important;
+  -webkit-backdrop-filter: blur(32px) saturate(1.35) !important;
+}
+:root:not([data-mode="dark"]) .app .wimm-home-clean .home-balance-main::before {
+  opacity: .12 !important;  /* no conspicuous blob behind the balance */
+}
+:root:not([data-mode="dark"]) .app .wimm-home-clean .home-balance-available {
+  background:
+    linear-gradient(132deg,rgba(255,255,255,.67),rgba(255,255,255,.21) 74%),
+    color-mix(in srgb,var(--aurora-tone) 8%,rgba(255,255,255,.30)) !important;
+  border: 1px solid rgba(255,255,255,.94) !important;
+  box-shadow: inset 0 1.5px 0 rgba(255,255,255,.98),0 7px 16px rgba(43,74,67,.07) !important;
+  backdrop-filter: blur(28px) saturate(1.30) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(1.30) !important;
+}
+
+/* Retain functional income blue and expense coral as restrained tinted glass. */
+:root:not([data-mode="dark"]) .app .wimm-home-clean .home-income-expenses .home-remaining-card {
+  background: linear-gradient(135deg,rgba(255,255,255,.61),rgba(223,237,255,.40)) !important;
+  border: 1px solid rgba(255,255,255,.91) !important;
+  box-shadow: 0 13px 29px rgba(55,74,92,.09),inset 0 1.5px 0 rgba(255,255,255,.97) !important;
+  backdrop-filter: blur(30px) saturate(1.3) !important;
+  -webkit-backdrop-filter: blur(30px) saturate(1.3) !important;
+}
+:root:not([data-mode="dark"]) .app .wimm-home-clean .home-income-expenses .home-expenses {
+  background: linear-gradient(135deg,rgba(255,255,255,.61),rgba(255,224,231,.41)) !important;
+}
+
+/* Complementary smaller panels and the month controls also read as glass. */
+:root:not([data-mode="dark"]) .app :is(
+  .month-picker input,
+  .month-picker .icon,
+  .soft-topbar .icon,
+  .soft-topbar .mobile-profile-trigger,
+  .projection-kpi,
+  .wealth-account-card,
+  .budget-quick-links button
+) {
+  background:
+    linear-gradient(148deg,rgba(255,255,255,.78),rgba(255,255,255,.24)),
+    color-mix(in srgb,var(--aurora-tone) 12%,rgba(255,255,255,.34)) !important;
+  border: 1px solid rgba(255,255,255,.88) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.94),0 5px 16px rgba(53,78,67,.08) !important;
+  backdrop-filter: blur(21px) saturate(1.24);
+  -webkit-backdrop-filter: blur(21px) saturate(1.24);
+}
+:root:not([data-mode="dark"]) .app .bottom-nav {
+  background: rgba(255,255,255,.44) !important;
+  border: 1px solid rgba(255,255,255,.94) !important;
+  box-shadow: 0 16px 39px rgba(38,64,59,.15),
+    inset 0 1.5px 0 #fff,inset 0 -1px 0 rgba(255,255,255,.56) !important;
+  backdrop-filter: blur(36px) saturate(1.42) !important;
+  -webkit-backdrop-filter: blur(36px) saturate(1.42) !important;
+}
+
+/* Global theme accents: these were hard-coded Wimm green before. */
+.app .soft-topbar .icon,
+.app .soft-topbar .mobile-profile-trigger,
+.app .content button.block-info,
+.app .home-personal-shortcut > svg,
+.app .home-personal-icon {
+  color: var(--accent-deep) !important;
+}
+.app .content button.block-info {
+  background: color-mix(in srgb,var(--accent-soft) 55%,transparent) !important;
+}
+.app .home-personal-icon,
+.app .wimm-settings-entry-icon {
+  background: color-mix(in srgb,var(--aurora-tone) 19%,var(--surface)) !important;
+}
+:root:not([data-mode="dark"]) .app .bottom-nav button.active {
+  background: color-mix(in srgb,var(--aurora-tone) 19%,rgba(255,255,255,.40)) !important;
+  color: var(--accent-deep) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.73);
+}
+.app .wimm-pro-shortcut,
+.app .floating-add-button {
+  color: white !important;
+  background: linear-gradient(150deg,
+    color-mix(in srgb,var(--action) 74%,#fff),
+    var(--action) 64%,
+    color-mix(in srgb,var(--action) 79%,#1c3230)) !important;
+  box-shadow: 0 9px 22px color-mix(in srgb,var(--action) 27%,transparent),
+    inset 0 1px 0 rgba(255,255,255,.49),
+    0 0 0 3px rgba(255,255,255,.40) !important;
+}
+.app .floating-add-button::after {
+  border-color: color-mix(in srgb,var(--aurora-tone) 25%,transparent) !important;
+  box-shadow: none !important;
+}
+.app .bottom-nav button:focus-visible,
+.app .floating-add-button:focus-visible {
+  outline-color: var(--action);
+}
+
+/* Muted night glass with enough refraction to differentiate layers. */
+:root[data-mode="dark"] .app :is(
+  .wimm-home-clean .home-balance-main,
+  .home-personal-shortcut,
+  .wimm-home-clean > .savings-home-summary,
+  .wealth-total-card,
+  .projection-main-card,
+  .budget-month-tracker,
+  .projection-chart-card,
+  .projection-projects-card,
+  .trips-overview-card,
+  .trips-financing-card,
+  .trips-categories-card,
+  .wimm-settings-menu,
+  .wimm-settings-entry,
+  .content > .card:not(.home-alerts):not(.budget-overrun-alert):not(.danger-zone),
+  .analysis-dashboard .card
+) {
+  background:
+    linear-gradient(134deg,rgba(255,255,255,.10),rgba(255,255,255,.00) 45%,rgba(255,255,255,.025)),
+    color-mix(in srgb,var(--aurora-tone) 10%,rgba(43,57,59,.66)) !important;
+  border: 1px solid rgba(190,220,215,.22) !important;
+  box-shadow: 0 14px 32px rgba(0,0,0,.20),
+    inset 0 1px 0 rgba(255,255,255,.16),
+    inset 0 -1px 0 rgba(255,255,255,.035) !important;
+  backdrop-filter: blur(28px) saturate(1.12) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(1.12) !important;
+}
+:root[data-mode="dark"] .app .wimm-home-clean .home-balance-main::before {
+  opacity: .05 !important;
+}
+:root[data-mode="dark"] .app .wimm-home-clean .home-balance-available {
+  background: color-mix(in srgb,var(--aurora-tone) 9%,rgba(54,71,71,.54)) !important;
+  border-color: rgba(200,226,222,.24) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.16),0 7px 16px rgba(0,0,0,.07) !important;
+  backdrop-filter: blur(26px) !important;
+  -webkit-backdrop-filter: blur(26px) !important;
+}
+:root[data-mode="dark"] .app .wimm-home-clean .home-income-expenses .home-remaining-card {
+  background: linear-gradient(136deg,rgba(57,72,81,.74),rgba(41,55,63,.55)) !important;
+  border: 1px solid rgba(190,220,215,.18) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.12),0 10px 22px rgba(0,0,0,.13) !important;
+  backdrop-filter: blur(25px) !important;
+  -webkit-backdrop-filter: blur(25px) !important;
+}
+:root[data-mode="dark"] .app .wimm-home-clean .home-income-expenses .home-expenses {
+  background: linear-gradient(136deg,rgba(72,54,64,.72),rgba(48,53,61,.54)) !important;
+}
+:root[data-mode="dark"] .app :is(.month-picker .icon,.month-picker input,.soft-topbar .icon,.soft-topbar .mobile-profile-trigger) {
+  background: color-mix(in srgb,var(--aurora-tone) 12%,rgba(55,70,72,.45)) !important;
+  border: 1px solid rgba(189,217,212,.18) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.11),0 5px 12px rgba(0,0,0,.11) !important;
+  backdrop-filter: blur(22px);
+  -webkit-backdrop-filter: blur(22px);
+}
+:root[data-mode="dark"] .app .bottom-nav {
+  background: rgba(42,55,58,.62) !important;
+  border: 1px solid rgba(203,228,220,.21) !important;
+  box-shadow: 0 14px 32px rgba(0,0,0,.23),inset 0 1px 0 rgba(255,255,255,.14) !important;
+  backdrop-filter: blur(32px) saturate(1.18) !important;
+  -webkit-backdrop-filter: blur(32px) saturate(1.18) !important;
+}
+:root[data-mode="dark"] .app .bottom-nav button.active {
+  background: color-mix(in srgb,var(--aurora-tone) 24%,rgba(36,49,53,.63)) !important;
+  color: var(--accent-deep) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.13);
+}
+:root[data-mode="dark"] .app .home-personal-icon,
+:root[data-mode="dark"] .app .wimm-settings-entry-icon {
+  background: color-mix(in srgb,var(--aurora-tone) 21%,rgba(36,52,52,.65)) !important;
+}
+
+/* Accessibility: when transparency reduction is requested, choose solid readable surfaces. */
+@media (prefers-reduced-transparency: reduce) {
+  :root:not([data-mode="dark"]) .app :is(
+    .wimm-home-clean .home-balance-main,.home-personal-shortcut,.bottom-nav,
+    .wimm-home-clean .home-balance-available,.content > .card
+  ) {
+    background: color-mix(in srgb,var(--aurora-tone-soft) 30%,#fff) !important;
+    backdrop-filter: none !important; -webkit-backdrop-filter: none !important;
+  }
+  :root[data-mode="dark"] .app :is(
+    .wimm-home-clean .home-balance-main,.home-personal-shortcut,.bottom-nav,
+    .wimm-home-clean .home-balance-available,.content > .card
+  ) {
+    background: color-mix(in srgb,var(--aurora-tone) 10%,#29363a) !important;
+    backdrop-filter: none !important; -webkit-backdrop-filter: none !important;
+  }
+}
+
+
+/* Theme accents must beat old mode-specific Wimm-green !important overrides. */
+:root:not([data-mode="dark"]) .app .wimm-pro-shortcut,
+:root:not([data-mode="dark"]) .app .floating-add-button,
+:root[data-mode="dark"] .app .wimm-pro-shortcut,
+:root[data-mode="dark"] .app .floating-add-button {
+  color: #fff !important;
+  background: linear-gradient(150deg,
+    color-mix(in srgb,var(--action) 76%,#fff) 0%,
+    var(--action) 64%,
+    color-mix(in srgb,var(--action) 80%,#172b28) 100%) !important;
+  box-shadow:
+    0 9px 24px color-mix(in srgb,var(--action) 23%,transparent),
+    inset 0 1px 0 rgba(255,255,255,.45),
+    0 0 0 3px rgba(255,255,255,.30) !important;
+}
+:root[data-mode="dark"] .app .wimm-pro-shortcut,
+:root[data-mode="dark"] .app .floating-add-button {
+  box-shadow:
+    0 8px 20px rgba(0,0,0,.17),
+    0 4px 18px color-mix(in srgb,var(--action) 15%,transparent),
+    inset 0 1px 0 rgba(255,255,255,.22) !important;
+}
+:root:not([data-mode="dark"]) .app :is(
+  .budget-category-list,.wealth-accounts-list,.transaction-search-results,
+  .wealth-breakdown-card,.fixed-expenses-list,.recurring-list,.fixed-expense-list
+) {
+  background: color-mix(in srgb,var(--aurora-tone) 10%,rgba(255,255,255,.51)) !important;
+  border: 1px solid rgba(255,255,255,.82) !important;
+  box-shadow: 0 11px 29px rgba(34,68,59,.075),inset 0 1px 0 rgba(255,255,255,.89) !important;
+  backdrop-filter: blur(25px) saturate(1.24);
+  -webkit-backdrop-filter: blur(25px) saturate(1.24);
+}
+:root[data-mode="dark"] .app :is(
+  .budget-category-list,.wealth-accounts-list,.transaction-search-results,
+  .wealth-breakdown-card,.fixed-expenses-list,.recurring-list,.fixed-expense-list
+) {
+  background: color-mix(in srgb,var(--aurora-tone) 10%,rgba(48,61,64,.70)) !important;
+  border: 1px solid rgba(194,222,216,.16) !important;
+  box-shadow: 0 12px 27px rgba(0,0,0,.13),inset 0 1px 0 rgba(255,255,255,.09) !important;
+  backdrop-filter: blur(24px) saturate(1.1);
+  -webkit-backdrop-filter: blur(24px) saturate(1.1);
+}
+
+
+/* Aurora V2 — cross-page theme coverage and continuous iOS-to-header gradient. */
+/*
+ * ProjectionPageStyles is a runtime <style>, so explicit scoped selectors and
+ * !important are intentional. Data semantics of chart traces remain untouched.
+ */
+
+/* Theme the formerly fixed mint horizon selector (all five presets). */
+:root:not([data-mode="dark"]) .app .projection-topline .pills,
+:root:not([data-mode="dark"]) .app .projects-type-switch,
+:root:not([data-mode="dark"]) .app .trips-page-v2 .trip-tabs {
+  background:
+    linear-gradient(135deg,
+      color-mix(in srgb,var(--aurora-tone-soft) 77%,rgba(255,255,255,.51)),
+      color-mix(in srgb,var(--aurora-tone) 17%,rgba(255,255,255,.57))) !important;
+  border: 1px solid rgba(255,255,255,.79) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.81),0 5px 17px rgba(40,58,58,.045);
+  backdrop-filter: blur(20px) saturate(1.22);
+  -webkit-backdrop-filter: blur(20px) saturate(1.22);
+}
+:root[data-mode="dark"] .app .projection-topline .pills,
+:root[data-mode="dark"] .app .projects-type-switch,
+:root[data-mode="dark"] .app .trips-page-v2 .trip-tabs {
+  background: color-mix(in srgb,var(--aurora-tone) 14%,rgba(40,54,58,.66)) !important;
+  border: 1px solid color-mix(in srgb,var(--aurora-tone) 21%,rgba(220,233,230,.16)) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.09),0 6px 20px rgba(0,0,0,.11);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+.app .projection-topline .pills button.selected,
+.app .projects-type-switch button.selected,
+.app .trips-page-v2 .trip-tabs button.selected {
+  color: var(--accent-deep) !important;
+  border-color: color-mix(in srgb,var(--aurora-tone) 32%,transparent) !important;
+  box-shadow: 0 5px 17px color-mix(in srgb,var(--aurora-tone) 14%,transparent),
+    inset 0 1px 0 rgba(255,255,255,.62) !important;
+}
+:root:not([data-mode="dark"]) .app .projection-topline .pills button.selected,
+:root:not([data-mode="dark"]) .app .projects-type-switch button.selected,
+:root:not([data-mode="dark"]) .app .trips-page-v2 .trip-tabs button.selected {
+  background: linear-gradient(135deg,rgba(255,255,255,.90),
+    color-mix(in srgb,var(--aurora-tone-soft) 41%,rgba(255,255,255,.83))) !important;
+}
+:root[data-mode="dark"] .app .projection-topline .pills button.selected,
+:root[data-mode="dark"] .app .projects-type-switch button.selected,
+:root[data-mode="dark"] .app .trips-page-v2 .trip-tabs button.selected {
+  background: color-mix(in srgb,var(--aurora-tone) 22%,rgba(54,67,70,.74)) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.13),0 5px 15px rgba(0,0,0,.10) !important;
+}
+.app .projection-topline .pills button:focus-visible,
+.app .trips-page-v2 .trip-tabs button:focus-visible {
+  outline: 2px solid var(--action) !important;
+  outline-offset: 2px;
+}
+
+/* Cover the projection cards excluded by the previous generic glass selector. */
+:root:not([data-mode="dark"]) .app :is(
+  .projection-kpis .projection-kpi,
+  .projection-dashboard-v2 .projection-annual-card,
+  .projection-dashboard-v2 .projection-settings-card,
+  .projection-dashboard-v2 .projection-year-card,
+  .wealth-breakdown-card,
+  .wealth-projection-link,
+  .budget-category-list,
+  .trips-disclosure,
+  .trips-v2-hero:not(.has-cover),
+  .trips-page-v2 .trip-tabs button
+) {
+  background:
+    linear-gradient(137deg,rgba(255,255,255,.67),rgba(255,255,255,.18)),
+    color-mix(in srgb,var(--aurora-tone) 11%,rgba(255,255,255,.43)) !important;
+  border-color: color-mix(in srgb,var(--aurora-tone) 14%,rgba(255,255,255,.83)) !important;
+  box-shadow: 0 12px 28px rgba(40,65,61,.075),
+    inset 0 1px 0 rgba(255,255,255,.95) !important;
+  backdrop-filter: blur(25px) saturate(1.25);
+  -webkit-backdrop-filter: blur(25px) saturate(1.25);
+}
+:root[data-mode="dark"] .app :is(
+  .projection-kpis .projection-kpi,
+  .projection-dashboard-v2 .projection-annual-card,
+  .projection-dashboard-v2 .projection-settings-card,
+  .projection-dashboard-v2 .projection-year-card,
+  .wealth-breakdown-card,
+  .wealth-projection-link,
+  .budget-category-list,
+  .trips-disclosure,
+  .trips-v2-hero:not(.has-cover)
+) {
+  background: color-mix(in srgb,var(--aurora-tone) 12%,rgba(47,62,65,.69)) !important;
+  border-color: color-mix(in srgb,var(--aurora-tone) 15%,rgba(203,229,222,.19)) !important;
+  box-shadow: 0 11px 27px rgba(0,0,0,.13),inset 0 1px 0 rgba(255,255,255,.12) !important;
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+}
+/* The main projection KPIs and actions belong to the selected theme. */
+.app .projection-main-heading svg,
+.app .projection-kpi:first-child > svg,
+.app .projection-card-heading .block-info,
+.app .projection-project-row .projection-project-icon,
+.app .projection-annual-card > summary svg:first-child,
+.app .projection-settings-card > summary svg:first-child,
+.app .wealth-total-header > svg,
+.app .wealth-breakdown-card > .text,
+.app .wealth-projection-link > svg,
+.app .wealth-projection-icon {
+  color: var(--accent-deep) !important;
+}
+.app .projection-project-row .projection-project-icon,
+.app .wealth-projection-icon {
+  background: color-mix(in srgb,var(--aurora-tone) 17%,var(--surface)) !important;
+}
+/* Keep the travel KPI and chart traces independently legible. */
+.app .projection-kpi:nth-child(2) > svg {
+  color: var(--wimm-blue);
+}
+
+/* A single color transition: system top is white, and fades into the themed
+   page THROUGH the header, with no gray strip at the safe-area boundary. */
+:root:not([data-mode="dark"]) #app-status-bar {
+  background: #fff !important;
+  background-image: none !important;
+}
+:root[data-mode="dark"] #app-status-bar {
+  background: linear-gradient(180deg,#0c1215 0%,#141d20 100%) !important;
+}
+@media (max-width: 850px) {
+  html:root:not([data-mode="dark"]) .app .main > header.topbar.soft-topbar {
+    background-color: #fff !important;
+    background-image: linear-gradient(180deg,
+      #fff 0%,
+      #fff 9%,
+      color-mix(in srgb,var(--aurora-tone-soft) 14%,#fff) 35%,
+      color-mix(in srgb,var(--aurora-tone) 7%,#fbfcfa) 64%,
+      color-mix(in srgb,var(--aurora-tone-soft) 35%,#f8faf8) 100%) !important;
+    box-shadow: none !important;
+    border-top: 0 !important;
+    border-bottom: 0 !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+  html:root[data-mode="dark"] .app .main > header.topbar.soft-topbar {
+    background-color: #141d20 !important;
+    background-image: linear-gradient(180deg,
+      #141d20 0%,
+      #171f22 28%,
+      color-mix(in srgb,var(--aurora-tone) 5%,#1b2528) 100%) !important;
+    box-shadow: none !important;
+    border: 0 !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+  /* Remove any legacy rectangle rendered over the continuous gradient. */
+  html:root .app .main > header.topbar.soft-topbar::before,
+  html:root .app .main > header.topbar.soft-topbar::after {
+    content: none !important;
+    display: none !important;
+  }
+}
+
+
+/* Aurora final direction — tinted canvas, neutral glass, semantic finance colors, seamless top. */
+/* The user's accent affects canvas and actions, not unrelated financial cards. */
+:root:not([data-mode="dark"]) {
+  --aurora-canvas-head: color-mix(in srgb,var(--aurora-tone) 16%,#f9fbf9);
+  --aurora-card-neutral: rgba(255,255,255,.80);
+}
+:root[data-mode="dark"] {
+  --aurora-canvas-head: color-mix(in srgb,var(--aurora-tone) 8%,#1d282b);
+  --aurora-card-neutral: rgba(43,53,58,.79);
+}
+:root:not([data-mode="dark"]) .app {
+  background:
+    radial-gradient(ellipse 78% 53% at 76% 43%,color-mix(in srgb,var(--aurora-tone) 15%,transparent),transparent 85%),
+    linear-gradient(170deg,var(--aurora-canvas-head) 0%,
+      color-mix(in srgb,var(--aurora-tone) 22%,#f4f8f5) 54%,
+      color-mix(in srgb,var(--aurora-tone) 15%,#f5f8f5) 100%) !important;
+  background-attachment: fixed !important;
+}
+:root[data-mode="dark"] .app {
+  background:
+    radial-gradient(ellipse 80% 48% at 76% 39%,color-mix(in srgb,var(--aurora-tone) 10%,transparent),transparent 82%),
+    linear-gradient(170deg,var(--aurora-canvas-head),#20282c 65%,#1b2427 100%) !important;
+  background-attachment: fixed !important;
+}
+
+/* Most glass surfaces stay *neutral* across blue, rose, sage, lavender and peach. */
+:root:not([data-mode="dark"]) .app :is(
+  .wimm-home-clean .home-balance-main,
+  .home-personal-shortcut,
+  .wimm-home-clean > .savings-home-summary,
+  .wimm-home-clean .home-actions,
+  .wimm-home-clean .home-balance-available,
+  .wealth-total-card,
+  .wealth-breakdown-card,
+  .wealth-projection-link,
+  .projection-dashboard-v2 .projection-main-card,
+  .projection-dashboard-v2 .projection-kpi,
+  .projection-dashboard-v2 .projection-chart-card,
+  .projection-dashboard-v2 .projection-projects-card,
+  .projection-dashboard-v2 .projection-annual-card,
+  .projection-dashboard-v2 .projection-year-card,
+  .projection-dashboard-v2 .projection-settings-card,
+  .budget-month-tracker,
+  .budget-analysis-link,
+  .budget-category-list,
+  .trips-overview-card,
+  .trips-financing-card,
+  .trips-categories-card,
+  .trips-disclosure,
+  .wimm-settings-menu,
+  .content > .card:not(.budget-overrun-alert):not(.home-alerts):not(.danger-zone),
+  .content > .two-col > .card:not(.budget-overrun-alert),
+  .analysis-dashboard .card
+) {
+  background:
+    linear-gradient(135deg,rgba(255,255,255,.91),rgba(255,255,255,.17) 55%,rgba(255,255,255,.25)),
+    var(--aurora-card-neutral) !important;
+  border: 1px solid rgba(255,255,255,.86) !important;
+  box-shadow:
+    0 12px 31px rgba(35,55,56,.085),
+    inset 0 1px 0 rgba(255,255,255,.96),
+    inset 0 -1px 0 rgba(255,255,255,.40) !important;
+  backdrop-filter: blur(24px) saturate(1.10) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(1.10) !important;
+}
+:root:not([data-mode="dark"]) .app .wimm-home-clean .home-balance-main::before {
+  opacity: 0 !important;
+}
+:root[data-mode="dark"] .app :is(
+  .wimm-home-clean .home-balance-main,
+  .home-personal-shortcut,
+  .wimm-home-clean > .savings-home-summary,
+  .wimm-home-clean .home-actions,
+  .wimm-home-clean .home-balance-available,
+  .wealth-total-card,
+  .wealth-breakdown-card,
+  .wealth-projection-link,
+  .projection-dashboard-v2 .projection-main-card,
+  .projection-dashboard-v2 .projection-kpi,
+  .projection-dashboard-v2 .projection-chart-card,
+  .projection-dashboard-v2 .projection-projects-card,
+  .projection-dashboard-v2 .projection-annual-card,
+  .projection-dashboard-v2 .projection-year-card,
+  .projection-dashboard-v2 .projection-settings-card,
+  .budget-month-tracker,
+  .budget-analysis-link,
+  .budget-category-list,
+  .trips-overview-card,
+  .trips-financing-card,
+  .trips-categories-card,
+  .trips-disclosure,
+  .wimm-settings-menu,
+  .content > .card:not(.budget-overrun-alert):not(.home-alerts):not(.danger-zone),
+  .content > .two-col > .card:not(.budget-overrun-alert),
+  .analysis-dashboard .card
+) {
+  background:
+    linear-gradient(133deg,rgba(255,255,255,.075),rgba(255,255,255,0) 58%),
+    var(--aurora-card-neutral) !important;
+  border: 1px solid rgba(223,234,229,.15) !important;
+  box-shadow: 0 11px 28px rgba(0,0,0,.18),inset 0 1px 0 rgba(255,255,255,.12) !important;
+  backdrop-filter: blur(24px) saturate(1.05) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(1.05) !important;
+}
+:root[data-mode="dark"] .app .wimm-home-clean .home-balance-main::before {
+  opacity: 0 !important;
+}
+
+/* Consistent semantic information: green = income / savings; red = expenses. */
+:root:not([data-mode="dark"]) .app .wimm-home-clean .home-income-expenses .home-income {
+  background: linear-gradient(138deg,rgba(253,255,254,.87),rgba(210,241,224,.79)) !important;
+  border: 1px solid rgba(242,255,248,.95) !important;
+  box-shadow: 0 10px 26px rgba(46,103,78,.095),inset 0 1px 0 #fff !important;
+}
+:root:not([data-mode="dark"]) .app .wimm-home-clean .home-income-expenses .home-expenses {
+  background: linear-gradient(138deg,rgba(255,253,253,.88),rgba(250,219,220,.79)) !important;
+  border: 1px solid rgba(255,247,247,.96) !important;
+  box-shadow: 0 10px 26px rgba(118,60,64,.083),inset 0 1px 0 #fff !important;
+}
+:root[data-mode="dark"] .app .wimm-home-clean .home-income-expenses .home-income {
+  background: linear-gradient(130deg,rgba(40,68,57,.78),rgba(42,57,54,.75)) !important;
+  border: 1px solid rgba(158,210,171,.21) !important;
+}
+:root[data-mode="dark"] .app .wimm-home-clean .home-income-expenses .home-expenses {
+  background: linear-gradient(130deg,rgba(73,47,52,.81),rgba(58,44,52,.73)) !important;
+  border: 1px solid rgba(231,164,170,.22) !important;
+}
+.app .wimm-home-clean .home-income::before,
+.app .wimm-home-clean .home-expenses::before { background: #3a9a70 !important; }
+.app .wimm-home-clean .home-expenses::before { background: #de7480 !important; }
+.app .wimm-home-clean .home-income-expenses .home-income .text { color: #287c55 !important; }
+.app .wimm-home-clean .home-income-expenses .home-expenses .text { color: #a94555 !important; }
+:root[data-mode="dark"] .app .wimm-home-clean .home-income-expenses .home-income .text { color: #94d8b5 !important; }
+:root[data-mode="dark"] .app .wimm-home-clean .home-income-expenses .home-expenses .text { color: #f0a3ae !important; }
+
+/* Keep savings visually positive but don't tint the whole summary card. */
+.app .wimm-home-clean .home-balance-available strong {
+  color: var(--wimm-green) !important;
+}
+:root:not([data-mode="dark"]) .app .wimm-home-clean > .savings-home-summary .progress span {
+  background: #529a78 !important;
+}
+/* Projection/wealth headers should not inject an unrelated theme color. */
+.app :is(.projection-main-heading svg,.projection-kpi:first-child > svg,.wealth-total-header > svg) {
+  color: var(--muted) !important;
+}
+.app .projection-kpi:nth-child(2) > svg { color: var(--wimm-blue) !important; }
+
+/* Month stays a native selectable input, but visually becomes plain text.
+   Arrows retain soft floating hit targets (no box around the month label). */
+.app .month-picker input[type="month"] {
+  -webkit-appearance: none !important;
+  appearance: none !important;
+  display: block;
+  width: 100% !important;
+  max-width: 100% !important;
+  height: 44px;
+  min-height: 44px;
+  padding: 0 4px !important;
+  margin: 0 !important;
+  outline-offset: 3px;
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  text-align: center;
+  color: var(--ink) !important;
+  font-weight: 750 !important;
+  font-size: 1rem;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+.app .month-picker input[type="month"]::-webkit-calendar-picker-indicator {
+  opacity: 0;
+}
+.app .month-picker input[type="month"]:focus-visible {
+  outline: 2px solid var(--action) !important;
+  border-radius: 8px !important;
+}
+:root:not([data-mode="dark"]) .app .page-heading .month-picker .icon:not(.month-reset) {
+  background: rgba(255,255,255,.63) !important;
+  border: 1px solid rgba(255,255,255,.78) !important;
+  box-shadow: 0 4px 11px rgba(48,66,60,.045),inset 0 1px 0 rgba(255,255,255,.86) !important;
+}
+:root[data-mode="dark"] .app .page-heading .month-picker .icon:not(.month-reset) {
+  background: rgba(49,58,62,.67) !important;
+  border: 1px solid rgba(225,232,230,.12) !important;
+  box-shadow: 0 4px 12px rgba(0,0,0,.13) !important;
+}
+
+/* Shared safe-area gradient: EXACT same color at the join, no duplicate band. */
+:root:not([data-mode="dark"]) #app-status-bar {
+  background: #fff !important;
+  background-image: none !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+:root[data-mode="dark"] #app-status-bar {
+  background: #0c1215 !important;
+  background-image: none !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+@media (max-width:850px) {
+  html:root:not([data-mode="dark"]) .app .main > header.topbar.soft-topbar {
+    background: linear-gradient(to bottom,
+      #fff 0,
+      #fff calc(env(safe-area-inset-top,0px) + 4px),
+      var(--aurora-canvas-head) 100%) !important;
+    background-color: #fff !important;
+    border: 0 !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+  html:root[data-mode="dark"] .app .main > header.topbar.soft-topbar {
+    background: linear-gradient(to bottom,
+      #0c1215 0,
+      #0c1215 calc(env(safe-area-inset-top,0px) + 4px),
+      var(--aurora-canvas-head) 100%) !important;
+    background-color: #0c1215 !important;
+    border: 0 !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+  /* The header is one continuous surface; never paint a second safe-area cap. */
+  html:root .app .main > header.topbar.soft-topbar::before,
+  html:root .app .main > header.topbar.soft-topbar::after {
+    display: none !important;
+    content: none !important;
+  }
+}
+
+/* Preserve clear active accent and the glass bottom dock. */
+:root:not([data-mode="dark"]) .app .bottom-nav {
+  background: rgba(255,255,255,.73) !important;
+  border-color: rgba(255,255,255,.87) !important;
+  box-shadow: 0 11px 28px rgba(34,58,54,.095),inset 0 1px 0 #fff !important;
+  backdrop-filter: blur(29px) saturate(1.12) !important;
+  -webkit-backdrop-filter: blur(29px) saturate(1.12) !important;
+}
+:root[data-mode="dark"] .app .bottom-nav {
+  background: rgba(44,53,57,.77) !important;
+  border-color: rgba(222,230,225,.14) !important;
+  box-shadow: 0 11px 27px rgba(0,0,0,.18),inset 0 1px 0 rgba(255,255,255,.09) !important;
+  backdrop-filter: blur(29px) !important;
+  -webkit-backdrop-filter: blur(29px) !important;
+}
+@media (prefers-reduced-transparency: reduce) {
+  :root:not([data-mode="dark"]) .app :is(.wimm-home-clean .home-balance-main,.home-personal-shortcut,.bottom-nav,.content > .card) {
+    background: #fff !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+  :root[data-mode="dark"] .app :is(.wimm-home-clean .home-balance-main,.home-personal-shortcut,.bottom-nav,.content > .card) {
+    background: #2c3437 !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+}
+
+
+/* Aurora polish: compact headings, real plain month label, theme-aware forms and neutral accounts. */
+/* All header / safe-area rules intentionally untouched and frozen. */
+
+/* Page and section hierarchy: avoid oversized editorial headings on iPhones. */
+.app .page-heading h1 {
+  font-size: clamp(1.35rem,2.8vw,1.73rem) !important;
+  letter-spacing: -.032em;
+  line-height: 1.22;
+}
+.app .content .section-head h2,
+.app .projection-card-heading h2,
+.app .projection-projects-card .section-head h2,
+.app .wealth-accounts-heading h2,
+.app .content .block-title h2 {
+  font-size: clamp(.98rem,2.1vw,1.1rem) !important;
+  line-height: 1.3;
+}
+@media (max-width: 560px) {
+  .app .page-heading h1 {
+    font-size: clamp(1.2rem,5.25vw,1.38rem) !important;
+    line-height: 1.24;
+  }
+  .app .page-heading .home-greeting { font-size: .85rem; }
+  .app .content .section-head h2,
+  .app .projection-card-heading h2,
+  .app .projection-projects-card .section-head h2,
+  .app .wealth-accounts-heading h2,
+  .app .content .block-title h2 {
+    font-size: .99rem !important;
+  }
+  .app dialog .sheet > header h2 { font-size: 1.13rem !important; }
+}
+
+/* iOS native month input cannot reliably lose its built-in field painting.
+   Keep it fully interactive but use an unboxed text label as the visible UI. */
+.app .page-heading > .month-picker {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+.app .month-picker .month-picker-current {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  width: 100%;
+  min-height: 44px;
+  padding: 0 4px;
+  background: transparent !important;
+  border: none !important;
+  outline: none;
+  box-shadow: none !important;
+  border-radius: 0;
+  cursor: pointer;
+  overflow: hidden;
+}
+.app .month-picker .month-picker-current > span {
+  display: block;
+  width: 100%;
+  color: var(--ink);
+  font-size: 1.06rem;
+  font-weight: 720;
+  text-align: center;
+  white-space: nowrap;
+  pointer-events: none;
+}
+.app .month-picker .month-picker-current > input[type="month"] {
+  position: absolute !important;
+  inset: 0;
+  height: 100% !important;
+  min-height: 100% !important;
+  width: 100% !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  opacity: 0 !important;
+  cursor: pointer;
+  border: 0 !important;
+  box-shadow: none !important;
+  background: transparent !important;
+  z-index: 1;
+}
+.app .month-picker .month-picker-current:focus-within {
+  outline: 2px solid var(--action);
+  outline-offset: 1px;
+  border-radius: 8px;
+}
+
+/* Accounts are one neutral glass panel, not tinted with the chosen wallpaper. */
+:root:not([data-mode="dark"]) .app .wealth-accounts-list {
+  background: rgba(255,255,255,.91) !important;
+  border: 1px solid rgba(255,255,255,.91) !important;
+  box-shadow: 0 12px 30px rgba(32,51,61,.075),inset 0 1px 0 rgba(255,255,255,.97) !important;
+  backdrop-filter: blur(25px) saturate(1.04) !important;
+  -webkit-backdrop-filter: blur(25px) saturate(1.04) !important;
+}
+:root[data-mode="dark"] .app .wealth-accounts-list {
+  background: rgba(44,52,57,.91) !important;
+  border: 1px solid rgba(235,241,238,.15) !important;
+  box-shadow: 0 12px 27px rgba(0,0,0,.15),inset 0 1px 0 rgba(255,255,255,.11) !important;
+  backdrop-filter: blur(24px) !important;
+  -webkit-backdrop-filter: blur(24px) !important;
+}
+.app .wealth-accounts-list .account-swipe-row:not(.is-open) > .swipe-actions-content,
+.app .wealth-accounts-list .account-swipe-row:not(.is-open) .wealth-account-row,
+.app .wealth-accounts-list .wealth-account-summary {
+  background: transparent !important;
+}
+:root:not([data-mode="dark"]) .app .wealth-accounts-list .wealth-account-row[open] > .wealth-account-summary,
+:root:not([data-mode="dark"]) .app .wealth-accounts-list .wealth-account-summary:hover {
+  background: rgba(238,242,243,.66) !important;
+}
+:root[data-mode="dark"] .app .wealth-accounts-list .wealth-account-row[open] > .wealth-account-summary,
+:root[data-mode="dark"] .app .wealth-accounts-list .wealth-account-summary:hover {
+  background: rgba(83,92,95,.27) !important;
+}
+
+/* Included means a project participates in the projection, not green income.
+   Theme tint only for "Inclus" and "Financé", orange still signals exclusion. */
+.app .projection-project-status:not(.excluded) {
+  color: var(--accent-deep) !important;
+  background: color-mix(in srgb,var(--aurora-tone) 18%,var(--surface)) !important;
+  border-radius: 9px;
+}
+:root[data-mode="dark"] .app .projection-project-status:not(.excluded) {
+  background: color-mix(in srgb,var(--aurora-tone) 23%,rgba(46,60,63,.78)) !important;
+}
+.app .projection-project-status.excluded {
+  color: var(--wimm-amber) !important;
+  background: var(--wimm-amber-wash) !important;
+}
+
+/* Transaction sheet: neutral body, selected theme for buttons, outlines,
+   switches and fields — semantic finance colors inside remain distinct. */
+:root:not([data-mode="dark"]) .app dialog {
+  background: #fff !important;
+  border-color: rgba(220,228,231,.82) !important;
+  box-shadow: 0 22px 65px rgba(29,41,50,.18) !important;
+}
+:root[data-mode="dark"] .app dialog {
+  background: #283135 !important;
+  border-color: rgba(233,243,237,.17) !important;
+  box-shadow: 0 22px 65px rgba(0,0,0,.31) !important;
+}
+:root:not([data-mode="dark"]) .app dialog .sheet .field :is(input,textarea,select) {
+  background: #fbfcfd !important;
+  border: 1px solid #dce3e9 !important;
+  color: var(--ink) !important;
+}
+:root[data-mode="dark"] .app dialog .sheet .field :is(input,textarea,select) {
+  background: #303a40 !important;
+  border: 1px solid #48545c !important;
+  color: var(--ink) !important;
+}
+.app dialog .sheet .field :is(input,textarea,select):focus {
+  border-color: var(--action) !important;
+  outline: 2px solid color-mix(in srgb,var(--action) 28%,transparent) !important;
+  outline-offset: 1px;
+}
+.app dialog .sheet > header > .icon {
+  color: var(--accent-deep) !important;
+  background: color-mix(in srgb,var(--aurora-tone) 10%,var(--surface)) !important;
+  border: 1px solid color-mix(in srgb,var(--aurora-tone) 44%,var(--border)) !important;
+}
+.app dialog .sheet > header > .icon:focus-visible {
+  outline: 2px solid var(--action) !important;
+}
+:root:not([data-mode="dark"]) .app dialog .sheet button.primary:not(:disabled),
+:root[data-mode="dark"] .app dialog .sheet button.primary:not(:disabled) {
+  color: #fff !important;
+  background: linear-gradient(130deg,
+    color-mix(in srgb,var(--action) 75%,#fff),
+    var(--action) 70%,
+    color-mix(in srgb,var(--action) 83%,#152524)) !important;
+  box-shadow: 0 8px 21px color-mix(in srgb,var(--action) 21%,transparent) !important;
+  border: 0 !important;
+}
+.app dialog :is(button,select,input[type="checkbox"],input[type="radio"]) {
+  accent-color: var(--action);
+}
+
+
+/* Aurora polish: unified settings rows and dark-mode project card. */
+/*
+ * Fix only content and control surfaces. Status bar, header gradients, branding,
+ * heights and safe-area are intentionally frozen at the previously approved design.
+ */
+/* Settings: one parent glass surface, NOT separate framed glass row cards. */
+:root:not([data-mode="dark"]) .app .wimm-settings-menu {
+  background: rgba(255,255,255,.83) !important;
+  border: 1px solid rgba(255,255,255,.88) !important;
+  box-shadow: 0 12px 29px rgba(37,55,58,.085),inset 0 1px 0 rgba(255,255,255,.92) !important;
+  overflow: hidden;
+}
+:root[data-mode="dark"] .app .wimm-settings-menu {
+  background: rgba(43,52,56,.95) !important;
+  border: 1px solid rgba(210,224,220,.16) !important;
+  box-shadow: 0 10px 28px rgba(0,0,0,.19),inset 0 1px 0 rgba(255,255,255,.07) !important;
+  overflow: hidden;
+}
+:root:not([data-mode="dark"]) .app .wimm-settings-menu > .wimm-settings-entry,
+:root[data-mode="dark"] .app .wimm-settings-menu > .wimm-settings-entry {
+  position: relative;
+  margin: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  outline-offset: -3px;
+  background: transparent !important;
+  background-image: none !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+:root:not([data-mode="dark"]) .app .wimm-settings-menu > .wimm-settings-entry + .wimm-settings-entry {
+  border-top: 1px solid rgba(74,89,99,.10) !important;
+}
+:root[data-mode="dark"] .app .wimm-settings-menu > .wimm-settings-entry + .wimm-settings-entry {
+  border-top: 1px solid rgba(225,232,235,.09) !important;
+}
+:root:not([data-mode="dark"]) .app .wimm-settings-menu > .wimm-settings-entry:is(:hover,:focus-visible) {
+  background: rgba(245,246,247,.74) !important;
+}
+:root[data-mode="dark"] .app .wimm-settings-menu > .wimm-settings-entry:is(:hover,:focus-visible) {
+  background: rgba(245,249,247,.055) !important;
+}
+:root:not([data-mode="dark"]) .app .wimm-settings-entry-icon,
+:root:not([data-mode="dark"]) .app .wimm-settings-back {
+  color: var(--accent-deep) !important;
+  background: color-mix(in srgb,var(--aurora-tone) 13%,#f6f7f8) !important;
+}
+:root[data-mode="dark"] .app .wimm-settings-entry-icon,
+:root[data-mode="dark"] .app .wimm-settings-back {
+  color: var(--accent-deep) !important;
+  background: color-mix(in srgb,var(--aurora-tone) 15%,#384147) !important;
+}
+.app .wimm-settings-chevron { color: var(--muted); }
+
+/*
+ * Projects: never display the swipe rail's opaque backing as a row rectangle.
+ * Keep the white/charcoal parent glass and subtle dividers. Explicit selectors
+ * beat the generic swipe-actions-content background from navigation-layout.css.
+ */
+:root:not([data-mode="dark"]) .app .projection-projects-card,
+:root[data-mode="dark"] .app .projection-projects-card {
+  overflow: visible; /* Keep the desktop edit/delete swipe menu unclipped. */
+}
+:root:not([data-mode="dark"]) .app .projection-projects-card > .project-swipe-row,
+:root[data-mode="dark"] .app .projection-projects-card > .project-swipe-row,
+:root:not([data-mode="dark"]) .app .projection-projects-card > .project-swipe-row > .swipe-actions-content,
+:root[data-mode="dark"] .app .projection-projects-card > .project-swipe-row > .swipe-actions-content,
+:root:not([data-mode="dark"]) .app .projection-projects-card > .project-swipe-row > .swipe-actions-content > .projection-project-row,
+:root[data-mode="dark"] .app .projection-projects-card > .project-swipe-row > .swipe-actions-content > .projection-project-row {
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+:root:not([data-mode="dark"]) .app .projection-projects-card > .project-swipe-row,
+:root[data-mode="dark"] .app .projection-projects-card > .project-swipe-row {
+  margin: 0 !important;
+  border: 0 !important;
+  border-bottom: 1px solid var(--aurora-separator) !important;
+  border-radius: 0 !important;
+}
+:root:not([data-mode="dark"]) .app .projection-projects-card > .project-swipe-row:last-of-type,
+:root[data-mode="dark"] .app .projection-projects-card > .project-swipe-row:last-of-type {
+  border-bottom: 0 !important;
+}
+:root:not([data-mode="dark"]) .app .projection-projects-card > .project-swipe-row .projection-project-row,
+:root[data-mode="dark"] .app .projection-projects-card > .project-swipe-row .projection-project-row {
+  border: 0 !important;
+  border-radius: 0 !important;
+  margin: 0 !important;
+  padding: 15px 3px !important;
+}
+:root[data-mode="dark"] .app .projection-projects-card {
+  --aurora-separator: rgba(231,239,236,.10);
+}
+/* The status should be a small badge, not a full-width opaque stripe. */
+.app .projection-project-row .projection-project-status {
+  justify-self: start !important;
+  align-self: start !important;
+  width: max-content !important;
+  max-width: 100%;
+  min-height: 23px;
+  padding: 3px 9px;
+  line-height: 1.2;
+  border-radius: 8px;
+  white-space: nowrap;
+}
+/* Theme belongs to included / financed, but exclusion remains a warning. */
+:root[data-mode="dark"] .app .projection-project-status:not(.excluded) {
+  color: var(--accent-deep) !important;
+  background: color-mix(in srgb,var(--aurora-tone) 20%,#394149) !important;
+}
+:root:not([data-mode="dark"]) .app .projection-project-status:not(.excluded) {
+  color: var(--accent-deep) !important;
+  background: color-mix(in srgb,var(--aurora-tone) 12%,#f5f7f7) !important;
+}
+
+/* The dark mode should read as charcoal neutral, not a mosaic of purple tiles. */
+:root[data-mode="dark"] .app .projection-topline .pills {
+  background: rgba(45,55,60,.80) !important;
+  border-color: rgba(220,232,229,.15) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.06) !important;
+}
+:root[data-mode="dark"] .app .projection-topline .pills button:not(.selected) {
+  color: var(--muted) !important;
+  background: transparent !important;
+  background-image: none !important;
+  border: 1px solid transparent !important;
+  box-shadow: none !important;
+}
+:root[data-mode="dark"] .app .projection-topline .pills button.selected {
+  color: var(--accent-deep) !important;
+  background: color-mix(in srgb,var(--aurora-tone) 22%,#384248) !important;
+  border-color: color-mix(in srgb,var(--aurora-tone) 28%,rgba(227,238,232,.08)) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.10) !important;
+}
+:root:not([data-mode="dark"]) .app .projection-topline .pills button:not(.selected) {
+  background: transparent !important;
+  border: 1px solid transparent !important;
+}
+:root[data-mode="dark"] .app :is(
+  .projection-dashboard-v2 .projection-main-card,
+  .projection-dashboard-v2 .projection-kpi,
+  .projection-dashboard-v2 .projection-chart-card,
+  .projection-dashboard-v2 .projection-projects-card,
+  .projection-dashboard-v2 .projection-annual-card,
+  .projection-dashboard-v2 .projection-settings-card,
+  .wimm-settings-menu,
+  .wealth-accounts-list,
+  .trips-overview-card,
+  .trips-categories-card
+) {
+  border-color: rgba(213,227,226,.15) !important;
+}
+:root[data-mode="dark"] .app .projection-projects-card .projection-project-row .grow > small {
+  color: var(--muted) !important;
+}
+/* Keep chart lines and semantic positive/negative signals unchanged. */
+
+
+/* Aurora mobile sheet: constrained date fields and tidy close button. */
+/* Date/select controls may keep a WebKit intrinsic minimum width on iPhone. */
+@media (max-width:850px) {
+  .app dialog,
+  .app dialog .sheet,
+  .app dialog .sheet .field {
+    box-sizing: border-box;
+    min-width: 0;
+    max-width: 100%;
+  }
+  .app dialog .sheet .field :is(input,select,textarea) {
+    display: block;
+    box-sizing: border-box !important;
+    min-width: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+  .app dialog .sheet .field input[type="date"],
+  .app dialog .sheet .field input[type="month"] {
+    -webkit-appearance: none;
+    appearance: none;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    padding-inline: 12px !important;
+  }
+}
+/* Use one clean outline on keyboard focus, no nested double ring at rest. */
+.app dialog .sheet > header > .icon {
+  outline: none !important;
+  box-shadow: none !important;
+  border-width: 1px !important;
+}
+.app dialog .sheet > header > .icon:focus-visible {
+  outline: 2px solid var(--action) !important;
+  outline-offset: 2px !important;
+}
