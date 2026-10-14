@@ -5,18 +5,19 @@ import { api } from "./api";
 import type { State } from "./engine";
 import { findVisibleTourTarget } from "./tutorialTargeting";
 import { journeySteps, type JourneyStep } from "./GuidedJourneyContent";
+import { chooseTourPlacement, clipTourBounds, type TourPlacement } from "./guidedJourneyLayout";
 import "./guided-journey.css";
 
 type Rect={top:number;left:number;width:number;height:number;bottom:number;right:number};
 type Geometry={focus:Rect|null;nav:Rect|null;found:boolean;w:number;h:number};
 const emptyGeometry:Geometry={focus:null,nav:null,found:true,w:0,h:0};
-function measure(el:HTMLElement|null,pad=5):Rect|null {
+function measure(el:HTMLElement|null,pad=5,slot?:{top:number;bottom:number}):Rect|null {
   if(!el)return null;
   const b=el.getBoundingClientRect();
   const w=window.innerWidth,h=window.innerHeight;
   if(b.width<8||b.height<8||b.bottom<0||b.top>h)return null;
-  const left=Math.max(3,b.left-pad),top=Math.max(3,b.top-pad);
-  const right=Math.min(w-3,b.right+pad),bottom=Math.min(h-3,b.bottom+pad);
+  const left=Math.max(3,b.left-pad),top=Math.max(3,b.top-pad,slot?.top??3);
+  const right=Math.min(w-3,b.right+pad),bottom=Math.min(h-3,b.bottom+pad,slot?.bottom??h-3);
   if(right<=left||bottom<=top)return null;
   return {left,top,right,bottom,width:right-left,height:bottom-top};
 }
@@ -50,9 +51,12 @@ export default function GuidedJourney({
   const [error,setError]=useState("");
   const [defer,setDefer]=useState(false);
   const [geometry,setGeometry]=useState<Geometry>(emptyGeometry);
-  const [topPanel,setTopPanel]=useState(false);
+  const [placement,setPlacement]=useState<TourPlacement|null>(null);
+  const panelRef=useRef<HTMLDivElement|null>(null);
+  const fullHeightRef=useRef(325);
+  const sideRef=useRef<"top"|"bottom"|null>(null);
   const targetRef=useRef<HTMLElement|null>(null);
-  const scrollKey=useRef("");
+
   const index=Math.max(0,steps.findIndex(step=>step.id===stepId));
   const stage=steps[index];
   const located=route===stage.route;
@@ -105,52 +109,91 @@ export default function GuidedJourney({
   },[working]);
 
   useLayoutEffect(()=>{
-    if(!working){targetRef.current=null;setGeometry(emptyGeometry);return;}
-    let cancelled=false;
-    let tries=0;
-    let timeout=0;
-    let frame=0;
-    let resizeObserver:ResizeObserver|null=null;
-    scrollKey.current="";
+    if(!working){targetRef.current=null;setGeometry(emptyGeometry);setPlacement(null);return;}
+    let cancelled=false, attempts=0, timeout=0,frame=0;
+    let observer:ResizeObserver|null=null;
+    fullHeightRef.current=Math.max(180,panelRef.current?.scrollHeight??325);
+    sideRef.current=null;
+    setPlacement(null);setGeometry(emptyGeometry);
+    const scrollIntoSlot=(delta:number,element:HTMLElement)=>{
+      const before=window.scrollY;
+      window.scrollBy({top:delta,behavior:"instant"});
+      if(Math.abs(window.scrollY-before)<2){
+        let parent=element.parentElement;
+        while(parent){
+          const style=getComputedStyle(parent);
+          if(parent.scrollHeight>parent.clientHeight+3&&/auto|scroll/.test(style.overflowY)){
+            parent.scrollTop+=delta;break;
+          }
+          parent=parent.parentElement;
+        }
+      }
+    };
     const refresh=()=>{
       if(cancelled)return;
-      const focus=measure(targetRef.current);
-      const nav=measure(findVisibleTourTarget(navSelector(stage.nav)),4);
-      setGeometry({focus,nav,found:!!targetRef.current,w:window.innerWidth,h:window.innerHeight});
-      if(focus) setTopPanel(focus.top>window.innerHeight*.52);
+      const element=targetRef.current;
+      const vv=window.visualViewport;
+      const vt=vv?.offsetTop??0,vb=vt+(vv?.height??window.innerHeight);
+      const navBar=findVisibleTourTarget(".bottom-nav");
+      const navTarget=findVisibleTourTarget(navSelector(stage.nav));
+      const b=element?.getBoundingClientRect();
+      const pinned=stage.id==="menu"||
+        !!element?.closest(".bottom-nav,.desktop-sidebar-nav,.floating-add-button,.desktop-quick-add");
+      const plan=chooseTourPlacement({
+        viewport:{top:vt,bottom:vb},
+        headerBottom:document.querySelector<HTMLElement>(".topbar")?.getBoundingClientRect().bottom??vt,
+        navigationTop:navBar?.getBoundingClientRect().top??null,
+        target:b?{top:b.top,bottom:b.bottom}:{top:vt+85,bottom:vt+130},
+        fullPanelHeight:fullHeightRef.current,
+        compactPanelHeight:Math.min(205,Math.max(130,(vb-vt)*.29)),
+        pinned,preferredSide:sideRef.current??undefined
+      });
+      sideRef.current??=plan.side;
+      setPlacement(prev=>prev&&prev.side===plan.side&&prev.compact===plan.compact&&
+        Math.abs(prev.panelTop-plan.panelTop)<1&&Math.abs(prev.panelHeight-plan.panelHeight)<1&&
+        Math.abs(prev.slot.top-plan.slot.top)<1&&Math.abs(prev.slot.bottom-plan.slot.bottom)<1
+        ?prev:plan);
+      if(element&&!pinned&&Math.abs(plan.scrollBy)>8&&attempts<3){
+        attempts++;scrollIntoSlot(plan.scrollBy,element);
+        timeout=window.setTimeout(refresh,85);return;
+      }
+      const bounds=element?.getBoundingClientRect();
+      const area=pinned?{top:vt,bottom:vb}:plan.slot;
+      const clip=bounds?clipTourBounds({top:bounds.top-5,bottom:bounds.bottom+5},area):null;
+      const focus=clip&&element?measure(element,5,clip):null;
+      const nav=measure(navTarget,4,{top:vt,bottom:vb});
+      const next:Geometry={focus,nav,found:!!element,w:window.innerWidth,h:window.innerHeight};
+      setGeometry(prev=>{
+        const same=(a:Rect|null,b:Rect|null)=>a===b||!!a&&!!b&&
+          Math.abs(a.top-b.top)<.8&&Math.abs(a.left-b.left)<.8&&
+          Math.abs(a.width-b.width)<.8&&Math.abs(a.height-b.height)<.8;
+        return prev.found===next.found&&prev.w===next.w&&prev.h===next.h&&
+          same(prev.focus,next.focus)&&same(prev.nav,next.nav)?prev:next;
+      });
     };
     const locate=()=>{
       if(cancelled)return;
       const element=findVisibleTourTarget(stage.target);
+      if(!element&&attempts++<11){timeout=window.setTimeout(locate,140);return;}
+      attempts=0;targetRef.current=element;
+      observer=new ResizeObserver(()=>{window.cancelAnimationFrame(frame);frame=requestAnimationFrame(refresh);});
+      if(element)observer.observe(element);
       const nav=findVisibleTourTarget(navSelector(stage.nav));
-      if(!element&&tries++<9){timeout=window.setTimeout(locate,145);return;}
-      targetRef.current=element;
-      if(element){
-        const key=stage.id;
-        if(scrollKey.current!==key){
-          scrollKey.current=key;
-          const rect=element.getBoundingClientRect();
-          const top=document.querySelector<HTMLElement>(".topbar")?.getBoundingClientRect().bottom??80;
-          // Scroll the target into the visible area, clear of header and bottom navigation.
-          if(rect.top<top+12||rect.bottom>window.innerHeight-120||
-             rect.top>window.innerHeight*.65)element.scrollIntoView({block:"center",behavior:"instant"});
-        }
-        resizeObserver=new ResizeObserver(refresh);
-        resizeObserver.observe(element);
-      }
-      if(nav)resizeObserver?.observe(nav);
-      frame=window.requestAnimationFrame(refresh);
+      if(nav)observer.observe(nav);
+      if(panelRef.current)observer.observe(panelRef.current);
+      frame=requestAnimationFrame(refresh);
     };
-    timeout=window.setTimeout(locate,110);
+    timeout=window.setTimeout(locate,105);
     window.addEventListener("resize",refresh);
     window.addEventListener("scroll",refresh,true);
+    window.visualViewport?.addEventListener("resize",refresh);
+    window.visualViewport?.addEventListener("scroll",refresh);
     return()=>{
-      cancelled=true;
-      window.clearTimeout(timeout);
-      window.cancelAnimationFrame(frame);
-      resizeObserver?.disconnect();
+      cancelled=true;clearTimeout(timeout);cancelAnimationFrame(frame);observer?.disconnect();
       window.removeEventListener("resize",refresh);
       window.removeEventListener("scroll",refresh,true);
+      window.visualViewport?.removeEventListener("resize",refresh);
+      window.visualViewport?.removeEventListener("scroll",refresh);
       targetRef.current=null;
     };
   },[working,stage.id,stage.target,stage.nav,route]);
@@ -192,7 +235,7 @@ export default function GuidedJourney({
     </div>;
   }
   const nav=geometry.nav,focus=geometry.focus;
-  const bottomNav=!!document.querySelector(".bottom-nav") && !!findVisibleTourTarget(".bottom-nav");
+
   const overlay=(
     <div className="wimm-journey-overlay" role="dialog" aria-modal="true" aria-label="Découverte guidée Wimm">
       <div className="wimm-journey-blocker" aria-hidden="true"/>
@@ -208,7 +251,8 @@ export default function GuidedJourney({
       </svg>
       {focus&&<div className="wimm-journey-ring" style={makeRect(focus)??undefined} aria-hidden="true"/>}
       {nav&&<div className="wimm-journey-ring wimm-journey-ring-nav" style={makeRect(nav)??undefined} aria-hidden="true"/>}
-      <div className={`wimm-journey-flyout ${topPanel?"at-top":"at-bottom"} ${bottomNav?"has-mobile-nav":""}`}>
+      <div ref={panelRef} className={"wimm-journey-flyout auto-placed"+(placement?.compact?" compact":"")+(placement?" ready":"")}
+        style={placement?{top:placement.panelTop,maxHeight:placement.panelHeight}:undefined}>
         <header>
           <span><Compass size={15}/> {stage.chapter.toUpperCase()} · {chapterAt}/{chapterSize}</span>
           <button type="button" onClick={()=>setPaused(true)} title="Mettre en pause" aria-label="Mettre en pause la visite"><Pause size={18}/></button>
@@ -218,6 +262,7 @@ export default function GuidedJourney({
         <p>{stage.description}</p>
         <div className="wimm-journey-usage"><Lightbulb size={16}/><span>{stage.action}</span></div>
         {!geometry.found&&<small className="wimm-journey-conditional">Ce bloc n'est pas affiché avec les données actuelles. Il apparaîtra lorsque la fonctionnalité sera configurée.</small>}
+        {placement?.clipped&&stage.id!=="menu"&&<small className="wimm-journey-conditional">Ce bloc est grand : Wimm éclaire uniquement sa partie visible, sans la masquer. Utilisez « Essayer » pour le parcourir librement.</small>}
         {(stage.id==="fixed-list"&&!fixedSet||stage.id==="wealth-savings"&&!wealthSet)&&
           <label className="wimm-journey-optional">
             <input type="checkbox" checked={defer} onChange={e=>setDefer(e.target.checked)}/>
