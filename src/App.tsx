@@ -29,6 +29,7 @@ import { applyInitialSetup } from "./SetupWizard";
 import ProgressiveSetupWizard from "./ProgressiveSetupWizard";
 import GettingStartedChecklist from "./GettingStartedChecklist";
 import GuidedJourney from "./GuidedJourney";
+import RecurringIncomeManager from "./RecurringIncomeManager";
 import {
   lazy,
   Suspense,
@@ -7761,6 +7762,28 @@ export default function App() {
               </section>
 )}
               {settingsDetail === "salaire" && (
+                <RecurringIncomeManager
+                  sources={s.incomeSources || []}
+                  legacyIncome={s.income}
+                  onSave={async items => {
+                    await change(d => {
+                      d.incomeSources = items;
+                      d.income = Math.round(items.reduce((total,item) =>
+                        total + item.amount / (item.frequency === "quarterly" ? 3 : item.frequency === "annual" ? 12 : 1), 0));
+                      const firstMonthly = items.find(item => item.frequency === "monthly");
+                      if (firstMonthly) d.salaryDay = firstMonthly.day;
+                      const currentMonth = month();
+                      d.salaryReceivedMonths ??= [];
+                      if (items.length > 0 && items.every(item=>item.receivedMonths.includes(currentMonth))) {
+                        if(!d.salaryReceivedMonths.includes(currentMonth)) d.salaryReceivedMonths.push(currentMonth);
+                      } else {
+                        d.salaryReceivedMonths = d.salaryReceivedMonths.filter(m=>m!==currentMonth);
+                      }
+                    }, "Sources de revenus habituels modifiées");
+                  }}
+                />
+              )}
+              {settingsDetail === "salaire" && !(s.incomeSources && s.incomeSources.length>0) && (
 <section className="card settings-salary-card">
                 <div className="section-head">
                   <div>
