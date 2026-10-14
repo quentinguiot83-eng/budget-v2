@@ -37,3 +37,14 @@
  .progressive-details summary{padding:13px;}
  .progressive-details-inner{padding:11px;}
 }
+
+
+/* Edition Aurora : styles ajoutés uniquement au parcours de configuration. */
+.progressive-profiles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.progressive-profile{position:relative;display:flex;flex-direction:column;align-items:flex-start;min-height:170px;gap:10px;text-align:left;padding:19px;border:1px solid var(--border);border-radius:19px;background:var(--surface);color:var(--ink);cursor:pointer}
+.progressive-profile strong{font-size:1rem}
+.progressive-profile small{color:var(--muted);line-height:1.55;font-size:.78rem}
+.progressive-profile.chosen{border-color:var(--ink);background:var(--soft-canvas)}
+.progressive-profile.chosen>svg:last-child{position:absolute;top:18px;right:16px}
+.progressive-setup .wimm-setup-budget-row .wimm-setup-remove{min-width:28px}
+@media(max-width:620px){.progressive-profiles{grid-template-columns:minmax(0,1fr)}.progressive-profile{min-height:0;gap:8px}}
