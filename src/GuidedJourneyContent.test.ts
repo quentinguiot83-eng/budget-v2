@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { JOURNEY_STEPS, journeySteps } from "./GuidedJourneyContent";
+import { JOURNEY_BRIEF, JOURNEY_STEPS, journeySteps } from "./GuidedJourneyContent";
 
 test("every explained block has a unique stable identity, text and ordered target",()=>{
   assert.ok(JOURNEY_STEPS.length>=50,"each page should explain its blocks, not just its title");
@@ -32,4 +32,14 @@ test("each main tab and required budget subpage is represented",()=>{
   const navs=new Set(JOURNEY_STEPS.map(x=>x.nav));
   for(const tab of ["home","budget","wealth","trips","projection","add","pro","settings"])
     assert.ok(navs.has(tab),tab);
+});
+
+test("each of the 58 onboarding explanations is brief, helpful and non-redundant",()=>{
+  for(const step of JOURNEY_STEPS){
+    const copy=JOURNEY_BRIEF[step.id];
+    assert.ok(copy,step.id+" has no short explanation");
+    assert.ok(copy.length<=160,step.id+" is too long: "+copy.length);
+    assert.ok(copy.length>=30,step.id+" is not explanatory enough");
+    assert.ok(!/ce bloc est grand|partie visible|utilisez .essayer. pour le parcourir/i.test(copy));
+  }
 });
