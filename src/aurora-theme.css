@@ -1,0 +1,291 @@
+/*
+ * Wimm Aurora Preview — Liquid Glass accent system
+ * Loaded AFTER aurora-preview.css, only on design/wimm-aurora-preview.
+ * Keep semantic colors (income / expenses / warnings) distinct from theme.
+ */
+:root {
+  --aurora-tone: #729eca;
+  --aurora-tone-soft: #e8f1fa;
+}
+:root[data-theme="blue"] {
+  --aurora-tone: #729eca;
+  --aurora-tone-soft: #e8f1fa;
+}
+:root[data-theme="lavender"] {
+  --aurora-tone: #ac93cc;
+  --aurora-tone-soft: #f0eafa;
+}
+:root[data-theme="sage"] {
+  --aurora-tone: #70ac94;
+  --aurora-tone-soft: #e5f2ea;
+}
+:root[data-theme="rose"] {
+  --aurora-tone: #ca8da8;
+  --aurora-tone-soft: #f9ebf2;
+}
+:root[data-theme="peach"] {
+  --aurora-tone: #ce9b77;
+  --aurora-tone-soft: #f9efe6;
+}
+
+/* A visible yet quiet hue shift on every page — not an opaque color overlay. */
+:root:not([data-mode="dark"]) .app {
+  background:
+    radial-gradient(ellipse 80% 43% at 77% 20%,
+      color-mix(in srgb, var(--aurora-tone) 23%, transparent), transparent 78%),
+    radial-gradient(ellipse 75% 54% at 6% 76%,
+      color-mix(in srgb, var(--aurora-tone) 13%, transparent), transparent 81%),
+    linear-gradient(156deg,
+      color-mix(in srgb, var(--aurora-tone-soft) 53%, #f8faf8) 0%,
+      color-mix(in srgb, var(--aurora-tone) 12%, #f1f6f2) 53%,
+      color-mix(in srgb, var(--aurora-tone-soft) 47%, #eef4f0) 100%) !important;
+  background-attachment: fixed !important;
+}
+:root[data-mode="dark"] .app {
+  background:
+    radial-gradient(ellipse 82% 50% at 77% 22%,
+      color-mix(in srgb, var(--aurora-tone) 12%, transparent), transparent 78%),
+    radial-gradient(ellipse 74% 40% at 5% 78%,
+      color-mix(in srgb, var(--aurora-tone) 8%, transparent), transparent 82%),
+    linear-gradient(155deg,#1a2225 0%,
+      color-mix(in srgb, var(--aurora-tone) 5%, #1c2528) 48%,
+      #182125 100%) !important;
+  background-attachment: fixed !important;
+}
+
+/* Soft white / near-black iOS fade uses the SAME hue as the active theme. */
+:root:not([data-mode="dark"]) #app-status-bar {
+  background: linear-gradient(180deg, #fff 0%,
+    color-mix(in srgb, var(--aurora-tone) 4%, #fff) 100%) !important;
+}
+:root[data-mode="dark"] #app-status-bar {
+  background: linear-gradient(180deg, #0c1215 0%,
+    color-mix(in srgb, var(--aurora-tone) 5%, #172023) 100%) !important;
+}
+@media (max-width: 850px) {
+  :root:not([data-mode="dark"]) .app .main > header.topbar.soft-topbar {
+    background: linear-gradient(180deg,
+      color-mix(in srgb, var(--aurora-tone) 4%, #fff) 0%,
+      color-mix(in srgb, var(--aurora-tone) 5%, #f7faf8) 32%,
+      color-mix(in srgb, var(--aurora-tone) 9%, #eff6f1) 100%) !important;
+    background-color: #f7faf8 !important;
+  }
+  :root[data-mode="dark"] .app .main > header.topbar.soft-topbar {
+    background: linear-gradient(180deg,
+      color-mix(in srgb, var(--aurora-tone) 5%, #172023) 0%,
+      color-mix(in srgb, var(--aurora-tone) 7%, #1b2829) 100%) !important;
+  }
+}
+
+/* The large panels: clearer rim, brighter inner highlight, more depth, less opacity. */
+:root:not([data-mode="dark"]) .app :is(
+  .wimm-home-clean .home-balance-main,
+  .home-personal-shortcut,
+  .wimm-home-clean > .savings-home-summary,
+  .wealth-total-card,
+  .projection-main-card,
+  .budget-month-tracker,
+  .projection-chart-card,
+  .projection-projects-card,
+  .trips-overview-card,
+  .trips-financing-card,
+  .trips-categories-card,
+  .wimm-settings-menu,
+  .wimm-settings-entry,
+  .content > .card:not(.home-alerts):not(.budget-overrun-alert):not(.danger-zone),
+  .analysis-dashboard .card
+) {
+  background:
+    linear-gradient(137deg,rgba(255,255,255,.70) 0%,rgba(255,255,255,.10) 44%,rgba(255,255,255,.28) 100%),
+    color-mix(in srgb, var(--aurora-tone) 12%, rgba(255,255,255,.33)) !important;
+  border: 1px solid rgba(255,255,255,.90) !important;
+  box-shadow:
+    0 17px 37px rgba(32,67,60,.105),
+    0 3px 9px color-mix(in srgb, var(--aurora-tone) 8%, transparent),
+    inset 0 1.5px 0 rgba(255,255,255,.98),
+    inset 1px 0 0 rgba(255,255,255,.57),
+    inset 0 -1px 0 rgba(255,255,255,.37) !important;
+  backdrop-filter: blur(32px) saturate(1.35) !important;
+  -webkit-backdrop-filter: blur(32px) saturate(1.35) !important;
+}
+:root:not([data-mode="dark"]) .app .wimm-home-clean .home-balance-main::before {
+  opacity: .12 !important;  /* no conspicuous blob behind the balance */
+}
+:root:not([data-mode="dark"]) .app .wimm-home-clean .home-balance-available {
+  background:
+    linear-gradient(132deg,rgba(255,255,255,.67),rgba(255,255,255,.21) 74%),
+    color-mix(in srgb,var(--aurora-tone) 8%,rgba(255,255,255,.30)) !important;
+  border: 1px solid rgba(255,255,255,.94) !important;
+  box-shadow: inset 0 1.5px 0 rgba(255,255,255,.98),0 7px 16px rgba(43,74,67,.07) !important;
+  backdrop-filter: blur(28px) saturate(1.30) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(1.30) !important;
+}
+
+/* Retain functional income blue and expense coral as restrained tinted glass. */
+:root:not([data-mode="dark"]) .app .wimm-home-clean .home-income-expenses .home-remaining-card {
+  background: linear-gradient(135deg,rgba(255,255,255,.61),rgba(223,237,255,.40)) !important;
+  border: 1px solid rgba(255,255,255,.91) !important;
+  box-shadow: 0 13px 29px rgba(55,74,92,.09),inset 0 1.5px 0 rgba(255,255,255,.97) !important;
+  backdrop-filter: blur(30px) saturate(1.3) !important;
+  -webkit-backdrop-filter: blur(30px) saturate(1.3) !important;
+}
+:root:not([data-mode="dark"]) .app .wimm-home-clean .home-income-expenses .home-expenses {
+  background: linear-gradient(135deg,rgba(255,255,255,.61),rgba(255,224,231,.41)) !important;
+}
+
+/* Complementary smaller panels and the month controls also read as glass. */
+:root:not([data-mode="dark"]) .app :is(
+  .month-picker input,
+  .month-picker .icon,
+  .soft-topbar .icon,
+  .soft-topbar .mobile-profile-trigger,
+  .projection-kpi,
+  .wealth-account-card,
+  .budget-quick-links button
+) {
+  background:
+    linear-gradient(148deg,rgba(255,255,255,.78),rgba(255,255,255,.24)),
+    color-mix(in srgb,var(--aurora-tone) 12%,rgba(255,255,255,.34)) !important;
+  border: 1px solid rgba(255,255,255,.88) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.94),0 5px 16px rgba(53,78,67,.08) !important;
+  backdrop-filter: blur(21px) saturate(1.24);
+  -webkit-backdrop-filter: blur(21px) saturate(1.24);
+}
+:root:not([data-mode="dark"]) .app .bottom-nav {
+  background: rgba(255,255,255,.44) !important;
+  border: 1px solid rgba(255,255,255,.94) !important;
+  box-shadow: 0 16px 39px rgba(38,64,59,.15),
+    inset 0 1.5px 0 #fff,inset 0 -1px 0 rgba(255,255,255,.56) !important;
+  backdrop-filter: blur(36px) saturate(1.42) !important;
+  -webkit-backdrop-filter: blur(36px) saturate(1.42) !important;
+}
+
+/* Global theme accents: these were hard-coded Wimm green before. */
+.app .soft-topbar .icon,
+.app .soft-topbar .mobile-profile-trigger,
+.app .content button.block-info,
+.app .home-personal-shortcut > svg,
+.app .home-personal-icon {
+  color: var(--accent-deep) !important;
+}
+.app .content button.block-info {
+  background: color-mix(in srgb,var(--accent-soft) 55%,transparent) !important;
+}
+.app .home-personal-icon,
+.app .wimm-settings-entry-icon {
+  background: color-mix(in srgb,var(--aurora-tone) 19%,var(--surface)) !important;
+}
+:root:not([data-mode="dark"]) .app .bottom-nav button.active {
+  background: color-mix(in srgb,var(--aurora-tone) 19%,rgba(255,255,255,.40)) !important;
+  color: var(--accent-deep) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.73);
+}
+.app .wimm-pro-shortcut,
+.app .floating-add-button {
+  color: white !important;
+  background: linear-gradient(150deg,
+    color-mix(in srgb,var(--action) 74%,#fff),
+    var(--action) 64%,
+    color-mix(in srgb,var(--action) 79%,#1c3230)) !important;
+  box-shadow: 0 9px 22px color-mix(in srgb,var(--action) 27%,transparent),
+    inset 0 1px 0 rgba(255,255,255,.49),
+    0 0 0 3px rgba(255,255,255,.40) !important;
+}
+.app .floating-add-button::after {
+  border-color: color-mix(in srgb,var(--aurora-tone) 25%,transparent) !important;
+  box-shadow: none !important;
+}
+.app .bottom-nav button:focus-visible,
+.app .floating-add-button:focus-visible {
+  outline-color: var(--action);
+}
+
+/* Muted night glass with enough refraction to differentiate layers. */
+:root[data-mode="dark"] .app :is(
+  .wimm-home-clean .home-balance-main,
+  .home-personal-shortcut,
+  .wimm-home-clean > .savings-home-summary,
+  .wealth-total-card,
+  .projection-main-card,
+  .budget-month-tracker,
+  .projection-chart-card,
+  .projection-projects-card,
+  .trips-overview-card,
+  .trips-financing-card,
+  .trips-categories-card,
+  .wimm-settings-menu,
+  .wimm-settings-entry,
+  .content > .card:not(.home-alerts):not(.budget-overrun-alert):not(.danger-zone),
+  .analysis-dashboard .card
+) {
+  background:
+    linear-gradient(134deg,rgba(255,255,255,.10),rgba(255,255,255,.00) 45%,rgba(255,255,255,.025)),
+    color-mix(in srgb,var(--aurora-tone) 10%,rgba(43,57,59,.66)) !important;
+  border: 1px solid rgba(190,220,215,.22) !important;
+  box-shadow: 0 14px 32px rgba(0,0,0,.20),
+    inset 0 1px 0 rgba(255,255,255,.16),
+    inset 0 -1px 0 rgba(255,255,255,.035) !important;
+  backdrop-filter: blur(28px) saturate(1.12) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(1.12) !important;
+}
+:root[data-mode="dark"] .app .wimm-home-clean .home-balance-main::before {
+  opacity: .05 !important;
+}
+:root[data-mode="dark"] .app .wimm-home-clean .home-balance-available {
+  background: color-mix(in srgb,var(--aurora-tone) 9%,rgba(54,71,71,.54)) !important;
+  border-color: rgba(200,226,222,.24) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.16),0 7px 16px rgba(0,0,0,.07) !important;
+  backdrop-filter: blur(26px) !important;
+  -webkit-backdrop-filter: blur(26px) !important;
+}
+:root[data-mode="dark"] .app .wimm-home-clean .home-income-expenses .home-remaining-card {
+  background: linear-gradient(136deg,rgba(57,72,81,.74),rgba(41,55,63,.55)) !important;
+  border: 1px solid rgba(190,220,215,.18) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.12),0 10px 22px rgba(0,0,0,.13) !important;
+  backdrop-filter: blur(25px) !important;
+  -webkit-backdrop-filter: blur(25px) !important;
+}
+:root[data-mode="dark"] .app .wimm-home-clean .home-income-expenses .home-expenses {
+  background: linear-gradient(136deg,rgba(72,54,64,.72),rgba(48,53,61,.54)) !important;
+}
+:root[data-mode="dark"] .app :is(.month-picker .icon,.month-picker input,.soft-topbar .icon,.soft-topbar .mobile-profile-trigger) {
+  background: color-mix(in srgb,var(--aurora-tone) 12%,rgba(55,70,72,.45)) !important;
+  border: 1px solid rgba(189,217,212,.18) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.11),0 5px 12px rgba(0,0,0,.11) !important;
+  backdrop-filter: blur(22px);
+  -webkit-backdrop-filter: blur(22px);
+}
+:root[data-mode="dark"] .app .bottom-nav {
+  background: rgba(42,55,58,.62) !important;
+  border: 1px solid rgba(203,228,220,.21) !important;
+  box-shadow: 0 14px 32px rgba(0,0,0,.23),inset 0 1px 0 rgba(255,255,255,.14) !important;
+  backdrop-filter: blur(32px) saturate(1.18) !important;
+  -webkit-backdrop-filter: blur(32px) saturate(1.18) !important;
+}
+:root[data-mode="dark"] .app .bottom-nav button.active {
+  background: color-mix(in srgb,var(--aurora-tone) 24%,rgba(36,49,53,.63)) !important;
+  color: var(--accent-deep) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.13);
+}
+:root[data-mode="dark"] .app .home-personal-icon,
+:root[data-mode="dark"] .app .wimm-settings-entry-icon {
+  background: color-mix(in srgb,var(--aurora-tone) 21%,rgba(36,52,52,.65)) !important;
+}
+
+/* Accessibility: when transparency reduction is requested, choose solid readable surfaces. */
+@media (prefers-reduced-transparency: reduce) {
+  :root:not([data-mode="dark"]) .app :is(
+    .wimm-home-clean .home-balance-main,.home-personal-shortcut,.bottom-nav,
+    .wimm-home-clean .home-balance-available,.content > .card
+  ) {
+    background: color-mix(in srgb,var(--aurora-tone-soft) 30%,#fff) !important;
+    backdrop-filter: none !important; -webkit-backdrop-filter: none !important;
+  }
+  :root[data-mode="dark"] .app :is(
+    .wimm-home-clean .home-balance-main,.home-personal-shortcut,.bottom-nav,
+    .wimm-home-clean .home-balance-available,.content > .card
+  ) {
+    background: color-mix(in srgb,var(--aurora-tone) 10%,#29363a) !important;
+    backdrop-filter: none !important; -webkit-backdrop-filter: none !important;
+  }
+}
