@@ -242,6 +242,13 @@ export type State = {
   loans: Loan[];
 
   income: number;
+  /** Prévisions récurrentes par source. La valeur income reste la moyenne
+   * mensuelle compatible avec les calculs historiques. Aucune source ne
+   * génère de transaction réelle sans confirmation. */
+  incomeSources?: {
+    id: string; name: string; amount: number; day: number;
+    frequency: "monthly" | "quarterly" | "annual"; receivedMonths: string[];
+  }[];
 
   salaryDay?: number;
 
