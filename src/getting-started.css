@@ -1,0 +1,20 @@
+.progressive-checklist{display:grid;gap:14px;padding:20px;border:1px solid var(--border);border-radius:22px;background:var(--surface);box-shadow:0 8px 30px rgba(24,32,45,.05);}
+.progressive-checklist-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;}
+.progressive-checklist-heading h2{font-size:1.09rem;letter-spacing:-.028em;margin:5px 0;}
+.progressive-checklist-heading p{color:var(--muted);font-size:.79rem;line-height:1.5;margin:0;}
+.progressive-checklist-eyebrow{display:flex;align-items:center;gap:6px;letter-spacing:.08em;font-size:.69rem;font-weight:800;color:var(--muted);}
+.progressive-checklist-dismiss{border:0;background:transparent;color:var(--muted);padding:5px;cursor:pointer;}
+.progressive-checklist-count{display:flex;justify-content:space-between;font-size:.77rem;color:var(--muted);}
+.progressive-checklist-count strong{color:var(--ink);}
+.progressive-checklist-track{height:7px;border-radius:999px;overflow:hidden;background:var(--border);}
+.progressive-checklist-track span{display:block;height:100%;border-radius:inherit;background:var(--ink);transition:width .2s ease;}
+.progressive-checklist-steps{display:grid;gap:3px;}
+.progressive-checklist-item{display:flex;align-items:center;gap:10px;min-height:41px;border:0;border-radius:11px;padding:6px 8px;text-align:left;background:transparent;color:var(--ink);cursor:pointer;font-size:.84rem;}
+.progressive-checklist-item:hover{background:var(--soft-canvas);}
+.progressive-checklist-item>span:nth-child(2){flex:1;}
+.progressive-checklist-item>svg{color:var(--muted);}
+.progressive-checklist-tick{display:grid;place-items:center;border:1px solid var(--border);border-radius:50%;width:25px;height:25px;font-size:.69rem;color:var(--muted);flex:0 0 25px;}
+.progressive-checklist-tick.done{color:var(--ink);background:var(--soft-canvas);}
+.progressive-checklist-actions{display:flex;flex-wrap:wrap;align-items:center;gap:8px;}
+.progressive-checklist-actions button{min-height:41px;border-radius:12px;padding:8px 12px;display:flex;align-items:center;gap:7px;font-size:.78rem;font-weight:750;}
+@media(max-width:620px){.progressive-checklist{padding:16px}.progressive-checklist-actions button{flex:1 1 auto;justify-content:center;}}
