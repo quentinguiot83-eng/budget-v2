@@ -7,11 +7,13 @@ type Group = "wealth" | "travel";
 type ExtraAccount = { id: string; name: string; group: Group; opening: string; allocation: string };
 type FixedCharge = { id: string; name: string; amount: string; category: string; first: string; interval: 1 | 3 | 6 | 12 };
 type VariableBudget = { id: string; name: string; icon: string; amount: string };
+export type InitialIncomeSource = { id: string; name: string; amount: string; day: string; frequency: "monthly" | "quarterly" | "annual"; received: boolean };
 export type InitialSetupDraft = {
   professional: boolean | null;
   accountName: string; opening: string; asOf: string;
   salaryReceived: boolean; savingDone: boolean;
   extras: ExtraAccount[]; income: string; salaryDay: string;
+  incomeSources?: InitialIncomeSource[];
   salaryBudget: "current" | "next"; salaryReminder: boolean;
   fixed: FixedCharge[]; categories: VariableBudget[];
 };
@@ -61,7 +63,24 @@ export function applyInitialSetup(state: State, draft: InitialSetupDraft) {
   if (shares.some(n => !Number.isFinite(n) || n < 0 || n > 100) || shares.reduce((a,b)=>a+b,0) > 100.0001)
     throw Error("La répartition de l’épargne ne peut pas dépasser 100 %.");
   draft.extras.forEach((a,i) => addAccount(a.name, a.group, a.opening, shares[i]));
-  state.income = parseEuros(draft.income, "revenus mensuels");
+  if (draft.incomeSources?.length) {
+    const sources = draft.incomeSources.map(source => {
+      if (!source.name.trim()) throw Error("Chaque revenu doit avoir un nom.");
+      const day = Number(source.day);
+      if (!Number.isInteger(day) || day < 1 || day > 31) throw Error("Jour de versement invalide pour " + source.name + ".");
+      const amount = parseEuros(source.amount, source.name);
+      return { id: source.id, name: source.name.trim(), amount, day,
+        frequency: source.frequency, receivedMonths: source.received ? [startMonth] : [] };
+    });
+    if (new Set(sources.map(source => source.id)).size !== sources.length) throw Error("Revenus en double.");
+    state.incomeSources = sources;
+    state.income = Math.round(sources.reduce((sum, source) =>
+      sum + source.amount / (source.frequency === "quarterly" ? 3 : source.frequency === "annual" ? 12 : 1), 0));
+    draft.salaryDay = String(sources.find(source => source.frequency === "monthly")?.day ?? 27);
+    draft.salaryReceived = sources.length > 0 && sources.every(source => source.received);
+  } else {
+    state.income = parseEuros(draft.income || "0", "revenus mensuels");
+  }
   const salaryDay = Number(draft.salaryDay);
   if (!Number.isInteger(salaryDay) || salaryDay < 1 || salaryDay > 31) throw Error("Choisissez un jour de salaire entre 1 et 31.");
   state.salaryDay = salaryDay;
