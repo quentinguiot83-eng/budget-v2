@@ -1005,3 +1005,17 @@ body:has(.app),body:has(.app) #root {background:#f0f0ef!important}
     flex-shrink:0;
   }
 }
+
+/* iOS safe-area: white status bar and header, no overlap. */
+@media (max-width:850px) {
+  :root:not([data-mode="dark"]) .app .main > header.topbar.soft-topbar {
+    box-sizing:border-box!important;
+    padding-top:calc(env(safe-area-inset-top, 0px) + 10px)!important;
+    padding-bottom:10px!important;
+    min-height:calc(env(safe-area-inset-top, 0px) + 72px)!important;
+    top:0!important;
+  }
+  :root:not([data-mode="dark"]) .app .main > header.topbar.soft-topbar::after {
+    content:none!important;
+  }
+}
