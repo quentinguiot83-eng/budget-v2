@@ -21,6 +21,7 @@ import {
 import { jsPDF } from "jspdf";
 import { rpc } from "./api";
 import ProDateTimeInput from "./ProDateTimeInput";
+import ProClientPicker, {type ProClientDraft, type ProClientChoice} from "./ProClientPicker";
 import "./pro-billing-v2.css";
 
 type PaymentMethod = "card" | "check" | "cash" | "transfer" | "other";
@@ -112,6 +113,19 @@ export default function ProBillingV2({suite,onSuite,setError,setNotice,initialAc
     finally{setBusy(false);}
   }
 
+  async function createQuickClient(draft:ProClientDraft):Promise<ProClientChoice>{
+    if(busy)throw Error("Enregistrement déjà en cours.");
+    setBusy(true);setError("");
+    try{
+      const next=await rpc("budget_pro_client_save",{p_client:draft}) as BillingSuite;
+      const added=next.clients.find(c=>!data.clients.some(old=>old.id===c.id));
+      if(!added)throw Error("Le client a été enregistré, mais sa fiche n’a pas pu être sélectionnée. Actualisez le formulaire.");
+      setData(next);onSuite(next);setNotice("Client créé et sélectionné");
+      return added;
+    } catch(e) {setError(e instanceof Error?e.message:String(e));throw e;}
+    finally{setBusy(false);}
+  }
+
   const overdue=(i:Invoice)=>i.status!=="paid"&&i.status!=="draft"&&i.status!=="cancelled"&&!!i.dueDate&&i.dueDate<today();
   const invoiceLabel=(i:Invoice)=>overdue(i)?"En retard":i.status==="partially_paid"?"Paiement partiel":i.status==="draft"?"Brouillon":i.status==="sent"?"Envoyée":i.status==="paid"?"Payée":"Annulée";
 
@@ -162,8 +176,8 @@ export default function ProBillingV2({suite,onSuite,setError,setNotice,initialAc
     </section>}
 
     {modal.type==="preview" ? <DocumentPreview kind={modal.kind} value={modal.value} close={()=>setModal({type:"none"})}/> : modal.type!=="none"&&<BillingModal close={()=>setModal({type:"none"})}>
-      {modal.type==="quote"&&<QuoteForm value={modal.value} clients={data.clients} products={data.products} vatEnabled={data.profile.vatEnabled} defaultVat={data.profile.vatRate} submit={v=>call("budget_pro_quote_save",{p_quote:v},"Devis enregistré")}/>} 
-      {modal.type==="invoice"&&<InvoiceFormV2 value={modal.value} clients={data.clients} products={data.products} vatEnabled={data.profile.vatEnabled} defaultVat={data.profile.vatRate} defaultPaymentDays={data.billing.defaultPaymentDays??30} submit={v=>call("budget_pro_invoice_save",{p_invoice:v},"Facture brouillon enregistrée")}/>} 
+      {modal.type==="quote"&&<QuoteForm value={modal.value} clients={data.clients} products={data.products} vatEnabled={data.profile.vatEnabled} defaultVat={data.profile.vatRate} createClient={createQuickClient} submit={v=>call("budget_pro_quote_save",{p_quote:v},"Devis enregistré")}/>} 
+      {modal.type==="invoice"&&<InvoiceFormV2 value={modal.value} clients={data.clients} products={data.products} vatEnabled={data.profile.vatEnabled} defaultVat={data.profile.vatRate} defaultPaymentDays={data.billing.defaultPaymentDays??30} createClient={createQuickClient} submit={v=>call("budget_pro_invoice_save",{p_invoice:v},"Facture brouillon enregistrée")}/>} 
       {modal.type==="payment"&&<PaymentForm invoice={modal.invoice} busy={busy} submit={v=>call("budget_pro_invoice_payment_save",{p_payment:v},"Paiement enregistré et ajouté à la trésorerie")}/>} 
       {modal.type==="payments"&&<PaymentHistory invoice={modal.invoice} payments={payments.filter(p=>p.invoiceId===modal.invoice.id)} remove={p=>confirm("Supprimer ce paiement et son encaissement de trésorerie ?")&&void call("budget_pro_invoice_payment_delete",{p_id:p.id},"Paiement supprimé")}/>} 
       {modal.type==="settings"&&<BillingSettingsFormV2 value={data.billing} submit={v=>call("budget_pro_billing_save",{p_settings:v},"Paramètres de facturation enregistrés")}/>} 
@@ -171,7 +185,7 @@ export default function ProBillingV2({suite,onSuite,setError,setNotice,initialAc
   </div>;
 }
 
-function QuoteForm({value,clients,products,vatEnabled,defaultVat,submit}:{value?:Quote;clients:Client[];products:Product[];vatEnabled:boolean;defaultVat:number;submit:(v:Record<string,unknown>)=>Promise<unknown>}){
+function QuoteForm({value,clients,products,vatEnabled,defaultVat,createClient,submit}:{value?:Quote;clients:Client[];products:Product[];vatEnabled:boolean;defaultVat:number;createClient:(draft:ProClientDraft)=>Promise<ProClientChoice>;submit:(v:Record<string,unknown>)=>Promise<unknown>}){
   const [clientId,setClientId]=useState(value?.clientId??clients[0]?.id??"");
   const [issueDate,setIssueDate]=useState(value?.issueDate??today());
   const [validUntil,setValidUntil]=useState(value?.validUntil??addDays(today(),30));
@@ -182,14 +196,14 @@ function QuoteForm({value,clients,products,vatEnabled,defaultVat,submit}:{value?
   const choose=(i:number,id:string)=>{const p=products.find(x=>x.id===id);if(p)setItem(i,{productId:p.id,description:p.name,unitPrice:p.unitPrice,vatRate:vatEnabled?p.vatRate:0})};
   return <form className="billing-v2-form billing-v2-form-wide" onSubmit={e=>{e.preventDefault();void submit({id:value?.id,clientId,issueDate,validUntil,notes,items})}}>
     <FormHead eyebrow="DEVIS" title={value?`Modifier ${value.number}`:"Nouveau devis"} text="Le devis reste modifiable tant qu’il n’est pas marqué envoyé."/>
-    <label>Client<select required value={clientId} onChange={e=>setClientId(e.target.value)}><option value="">Choisir…</option>{clients.map(c=><option key={c.id} value={c.id}>{c.companyName||c.name}</option>)}</select></label>
+    <ProClientPicker clients={clients} value={clientId} onChange={setClientId} onCreate={createClient} required/>
     <div className="billing-v2-form2"><label>Date du devis<ProDateTimeInput type="date" required value={issueDate} onChange={e=>setIssueDate(e.target.value)}/></label><label>Valable jusqu’au<ProDateTimeInput type="date" required min={issueDate} value={validUntil} onChange={e=>setValidUntil(e.target.value)}/></label></div>
     <DocumentLines items={items} products={products} vatEnabled={vatEnabled} defaultVat={defaultVat} setItems={setItems} setItem={setItem} choose={choose}/>
     <Totals {...totals}/><label>Notes<textarea rows={3} value={notes} onChange={e=>setNotes(e.target.value)}/></label><button className="billing-v2-primary">Enregistrer le devis</button>
   </form>;
 }
 
-function InvoiceFormV2({value,clients,products,vatEnabled,defaultVat,defaultPaymentDays,submit}:{value?:Invoice;clients:Client[];products:Product[];vatEnabled:boolean;defaultVat:number;defaultPaymentDays:number;submit:(v:Record<string,unknown>)=>Promise<unknown>}){
+function InvoiceFormV2({value,clients,products,vatEnabled,defaultVat,defaultPaymentDays,createClient,submit}:{value?:Invoice;clients:Client[];products:Product[];vatEnabled:boolean;defaultVat:number;defaultPaymentDays:number;createClient:(draft:ProClientDraft)=>Promise<ProClientChoice>;submit:(v:Record<string,unknown>)=>Promise<unknown>}){
   const initialIssue=value?.issueDate??today();
   const [clientId,setClientId]=useState(value?.clientId??clients[0]?.id??"");
   const [issueDate,setIssueDate]=useState(initialIssue);const [serviceDate,setServiceDate]=useState(value?.serviceDate??initialIssue);
@@ -203,7 +217,7 @@ function InvoiceFormV2({value,clients,products,vatEnabled,defaultVat,defaultPaym
   const choose=(i:number,id:string)=>{const p=products.find(x=>x.id===id);if(p)setItem(i,{productId:p.id,description:p.name,unitPrice:p.unitPrice,vatRate:vatEnabled?p.vatRate:0})};
   return <form className="billing-v2-form billing-v2-form-wide" onSubmit={e=>{e.preventDefault();void submit({id:value?.id,clientId,issueDate,dueDate,serviceDate,purchaseOrderNumber,operationType,deliveryAddress,notes,sourceQuoteId:value?.sourceQuoteId??null,items})}}>
     <FormHead eyebrow="FACTURE" title={value?"Modifier le brouillon":"Nouvelle facture"} text="Le numéro définitif n’est attribué qu’au moment où vous émettez la facture."/>
-    <label>Client<select required value={clientId} onChange={e=>setClientId(e.target.value)}><option value="">Choisir…</option>{clients.map(c=><option key={c.id} value={c.id}>{c.companyName||c.name}</option>)}</select></label>
+    <ProClientPicker clients={clients} value={clientId} onChange={setClientId} onCreate={createClient} required/>
     <div className="billing-v2-form3"><label>Date d’émission<ProDateTimeInput type="date" required value={issueDate} onChange={e=>{setIssueDate(e.target.value);if(!value)setDueDate(addDays(e.target.value,defaultPaymentDays))}}/></label><label>Date prestation / vente<ProDateTimeInput type="date" required value={serviceDate} onChange={e=>setServiceDate(e.target.value)}/></label><label>Échéance<ProDateTimeInput type="date" required min={issueDate} value={dueDate} onChange={e=>setDueDate(e.target.value)}/></label></div>
     <div className="billing-v2-form2"><label>Type d’opération<select value={operationType} onChange={e=>setOperationType(e.target.value as "goods"|"services"|"mixed")}><option value="services">Prestations de services</option><option value="goods">Livraisons de biens</option><option value="mixed">Biens et services</option></select></label><label>N° bon de commande<input value={purchaseOrderNumber} onChange={e=>setPurchaseOrderNumber(e.target.value)}/></label></div>
     {operationType!=="services"&&<label>Adresse de livraison si différente<input value={deliveryAddress} onChange={e=>setDeliveryAddress(e.target.value)}/></label>}
