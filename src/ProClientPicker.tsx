@@ -75,7 +75,7 @@ export default function ProClientPicker({clients, value, onChange, onCreate, req
       <div className="pro-client-picker-row">
         <label className="pro-client-search">
           <span>Rechercher un client</span>
-          <span className="pro-client-search-control"><Search size={17}/><input type="search" placeholder="Nom, entreprise ou e-mail" value={search} onChange={e=>setSearch(e.target.value)} autoComplete="off"/></span>
+          <span className="pro-client-search-control"><Search size={17}/><input type="search" placeholder="Nom, entreprise ou e-mail" value={search} onChange={e=>setSearch(e.target.value)} onKeyDown={e=>{if(e.key==="Enter"){e.preventDefault();if(matching[0])onChange(matching[0].id);}}} autoComplete="off"/></span>
         </label>
         <button type="button" className="pro-client-new" onClick={()=>{setCreating(true);setDraft({...newDraft(),name:search.trim()});setError("");}}><Plus size={17}/> Nouveau</button>
       </div>
@@ -86,7 +86,7 @@ export default function ProClientPicker({clients, value, onChange, onCreate, req
         </select>
       </label>
       {query&&!matching.length&&<small>Aucun client trouvé. Vous pouvez en créer un sans quitter ce formulaire.</small>}
-    </>:<div className="pro-client-create">
+    </>:<div className="pro-client-create" onKeyDown={e=>{if(e.key==="Enter"&&(e.target as HTMLElement).tagName!=="TEXTAREA"){e.preventDefault();void save();}}}>
       <div className="pro-client-create-head"><strong>Nouveau client</strong><button type="button" title="Annuler" aria-label="Revenir au choix du client" onClick={cancel}><X size={18}/></button></div>
       <label>Nom du client<input autoFocus required value={draft.name} onChange={e=>update({name:e.target.value})} placeholder="Nom et prénom"/></label>
       <label>Type<select value={draft.clientType} onChange={e=>update({clientType:e.target.value as ProClientDraft["clientType"]})}><option value="individual">Particulier</option><option value="professional">Professionnel</option></select></label>
