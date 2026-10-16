@@ -1,5 +1,6 @@
 import { Fragment, useEffect, useRef, useState, type ReactNode } from "react";
 import { CategoryGlyph } from "./CategoryGlyph";
+import InlineCategoryCreator, {type InlineChoiceCreator, type QuickChoice} from "./InlineCategoryCreator";
 import { X, ChevronRight, Info } from "lucide-react";
 export type Field = {
   name: string;
@@ -75,6 +76,7 @@ export function Form({
   extra,
   assist,
   onFieldChange,
+  createChoice,
 }: {
   fields: Field[];
   submit: (v: Record<string, string>) => Promise<void>;
@@ -82,9 +84,11 @@ export function Form({
   extra?: ReactNode;
   assist?: (values: Record<string, string>, apply: (patch: Record<string, string>) => void) => ReactNode;
   onFieldChange?: (name: string, value: string, values: Record<string, string>) => Record<string, string> | undefined;
+  createChoice?: InlineChoiceCreator;
 }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [createdChoices,setCreatedChoices] = useState<QuickChoice[]>([]);
 
   const [values, setValues] = useState<Record<string, string>>(
     () =>
@@ -187,6 +191,7 @@ export function Form({
             {f.hint && <small>{f.hint}</small>}
           </div>
         ) : (
+          <>
           <label className="field">
             <span>{f.label}</span>
             {f.options ? (
@@ -196,7 +201,7 @@ export function Form({
                 required={f.required !== false}
                 onChange={e => updateValue(f.name, e.target.value)}
               >
-                {f.options.map(([v, l]) => (
+                {[...f.options, ...(createChoice?.field===f.name?createdChoices.map(item=>[item.value,item.label] as [string,string]):[])].map(([v, l]) => (
                   <option key={v} value={v}>
                     {l}
                   </option>
@@ -221,6 +226,11 @@ export function Form({
             )}{" "}
             {f.hint && <small>{f.hint}</small>}
           </label>
+          {createChoice?.field===f.name&&<InlineCategoryCreator config={createChoice} selected={values[f.name]??""} onCreated={(item,kind)=>{
+            setCreatedChoices(old=>[...old,item]);
+            setValues(current=>({...current,[f.name]:item.value,...(kind==="fixed"&&createChoice.kind==="household"?{expenseKind:"fixed"}:{})}));
+          }}/>}
+          </>
         )}
           {f.name === "description" && assist?.(values, patchValues)}
         </Fragment>)}
