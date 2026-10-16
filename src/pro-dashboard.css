@@ -36,5 +36,5 @@
 :root[data-mode="dark"] .pro-db-analysis small,:root[data-mode="dark"] .pro-db-disclaimer{color:#abb0bd}
 :root[data-mode="dark"] .pro-db-follow-row,:root[data-mode="dark"] .pro-db-alert-summary{border-color:#334250}
 :root[data-mode="dark"] .pro-db-add-menu>button{color:#e5edf5}
-@media(min-width:800px){.pro-db-overview{grid-template-columns:repeat(2,minmax(0,1fr))}.pro-db-salary{grid-column:1/-1}.pro-db-dual{grid-column:1/-1}.pro-db-summary,.pro-db-treasury{grid-column:span 1}}
+@media(min-width:800px){.pro-db-overview{grid-template-columns:repeat(2,minmax(0,1fr))}.pro-db-salary{grid-column:1/-1}.pro-db-dual{grid-column:1/-1}.pro-db-treasury{grid-column:1/-1}}
 @media(max-width:540px){.pro-db-heading h1{font-size:23px}.pro-db-overview{gap:9px}.pro-db-tile{padding:13px 10px}.pro-db-summary,.pro-db-treasury{padding:15px}.pro-db-section-head h2{font-size:15px}}
