@@ -58,7 +58,7 @@ export default function InlineCategoryCreator({
         <label>Nom<input value={name} autoFocus placeholder="Ex. Animaux" onChange={e=>setName(e.target.value)}/></label>
         {config.kind==="household"&&<label>Icône<select value={icon} onChange={e=>setIcon(e.target.value)}>{icons.map(([id,label])=><option key={id} value={id}>{label}</option>)}</select></label>}
         {config.kind==="household"&&<label>Type de dépense<select value={kind} onChange={e=>setKind(e.target.value as QuickCategoryDraft["kind"])}><option value="variable">Variable</option><option value="fixed">Fixe / récurrente</option></select></label>}
-        <label>Budget mensuel (€) — facultatif<input inputMode="decimal" type="number" step="0.01" min="0" value={budget} onChange={e=>setBudget(e.target.value)} placeholder="0"/></label>
+        {(config.kind==="personal"||kind==="variable")&&<label>Budget mensuel (€) — facultatif<input inputMode="decimal" type="number" step="0.01" min="0" value={budget} onChange={e=>setBudget(e.target.value)} placeholder="0"/></label>}
         <small>{config.kind==="personal"?"La catégorie sera créée dans votre budget personnel.":"Pour une dépense fixe, l’échéance ne sera créée qu’après validation de l’opération. Un plafond est facultatif."}</small>
         {duplicate&&<small className="inline-category-error">Cette catégorie existe déjà.</small>}
         {error&&<p className="inline-category-error" role="alert">{error}</p>}
