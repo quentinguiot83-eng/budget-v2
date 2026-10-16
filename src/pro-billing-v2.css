@@ -161,3 +161,23 @@
   .billing-v2-form .billing-v2-form2,
   .billing-v2-form .billing-v2-form3{grid-template-columns:minmax(0,1fr)}
 }
+
+
+/* Billing mobile: match the same 44px touch targets and compact form rhythm. */
+@media(max-width:650px) {
+  .billing-v2-modal-body {padding:0 16px 16px}
+  .billing-v2-form {gap:11px;min-width:0}
+  .billing-v2-formhead {margin-bottom:2px}
+  .billing-v2-formhead h2 {font-size:21px;line-height:1.2}
+  .billing-v2-form label {gap:5px;min-width:0}
+  .billing-v2-form input:not([type="checkbox"]):not([type="date"]):not([type="time"]):not([type="datetime-local"]),
+  .billing-v2-form select {
+    box-sizing:border-box;
+    min-width:0;
+    max-width:100%;
+    min-height:44px;
+    padding:9px 11px;
+    font-size:16px;
+  }
+  .billing-v2-form > button.billing-v2-primary:last-child {width:100%;min-height:46px}
+}
