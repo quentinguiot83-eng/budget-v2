@@ -184,3 +184,41 @@
 :root[data-mode="dark"] .prosuite-modal-header{background:#17212b}
 :root[data-mode="dark"] .prosuite-modalclose{background:#17212b;color:#e5edf5;border-color:#334250}
 :root[data-mode="dark"] .prosuite-event-timeblock>span{color:#99a8b7}
+
+
+/* One compact, overflow-safe iOS date/time style for every Pro workspace form. */
+.prosuite-form .prosuite-form2,
+.prosuite-form .prosuite-form3,
+.prosuite-form .prosuite-event-datetime-fields{min-width:0}
+.prosuite-form .prosuite-form2>label,
+.prosuite-form .prosuite-form3>label,
+.prosuite-form .prosuite-event-datetime-fields>label{min-width:0;max-width:100%}
+@media(max-width:650px){
+  .prosuite-form input[type="date"],
+  .prosuite-form input[type="time"],
+  .prosuite-form input[type="datetime-local"]{
+    display:block;
+    box-sizing:border-box!important;
+    width:100%!important;
+    min-width:0!important;
+    max-width:100%!important;
+    min-height:44px;
+    height:44px;
+    padding:9px 10px!important;
+    font-size:16px!important;
+    line-height:1.25!important;
+    letter-spacing:normal!important;
+    text-align:left;
+    -webkit-appearance:auto;
+    appearance:auto;
+  }
+  .prosuite-form input[type="date"]::-webkit-date-and-time-value,
+  .prosuite-form input[type="time"]::-webkit-date-and-time-value,
+  .prosuite-form input[type="datetime-local"]::-webkit-date-and-time-value{min-width:0;text-align:left}
+  .prosuite-form .prosuite-form2,
+  .prosuite-form .prosuite-form3{grid-template-columns:minmax(0,1fr)}
+  .prosuite-form .prosuite-event-datetime-fields{
+    grid-template-columns:minmax(0,1.55fr) minmax(0,.95fr);
+    gap:8px;
+  }
+}
