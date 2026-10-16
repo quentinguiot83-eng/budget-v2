@@ -457,3 +457,111 @@
   .app .soft-topbar .wimm-pro-shortcut { width: 35px; height: 35px; min-width: 35px; font-size: .56rem; }
   .app .soft-topbar > div:first-child > .eyebrow { max-width: 115px; }
 }
+
+
+/* Desktop Pro: make the contextual actions genuinely accessible.
+   Mobile keeps its existing floating + and bottom-sheet layout. */
+.prosuite-native .prosuite-desktop-add { display:none; }
+@media (min-width:851px) {
+  .prosuite-native .prosuite-desktop-add {
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+    flex:0 0 auto;
+    min-height:42px;
+    border:0;
+    border-radius:12px;
+    background:var(--action,#7653bc);
+    color:#fff;
+    font-size:13px;
+    font-weight:800;
+    padding:10px 17px;
+    cursor:pointer;
+  }
+  .prosuite-native .prosuite-desktop-add:hover { filter:brightness(1.06); }
+  .prosuite-native .prosuite-desktop-add:focus-visible,
+  .app .desktop-quick-add:focus-visible { outline:2px solid var(--action,#7653bc);outline-offset:3px; }
+  .app .quick-add-layer.pro-context-add-layer {
+    display:grid!important;
+    position:fixed;
+    inset:0;
+    z-index:1000;
+    padding:24px;
+    align-items:center;
+    justify-items:center;
+    box-sizing:border-box;
+  }
+  .app .pro-context-add-layer .quick-add-backdrop {
+    display:block;
+    position:absolute;
+    inset:0;
+    background:rgba(24,22,41,.39);
+  }
+  .app .pro-context-add-layer .quick-add-menu {
+    position:relative;
+    top:auto;
+    bottom:auto;
+    left:auto;
+    right:auto;
+    width:min(460px,100%);
+    min-width:0;
+    max-width:460px;
+    max-height:min(76dvh,690px);
+    overflow-y:auto;
+    overscroll-behavior:contain;
+    box-sizing:border-box;
+    border-radius:21px;
+    border:1px solid var(--border);
+    padding:18px;
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:9px;
+    background:var(--surface);
+    color:var(--ink);
+    box-shadow:0 20px 65px rgba(22,15,45,.22);
+  }
+  .app .pro-context-add-layer .quick-add-menu > .pro-v3-add-title {
+    grid-column:1/-1;
+    padding:1px 3px 7px;
+    margin:0;
+    font-size:16px;
+    font-weight:800;
+    color:var(--ink);
+  }
+  .app .pro-context-add-layer .quick-add-menu > .quick-add-primary-action {
+    display:flex;
+    align-items:center;
+    width:100%;
+    min-width:0;
+    min-height:58px;
+    margin:0;
+    padding:9px;
+    gap:9px;
+    border:1px solid var(--border);
+    border-radius:13px;
+    background:var(--surface);
+    font-size:12px;
+    font-weight:750;
+    color:var(--ink);
+    text-align:left;
+    cursor:pointer;
+  }
+  .app .pro-context-add-layer .quick-add-primary-action > .quick-add-item-icon {
+    display:grid;
+    flex:0 0 30px;
+    place-items:center;
+    width:30px;
+    height:30px;
+    border-radius:10px;
+    background:color-mix(in srgb,var(--action,#7653bc) 10%,var(--surface));
+    color:var(--action,#7653bc);
+  }
+  .app .pro-context-add-layer .quick-add-menu > .quick-add-primary-action:hover {
+    background:color-mix(in srgb,var(--action,#7653bc) 6%,var(--surface));
+    border-color:color-mix(in srgb,var(--action,#7653bc) 32%,var(--border));
+  }
+  .app .pro-context-add-layer .quick-add-menu > .quick-add-primary-action:focus-visible {
+    outline:2px solid var(--action,#7653bc);outline-offset:2px;
+  }
+}
