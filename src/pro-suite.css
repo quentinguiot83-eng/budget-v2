@@ -313,3 +313,63 @@
   .pro-month-navigator button{flex-basis:35px;width:35px;height:35px}
   .pro-month-navigator strong{font-size:13px}
 }
+
+
+/* Wimm Pro v3 - coherent mobile navigation and Liquid Glass density */
+.pro-v3-hidden-heading{display:none!important}
+.prosuite-v3-nav{gap:8px}
+.prosuite-v3-nav button{transition:background .15s;color:#6e7385}
+.prosuite-v3-nav button.active{background:rgba(124,86,195,.09);border-radius:13px;color:#7545b6}
+.prosuite-native .prosuite-topbar{height:auto!important;min-height:65px;padding:11px 15px!important;border-radius:18px!important;border:1px solid rgba(236,232,242,.88)!important;background:rgba(255,255,255,.87)!important;margin-bottom:14px}
+.prosuite-native .prosuite-titleblock small{display:none}
+.prosuite-native .prosuite-titleblock strong{font-size:15px}
+.prosuite-native .prosuite-business-title{gap:9px}
+.prosuite-native .prosuite-main{padding-top:12px!important}
+.pro-v3-pageheading{padding:2px 1px 12px}.pro-v3-pageheading span{font-size:11px;color:#8059bb;font-weight:800;letter-spacing:.1em}.pro-v3-pageheading h1{font-size:24px;margin:5px 0}.pro-v3-pageheading p{font-size:13px;color:#7a8291;margin:0}
+.pro-v3-management-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.pro-v3-management-grid>button{display:flex;flex-direction:column;align-items:flex-start;gap:9px;padding:15px;background:rgba(255,255,255,.9);color:#7150b2;text-align:left;border:1px solid #e6e2f1;border-radius:17px;min-height:130px}
+.pro-v3-management-grid>button>span{display:grid;gap:5px;min-width:0}.pro-v3-management-grid strong{font-size:14px;color:#313147}.pro-v3-management-grid small{font-size:11px;line-height:1.4;color:#828697}.pro-v3-management-grid>button>svg:last-child{display:none}
+.pro-v3-back{display:flex;align-items:center;gap:5px;background:transparent;border:0;color:#7651b3;font-size:12px;font-weight:750;padding:5px 0 12px}
+.prosuite-native .prosuite-pagehead>div:first-child>p{font-size:12px;line-height:1.4}
+.prosuite-native .prosuite-clientgrid,.prosuite-native .prosuite-productgrid{grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px}
+.prosuite-native .prosuite-client,.prosuite-native .prosuite-product{padding:13px;border-radius:17px;min-width:0}
+.prosuite-native .prosuite-client p,.prosuite-native .prosuite-product p{font-size:12px;margin:4px 0}
+.prosuite-native .prosuite-client button,.prosuite-native .prosuite-product button{min-height:33px}
+.prosuite-native .pro-new-dashboard{gap:11px}
+.prosuite-native .pro-db-heading{padding-bottom:1px}
+.prosuite-native .pro-db-heading h1{font-size:23px}
+.prosuite-native .pro-db-heading p{font-size:12px}
+.prosuite-native .pro-db-overview{gap:9px}
+.prosuite-native .pro-db-summary{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 13px;border-radius:14px}
+.prosuite-native .pro-db-summary>strong{font-size:18px}
+.prosuite-native .pro-db-summary small{display:none}
+.prosuite-native .pro-db-salary{padding:14px}
+.prosuite-native .pro-db-salary>strong{font-size:23px}
+.prosuite-native .pro-db-treasury{padding:14px}
+.prosuite-native .pro-db-treasury strong{font-size:23px}
+.quick-add-menu:has(.pro-v3-add-title){max-height:min(70dvh,580px);overflow-y:auto;overscroll-behavior:contain;padding-bottom:15px}
+.pro-v3-add-title{display:block;font-size:14px;margin:8px 8px 13px}
+:root[data-mode="dark"] .prosuite-native .prosuite-topbar,:root[data-mode="dark"] .pro-v3-management-grid>button{background:rgba(24,32,43,.94)!important;color:#e5edf5;border-color:#2a3744!important}
+:root[data-mode="dark"] .pro-v3-management-grid strong{color:#e5edf5}
+@media(max-width:800px){
+  .prosuite-native .prosuite-v3-nav{
+    display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:3px!important;
+    align-items:stretch!important;justify-content:stretch!important;width:100%!important;
+    box-sizing:border-box!important;max-height:none!important;min-height:60px!important;height:auto!important;
+    padding:6px!important;overflow:visible!important;border:1px solid #ede9f2!important;border-radius:18px!important;
+    background:rgba(255,255,255,.88)!important;
+  }
+  .prosuite-native .prosuite-v3-nav button,
+  .prosuite-native .prosuite-v3-nav button.active{
+    display:flex!important;flex-direction:column!important;gap:3px!important;flex:none!important;
+    height:58px!important;max-height:none!important;min-height:58px!important;
+    width:100%!important;max-width:100%!important;min-width:0!important;
+    align-items:center!important;justify-content:center!important;
+    padding:6px 2px!important;font-size:10px!important;border-radius:12px!important;
+  }
+  .prosuite-native .prosuite-v3-nav button span{display:block!important;white-space:nowrap!important;font-size:10px!important;font-weight:700}
+  .prosuite-native .prosuite-v3-nav button svg{width:19px!important;height:19px!important;flex:0 0 auto!important}
+  .prosuite-native .prosuite-shell{min-height:0!important}
+  .prosuite-native .prosuite-main{padding-top:12px!important}
+}
+@media(max-width:540px){.pro-v3-management-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.prosuite-native .prosuite-main{padding-left:10px!important;padding-right:10px!important}.prosuite-native .prosuite-topbar{margin:0 4px 11px}.prosuite-native .pro-db-heading{padding-top:0}}
