@@ -76,7 +76,7 @@ const payLabel:Record<string,string>={card:"CB",check:"Chèque",cash:"Espèces",
 const eventLabel:Record<string,string>={appointment:"Rendez-vous",shooting:"Prestation",deadline:"Échéance",admin:"Administratif",other:"Autre"};
 const invoiceStatus:Record<string,string>={draft:"Brouillon",sent:"Envoyée",partially_paid:"Paiement partiel",paid:"Payée",cancelled:"Annulée"};
 
-export default function ProWorkspace({ native = false }: { native?: boolean } = {}){
+export default function ProWorkspace({ native = false, onOpenQuickAdd }: { native?: boolean; onOpenQuickAdd?: ()=>void } = {}){
   const [enabled,setEnabled]=useState(native);
   const [open,setOpen]=useState(native);
   const [section,setSection]=useState<Section>("dashboard");
@@ -196,6 +196,13 @@ export default function ProWorkspace({ native = false }: { native?: boolean } = 
       <header className="prosuite-topbar">
         {!native&&<button className="prosuite-icon" onClick={()=>setOpen(false)}><ChevronLeft size={20}/></button>}
         <div className="prosuite-titleblock"><div className="prosuite-business-title"><strong>{suite?.profile.businessName||"Mon entreprise"}</strong>{suite&&<ProBusinessMenu activeBusinessId={suite.activeBusinessId} businesses={suite.businesses??[]} onChanged={load}/>}</div></div>
+        {native && onOpenQuickAdd && <button
+          type="button"
+          className="prosuite-desktop-add"
+          aria-haspopup="dialog"
+          aria-controls="wimm-quick-add-actions"
+          onClick={onOpenQuickAdd}
+        ><Plus size={18}/> Ajouter</button>}
         {suite&&<button type="button" className="prosuite-icon" title="Exporter les données de l'entreprise active (JSON)"
           aria-label="Exporter les données Pro" disabled={busy} onClick={()=>void exportCurrentBusiness()}>
           <Download size={20}/>
