@@ -30,7 +30,7 @@ export default function ProRecurrences({clients,vatEnabled,defaultVat,onSuite,on
   setState(result);
   return result;
  }
- useEffect(()=>{let ignore=false;setLoading(true);void rpc("budget_pro_recurring_refresh").then(v=>{if(!ignore)setState(v as Result)}).catch(e=>{if(!ignore)setError(e instanceof Error?e.message:String(e))}).finally(()=>{if(!ignore)setLoading(false)});return()=>{ignore=true}},[]);
+ useEffect(()=>{let ignore=false;setLoading(true);void rpc("budget_pro_recurring_refresh").then(async v=>{if(ignore)return;setState(v as Result);try{const fresh=await rpc("budget_pro_suite_load");if(!ignore)onSuite(fresh);}catch{/* Retain the recurring list when refreshing billing totals fails */}}).catch(e=>{if(!ignore)setError(e instanceof Error?e.message:String(e))}).finally(()=>{if(!ignore)setLoading(false)});return()=>{ignore=true}},[]);
  const invoke=async(name:string,args:Record<string,unknown>|undefined,message:string,close=false)=>{
   if(busy)return;
   setBusy(true);setError("");setNotice("");
