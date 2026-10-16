@@ -222,3 +222,40 @@
     gap:8px;
   }
 }
+
+
+/* Pro mobile: unified compact form rhythm and useful dashboard actions. */
+@media(max-width:650px) {
+  .prosuite-modal-body {padding:0 16px 16px}
+  .prosuite-form {gap:10px;min-width:0}
+  .prosuite-formtitle {margin-bottom:2px}
+  .prosuite-formtitle h2 {font-size:21px;line-height:1.2}
+  .prosuite-form label {gap:5px;min-width:0}
+  .prosuite-form input:not([type="checkbox"]):not([type="date"]):not([type="time"]):not([type="datetime-local"]),
+  .prosuite-form select {
+    box-sizing:border-box;
+    min-width:0;
+    max-width:100%;
+    min-height:44px;
+    padding:9px 11px;
+    font-size:16px;
+  }
+  .prosuite-event-datetime-fields {grid-template-columns:minmax(0,1.55fr) minmax(0,.95fr);gap:8px}
+  .prosuite-form > .prosuite-btn:last-child {align-self:stretch;min-height:46px}
+  .prosuite-event-actions .prosuite-btn {min-height:46px}
+  .prosuite-native .prosuite-pagehead .prosuite-actions.prosuite-actions-compact {
+    display:grid!important;
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+    gap:8px!important;
+    width:100%;
+  }
+  .prosuite-native .prosuite-pagehead .prosuite-actions.prosuite-actions-compact .prosuite-btn {
+    min-width:0;
+    min-height:44px;
+    padding:9px 7px;
+    gap:5px;
+    font-size:12px;
+    line-height:1.2;
+    white-space:normal;
+  }
+}
