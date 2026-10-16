@@ -17,7 +17,9 @@ export default function ProDashboard({businessName,month,transactions,invoices,e
   const data=proMonthStats(transactions,invoices,month);
   const cash=proCashAtMonth(transactions,openingBalance,month);
   const alerts=unpaidProInvoices(invoices).sort((a,b)=>(a.dueDate??"9999").localeCompare(b.dueDate??"9999"));
-  const overdue=alerts.filter(i=>!!i.dueDate&&i.dueDate<new Date().toLocaleDateString("en-CA"));
+  const currentDate=new Date();
+  const todayLocal=currentDate.getFullYear()+"-"+String(currentDate.getMonth()+1).padStart(2,"0")+"-"+String(currentDate.getDate()).padStart(2,"0");
+  const overdue=alerts.filter(i=>!!i.dueDate&&i.dueDate<todayLocal);
   const alertAmount=alerts.reduce((n,i)=>n+proInvoiceRemaining(i),0);
   const now=new Date();
   const upcoming=events.filter(e=>{
