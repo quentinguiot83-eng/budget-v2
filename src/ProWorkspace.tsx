@@ -10,6 +10,8 @@ import {
   CreditCard,
   Download,
   LayoutDashboard,
+  ChartNoAxesCombined,
+  ChevronsLeft,
   Link2,
   Package,
   Pencil,
@@ -29,9 +31,12 @@ import ProBusinessMenu from "./ProBusinessMenu";
 import ProCalendarSubscription from "./ProCalendarSubscription";
 import ProDateTimeInput from "./ProDateTimeInput";
 import ProClientPicker, {type ProClientDraft, type ProClientChoice} from "./ProClientPicker";
+import ProDashboard from "./ProDashboard";
+import ProAnalysis from "./ProAnalysis";
+import {currentProMonth,formatProMonth,moveProMonth,proCashAtMonth,proMonthStats,proInvoiceRemaining,unpaidProInvoices} from "./proFinance";
 import "./pro-suite.css";
 
-type Section = "dashboard" | "clients" | "billing" | "catalog" | "agenda" | "treasury";
+type Section = "dashboard" | "analysis" | "clients" | "billing" | "catalog" | "agenda" | "treasury";
 type PaymentMethod = "card" | "check" | "cash" | "transfer" | "other";
 
 type Profile = { businessName:string; legalStatus:string; activityType:string; siret:string; contributionRate:number; taxRate:number; vatEnabled:boolean; vatRate:number };
@@ -75,6 +80,7 @@ export default function ProWorkspace({ native = false }: { native?: boolean } = 
   const [enabled,setEnabled]=useState(native);
   const [open,setOpen]=useState(native);
   const [section,setSection]=useState<Section>("dashboard");
+  const [selectedProMonth,setSelectedProMonth]=useState(currentProMonth);
   const [billingQuickCreate,setBillingQuickCreate]=useState<"quote"|"invoice"|null>(null);
   const [suite,setSuite]=useState<Suite|null>(null);
   const [modal,setModal]=useState<Modal>({type:"none"});
@@ -132,7 +138,7 @@ export default function ProWorkspace({ native = false }: { native?: boolean } = 
       setBusy(false);
     }
   }
-  async function enter(){ setOpen(true); setSection("dashboard"); await load(); }
+  async function enter(){ setOpen(true); setSection("dashboard"); setSelectedProMonth(currentProMonth()); await load(); }
   async function call(name:string,args?:Record<string,unknown>,message?:string){
     setBusy(true);setError("");
     try{ const data=await rpc(name,args) as Suite; setSuite(data); setModal({type:"none"}); if(message)setNotice(message); return true; }
@@ -155,7 +161,7 @@ export default function ProWorkspace({ native = false }: { native?: boolean } = 
   }
 
   const transactions=suite?.transactions??[];
-  const current=transactions.filter(t=>t.paid&&t.date.slice(0,7)===monthKey());
+  const current=transactions.filter(t=>t.paid&&t.date.slice(0,7)===selectedProMonth);
   const monthIncome=current.filter(t=>t.kind==="income").reduce((s,t)=>s+t.amount,0);
   const monthExpense=current.filter(t=>t.kind==="expense").reduce((s,t)=>s+t.amount,0);
   const accountBalance=useMemo(()=>{
@@ -166,8 +172,8 @@ export default function ProWorkspace({ native = false }: { native?: boolean } = 
   const openInvoices=(suite?.invoices??[]).filter(i=>i.status==="draft"||i.status==="sent"||i.status==="partially_paid");
   const currentContribution=Math.round(monthIncome*((suite?.profile.contributionRate??0)/100));
   const currentTax=Math.round(monthIncome*((suite?.profile.taxRate??0)/100));
-  const paidContrib=current.filter(t=>t.kind==="contribution_payment"&&(t.contributionPeriodKey??t.date.slice(0,7))===monthKey()).reduce((s,t)=>s+t.amount,0);
-  const paidTax=current.filter(t=>t.kind==="tax_payment"&&(t.taxPeriodKey??t.date.slice(0,7))===monthKey()).reduce((s,t)=>s+t.amount,0);
+  const paidContrib=transactions.filter(t=>t.paid&&t.kind==="contribution_payment"&&(t.contributionPeriodKey??t.date.slice(0,7))===selectedProMonth).reduce((s,t)=>s+t.amount,0);
+  const paidTax=transactions.filter(t=>t.paid&&t.kind==="tax_payment"&&(t.taxPeriodKey??t.date.slice(0,7))===selectedProMonth).reduce((s,t)=>s+t.amount,0);
 
   const nav=(mobile=false)=>enabled?<button type="button" className={open?"active":""} onClick={()=>void enter()}><Briefcase size={mobile?20:24}/><span>Professionnel</span></button>:null;
 
@@ -186,6 +192,7 @@ export default function ProWorkspace({ native = false }: { native?: boolean } = 
       <div className="prosuite-shell">
         <nav className="prosuite-nav">
           <ProNav active={section==="dashboard"} icon={<LayoutDashboard/>} label="Tableau de bord" onClick={()=>setSection("dashboard")}/>
+          <ProNav active={section==="analysis"} icon={<ChartNoAxesCombined/>} label="Analyse" onClick={()=>setSection("analysis")}/>
           <ProNav active={section==="clients"} icon={<Users/>} label="Clients" onClick={()=>setSection("clients")}/>
           <ProNav active={section==="billing"} icon={<ReceiptText/>} label="Facturation" onClick={()=>setSection("billing")}/>
           <ProNav active={section==="catalog"} icon={<Package/>} label="Produits & services" onClick={()=>setSection("catalog")}/>
@@ -194,13 +201,39 @@ export default function ProWorkspace({ native = false }: { native?: boolean } = 
         </nav>
         <main className="prosuite-main">
           {error&&<div className="prosuite-error">{error}</div>}{notice&&<div className="prosuite-notice">{notice}</div>}
+          {["dashboard","analysis","agenda","treasury"].includes(section)&&
+            <ProMonthNavigator month={selectedProMonth} onChange={setSelectedProMonth} allowFuture={section==="agenda"}/>}
+          
           {busy&&!suite?<div className="prosuite-loading">Chargement…</div>:suite&&<>
-            {section==="dashboard"&&<Dashboard suite={suite} income={monthIncome} expense={monthExpense} balance={accountBalance} openInvoices={openInvoices} nextEvents={nextEvents} go={setSection} incomeAction={()=>setModal({type:"income"})} eventAction={()=>setModal({type:"event"})} expenseAction={()=>setModal({type:"expense"})} quoteAction={()=>{setBillingQuickCreate("quote");setSection("billing");}} invoiceAction={()=>{setBillingQuickCreate("invoice");setSection("billing");}}/>} 
+            {section==="dashboard"&&<ProDashboard
+              businessName={suite.profile.businessName}
+              month={selectedProMonth}
+              transactions={suite.transactions}
+              invoices={suite.invoices}
+              events={suite.events}
+              openingBalance={suite.account.openingBalance}
+              onAnalysis={()=>setSection("analysis")}
+              onAgenda={()=>setSection("agenda")}
+              onBilling={()=>setSection("billing")}
+              onTransfer={()=>setModal({type:"transfer"})}
+              onAdd={action=>{
+                if(action==="invoice"||action==="quote"){setBillingQuickCreate(action);setSection("billing");}
+                else if(action==="event"){setModal({type:"event"});}
+                else setModal({type:action});
+              }}
+            />}
+            {section==="analysis"&&<ProAnalysis
+              month={selectedProMonth}
+              transactions={suite.transactions}
+              invoices={suite.invoices}
+              clients={suite.clients}
+              openingBalance={suite.account.openingBalance}
+            />}
             {section==="clients"&&<ClientsPage clients={suite.clients} add={()=>setModal({type:"client"})} edit={c=>setModal({type:"client",client:c})} remove={c=>void removeClient(c)}/>} 
             {section==="billing"&&<ProBillingV2 suite={suite} initialAction={billingQuickCreate} onSuite={next=>setSuite(next as Suite)} setError={setError} setNotice={setNotice}/>} 
             {section==="catalog"&&<CatalogPage products={suite.products} add={()=>setModal({type:"product"})} edit={p=>setModal({type:"product",product:p})} remove={p=>void removeProduct(p)}/>} 
-            {section==="agenda"&&<AgendaPage connect={suite.activeBusinessId?()=>setModal({type:"calendar",businessId:suite.activeBusinessId!}):undefined} events={suite.events} clients={suite.clients} add={date=>setModal({type:"event",initialDate:date})} edit={e=>setModal({type:"event",event:e})} remove={e=>void removeEvent(e)}/>}
-            {section==="treasury"&&<TreasuryPage suite={suite} balance={accountBalance} contribution={{estimated:currentContribution,paid:paidContrib}} tax={{estimated:currentTax,paid:paidTax}} income={()=>setModal({type:"income"})} expense={()=>setModal({type:"expense"})} transfer={()=>setModal({type:"transfer"})} contributionPay={()=>setModal({type:"payment",paymentType:"contribution"})} taxPay={()=>setModal({type:"payment",paymentType:"tax"})} account={()=>setModal({type:"account"})} profile={()=>setModal({type:"profile"})} removeTx={id=>void removeTx(id)}/>} 
+            {section==="agenda"&&<AgendaPage month={selectedProMonth} connect={suite.activeBusinessId?()=>setModal({type:"calendar",businessId:suite.activeBusinessId!}):undefined} events={suite.events} clients={suite.clients} add={date=>setModal({type:"event",initialDate:date})} edit={e=>setModal({type:"event",event:e})} remove={e=>void removeEvent(e)}/>}
+            {section==="treasury"&&<TreasuryPage month={selectedProMonth} suite={suite} balance={proCashAtMonth(suite.transactions,suite.account.openingBalance,selectedProMonth)??accountBalance} contribution={{estimated:currentContribution,paid:paidContrib}} tax={{estimated:currentTax,paid:paidTax}} income={()=>setModal({type:"income"})} expense={()=>setModal({type:"expense"})} transfer={()=>setModal({type:"transfer"})} contributionPay={()=>setModal({type:"payment",paymentType:"contribution"})} taxPay={()=>setModal({type:"payment",paymentType:"tax"})} account={()=>setModal({type:"account"})} profile={()=>setModal({type:"profile"})} removeTx={id=>void removeTx(id)}/>} 
           </>}
         </main>
       </div>
@@ -230,16 +263,20 @@ export default function ProWorkspace({ native = false }: { native?: boolean } = 
   async function removeTx(id:string){if(!confirm("Supprimer cette opération ?"))return;await call("budget_pro_transaction_delete",{p_id:id},"Opération supprimée");}
 }
 
+function ProMonthNavigator({month,onChange,allowFuture=false}:{month:string;onChange:(month:string)=>void;allowFuture?:boolean}){
+  const current=currentProMonth();
+  return <div className="pro-month-navigator" role="group" aria-label="Sélection du mois professionnel">
+    <button type="button" onClick={()=>onChange(moveProMonth(month,-1))} aria-label="Mois précédent"><ChevronLeft size={18}/></button>
+    <strong>{formatProMonth(month)}</strong>
+    <button type="button" disabled={!allowFuture&&month>=current} onClick={()=>onChange(moveProMonth(month,1))} aria-label="Mois suivant"><ChevronRight size={18}/></button>
+    <button className="pro-month-reset" type="button" disabled={month===current} onClick={()=>onChange(current)} aria-label="Revenir au mois en cours" title="Mois en cours"><ChevronsLeft size={19}/></button>
+  </div>;
+}
+
 function ProNav({active,icon,label,onClick}:{active:boolean;icon:ReactNode;label:string;onClick:()=>void}){return <button className={active?"active":""} onClick={onClick}>{icon}<span>{label}</span></button>}
 function PageHead({eyebrow,title,text,actions,compactActions=false}:{eyebrow:string;title:string;text:string;actions?:ReactNode;compactActions?:boolean}){return <div className="prosuite-pagehead"><div><span>{eyebrow}</span><h1>{title}</h1><p>{text}</p></div>{actions&&<div className={compactActions?"prosuite-actions prosuite-actions-compact":"prosuite-actions"}>{actions}</div>}</div>}
 function Btn({children,onClick,secondary=false}:{children:ReactNode;onClick:()=>void;secondary?:boolean}){return <button className={secondary?"prosuite-btn secondary":"prosuite-btn"} onClick={onClick}>{children}</button>}
 
-function Dashboard({suite,income,expense,balance,openInvoices,nextEvents,go,incomeAction,expenseAction,quoteAction,invoiceAction,eventAction}:{suite:Suite;income:number;expense:number;balance:number;openInvoices:Invoice[];nextEvents:EventItem[];go:(s:Section)=>void;incomeAction:()=>void;expenseAction:()=>void;quoteAction:()=>void;invoiceAction:()=>void;eventAction:()=>void}){
-  return <><PageHead compactActions eyebrow="TABLEAU DE BORD" title={suite.profile.businessName||"Mon activité"} text="L’essentiel de votre activité, sans surcharger la page." actions={<><Btn onClick={incomeAction}><Plus size={16}/> Encaissement</Btn><Btn secondary onClick={expenseAction}><Plus size={16}/> Dépense</Btn><Btn secondary onClick={quoteAction}><ReceiptText size={16}/> Nouveau devis</Btn><Btn secondary onClick={invoiceAction}><ReceiptText size={16}/> Nouvelle facture</Btn><Btn secondary onClick={eventAction}><CalendarDays size={16}/> Rendez-vous</Btn></>}/>
-  <div className="prosuite-metrics"><Metric label="CA encaissé ce mois" value={euro(income)}/><Metric label="Dépenses ce mois" value={euro(expense)}/><Metric label="Trésorerie" value={euro(balance)}/><Metric label="Factures à suivre" value={String(openInvoices.length)}/></div>
-  <div className="prosuite-grid2"><Card title="Prochains rendez-vous" action={<button onClick={()=>go("agenda")}>Voir l’agenda</button>}>{nextEvents.length?nextEvents.map(e=><div className="prosuite-list" key={e.id}><CalendarDays size={17}/><div><strong>{e.title}</strong><small>{new Date(e.startsAt).toLocaleString("fr-FR",{dateStyle:"medium",timeStyle:"short"})}</small></div></div>):<Empty text="Aucun événement à venir."/>}</Card><Card title="Factures récentes" action={<button onClick={()=>go("billing")}>Voir la facturation</button>}>{suite.invoices.filter(i=>!i.archivedAt).slice(0,5).map(i=><div className="prosuite-list" key={i.id}><ReceiptText size={17}/><div><strong className="prosuite-list-title" title={i.number}>{i.status==="draft"?"Brouillon":i.number}</strong><small>{invoiceStatus[i.status]} · {euro(i.totalTtc)}</small></div></div>)}{!suite.invoices.some(i=>!i.archivedAt)&&<Empty text="Aucune facture active."/>}</Card></div>
-  </>;
-}
 function Metric({label,value}:{label:string;value:string}){return <div className="prosuite-metric"><span>{label}</span><strong>{value}</strong></div>}
 function Card({title,action,children}:{title:string;action?:ReactNode;children:ReactNode}){return <section className="prosuite-card"><div className="prosuite-cardhead"><h2>{title}</h2>{action}</div>{children}</section>}
 function Empty({text}:{text:string}){return <p className="prosuite-empty">{text}</p>}
