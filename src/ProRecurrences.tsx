@@ -1,4 +1,5 @@
 import {useEffect,useState} from "react";
+import {createPortal} from "react-dom";
 import {CalendarDays,CheckCircle2,Clock3,FileText,PauseCircle,PlayCircle,Plus,RefreshCw,Settings2,X} from "lucide-react";
 import {rpc} from "./api";
 import ProClientPicker,{type ProClientDraft,type ProClientChoice} from "./ProClientPicker";
@@ -85,7 +86,7 @@ export default function ProRecurrences({clients,vatEnabled,defaultVat,onSuite,on
     </div>
     <p className="pro-recurring-help">Les interventions futures sont planifiées. Une prestation doit être marquée « Effectuée » avant d'être facturée. En facturation mensuelle, le brouillon est préparé au début du mois suivant. Aucune facture n'est émise ni envoyée automatiquement.</p>
    </>}
-   {draft&&<div className="pro-recurring-dialog-layer" role="presentation"><button className="pro-recurring-backdrop" type="button" onClick={()=>setDraft(null)} aria-label="Fermer le formulaire"/><section className="pro-recurring-dialog" role="dialog" aria-modal="true" aria-label="Contrat de facturation récurrente"><div className="pro-recurring-dialog-head"><strong>{draft.id?"Modifier le contrat":"Nouvelle récurrence"}</strong><button type="button" onClick={()=>setDraft(null)} aria-label="Fermer"><X size={20}/></button></div>
+   {draft&&createPortal(<div className="pro-recurring-dialog-layer" role="presentation"><button className="pro-recurring-backdrop" type="button" onClick={()=>setDraft(null)} aria-label="Fermer le formulaire"/><section className="pro-recurring-dialog" role="dialog" aria-modal="true" aria-label="Contrat de facturation récurrente"><div className="pro-recurring-dialog-head"><strong>{draft.id?"Modifier le contrat":"Nouvelle récurrence"}</strong><button type="button" onClick={()=>setDraft(null)} aria-label="Fermer"><X size={20}/></button></div>
      <div className="pro-recurring-dialog-body">
        <ProClientPicker clients={clients} value={draft.clientId} onChange={clientId=>update({clientId})} onCreate={onCreateClient} required/>
        <label>Prestation<input value={draft.title} placeholder="Nettoyage des locaux" onChange={e=>update({title:e.target.value})}/></label>
@@ -99,6 +100,6 @@ export default function ProRecurrences({clients,vatEnabled,defaultVat,onSuite,on
        <label>Notes (facultatif)<textarea rows={2} value={draft.notes} onChange={e=>update({notes:e.target.value})}/></label>
        <div className="pro-recurring-dialog-actions"><button type="button" onClick={()=>setDraft(null)}>Annuler</button><button type="button" disabled={busy} className="pro-recurring-primary" onClick={save}>{busy?"Enregistrement…":"Enregistrer le contrat"}</button></div>
      </div>
-   </section></div>}
+   </section></div>,document.body)}
  </section>;
 }
