@@ -22,6 +22,7 @@ import { jsPDF } from "jspdf";
 import { rpc } from "./api";
 import ProDateTimeInput from "./ProDateTimeInput";
 import ProClientPicker, {type ProClientDraft, type ProClientChoice} from "./ProClientPicker";
+import ProRecurrences from "./ProRecurrences";
 import "./pro-billing-v2.css";
 
 type PaymentMethod = "card" | "check" | "cash" | "transfer" | "other";
@@ -60,7 +61,7 @@ type Props = {
   onSuite:(suite:unknown)=>void;
   setError:(message:string)=>void;
   setNotice:(message:string)=>void;
-  initialAction?:"quote"|"invoice"|null;
+  initialAction?:"quote"|"invoice"|"recurrence"|null;
 };
 type Modal =
   | {type:"none"}
@@ -86,8 +87,8 @@ const snapBool=(obj:Record<string,unknown>,key:string)=>Boolean(obj?.[key]);
 
 export default function ProBillingV2({suite,onSuite,setError,setNotice,initialAction=null}:Props){
   const [data,setData]=useState(suite as BillingSuite);
-  const [view,setView]=useState<"quotes"|"invoices">(initialAction==="quote"?"quotes":"invoices");
-  const [modal,setModal]=useState<Modal>(initialAction?{type:initialAction}:{type:"none"});
+  const [view,setView]=useState<"quotes"|"invoices"|"recurrences">(initialAction==="quote"?"quotes":initialAction==="recurrence"?"recurrences":"invoices");
+  const [modal,setModal]=useState<Modal>(initialAction&&initialAction!=="recurrence"?{type:initialAction}:{type:"none"});
   const [busy,setBusy]=useState(false);
   const [showArchived,setShowArchived]=useState(false);
   useEffect(()=>setData(suite as BillingSuite),[suite]);
@@ -131,20 +132,19 @@ export default function ProBillingV2({suite,onSuite,setError,setNotice,initialAc
 
   return <div className="billing-v2">
     <div className="billing-v2-head">
-      <div><span className="billing-v2-eyebrow">FACTURATION</span><h1>Devis & factures</h1><p>Du devis à l’encaissement, avec suivi des paiements et documents PDF.</p></div>
+      <div><span className="billing-v2-eyebrow">FACTURATION</span><h1>Facturation</h1><p>Factures, devis et prestations récurrentes.</p></div>
       <div className="billing-v2-head-actions">
         <button className="billing-v2-secondary" onClick={()=>setModal({type:"settings"})}><Settings2 size={16}/> Paramètres</button>
-        <button className="billing-v2-secondary" onClick={()=>{setView("quotes");setModal({type:"quote"})}}><FileText size={16}/> Nouveau devis</button>
-        <button className="billing-v2-primary" onClick={()=>{setView("invoices");setShowArchived(false);setModal({type:"invoice"})}}><Plus size={16}/> Nouvelle facture</button>
       </div>
     </div>
 
     <div className="billing-v2-tabs">
       <button className={view==="quotes"?"active":""} onClick={()=>setView("quotes")}><FileText size={16}/> Devis <span>{quotes.length}</span></button>
       <button className={view==="invoices"?"active":""} onClick={()=>setView("invoices")}><ReceiptText size={16}/> Factures <span>{activeInvoices.length}</span></button>
+      <button className={view==="recurrences"?"active":""} onClick={()=>setView("recurrences")}><Plus size={16}/> Récurrences</button>
     </div>
 
-    {view==="quotes"?<section className="billing-v2-card">
+    {view==="recurrences"?<ProRecurrences clients={data.clients} vatEnabled={data.profile.vatEnabled} defaultVat={data.profile.vatRate} onSuite={next=>{setData(next as BillingSuite);onSuite(next)}} onCreateClient={createQuickClient}/>:view==="quotes"?<section className="billing-v2-card">
       <div className="billing-v2-cardhead"><div><h2>Devis</h2><p>Un devis accepté peut être transformé en facture brouillon en un clic.</p></div></div>
       {!quotes.length?<Empty text="Aucun devis pour le moment."/>:<div className="billing-v2-tablewrap"><table className="billing-v2-table"><thead><tr><th>N°</th><th>Date</th><th>Client</th><th>Validité</th><th>Statut</th><th>Total TTC</th><th></th></tr></thead><tbody>
         {quotes.map(q=><tr key={q.id}><td><strong>{q.number}</strong></td><td>{dateFr(q.issueDate)}</td><td>{snap(q.clientSnapshot,"companyName")||snap(q.clientSnapshot,"name")||"Client"}</td><td>{dateFr(q.validUntil)}</td><td><Status value={quoteLabel[q.status]??q.status} kind={q.status}/></td><td>{euro(q.totalTtc)}</td><td><Actions>
