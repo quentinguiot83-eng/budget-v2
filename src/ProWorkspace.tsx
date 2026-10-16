@@ -82,7 +82,7 @@ export default function ProWorkspace({ native = false }: { native?: boolean } = 
   const [section,setSection]=useState<Section>("dashboard");
   const [selectedProMonth,setSelectedProMonth]=useState(currentProMonth);
   useEffect(()=>{if(section!=="agenda"&&selectedProMonth>currentProMonth())setSelectedProMonth(currentProMonth());},[section,selectedProMonth]);
-  const [billingQuickCreate,setBillingQuickCreate]=useState<"quote"|"invoice"|null>(null);
+  const [billingQuickCreate,setBillingQuickCreate]=useState<"quote"|"invoice"|"recurrence"|null>(null);
   const [suite,setSuite]=useState<Suite|null>(null);
   const [modal,setModal]=useState<Modal>({type:"none"});
   const [error,setError]=useState("");
@@ -96,13 +96,14 @@ export default function ProWorkspace({ native = false }: { native?: boolean } = 
     if(!native)return;
     const run=(event:Event)=>{
       const action=(event as CustomEvent<string>).detail;
-      if(action==="quote"||action==="invoice"){setBillingQuickCreate(action);setSection("billing");}
-      else if(action==="client"||action==="product"||action==="event"||action==="income"||action==="expense"||action==="transfer"){setModal({type:action});}
-      else if(action==="recurrence"){setSection("billing");window.setTimeout(()=>window.dispatchEvent(new Event("wimm:pro-open-recurrence")),100);}
+      if(action==="quote"||action==="invoice"||action==="recurrence"){
+        if(section==="billing")window.dispatchEvent(new CustomEvent("wimm:pro-billing-create",{detail:action}));
+        else {setBillingQuickCreate(action);setSection("billing");}
+      } else if(action==="client"||action==="product"||action==="event"||action==="income"||action==="expense"||action==="transfer"){setModal({type:action});}
     };
     window.addEventListener("wimm:pro-action",run);
     return()=>window.removeEventListener("wimm:pro-action",run);
-  },[native]);
+  },[native,section]);
   const sidebar=native?null:document.querySelector(".sidebar nav");
   const drawer=native?null:document.querySelector(".mobile-drawer-nav");
 
