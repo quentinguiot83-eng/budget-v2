@@ -181,3 +181,116 @@
   }
   .billing-v2-form > button.billing-v2-primary:last-child {width:100%;min-height:46px}
 }
+
+
+/* Pro billing: on narrow iPhones show all tabs and invoices without sideways page scrolling. */
+@media(max-width:650px){
+  .prosuite-native .billing-v2{display:grid;grid-template-columns:minmax(0,1fr);min-width:0;max-width:100%;overflow-x:clip;gap:14px}
+  .prosuite-native .billing-v2-head{min-width:0;gap:12px}
+  .prosuite-native .billing-v2-head h1{font-size:24px}
+  .prosuite-native .billing-v2-head p{font-size:12px;line-height:1.4}
+  .prosuite-native .billing-v2-head-actions{margin-top:1px}
+  .prosuite-native .billing-v2-head-actions button{min-height:42px}
+  .prosuite-native .billing-v2 > .billing-v2-tabs{
+    display:grid;
+    grid-template-columns:repeat(3,minmax(0,1fr));
+    width:100%;max-width:100%;
+    box-sizing:border-box;
+    gap:3px;
+    overflow:visible;
+    border-bottom:1px solid rgba(222,216,234,.8);
+  }
+  .prosuite-native .billing-v2 > .billing-v2-tabs button{
+    min-width:0;max-width:100%;width:100%;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    gap:5px;text-align:center;
+    padding:9px 2px 8px;
+    line-height:1.1;font-size:11px;font-weight:750;
+    white-space:nowrap;
+  }
+  .prosuite-native .billing-v2 > .billing-v2-tabs button svg{width:17px;height:17px;flex-shrink:0}
+  .prosuite-native .billing-v2 > .billing-v2-tabs button span{font-size:10px;padding:2px 6px}
+  .prosuite-native .billing-v2-card{padding:13px;overflow:visible;min-width:0}
+  .prosuite-native .billing-v2-cardhead{margin-bottom:10px}
+  .prosuite-native .billing-v2-cardhead h2{font-size:18px}
+  .prosuite-native .billing-v2-cardhead p{font-size:12px;line-height:1.4}
+  .prosuite-native .billing-v2-card > .billing-v2-tabs{
+    display:grid;grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:4px;width:100%;min-width:0;max-width:100%;
+  }
+  .prosuite-native .billing-v2-card > .billing-v2-tabs button{
+    display:flex;align-items:center;justify-content:center;gap:5px;
+    font-size:12px;white-space:nowrap;min-width:0;width:100%;
+    padding:10px 3px;
+  }
+  .prosuite-native .billing-v2-card > .billing-v2-tabs button svg{width:15px;height:15px;flex-shrink:0}
+  /* Card layout replaces the desktop table; every action stays visible. */
+  .prosuite-native .billing-v2-tablewrap{
+    overflow:visible;width:100%;max-width:100%;min-width:0;margin:0;
+  }
+  .prosuite-native .billing-v2-table{
+    display:block;min-width:0!important;width:100%;max-width:100%;table-layout:auto;
+    border-collapse:separate;
+  }
+  .prosuite-native .billing-v2-table thead{display:none}
+  .prosuite-native .billing-v2-table tbody{display:grid;gap:10px;min-width:0}
+  .prosuite-native .billing-v2-table tbody tr{
+    display:grid;grid-template-columns:repeat(2,minmax(0,1fr));
+    min-width:0;max-width:100%;
+    box-sizing:border-box;
+    gap:2px 8px;padding:12px 10px;
+    border-radius:15px;border:1px solid #e7e3ee;
+    background:#faf9fd;
+  }
+  .prosuite-native .billing-v2-table tbody tr.overdue-row{background:#fff6f4}
+  .prosuite-native .billing-v2-table tbody td{
+    display:flex;flex-direction:column;align-items:flex-start;
+    gap:4px;min-width:0;max-width:100%;
+    padding:5px 2px;
+    border:0;
+    box-sizing:border-box;
+    color:inherit;overflow-wrap:anywhere;word-break:normal;
+    font-size:12px;line-height:1.4;
+  }
+  .prosuite-native .billing-v2-table tbody td::before{
+    content:attr(data-label);
+    display:block;font-size:10px;font-weight:800;
+    text-transform:uppercase;letter-spacing:.05em;
+    color:#9290a4;
+  }
+  .prosuite-native .billing-v2-table tbody td:first-child,
+  .prosuite-native .billing-v2-table tbody td:last-child{grid-column:1/-1}
+  .prosuite-native .billing-v2-table tbody td:first-child{
+    padding-bottom:8px;margin-bottom:3px;border-bottom:1px solid #ece8f2;
+  }
+  .prosuite-native .billing-v2-table tbody td:first-child strong{font-size:14px}
+  .prosuite-native .billing-v2-table tbody td:last-child{
+    padding-top:10px;margin-top:3px;border-top:1px solid #ece8f2;
+  }
+  .prosuite-native .billing-v2-table tbody td:last-child::before{margin-bottom:1px}
+  .prosuite-native .billing-v2-table td .billing-v2-actions{
+    display:flex;align-items:center;justify-content:flex-start;flex-wrap:wrap;
+    gap:7px;white-space:normal;max-width:100%;width:100%;
+  }
+  .prosuite-native .billing-v2-table td .billing-v2-actions button{
+    flex:0 0 auto;min-height:38px;min-width:38px;
+    border-radius:11px;background:#f0eafc;color:#7450b1;
+  }
+  .prosuite-native .billing-v2-table td .billing-v2-actions .billing-v2-action-label{
+    flex:0 1 auto;width:auto;min-width:0;max-width:100%;
+    white-space:normal;text-align:left;line-height:1.25;
+    padding:9px 11px;overflow-wrap:anywhere;
+  }
+  .prosuite-native .billing-v2-table td .billing-v2-actions .billing-v2-delete-permanently{
+    color:#ad3f4c;background:#fff0f1;border:1px solid #f0d0d4;
+  }
+}
+:root[data-mode="dark"] .prosuite-native .billing-v2-table tbody tr{
+  background:#202936;border-color:#324150;
+}
+:root[data-mode="dark"] .prosuite-native .billing-v2-table tbody tr.overdue-row{background:#32272a}
+:root[data-mode="dark"] .prosuite-native .billing-v2-table tbody td:first-child,
+:root[data-mode="dark"] .prosuite-native .billing-v2-table tbody td:last-child{border-color:#364151}
+:root[data-mode="dark"] .prosuite-native .billing-v2-table tbody td::before{color:#a6acc1}
+:root[data-mode="dark"] .prosuite-native .billing-v2-table td .billing-v2-actions button{background:#322a45;color:#d2bcf7}
+:root[data-mode="dark"] .prosuite-native .billing-v2-table td .billing-v2-actions .billing-v2-delete-permanently{background:#412b34;color:#ffc3c9;border-color:#69404b}
