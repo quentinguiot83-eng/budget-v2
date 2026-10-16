@@ -92,6 +92,18 @@ export default function ProBillingV2({suite,onSuite,setError,setNotice,initialAc
   const [busy,setBusy]=useState(false);
   const [showArchived,setShowArchived]=useState(false);
   useEffect(()=>setData(suite as BillingSuite),[suite]);
+  useEffect(()=>{
+    const handle=(event:Event)=>{
+      const action=(event as CustomEvent<"quote"|"invoice"|"recurrence">).detail;
+      if(action==="recurrence"){setView("recurrences");setModal({type:"none"});}
+      else if(action==="quote"||action==="invoice"){
+        setView(action==="quote"?"quotes":"invoices");setModal({type:action});
+      }
+    };
+    window.addEventListener("wimm:pro-billing-create",handle);
+    return()=>window.removeEventListener("wimm:pro-billing-create",handle);
+  },[]);
+
 
   const quotes=data.quotes??[];
   const invoices=data.invoices??[];
