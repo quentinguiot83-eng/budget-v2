@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import {
   ArrowRight,
   Archive,
@@ -255,7 +256,25 @@ function downloadDocumentPdf(kind:"quote"|"invoice",value:Quote|Invoice){
   const name=(kind==="invoice"?"facture-":"devis-")+(value.number||"document")+".pdf";doc.save(name.replace(/[^a-zA-Z0-9._-]/g,"-"));
 }
 
-function BillingModal({children,close}:{children:ReactNode;close:()=>void}){return <div className="billing-v2-modal-layer"><button className="billing-v2-backdrop" type="button" onClick={close}/><section className="billing-v2-modal"><button className="billing-v2-close" type="button" onClick={close}><X size={18}/></button>{children}</section></div>}
+function BillingModal({children,close}:{children:ReactNode;close:()=>void}){
+  useEffect(()=>{
+    const onKeyDown=(event:KeyboardEvent)=>{if(event.key==="Escape")close();};
+    window.addEventListener("keydown",onKeyDown);
+    return ()=>window.removeEventListener("keydown",onKeyDown);
+  },[close]);
+  return createPortal(
+    <div className="billing-v2-modal-layer">
+      <button className="billing-v2-backdrop" type="button" aria-label="Fermer la fenêtre" onClick={close}/>
+      <section className="billing-v2-modal" role="dialog" aria-modal="true" aria-label="Fenêtre de facturation">
+        <div className="billing-v2-modal-header">
+          <button className="billing-v2-close" type="button" aria-label="Fermer la fenêtre" onClick={close}><X size={18}/></button>
+        </div>
+        <div className="billing-v2-modal-body">{children}</div>
+      </section>
+    </div>,
+    document.body
+  );
+}
 function FormHead({eyebrow,title,text}:{eyebrow:string;title:string;text?:string}){return <div className="billing-v2-formhead"><span>{eyebrow}</span><h2>{title}</h2>{text&&<p>{text}</p>}</div>}
 function calcTotals(items:Line[]){const ht=items.reduce((s,x)=>s+Math.round(x.quantity*x.unitPrice),0);const vat=items.reduce((s,x)=>s+Math.round(x.quantity*x.unitPrice*x.vatRate/100),0);return {ht,vat,ttc:ht+vat}}
 function Totals({ht,vat,ttc}:{ht:number;vat:number;ttc:number}){return <div className="billing-v2-totals"><span>HT <strong>{euro(ht)}</strong></span><span>TVA <strong>{euro(vat)}</strong></span><span>TTC <strong>{euro(ttc)}</strong></span></div>}

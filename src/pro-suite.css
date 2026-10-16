@@ -124,3 +124,63 @@
 .prosuite-calendar-subscription .prosuite-calendar-private{font-size:12px}
 :root[data-mode="dark"] .prosuite-calendar-subscription p{color:#b5c1cf}
 :root[data-mode="dark"] .prosuite-calendar-help{border-color:#334250}
+
+
+/* Pro dialog viewport containment: keep its close control above the scrolling form. */
+.prosuite-modal-layer{
+  position:fixed;
+  inset:0;
+  z-index:10000;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  box-sizing:border-box;
+  padding:calc(12px + env(safe-area-inset-top, 0px)) 12px calc(12px + env(safe-area-inset-bottom, 0px));
+}
+.prosuite-modal{
+  display:flex;
+  flex-direction:column;
+  box-sizing:border-box;
+  min-height:0;
+  max-height:100%;
+  width:min(620px, 100%);
+  padding:0;
+  overflow:hidden;
+  color:#1f2937;
+}
+.prosuite-modal-header{
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  flex:0 0 auto;
+  min-height:52px;
+  box-sizing:border-box;
+  padding:10px 14px 6px;
+  background:#fff;
+}
+.prosuite-modalclose{
+  position:static;
+  flex:0 0 36px;
+}
+.prosuite-modal-body{
+  min-height:0;
+  overflow-y:auto;
+  overscroll-behavior:contain;
+  -webkit-overflow-scrolling:touch;
+  padding:0 24px 24px;
+}
+.prosuite-modal .prosuite-formtitle{padding-right:0}
+.prosuite-event-timeblock{display:flex;flex-direction:column;gap:6px;min-width:0}
+.prosuite-event-timeblock>span{font-size:12px;font-weight:800;color:#475467}
+.prosuite-event-datetime-fields{display:grid;grid-template-columns:minmax(0,1.45fr) minmax(0,1fr);gap:10px;min-width:0}
+.prosuite-event-datetime-fields label{min-width:0}
+.prosuite-event-datetime-fields input{min-width:0;max-width:100%;font-size:16px}
+@media(max-width:540px){
+  .prosuite-modal-layer{padding-left:10px;padding-right:10px}
+  .prosuite-modal-body{padding:0 16px 20px}
+  .prosuite-event-datetime-fields{gap:8px}
+}
+:root[data-mode="dark"] .prosuite-modal{background:#17212b;color:#e5edf5;border-color:#2a3744}
+:root[data-mode="dark"] .prosuite-modal-header{background:#17212b}
+:root[data-mode="dark"] .prosuite-modalclose{background:#17212b;color:#e5edf5;border-color:#334250}
+:root[data-mode="dark"] .prosuite-event-timeblock>span{color:#99a8b7}
