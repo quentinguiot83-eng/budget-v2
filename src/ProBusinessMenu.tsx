@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { Check, ChevronDown, Pencil, Plus, Trash2, X } from "lucide-react";
 import { rpc } from "./api";
@@ -63,6 +63,14 @@ export default function ProBusinessMenu({activeBusinessId,businesses,onChanged}:
   const [busy,setBusy]=useState(false);
   const [error,setError]=useState("");
   const active=useMemo(()=>businesses.find(b=>b.id===activeBusinessId)??businesses[0],[businesses,activeBusinessId]);
+  const closeManager=()=>{setManage(false);setEditing(null);};
+
+  useEffect(()=>{
+    if(!manage)return;
+    const handleEscape=(event:KeyboardEvent)=>{if(event.key==="Escape"){setManage(false);setEditing(null);}};
+    window.addEventListener("keydown",handleEscape);
+    return ()=>window.removeEventListener("keydown",handleEscape);
+  },[manage]);
 
   async function refreshBusinesses(){
     const data=await rpc("budget_pro_businesses_list") as BusinessState;
@@ -133,10 +141,13 @@ export default function ProBusinessMenu({activeBusinessId,businesses,onChanged}:
     </>}
 
     {manage&&createPortal(<div className="pro-business-modal-layer">
-      <button className="pro-business-backdrop" onClick={()=>{setManage(false);setEditing(null)}}/>
-      <section className="pro-business-modal">
-        <button className="pro-business-close" onClick={()=>{setManage(false);setEditing(null)}}><X size={18}/></button>
-        <div className="pro-business-head"><div><small>PROFESSIONNEL</small><h2>Mes entreprises</h2><p>Chaque entreprise possède ses propres clients, factures, catalogue, agenda et trésorerie.</p></div><button className="pro-business-primary" onClick={()=>setEditing("new")}><Plus size={16}/> Ajouter</button></div>
+      <button type="button" className="pro-business-backdrop" aria-label="Fermer la gestion des entreprises" onClick={closeManager}/>
+      <section className="pro-business-modal" role="dialog" aria-modal="true" aria-label="Mes entreprises">
+        <div className="pro-business-modal-toolbar">
+          <button type="button" className="pro-business-close" aria-label="Fermer la gestion des entreprises" onClick={closeManager}><X size={20}/></button>
+        </div>
+        <div className="pro-business-modal-body">
+          <div className="pro-business-head"><div><small>PROFESSIONNEL</small><h2>Mes entreprises</h2><p>Chaque entreprise possède ses propres clients, factures, catalogue, agenda et trésorerie.</p></div><button className="pro-business-primary" onClick={()=>setEditing("new")}><Plus size={16}/> Ajouter</button></div>
         {error&&<div className="pro-business-error">{error}</div>}
         {!editing&&<div className="pro-business-list">
           {state.businesses.map(b=><article key={b.id} className={b.id===state.activeBusinessId?"active":""}>
@@ -146,7 +157,8 @@ export default function ProBusinessMenu({activeBusinessId,businesses,onChanged}:
             {state.businesses.length>1&&<button className="danger" title="Supprimer" onClick={()=>void removeBusiness(b)}><Trash2 size={15}/></button>}
           </article>)}
         </div>}
-        {editing&&<BusinessForm value={editing==="new"?emptyBusiness:editing} busy={busy} cancel={()=>setEditing(null)} submit={saveBusiness}/>} 
+          {editing&&<BusinessForm key={editing==="new"?"new":editing.id} value={editing==="new"?emptyBusiness:editing} busy={busy} cancel={()=>setEditing(null)} submit={saveBusiness}/>} 
+        </div>
       </section>
     </div>,document.body)}
   </div>;
