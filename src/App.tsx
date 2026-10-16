@@ -8,6 +8,7 @@ import "./SettingsNavigation.css";
 import { SortableList } from "./SortableList";
 import { applyAppearance, readAppearanceMode, type AppearanceMode } from "./appearance";
 import { CategoryGlyph } from "./CategoryGlyph";
+import type { InlineChoiceCreator, QuickCategoryDraft } from "./InlineCategoryCreator";
 import { seedStarterCategories } from "./starterCategories";
 import PhoneNotifications, { dispatchPhoneAlerts } from "./PhoneNotifications";
 import { categoryUsage, categoryReplacements, deleteArchivedCategory } from "./categoryDeletion";
@@ -930,6 +931,7 @@ export default function App() {
     extra?: ReactNode,
     assist?: (values: Record<string, string>, apply: (patch: Record<string, string>) => void) => ReactNode,
     onFieldChange?: (name: string, value: string, values: Record<string, string>) => Record<string, string> | undefined,
+    createChoice?: InlineChoiceCreator,
   ) {
     setSheet({
       title,
@@ -940,6 +942,7 @@ export default function App() {
           extra={extra}
           assist={assist}
           onFieldChange={onFieldChange}
+          createChoice={createChoice}
           submit={async (v) => {
             await save(v);
             setSheet(null);
@@ -997,6 +1000,44 @@ export default function App() {
       <p>Êtes-vous sûr de vouloir supprimer cette catégorie ? {usage.transactions} opération(s) et {usage.rules} échéance(s) seront réaffectées à la catégorie sélectionnée. Les montants et dates seront conservés.</p>
     ));
   }
+  function householdCategoryCreator(): InlineChoiceCreator {
+    return {
+      field: "category", kind: "household",
+      existing: s.categories.filter(item=>!item.archived).map(item=>item.name),
+      create: async (draft:QuickCategoryDraft) => {
+        const id=uid();
+        const name=draft.name.trim();
+        await change(d=>{
+          if(d.categories.some(item=>!item.archived&&item.name.trim().toLocaleLowerCase("fr-FR")===name.toLocaleLowerCase("fr-FR")))
+            throw Error("Cette catégorie existe déjà.");
+          d.categories.push({
+            id, name, icon:draft.icon, budgets:{[selectedMonth]:draft.kind==="fixed"?0:euro(draft.budget||"0")},
+          });
+        }, "Catégorie créée depuis une transaction");
+        return {value:id,label:name};
+      },
+    };
+  }
+
+  function personalCategoryCreator(): InlineChoiceCreator {
+    return {
+      field:"budgetId", kind:"personal",
+      existing:(ps.budgets??[]).map(item=>item.name),
+      create: async (draft:QuickCategoryDraft) => {
+        if(!ps.account)throw Error("Compte personnel non configuré.");
+        const id=uid();
+        const name=draft.name.trim();
+        await changePersonal(d=>{
+          d.budgets??=[];
+          if(d.budgets.some(item=>item.name.trim().toLocaleLowerCase("fr-FR")===name.toLocaleLowerCase("fr-FR")))
+            throw Error("Cette catégorie personnelle existe déjà.");
+          d.budgets.push({id,name,amount:euro(draft.budget||"0"),start:selectedMonth});
+        }, "Catégorie personnelle créée depuis une transaction");
+        return {value:id,label:name};
+      },
+    };
+  }
+
   function editCategory(c?: Category) {
     openForm(
       c ? "Modifier la catégorie" : "Nouvelle catégorie",
@@ -1771,6 +1812,8 @@ export default function App() {
         );
 
       },
+      undefined,undefined,undefined,undefined,
+      personalCategoryCreator(),
     );
 
   }
@@ -3781,6 +3824,7 @@ export default function App() {
       undefined,
       transactionAssist("expense").render,
       transactionAssist("expense").infer,
+      householdCategoryCreator(),
     );
 
   }
