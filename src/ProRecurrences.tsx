@@ -3,6 +3,7 @@ import {createPortal} from "react-dom";
 import {CalendarDays,CheckCircle2,Clock3,FileText,PauseCircle,PlayCircle,Plus,RefreshCw,Settings2,X} from "lucide-react";
 import {rpc} from "./api";
 import ProClientPicker,{type ProClientDraft,type ProClientChoice} from "./ProClientPicker";
+import ProDateTimeInput from "./ProDateTimeInput";
 import "./pro-recurrences.css";
 
 type Client={id:string;name:string;companyName?:string;email?:string};
@@ -92,7 +93,7 @@ export default function ProRecurrences({clients,vatEnabled,defaultVat,onSuite,on
        <label>Prestation<input value={draft.title} placeholder="Nettoyage des locaux" onChange={e=>update({title:e.target.value})}/></label>
        <label>Fréquence des interventions<select value={draft.frequency} onChange={e=>update({frequency:e.target.value as Rule["frequency"]})}><option value="weekly">Toutes les semaines</option><option value="biweekly">Toutes les 2 semaines</option><option value="twice_monthly">2 fois par mois</option></select></label>
        {draft.frequency==="twice_monthly"&&<div className="pro-recurring-2cols"><label>Premier jour du mois<input type="number" min="1" max="28" value={draft.dayOne} onChange={e=>update({dayOne:e.target.value})}/></label><label>Deuxième jour<input type="number" min="1" max="28" value={draft.dayTwo} onChange={e=>update({dayTwo:e.target.value})}/></label></div>}
-       <div className="pro-recurring-2cols"><label>Date de début<input type="date" value={draft.startDate} onChange={e=>update({startDate:e.target.value})}/></label><label>Date de fin (facultative)<input type="date" value={draft.endDate} min={draft.startDate} onChange={e=>update({endDate:e.target.value})}/></label></div>
+       <div className="pro-recurring-2cols pro-recurring-dates"><label>Date de début<ProDateTimeInput type="date" value={draft.startDate} onChange={e=>update({startDate:e.target.value,endDate:draft.endDate&&e.target.value>draft.endDate?"":draft.endDate})}/></label><label>Date de fin (facultative)<ProDateTimeInput type="date" value={draft.endDate} min={draft.startDate} onChange={e=>update({endDate:e.target.value})}/></label></div>
        <label>Facturation<select value={draft.billingMode} onChange={e=>update({billingMode:e.target.value as Rule["billingMode"],priceMode:e.target.value==="per_visit"?"per_visit":draft.priceMode})}><option value="monthly">Une facture par mois</option><option value="per_visit">Une facture par intervention</option></select></label>
        {draft.billingMode==="monthly"&&<label>Tarification<select value={draft.priceMode} onChange={e=>update({priceMode:e.target.value as Rule["priceMode"]})}><option value="per_visit">Prix par intervention</option><option value="flat_monthly">Forfait mensuel fixe</option></select></label>}
        <div className="pro-recurring-2cols"><label>{draft.priceMode==="flat_monthly"?"Prix mensuel HT (€)":"Prix par intervention HT (€)"}<input type="number" min="0" step=".01" value={draft.unitPrice} onChange={e=>update({unitPrice:e.target.value})}/></label>{vatEnabled&&<label>TVA (%)<input type="number" min="0" max="100" value={draft.vatRate} onChange={e=>update({vatRate:e.target.value})}/></label>}</div>
