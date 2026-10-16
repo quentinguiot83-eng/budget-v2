@@ -259,3 +259,57 @@
     white-space:normal;
   }
 }
+
+
+/* Shared Pro month navigator: dashboard, analysis, calendar and monthly treasury */
+.pro-month-navigator{
+  box-sizing:border-box;
+  display:flex;
+  gap:8px;
+  align-items:center;
+  justify-content:center;
+  min-width:0;
+  width:100%;
+  margin:0 0 14px;
+  padding:8px;
+  border:1px solid rgba(219,218,232,.85);
+  border-radius:16px;
+  background:rgba(255,255,255,.82);
+  box-shadow:0 6px 20px rgba(50,40,75,.025);
+}
+.pro-month-navigator strong{
+  text-align:center;
+  flex:1;
+  font-size:14px;
+  line-height:1.3;
+  text-transform:capitalize;
+  min-width:0;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  color:inherit;
+}
+.pro-month-navigator button{
+  display:grid;
+  place-items:center;
+  flex:0 0 37px;
+  width:37px;
+  height:37px;
+  border-radius:11px;
+  border:1px solid #e1ddec;
+  background:rgba(250,249,255,.92);
+  color:#7554b5;
+  cursor:pointer;
+}
+.pro-month-navigator button:disabled{opacity:.3;cursor:not-allowed}
+.pro-month-navigator .pro-month-reset{margin-left:3px}
+:root[data-mode="dark"] .pro-month-navigator{background:#17212b;border-color:#2a3744}
+:root[data-mode="dark"] .pro-month-navigator button{background:#202b36;border-color:#344252;color:#cbb1f3}
+@media(min-width:801px){
+  .pro-month-navigator{width:min(480px,100%);margin-inline:auto}
+}
+@media(max-width:540px){
+  .pro-month-navigator{gap:5px;padding:7px;margin-bottom:11px}
+  .pro-month-navigator button{flex-basis:35px;width:35px;height:35px}
+  .pro-month-navigator strong{font-size:13px}
+}
