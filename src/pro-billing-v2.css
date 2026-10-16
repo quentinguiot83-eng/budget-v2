@@ -80,3 +80,52 @@
 }
 
 .billing-v2-actions .billing-v2-action-label{width:auto;min-width:0;display:inline-flex;gap:5px;padding:7px 9px;white-space:nowrap}.billing-v2-actions button:disabled{opacity:.5;cursor:wait}
+
+
+/* Keep billing dialog headers visible above the scrollable form on iPhone. */
+.billing-v2-modal-layer{
+  position:fixed;
+  inset:0;
+  z-index:10000;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  box-sizing:border-box;
+  padding:calc(12px + env(safe-area-inset-top, 0px)) 12px calc(12px + env(safe-area-inset-bottom, 0px));
+}
+.billing-v2-modal{
+  display:flex;
+  flex-direction:column;
+  width:min(900px, 100%);
+  min-height:0;
+  max-height:100%;
+  box-sizing:border-box;
+  overflow:hidden;
+  padding:0;
+}
+.billing-v2-modal-header{
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  flex:0 0 auto;
+  min-height:52px;
+  box-sizing:border-box;
+  padding:10px 14px 6px;
+  background:#fff;
+}
+.billing-v2-close{position:static;flex:0 0 36px}
+.billing-v2-modal-body{
+  min-height:0;
+  overflow-y:auto;
+  overscroll-behavior:contain;
+  -webkit-overflow-scrolling:touch;
+  padding:0 24px 24px;
+}
+.billing-v2-modal .billing-v2-formhead{padding-right:0}
+@media(max-width:650px){
+  .billing-v2-modal-layer{padding-left:10px;padding-right:10px}
+  .billing-v2-modal{width:100%;max-height:100%;padding:0}
+  .billing-v2-modal-body{padding:0 16px 20px}
+}
+:root[data-mode="dark"] .billing-v2-modal-header{background:#17212b}
+:root[data-mode="dark"] .billing-v2-close{color:#e5edf5}
