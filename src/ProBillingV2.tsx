@@ -59,6 +59,7 @@ type Props = {
   onSuite:(suite:unknown)=>void;
   setError:(message:string)=>void;
   setNotice:(message:string)=>void;
+  initialAction?:"quote"|"invoice"|null;
 };
 type Modal =
   | {type:"none"}
@@ -82,10 +83,10 @@ const legalLabel:Record<string,string>={micro:"Micro-entreprise",ei:"EI",eurl:"E
 const snap=(obj:Record<string,unknown>,key:string)=>String(obj?.[key]??"");
 const snapBool=(obj:Record<string,unknown>,key:string)=>Boolean(obj?.[key]);
 
-export default function ProBillingV2({suite,onSuite,setError,setNotice}:Props){
+export default function ProBillingV2({suite,onSuite,setError,setNotice,initialAction=null}:Props){
   const [data,setData]=useState(suite as BillingSuite);
-  const [view,setView]=useState<"quotes"|"invoices">("invoices");
-  const [modal,setModal]=useState<Modal>({type:"none"});
+  const [view,setView]=useState<"quotes"|"invoices">(initialAction==="quote"?"quotes":"invoices");
+  const [modal,setModal]=useState<Modal>(initialAction?{type:initialAction}:{type:"none"});
   const [busy,setBusy]=useState(false);
   const [showArchived,setShowArchived]=useState(false);
   useEffect(()=>setData(suite as BillingSuite),[suite]);
