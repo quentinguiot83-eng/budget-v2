@@ -1,0 +1,85 @@
+/* Shared compact native date/time picker for all Wimm Pro forms. */
+.pro-date-time-control {
+  position:relative;
+  isolation:isolate;
+  box-sizing:border-box;
+  width:100%;
+  max-width:100%;
+  min-width:0;
+  height:44px;
+  min-height:44px;
+  border:1px solid #d7dce2;
+  border-radius:11px;
+  background:#f7f8fc;
+  color:#273141;
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:0 12px;
+  overflow:hidden;
+  cursor:pointer;
+}
+.pro-date-time-control .pro-date-time-value {
+  flex:1 1 0;
+  min-width:0;
+  font-size:15px;
+  font-weight:650;
+  letter-spacing:normal;
+  line-height:1.2;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  pointer-events:none;
+}
+.pro-date-time-control svg {
+  flex:0 0 17px;
+  width:17px;
+  height:17px;
+  color:#8269ae;
+  pointer-events:none;
+}
+.pro-date-time-control.is-empty .pro-date-time-value {
+  color:#7c8497;
+  font-weight:500;
+}
+.pro-date-time-control:focus-within {
+  outline:2px solid #8a6dcc;
+  outline-offset:1px;
+}
+.prosuite-form .pro-date-time-control > input[type="date"],
+.prosuite-form .pro-date-time-control > input[type="time"],
+.prosuite-form .pro-date-time-control > input[type="datetime-local"],
+.billing-v2-form .pro-date-time-control > input[type="date"],
+.billing-v2-form .pro-date-time-control > input[type="time"],
+.billing-v2-form .pro-date-time-control > input[type="datetime-local"] {
+  position:absolute!important;
+  inset:0!important;
+  z-index:2!important;
+  display:block!important;
+  box-sizing:border-box!important;
+  width:100%!important;
+  max-width:100%!important;
+  min-width:0!important;
+  height:100%!important;
+  min-height:0!important;
+  max-height:100%!important;
+  padding:0!important;
+  margin:0!important;
+  border:0!important;
+  border-radius:0!important;
+  opacity:0!important;
+  cursor:pointer!important;
+  font-size:16px!important;
+  appearance:auto!important;
+  -webkit-appearance:auto!important;
+}
+:root[data-mode="dark"] .pro-date-time-control {
+  background:#101922;
+  border-color:#2a3744;
+  color:#e5edf5;
+}
+:root[data-mode="dark"] .pro-date-time-control.is-empty .pro-date-time-value{color:#9caaba}
+@media(max-width:650px) {
+  .pro-date-time-control{height:44px;min-height:44px;padding-inline:11px}
+  .pro-date-time-control .pro-date-time-value{font-size:14px}
+}
