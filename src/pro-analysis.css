@@ -1,0 +1,27 @@
+.pro-an{display:grid;gap:16px;min-width:0}.pro-an-heading{padding:3px 2px}
+.pro-an-heading>span{font-size:11px;font-weight:850;color:#8257c1;letter-spacing:.13em}
+.pro-an-heading h1{font-size:26px;line-height:1.15;margin:7px 0}.pro-an-heading p{margin:0;font-size:13px;color:#7d8291}
+.pro-an-period,.pro-an-card{border:1px solid rgba(226,228,239,.92);background:rgba(255,255,255,.92);padding:16px;border-radius:19px;min-width:0}
+.pro-an-period{display:grid;gap:12px}.pro-an-period-pills{display:flex;gap:6px;flex-wrap:wrap}
+.pro-an-period-pills button{border:1px solid #e3def0;background:#f8f6fc;color:#665d7a;font-size:12px;font-weight:750;border-radius:9px;min-height:37px;padding:8px 10px}
+.pro-an-period-pills button.active{background:#7d55c5;color:white;border-color:#7d55c5}
+.pro-an-period small{font-size:11px;color:#89818e}
+.pro-an-custom{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.pro-an-custom label{display:grid;gap:5px;min-width:0;font-size:12px;color:#808597}.pro-an-custom input{width:100%;box-sizing:border-box;min-width:0;min-height:42px;padding:8px;border-radius:10px;border:1px solid #e2dfeb;background:#fafaff;font-size:14px}
+.pro-an-kpis{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+.pro-an-kpis>div{display:grid;gap:8px;border:1px solid rgba(226,228,239,.92);background:rgba(255,255,255,.91);padding:13px;border-radius:17px;min-width:0}
+.pro-an-kpis span{display:flex;align-items:center;gap:5px;color:#787d8e;font-size:11px}.pro-an-kpis strong{font-size:19px;overflow-wrap:anywhere;font-variant-numeric:tabular-nums}
+.pro-an-kpis>div:nth-child(1) svg{color:#38956a}.pro-an-kpis>div:nth-child(2) svg{color:#c86d77}
+.pro-an-card{display:grid;gap:8px}.pro-an-card h2{margin:0;font-size:17px}.pro-an-card>p{margin:0 0 4px;font-size:12px;line-height:1.5;color:#828795}
+.pro-an-chart{height:265px;min-width:0;width:100%;margin-top:8px}
+.pro-an-breakdown{display:grid;gap:6px;border-top:1px solid #eeeff4;padding:10px 0 4px}
+.pro-an-breakdown>div:first-child{display:flex;justify-content:space-between;align-items:center;gap:8px}.pro-an-breakdown strong,.pro-an-client strong{font-size:13px}.pro-an-breakdown>div:first-child span{font-size:13px;font-variant-numeric:tabular-nums}
+.pro-an-progress{width:100%;height:6px;background:#efecf7;border-radius:99px;overflow:hidden}.pro-an-progress span{display:block;height:100%;background:#8a61d0;border-radius:99px}
+.pro-an-client{display:flex;justify-content:space-between;align-items:center;gap:15px;padding:10px 0;border-top:1px solid #eeeff4;font-size:13px}.pro-an-client>span:last-child{font-variant-numeric:tabular-nums;white-space:nowrap}
+.pro-an-note{display:flex;align-items:flex-start;gap:8px;line-height:1.5;color:#8e91a2;font-size:11px;margin:2px 3px}.pro-an-note svg{flex:0 0 auto}
+:root[data-mode="dark"] .pro-an-period,:root[data-mode="dark"] .pro-an-card,:root[data-mode="dark"] .pro-an-kpis>div{background:#17212b;color:#e5edf5;border-color:#2a3744}
+:root[data-mode="dark"] .pro-an-period-pills button{background:#202838;border-color:#334250;color:#c2c5d8}
+:root[data-mode="dark"] .pro-an-period-pills button.active{background:#7952c3;color:white}
+:root[data-mode="dark"] .pro-an-client,:root[data-mode="dark"] .pro-an-breakdown{border-color:#2a3744}
+:root[data-mode="dark"] .pro-an-custom input{background:#101922;color:#e5edf5;border-color:#2a3744}
+@media(min-width:930px){.pro-an{grid-template-columns:repeat(2,minmax(0,1fr))}.pro-an-heading,.pro-an-period,.pro-an-kpis,.pro-an-note{grid-column:1/-1}.pro-an-kpis{grid-template-columns:repeat(4,minmax(0,1fr))}}
+@media(max-width:540px){.pro-an-chart{height:230px}.pro-an-heading h1{font-size:23px}.pro-an-card{padding:13px}.pro-an-kpis strong{font-size:16px}}
