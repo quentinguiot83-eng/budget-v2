@@ -129,3 +129,35 @@
 }
 :root[data-mode="dark"] .billing-v2-modal-header{background:#17212b}
 :root[data-mode="dark"] .billing-v2-close{color:#e5edf5}
+
+
+/* Every quote, invoice and payment date stays compact on iPhone. */
+.billing-v2-form .billing-v2-form2,
+.billing-v2-form .billing-v2-form3{min-width:0}
+.billing-v2-form .billing-v2-form2>label,
+.billing-v2-form .billing-v2-form3>label{min-width:0;max-width:100%}
+@media(max-width:650px){
+  .billing-v2-form input[type="date"],
+  .billing-v2-form input[type="time"],
+  .billing-v2-form input[type="datetime-local"]{
+    display:block;
+    box-sizing:border-box!important;
+    width:100%!important;
+    min-width:0!important;
+    max-width:100%!important;
+    min-height:44px;
+    height:44px;
+    padding:9px 10px!important;
+    font-size:16px!important;
+    line-height:1.25!important;
+    letter-spacing:normal!important;
+    text-align:left;
+    -webkit-appearance:auto;
+    appearance:auto;
+  }
+  .billing-v2-form input[type="date"]::-webkit-date-and-time-value,
+  .billing-v2-form input[type="time"]::-webkit-date-and-time-value,
+  .billing-v2-form input[type="datetime-local"]::-webkit-date-and-time-value{min-width:0;text-align:left}
+  .billing-v2-form .billing-v2-form2,
+  .billing-v2-form .billing-v2-form3{grid-template-columns:minmax(0,1fr)}
+}
