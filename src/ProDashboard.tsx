@@ -35,7 +35,6 @@ export default function ProDashboard({businessName,month,transactions,invoices,e
         <div className="pro-db-tile"><span><ArrowDownLeft size={17}/> CA encaissé TTC</span><strong>{proEuro(data.income)}</strong></div>
         <div className="pro-db-tile"><span><ArrowUpRight size={17}/> Dépenses TTC</span><strong>{proEuro(data.expenses)}</strong></div>
       </div>
-      <div className="pro-db-summary"><span>CA − Dépenses</span><strong>{proEuro(data.operatingFlow)}</strong><small>Hors prélèvements personnels, cotisations et impôts</small></div>
       <div className="pro-db-treasury"><span><Wallet size={18}/> Trésorerie {isCurrent?"actuelle":"à fin de mois"}</span><strong>{cash===null?"—":proEuro(cash)}</strong><small>Solde du compte Pro, selon les opérations enregistrées</small></div>
     </section>
     <button className="pro-db-analysis" type="button" onClick={onAnalysis}>
