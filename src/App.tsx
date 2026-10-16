@@ -5550,7 +5550,7 @@ export default function App() {
             </button>
           </div>
         )}
-        <div className="page-heading">
+        <div className={route==="pro"?"page-heading pro-v3-hidden-heading":"page-heading"}>
           <div>
 
             {subRoutes.includes(route) && (
@@ -5586,7 +5586,7 @@ export default function App() {
                 )}
               </div>
             ) : (
-              <>{!(route === "settings" && settingsCategory) && <h1>{titles[route]}</h1>}</>
+              <>{!(route === "settings" && settingsCategory || route==="pro") && <h1>{titles[route]}</h1>}</>
             )}
 
           </div>
