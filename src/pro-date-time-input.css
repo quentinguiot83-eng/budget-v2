@@ -51,7 +51,10 @@
 .prosuite-form .pro-date-time-control > input[type="datetime-local"],
 .billing-v2-form .pro-date-time-control > input[type="date"],
 .billing-v2-form .pro-date-time-control > input[type="time"],
-.billing-v2-form .pro-date-time-control > input[type="datetime-local"] {
+.billing-v2-form .pro-date-time-control > input[type="datetime-local"],
+.pro-recurring-dialog-body .pro-date-time-control > input[type="date"],
+.pro-recurring-dialog-body .pro-date-time-control > input[type="time"],
+.pro-recurring-dialog-body .pro-date-time-control > input[type="datetime-local"] {
   position:absolute!important;
   inset:0!important;
   z-index:2!important;
