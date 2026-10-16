@@ -455,12 +455,13 @@ export default function App() {
   }, [tutorialOpen, tutorialMode]);
 
   const quickAddButtonRef = useRef<HTMLButtonElement>(null);
+  const desktopQuickAddButtonRef = useRef<HTMLButtonElement>(null);
   useEffect(() => {
     if (!mobileQuickAddOpen) return;
     const handleQuickAddKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         setMobileQuickAddOpen(false);
-        quickAddButtonRef.current?.focus();
+        (window.matchMedia("(min-width: 851px)").matches ? desktopQuickAddButtonRef : quickAddButtonRef).current?.focus();
       }
     };
     window.addEventListener("keydown", handleQuickAddKeyDown);
@@ -5472,8 +5473,17 @@ export default function App() {
           <WimmWordmark />
         </button>
         <p className="eyebrow">{doc.household.name}</p>
-        <button type="button" className="desktop-quick-add" data-tour-route="add" onClick={()=>navigate("add")}>
-          <Plus size={19}/> Ajouter une opération
+        <button
+          type="button"
+          ref={desktopQuickAddButtonRef}
+          className="desktop-quick-add"
+          data-tour-route={route==="pro"?undefined:"add"}
+          aria-haspopup={route==="pro"?"dialog":undefined}
+          aria-controls={route==="pro"?"wimm-quick-add-actions":undefined}
+          aria-expanded={route==="pro"?mobileQuickAddOpen:undefined}
+          onClick={()=>route==="pro"?setMobileQuickAddOpen(v=>!v):navigate("add")}
+        >
+          <Plus size={19}/> {route==="pro"?"Ajouter dans Wimm Pro":"Ajouter une opération"}
         </button>
         <nav data-tour="desktop-nav" className="desktop-sidebar-nav" aria-label="Navigation ordinateur">
           {desktopNavGroups.map(group=>(
@@ -5659,7 +5669,7 @@ export default function App() {
               </button>
             </section>
           )}
-          {route === "pro" && <ProWorkspace native />}
+          {route === "pro" && <ProWorkspace native onOpenQuickAdd={()=>setMobileQuickAddOpen(true)} />}
           {route === "home" && (
             <div className="wimm-home-clean">
               {onboardingChecklistPreviewEnabled && (
@@ -8223,7 +8233,7 @@ export default function App() {
         ))}
       </nav>
       {mobileQuickAddOpen && (
-        <div className="quick-add-layer">
+        <div className={route==="pro"?"quick-add-layer pro-context-add-layer":"quick-add-layer"}>
           <button
             type="button"
             className="quick-add-backdrop"
