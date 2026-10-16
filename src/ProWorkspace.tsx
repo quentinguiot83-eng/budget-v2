@@ -36,7 +36,7 @@ import ProAnalysis from "./ProAnalysis";
 import {currentProMonth,formatProMonth,moveProMonth,proCashAtMonth} from "./proFinance";
 import "./pro-suite.css";
 
-type Section = "dashboard" | "analysis" | "clients" | "billing" | "catalog" | "agenda" | "treasury";
+type Section = "dashboard" | "analysis" | "billing" | "management" | "clients" | "catalog" | "agenda" | "treasury";
 type PaymentMethod = "card" | "check" | "cash" | "transfer" | "other";
 
 type Profile = { businessName:string; legalStatus:string; activityType:string; siret:string; contributionRate:number; taxRate:number; vatEnabled:boolean; vatRate:number };
@@ -92,6 +92,17 @@ export default function ProWorkspace({ native = false }: { native?: boolean } = 
   const [printInvoice,setPrintInvoice]=useState<Invoice|null>(null);
   const [,tick]=useState(0);
   useEffect(()=>{if(section!=="billing")setBillingQuickCreate(null);},[section]);
+  useEffect(()=>{
+    if(!native)return;
+    const run=(event:Event)=>{
+      const action=(event as CustomEvent<string>).detail;
+      if(action==="quote"||action==="invoice"){setBillingQuickCreate(action);setSection("billing");}
+      else if(action==="client"||action==="product"||action==="event"||action==="income"||action==="expense"||action==="transfer"){setModal({type:action});}
+      else if(action==="recurrence"){setSection("billing");window.setTimeout(()=>window.dispatchEvent(new Event("wimm:pro-open-recurrence")),100);}
+    };
+    window.addEventListener("wimm:pro-action",run);
+    return()=>window.removeEventListener("wimm:pro-action",run);
+  },[native]);
   const sidebar=native?null:document.querySelector(".sidebar nav");
   const drawer=native?null:document.querySelector(".mobile-drawer-nav");
 
@@ -183,7 +194,7 @@ export default function ProWorkspace({ native = false }: { native?: boolean } = 
     {(native||(open&&enabled))&&<div className={native?"prosuite-layer prosuite-native":"prosuite-layer"}>
       <header className="prosuite-topbar">
         {!native&&<button className="prosuite-icon" onClick={()=>setOpen(false)}><ChevronLeft size={20}/></button>}
-        <div className="prosuite-titleblock"><small>PROFESSIONNEL</small><div className="prosuite-business-title"><strong>{suite?.profile.businessName||"Espace professionnel"}</strong>{suite&&<ProBusinessMenu activeBusinessId={suite.activeBusinessId} businesses={suite.businesses??[]} onChanged={load}/>}</div></div>
+        <div className="prosuite-titleblock"><div className="prosuite-business-title"><strong>{suite?.profile.businessName||"Mon entreprise"}</strong>{suite&&<ProBusinessMenu activeBusinessId={suite.activeBusinessId} businesses={suite.businesses??[]} onChanged={load}/>}</div></div>
         {suite&&<button type="button" className="prosuite-icon" title="Exporter les données de l'entreprise active (JSON)"
           aria-label="Exporter les données Pro" disabled={busy} onClick={()=>void exportCurrentBusiness()}>
           <Download size={20}/>
@@ -191,20 +202,18 @@ export default function ProWorkspace({ native = false }: { native?: boolean } = 
         {!native&&<button className="prosuite-icon" onClick={()=>setOpen(false)}><X size={20}/></button>}
       </header>
       <div className="prosuite-shell">
-        <nav className="prosuite-nav">
-          <ProNav active={section==="dashboard"} icon={<LayoutDashboard/>} label="Tableau de bord" onClick={()=>setSection("dashboard")}/>
+        <nav className="prosuite-nav prosuite-v3-nav" aria-label="Navigation professionnelle">
+          <ProNav active={section==="dashboard"} icon={<LayoutDashboard/>} label="Accueil" onClick={()=>setSection("dashboard")}/>
           <ProNav active={section==="analysis"} icon={<ChartNoAxesCombined/>} label="Analyse" onClick={()=>setSection("analysis")}/>
-          <ProNav active={section==="clients"} icon={<Users/>} label="Clients" onClick={()=>setSection("clients")}/>
           <ProNav active={section==="billing"} icon={<ReceiptText/>} label="Facturation" onClick={()=>setSection("billing")}/>
-          <ProNav active={section==="catalog"} icon={<Package/>} label="Produits & services" onClick={()=>setSection("catalog")}/>
-          <ProNav active={section==="agenda"} icon={<CalendarDays/>} label="Agenda" onClick={()=>setSection("agenda")}/>
-          <ProNav active={section==="treasury"} icon={<Wallet/>} label="Trésorerie" onClick={()=>setSection("treasury")}/>
+          <ProNav active={["management","clients","catalog","agenda","treasury"].includes(section)} icon={<Briefcase/>} label="Gestion" onClick={()=>setSection("management")}/>
         </nav>
         <main className="prosuite-main">
           {error&&<div className="prosuite-error">{error}</div>}{notice&&<div className="prosuite-notice">{notice}</div>}
           {["dashboard","analysis","agenda","treasury"].includes(section)&&
             <ProMonthNavigator month={selectedProMonth} onChange={setSelectedProMonth} allowFuture={section==="agenda"}/>}
           
+          {["clients","catalog","agenda","treasury"].includes(section)&&<button type="button" className="pro-v3-back" onClick={()=>setSection("management")}><ChevronLeft size={16}/> Gestion</button>}
           {busy&&!suite?<div className="prosuite-loading">Chargement…</div>:suite&&<>
             {section==="dashboard"&&<ProDashboard
               businessName={suite.profile.businessName}
@@ -217,11 +226,6 @@ export default function ProWorkspace({ native = false }: { native?: boolean } = 
               onAgenda={()=>setSection("agenda")}
               onBilling={()=>setSection("billing")}
               onTransfer={()=>setModal({type:"transfer"})}
-              onAdd={action=>{
-                if(action==="invoice"||action==="quote"){setBillingQuickCreate(action);setSection("billing");}
-                else if(action==="event"){setModal({type:"event"});}
-                else setModal({type:action});
-              }}
             />}
             {section==="analysis"&&<ProAnalysis
               month={selectedProMonth}
@@ -230,6 +234,12 @@ export default function ProWorkspace({ native = false }: { native?: boolean } = 
               clients={suite.clients}
               openingBalance={suite.account.openingBalance}
             />}
+            {section==="management"&&<section className="pro-v3-management">
+              <div className="pro-v3-pageheading"><span>GESTION</span><h1>Mon entreprise</h1><p>Les outils au même endroit.</p></div>
+              <div className="pro-v3-management-grid">
+                {([{key:"clients",label:"Clients",desc:"Fiches et coordonnées",Icon:Users},{key:"catalog",label:"Produits & services",desc:"Catalogue et tarifs",Icon:Package},{key:"treasury",label:"Trésorerie",desc:"Opérations, virements et cotisations",Icon:Wallet},{key:"agenda",label:"Agenda",desc:"Interventions et rendez-vous",Icon:CalendarDays}] as const).map(({key,label,desc,Icon})=><button type="button" key={key} onClick={()=>setSection(key)}><Icon size={22}/><span><strong>{label}</strong><small>{desc}</small></span><ChevronRight size={17}/></button>)}
+              </div>
+            </section>}
             {section==="clients"&&<ClientsPage clients={suite.clients} add={()=>setModal({type:"client"})} edit={c=>setModal({type:"client",client:c})} remove={c=>void removeClient(c)}/>} 
             {section==="billing"&&<ProBillingV2 suite={suite} initialAction={billingQuickCreate} onSuite={next=>setSuite(next as Suite)} setError={setError} setNotice={setNotice}/>} 
             {section==="catalog"&&<CatalogPage products={suite.products} add={()=>setModal({type:"product"})} edit={p=>setModal({type:"product",product:p})} remove={p=>void removeProduct(p)}/>} 
