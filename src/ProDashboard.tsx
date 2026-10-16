@@ -1,5 +1,4 @@
-import {useState} from "react";
-import {ArrowDownLeft, ArrowRight, ArrowRightLeft, ArrowUpRight, CalendarDays, ChevronRight, Clock3, FileText, Plus, ReceiptText, TrendingUp, Wallet, X} from "lucide-react";
+import {ArrowDownLeft, ArrowRight, ArrowRightLeft, ArrowUpRight, CalendarDays, ChevronRight, Clock3, TrendingUp, Wallet} from "lucide-react";
 import {
   currentProMonth,formatProMonth,proCashAtMonth,proEuro,proInvoiceRemaining,proMonthStats,
   unpaidProInvoices,type ProCashEntry,type ProInvoiceSummary,type ProEventSummary
@@ -9,10 +8,8 @@ import "./pro-dashboard.css";
 type DashboardProps={
   businessName:string; month:string;transactions:ProCashEntry[];invoices:ProInvoiceSummary[];events:ProEventSummary[];
   openingBalance:number;onAnalysis:()=>void;onAgenda:()=>void;onBilling:()=>void;onTransfer:()=>void;
-  onAdd:(action:"income"|"expense"|"quote"|"invoice"|"event")=>void;
 };
-export default function ProDashboard({businessName,month,transactions,invoices,events,openingBalance,onAnalysis,onAgenda,onBilling,onTransfer,onAdd}:DashboardProps){
-  const [adding,setAdding]=useState(false);
+export default function ProDashboard({businessName,month,transactions,invoices,events,openingBalance,onAnalysis,onAgenda,onBilling,onTransfer}:DashboardProps){
   const isCurrent=month===currentProMonth();
   const data=proMonthStats(transactions,invoices,month);
   const cash=proCashAtMonth(transactions,openingBalance,month);
@@ -26,13 +23,6 @@ export default function ProDashboard({businessName,month,transactions,invoices,e
     const day=e.startsAt.slice(0,7);
     return isCurrent?new Date(e.endsAt)>=now:day===month;
   }).sort((a,b)=>a.startsAt.localeCompare(b.startsAt)).slice(0,4);
-  const actions=[
-    {id:"income" as const,label:"Encaissement",Icon:ArrowDownLeft},
-    {id:"expense" as const,label:"Dépense",Icon:ArrowUpRight},
-    {id:"quote" as const,label:"Nouveau devis",Icon:FileText},
-    {id:"invoice" as const,label:"Nouvelle facture",Icon:ReceiptText},
-    {id:"event" as const,label:"Rendez-vous",Icon:CalendarDays}
-  ];
   return <div className="pro-new-dashboard">
     <div className="pro-db-heading"><span>TABLEAU DE BORD</span><h1>{businessName||"Mon activité"}</h1><p>L’essentiel de mon entreprise · {formatProMonth(month)}</p></div>
     <section className="pro-db-overview" aria-label="Indicateurs du mois">
@@ -60,13 +50,6 @@ export default function ProDashboard({businessName,month,transactions,invoices,e
     <section className="pro-db-follow">
       <div className="pro-db-section-head"><h2>Factures en attente</h2><button type="button" onClick={onBilling}>Voir les factures <ChevronRight size={16}/></button></div>
       {alerts.length?<><div className="pro-db-alert-summary"><span><Clock3 size={17}/> {alerts.length} facture{alerts.length>1?"s":""} à encaisser</span><strong>{proEuro(alertAmount)}</strong></div>{overdue.length>0&&<p className="pro-db-overdue">{overdue.length} facture{overdue.length>1?"s":""} en retard de paiement</p>}<button type="button" className="pro-db-view-alerts" onClick={onBilling}>Consulter les factures en attente <ArrowRight size={17}/></button></>:<p className="pro-db-empty">Aucune facture impayée à suivre.</p>}
-    </section>
-    <section className="pro-db-add">
-      <button type="button" className="pro-db-add-button" aria-expanded={adding} onClick={()=>setAdding(!adding)}><Plus size={21}/> Ajouter <ChevronRight size={18}/></button>
-      {adding&&<div className="pro-db-add-menu" aria-label="Ajouter dans le mode Pro">
-        {actions.map(({id,label,Icon})=><button type="button" key={id} onClick={()=>{setAdding(false);onAdd(id);}}><Icon size={18}/>{label}<ChevronRight size={15}/></button>)}
-        <button type="button" className="pro-db-menu-close" onClick={()=>setAdding(false)}><X size={16}/> Fermer</button>
-      </div>}
     </section>
     <p className="pro-db-disclaimer">Le « salaire versé » correspond aux virements du compte Pro vers le personnel. Pour une micro-entreprise, ce sont des prélèvements personnels, pas un salaire comptable.</p>
   </div>;
