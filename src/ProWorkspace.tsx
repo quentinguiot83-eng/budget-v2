@@ -282,7 +282,25 @@ function AgendaPage({events,clients,add,edit,remove,connect}:{connect?:()=>void;
 function TreasuryPage({suite,balance,contribution,tax,income,expense,transfer,contributionPay,taxPay,account,profile,removeTx}:{suite:Suite;balance:number;contribution:{estimated:number;paid:number};tax:{estimated:number;paid:number};income:()=>void;expense:()=>void;transfer:()=>void;contributionPay:()=>void;taxPay:()=>void;account:()=>void;profile:()=>void;removeTx:(id:string)=>void}){return <><PageHead eyebrow="TRÉSORERIE" title="Trésorerie & opérations" text="Encaissements, dépenses, virements et réserves obligatoires au même endroit." actions={<><Btn secondary onClick={profile}><Settings2 size={16}/> Activité</Btn><Btn secondary onClick={account}><Wallet size={16}/> Compte Pro</Btn><Btn onClick={income}><Plus size={16}/> Encaissement</Btn></>}/><div className="prosuite-metrics"><Metric label="Trésorerie actuelle" value={euro(balance)}/><Metric label="Cotisations restantes" value={euro(Math.max(0,contribution.estimated-contribution.paid))}/><Metric label="Impôt restant" value={euro(Math.max(0,tax.estimated-tax.paid))}/><Metric label="À encaisser" value={euro(suite.transactions.filter(t=>t.kind==="income"&&!t.paid).reduce((s,t)=>s+t.amount,0))}/></div><div className="prosuite-grid2"><Card title="Réserves du mois"><ReserveLine label="Cotisations" estimated={contribution.estimated} paid={contribution.paid} action={contributionPay}/><ReserveLine label="Impôt" estimated={tax.estimated} paid={tax.paid} action={taxPay}/></Card><Card title="Actions"><div className="prosuite-actiongrid"><Btn onClick={income}><Plus size={16}/> Encaissement</Btn><Btn secondary onClick={expense}><Plus size={16}/> Dépense</Btn><Btn secondary onClick={transfer}><ArrowRightLeft size={16}/> Vers le perso</Btn></div></Card></div><Card title="Dernières opérations"><div className="prosuite-tablewrap"><table className="prosuite-table prosuite-treasury-table"><thead><tr><th>Date</th><th>Opération</th><th>Règlement</th><th>Montant</th><th></th></tr></thead><tbody>{suite.transactions.slice(0,30).map(t=><tr key={t.id}><td>{new Date(t.date+"T12:00:00").toLocaleDateString("fr-FR")}</td><td>{t.label}<small className="prosuite-block">{t.category||t.kind}</small></td><td>{t.paymentMethod?payLabel[t.paymentMethod]:"—"}</td><td className={t.kind==="income"?"positive":""}>{t.kind==="income"?"+":"−"}{euro(t.amount)}</td><td><button className="prosuite-trash" onClick={()=>removeTx(t.id)}><Trash2 size={15}/></button></td></tr>)}</tbody></table></div></Card></>}
 function ReserveLine({label,estimated,paid,action}:{label:string;estimated:number;paid:number;action:()=>void}){return <div className="prosuite-reserve"><div><strong>{label}</strong><small>Estimé {euro(estimated)} · payé {euro(paid)}</small></div><strong>{euro(Math.max(0,estimated-paid))}</strong><button onClick={action}>Enregistrer un paiement</button></div>}
 
-function Modal({children,close}:{children:ReactNode;close:()=>void}){return <div className="prosuite-modal-layer"><button className="prosuite-backdrop" onClick={close}/><section className="prosuite-modal"><button className="prosuite-modalclose" onClick={close}><X/></button>{children}</section></div>}
+function Modal({children,close}:{children:ReactNode;close:()=>void}){
+  useEffect(()=>{
+    const onKeyDown=(event:KeyboardEvent)=>{if(event.key==="Escape")close();};
+    window.addEventListener("keydown",onKeyDown);
+    return ()=>window.removeEventListener("keydown",onKeyDown);
+  },[close]);
+  return createPortal(
+    <div className="prosuite-modal-layer">
+      <button type="button" className="prosuite-backdrop" aria-label="Fermer la fenêtre" onClick={close}/>
+      <section className="prosuite-modal" role="dialog" aria-modal="true" aria-label="Fenêtre du mode professionnel">
+        <div className="prosuite-modal-header">
+          <button type="button" className="prosuite-modalclose" aria-label="Fermer la fenêtre" onClick={close}><X size={20}/></button>
+        </div>
+        <div className="prosuite-modal-body">{children}</div>
+      </section>
+    </div>,
+    document.body
+  );
+}
 function FormTitle({eyebrow,title,text}:{eyebrow:string;title:string;text?:string}){return <div className="prosuite-formtitle"><span>{eyebrow}</span><h2>{title}</h2>{text&&<p>{text}</p>}</div>}
 
 function ClientForm({value,submit}:{value?:Client;submit:(v:Record<string,unknown>)=>Promise<boolean>}){
@@ -316,7 +334,20 @@ function EventForm({value,initialDate,clients,submit,remove}:{value?:EventItem;i
     <FormTitle eyebrow="AGENDA" title={value?"Modifier l’événement":"Nouvel événement"}/>
     <label>Titre<input required value={v.title} onChange={e=>setV({...v,title:e.target.value})}/></label>
     <div className="prosuite-form2"><label>Type<select value={v.eventType} onChange={e=>setV({...v,eventType:e.target.value})}>{Object.entries(eventLabel).map(([k,l])=><option key={k} value={k}>{l}</option>)}</select></label><label>Client<select value={v.clientId} onChange={e=>setV({...v,clientId:e.target.value})}><option value="">Aucun</option>{clients.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}</select></label></div>
-    <div className="prosuite-form2"><label>Début<input type="datetime-local" required value={v.startsAt} onChange={e=>setV({...v,startsAt:e.target.value})}/></label><label>Fin<input type="datetime-local" required value={v.endsAt} onChange={e=>setV({...v,endsAt:e.target.value})}/></label></div>
+    <div className="prosuite-event-timeblock">
+      <span>Début</span>
+      <div className="prosuite-event-datetime-fields">
+        <label>Date<input type="date" required value={v.startsAt.slice(0,10)} onChange={e=>setV({...v,startsAt:e.target.value+"T"+v.startsAt.slice(11,16)})}/></label>
+        <label>Heure<input type="time" required value={v.startsAt.slice(11,16)} onChange={e=>setV({...v,startsAt:v.startsAt.slice(0,10)+"T"+e.target.value})}/></label>
+      </div>
+    </div>
+    <div className="prosuite-event-timeblock">
+      <span>Fin</span>
+      <div className="prosuite-event-datetime-fields">
+        <label>Date<input type="date" required value={v.endsAt.slice(0,10)} onChange={e=>setV({...v,endsAt:e.target.value+"T"+v.endsAt.slice(11,16)})}/></label>
+        <label>Heure<input type="time" required value={v.endsAt.slice(11,16)} onChange={e=>setV({...v,endsAt:v.endsAt.slice(0,10)+"T"+e.target.value})}/></label>
+      </div>
+    </div>
     <label>Lieu<input value={v.location} onChange={e=>setV({...v,location:e.target.value})}/></label>
     <label>Notes<textarea rows={3} value={v.notes} onChange={e=>setV({...v,notes:e.target.value})}/></label>
     <div className="prosuite-event-actions">
