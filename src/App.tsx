@@ -508,6 +508,13 @@ export default function App() {
   const tutorialSeen = session?.user.user_metadata?.wimm_tutorial_seen === true;
   const tutorialStarted = session?.user.user_metadata?.wimm_tutorial_started === true;
   const totals = stats(s, selectedMonth);
+  // Les cinq dépenses réelles les plus récentes du mois affiché, et non les échéances à venir.
+  // reverse() conserve la dernière opération enregistrée en tête à date égale.
+  const recentExpenses = [...s.transactions]
+    .reverse()
+    .filter((tx) => tx.type === "expense" && month(tx.date) === selectedMonth)
+    .sort((a, b) => b.date.localeCompare(a.date))
+    .slice(0, 5);
   const availableDate = today();
   const availableThisMonth = useMemo(() => monthEndAvailable(s), [s, availableDate]);
   const exceededBudgets = useMemo(() => budgetOverruns(s, selectedMonth), [s, selectedMonth, availableDate]);
@@ -4621,7 +4628,7 @@ export default function App() {
           }`}
           value={
             <span
-              className={["income", "repay"].includes(t.type) ? "positive" : ""}
+              className={["income", "repay"].includes(t.type) ? "positive" : t.type === "expense" || t.amount < 0 ? "negative-money" : ""}
             >
               {t.type === "transfer"
                 ? ""
@@ -5696,7 +5703,7 @@ export default function App() {
                   </div>
                   <Wallet size={22}/>
                 </div>
-                <div className="hero-number">{money(s.accounts.filter(a => a.group === "current").reduce((n,a) => n + balance(s,a.id),0))}</div>
+                <div className={`hero-number${currentBalance < 0 ? " negative-money" : ""}`}>{money(currentBalance)}</div>
                 <div className="home-balance-date">Solde actuel · {dateLabel(today())}</div>
                 {selectedMonth === month() && current && (
                   <div className="home-balance-available">
@@ -5714,7 +5721,7 @@ export default function App() {
                    <span className="home-personal-icon"><UserRound size={22}/></span>
                    <span className="home-personal-copy">
                      <small>Compte perso</small>
-                     <strong>{ps.account?money(personalBalance(ps,s,personalOwnerId)):"Configurer mon espace"}</strong>
+                     <strong className={ps.account && personalBalance(ps,s,personalOwnerId) < 0 ? "negative-money" : undefined}>{ps.account?money(personalBalance(ps,s,personalOwnerId)):"Configurer mon espace"}</strong>
                      <small>{ps.account?"Mon espace privé":"Suivre mes dépenses personnelles"}</small>
                    </span>
                    <ChevronRight size={20}/>
@@ -5761,6 +5768,35 @@ export default function App() {
                   </button>)}
                 </section>
               )}
+
+              <section className="card home-recent-expenses" aria-label="Cinq dernières dépenses du mois">
+                <div className="section-head home-recent-expenses-heading">
+                  <h2>Dernières dépenses</h2>
+                  <button type="button" className="text home-recent-expenses-all"
+                    onClick={() => { navigate("transactions"); setTxFilter("expense"); setTxCategoryFilter(""); }}>
+                    Tout voir <ChevronRight size={16} />
+                  </button>
+                </div>
+                {recentExpenses.length ? (
+                  <div className="home-recent-expenses-list">
+                    {recentExpenses.map((tx) => (
+                      <button type="button" className="home-recent-expense" key={tx.id}
+                        onClick={() => txDetails(tx)} title={tx.description}>
+                        <span className="home-recent-expense-icon" aria-hidden="true"><ArrowUpRight size={18}/></span>
+                        <span className="home-recent-expense-details">
+                          <strong>{tx.description || "Dépense"}</strong>
+                          <small>{dateLabel(tx.date)} · {tx.trip
+                            ? s.trips.find((trip) => trip.id === tx.trip)?.name || "Projet"
+                            : s.categories.find((category) => category.id === tx.category)?.name || "Autre"}</small>
+                        </span>
+                        <strong className="home-recent-expense-amount negative-money">−{money(Math.abs(tx.amount))}</strong>
+                      </button>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="home-recent-expenses-empty">Aucune dépense enregistrée pour ce mois.</p>
+                )}
+              </section>
             </div>
           )}
           {route === "budget" && (
@@ -6172,7 +6208,7 @@ export default function App() {
                         </div>
                         <div className="personal-v2-amount">
                           <span>Solde privé actuel</span>
-                          <strong>{money(privateBalance)}</strong>
+                          <strong className={privateBalance < 0 ? "negative-money" : undefined}>{money(privateBalance)}</strong>
                         </div>
                         <div className="personal-v2-totals">
                           <div>
@@ -6182,7 +6218,7 @@ export default function App() {
                           </div>
                           <div className="personal-v2-due">
                             <small>Reste à virer</small>
-                            <strong>{money(envelope.remaining)}</strong>
+                            <strong className={envelope.remaining < 0 ? "negative-money" : undefined}>{money(envelope.remaining)}</strong>
                             <span>{envelope.carryIn > 0 ? money(envelope.carryIn) + " reportés" : "Aucun report"}</span>
                           </div>
                         </div>
@@ -6985,7 +7021,7 @@ export default function App() {
                   </div>
                   <Wallet size={21} aria-hidden="true"/>
                 </div>
-                <strong className="wealth-total-amount">{money(householdAccountsTotal)}</strong>
+                <strong className={`wealth-total-amount${householdAccountsTotal < 0 ? " negative-money" : ""}`}>{money(householdAccountsTotal)}</strong>
                 <p>Comptes courants, épargne et placements · sans double comptage</p>
               </section>
 
@@ -6993,13 +7029,13 @@ export default function App() {
                 <section className="wealth-breakdown-card wealth-breakdown-travel">
                   <Plane size={23} aria-hidden="true"/>
                   <span>Épargne voyage</span>
-                  <strong>{money(travelBalance)}</strong>
+                  <strong className={travelBalance < 0 ? "negative-money" : undefined}>{money(travelBalance)}</strong>
                   <button type="button" className="text" onClick={() => navigate("trips")}>Mes voyages <ChevronRight size={15}/></button>
                 </section>
                 <section className="wealth-breakdown-card wealth-breakdown-current">
                   <Wallet size={23} aria-hidden="true"/>
                   <span>Comptes courants</span>
-                  <strong>{money(currentBalance)}</strong>
+                  <strong className={currentBalance < 0 ? "negative-money" : undefined}>{money(currentBalance)}</strong>
                   <small>Disponible à la banque aujourd’hui</small>
                 </section>
               </div>
@@ -7034,7 +7070,7 @@ export default function App() {
                           <strong>{a.name}</strong>
                           <small>{a.group === "current" ? "Compte courant" : a.group === "travel" ? "Épargne voyage" : "Épargne et placement"}</small>
                         </span>
-                        <strong className="wealth-account-balance">{money(balance(s, a.id))}</strong>
+                        <strong className={`wealth-account-balance${balance(s, a.id) < 0 ? " negative-money" : ""}`}>{money(balance(s, a.id))}</strong>
                         <ChevronRight className="wealth-account-chevron" size={18} aria-hidden="true"/>
                       </summary>
                       <div className="wealth-account-expanded">

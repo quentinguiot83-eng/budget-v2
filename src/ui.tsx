@@ -313,6 +313,8 @@ export function Row({
   value?: ReactNode;
   onClick?: () => void;
 }) {
+  const negativeCurrencyValue =
+    typeof value === "string" && /^\s*[-−]\s*\d/.test(value);
   const content = (
     <>
       <span className="row-icon">{icon}</span>
@@ -320,7 +322,7 @@ export function Row({
         <strong>{title}</strong>
         {sub && <small>{sub}</small>}
       </span>
-      <span className="row-value">{value}</span>
+      <span className={negativeCurrencyValue ? "row-value negative-money" : "row-value"}>{value}</span>
       {onClick && <ChevronRight size={16} />}
     </>
   );
