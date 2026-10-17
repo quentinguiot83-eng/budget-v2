@@ -1454,12 +1454,12 @@ html:root body #root {
   gap:12px;
   margin:0 0 5px;
 }
-.app .home-recent-expenses-heading h2 { margin:0; font-size:1.06rem; }
+.app .home-recent-expenses-heading h2 { margin:0; font-size:1rem; }
 .app .home-recent-expenses-all {
   display:inline-flex;
   align-items:center;
   gap:4px;
-  font-size:.82rem;
+  font-size:.78rem;
   white-space:nowrap;
 }
 .app .home-recent-expenses-list { display:grid; }
@@ -1508,12 +1508,12 @@ html:root body #root {
   overflow:hidden;
   text-overflow:ellipsis;
   white-space:nowrap;
-  font-size:.86rem;
+  font-size:.81rem;
   font-weight:700;
 }
 .app .home-recent-expense-details small {
   color:var(--muted);
-  font-size:.73rem;
+  font-size:.70rem;
   overflow:hidden;
   text-overflow:ellipsis;
   white-space:nowrap;
@@ -1522,7 +1522,7 @@ html:root body #root {
   white-space:nowrap;
   font-family:Manrope,sans-serif;
   font-weight:750;
-  font-size:.88rem;
+  font-size:.82rem;
   font-variant-numeric:tabular-nums;
 }
 .app .home-recent-expenses-empty {
@@ -1535,7 +1535,7 @@ html:root body #root {
   .app .wimm-home-clean > .home-recent-expenses {padding:16px 15px 9px;}
   .app .home-recent-expense {grid-template-columns:34px minmax(0,1fr) auto;gap:8px;}
   .app .home-recent-expense-icon {width:32px;height:32px;}
-  .app .home-recent-expense-amount {font-size:.83rem;}
+  .app .home-recent-expense-amount {font-size:.79rem;}
 }
 
 /* Couleur financière sémantique : un montant négatif doit toujours être rouge,
