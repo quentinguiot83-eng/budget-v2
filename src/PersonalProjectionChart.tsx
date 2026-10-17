@@ -1,6 +1,6 @@
 import { useState, type KeyboardEvent, type TouchEvent } from "react";
 import {
-  CartesianGrid, Line, LineChart, ReferenceDot, ReferenceLine,
+  Area, CartesianGrid, Line, ComposedChart, ReferenceDot, ReferenceLine,
   ResponsiveContainer, Tooltip, XAxis, YAxis,
 } from "recharts";
 import { money, monthLabel } from "./engine";
@@ -50,20 +50,26 @@ export default function PersonalProjectionChart({ points }: { points: Point[] })
         aria-valuenow={index} aria-valuetext={monthLabel(active.date)}
         onKeyDown={keyboard} onTouchStart={touch} onTouchMove={touch}>
         <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={points} margin={{top:13,right:10,left:0,bottom:4}}
+          <ComposedChart data={points} margin={{top:13,right:10,left:0,bottom:4}}
             onMouseMove={move} onClick={move}>
-            <CartesianGrid vertical={false} stroke="var(--border)"/>
+            <defs><linearGradient id="wimm-glass-personal-area" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#9478ee" stopOpacity={0.24}/>
+              <stop offset="100%" stopColor="#9478ee" stopOpacity={0}/>
+            </linearGradient></defs>
+            <CartesianGrid vertical={false} stroke="var(--border)" strokeOpacity={0.55}/>
             <XAxis dataKey="date" ticks={ticks} tickFormatter={v=>monthLabel(String(v)).replace(/^(.)/,c=>c.toUpperCase())}
               tickLine={false} axisLine={false} minTickGap={19} tick={{fill:"var(--muted)",fontSize:10}}/>
             <YAxis width={55} tickFormatter={v=>Math.round(Number(v)/100)+" €"}
               tickLine={false} axisLine={false} tick={{fill:"var(--muted)",fontSize:11}}/>
             <Tooltip content={()=>null} isAnimationActive={false}/>
             {selected !== null && <ReferenceLine x={active.date} stroke="#a4adb7" strokeDasharray="3 5"/>}
-            <Line type="monotone" dataKey="balance" stroke="#6a85c9" strokeWidth={3}
+            <Area type="monotone" dataKey="balance" fill="url(#wimm-glass-personal-area)"
+              stroke="none" fillOpacity={1} legendType="none" activeDot={false} isAnimationActive={false}/>
+            <Line type="monotone" dataKey="balance" stroke="#8266dc" strokeWidth={3.2}
               dot={false} activeDot={{r:5}} isAnimationActive={false}/>
             {selected !== null && <ReferenceDot x={active.date} y={active.balance} r={5}
-              fill="#6a85c9" stroke="var(--surface)" strokeWidth={2}/>}
-          </LineChart>
+              fill="#8266dc" stroke="var(--surface)" strokeWidth={2}/>}
+          </ComposedChart>
         </ResponsiveContainer>
       </div>
       <div className="personal-projection-readout">

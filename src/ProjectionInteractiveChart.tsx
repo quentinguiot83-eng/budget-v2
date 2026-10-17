@@ -78,9 +78,13 @@ export default function ProjectionInteractiveChart({ points }: { points: Project
             onMouseMove={selectFrom} onClick={selectFrom}>
             <defs>
               <linearGradient id="wimm-aurora-wealth-fill" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#4eac8d" stopOpacity={0.21}/>
+                <stop offset="0%" stopColor="#51be9e" stopOpacity={0.28}/>
                 <stop offset="70%" stopColor="#4eac8d" stopOpacity={0.07}/>
                 <stop offset="100%" stopColor="#4eac8d" stopOpacity={0}/>
+              </linearGradient>
+              <linearGradient id="wimm-glass-travel-area" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#9880ed" stopOpacity={0.20}/>
+                <stop offset="100%" stopColor="#9880ed" stopOpacity={0}/>
               </linearGradient>
             </defs>
             <CartesianGrid vertical={false} stroke="var(--border)" strokeOpacity={0.48}/>
@@ -95,10 +99,13 @@ export default function ProjectionInteractiveChart({ points }: { points: Project
             <Area type="monotone" name="Surface patrimoine" dataKey="globalGross"
               stroke="none" fill="url(#wimm-aurora-wealth-fill)" fillOpacity={1}
               activeDot={false} isAnimationActive={false} legendType="none"/>
-            <Line type="monotone" name="Patrimoine total" dataKey="globalGross" stroke="#338c71" strokeWidth={3.6}
+            <Line type="monotone" name="Patrimoine total" dataKey="globalGross" stroke="#29947d" strokeWidth={3.7}
               strokeLinecap="round" strokeLinejoin="round"
               dot={false} activeDot={{r:6, stroke:"#fff", strokeWidth:2.5, fill:"#338c71"}} isAnimationActive={false}/>
-            <Line type="monotone" name="Épargne voyage" dataKey="travel" stroke="#8585da" strokeWidth={3}
+            <Area type="monotone" dataKey="travel" name="Surface épargne voyage"
+              stroke="none" fill="url(#wimm-glass-travel-area)" fillOpacity={1}
+              activeDot={false} isAnimationActive={false} legendType="none"/>
+            <Line type="monotone" name="Épargne voyage" dataKey="travel" stroke="#8f75e9" strokeWidth={3.1}
               strokeLinecap="round" strokeLinejoin="round"
               dot={false} activeDot={{r:5, stroke:"#fff", strokeWidth:2, fill:"#8585da"}} isAnimationActive={false}/>
             <Line type="monotone" name="Patrimoine après fiscalité" dataKey="globalNet" stroke="#9ba2b2"

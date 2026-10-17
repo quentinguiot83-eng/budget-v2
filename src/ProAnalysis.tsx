@@ -48,12 +48,18 @@ export default function ProAnalysis({month,transactions,invoices,clients,opening
       {valid&&data.length?<div className="pro-an-chart pro-v3-chart" role="img" aria-label="Graphique interactif des indicateurs financiers sélectionnés">
         <ResponsiveContainer width="100%" height="100%">
           <ComposedChart data={data} margin={{top:12,right:8,left:-22,bottom:4}}>
+            <defs>{selection.filter(item => item.key !== "expenses").map(item => (
+              <linearGradient key={item.key} id={`wimm-pro-glass-${item.key}`} x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor={item.color} stopOpacity={0.19}/>
+                <stop offset="100%" stopColor={item.color} stopOpacity={0.01}/>
+              </linearGradient>
+            ))}</defs>
             <CartesianGrid strokeDasharray="3 5" stroke="#adb0bb" strokeOpacity={.25} vertical={false}/>
             <XAxis dataKey="label" tick={{fontSize:10}} interval="preserveStartEnd"/>
             <YAxis tick={{fontSize:10}} tickFormatter={v=>String(Math.round(v))+" €"}/>
             <Tooltip formatter={formatMoney}/>
             <Legend iconType="circle" wrapperStyle={{fontSize:11}}/>
-            {selection.map(item=>item.key==="expenses"?<Bar key={item.key} dataKey={item.key} name={item.label} fill={item.color} barSize={14} radius={[4,4,0,0]}/>:<Area key={item.key} dataKey={item.key} name={item.label} type="monotone" stroke={item.color} fill={item.color} fillOpacity={.06} strokeWidth={2} connectNulls={false}/>)}
+            {selection.map(item=>item.key==="expenses"?<Bar key={item.key} dataKey={item.key} name={item.label} fill={item.color} barSize={14} radius={[4,4,0,0]}/>:<Area key={item.key} dataKey={item.key} name={item.label} type="monotone" stroke={item.color} fill={`url(#wimm-pro-glass-${item.key})`} fillOpacity={1} strokeWidth={2.8} connectNulls={false}/>)}
           </ComposedChart>
         </ResponsiveContainer>
       </div>:<p className="pro-an-empty">Choisissez une période valide.</p>}

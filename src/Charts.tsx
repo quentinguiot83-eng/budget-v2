@@ -1,6 +1,8 @@
 import {
   ResponsiveContainer,
   LineChart,
+  ComposedChart,
+  Area,
   Line,
   XAxis,
   YAxis,
@@ -299,25 +301,32 @@ export default function Charts(
         height="100%"
       >
         <PieChart>
+          <defs>
+            {props.data.map((_, i) => {
+              const color = props.palette[i % props.palette.length];
+              return <linearGradient key={i} id={`wimm-glass-slice-${i}`} x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stopColor={color} stopOpacity={0.77}/>
+                <stop offset="48%" stopColor={color} stopOpacity={0.98}/>
+                <stop offset="100%" stopColor={color} stopOpacity={0.84}/>
+              </linearGradient>;
+            })}
+          </defs>
           <Pie
             data={props.data}
             dataKey="value"
             nameKey="name"
-            innerRadius="55%"
-            outerRadius="80%"
-            paddingAngle={3}
+            innerRadius="57%"
+            outerRadius="84%"
+            paddingAngle={2.2}
+            cornerRadius={5}
+            stroke="var(--surface)"
+            strokeWidth={3}
           >
             {props.data.map(
               (_, i) => (
                 <Cell
                   key={i}
-                  fill={
-                    props.palette[
-                      i %
-                        props.palette
-                          .length
-                    ]
-                  }
+                  fill={`url(#wimm-glass-slice-${i})`}
                 />
               ),
             )}
@@ -341,7 +350,12 @@ export default function Charts(
   if (props.kind === "financial-trend") {
     return (
       <ResponsiveContainer width="100%" height="100%">
-        <LineChart data={props.data} margin={{ top: 14, right: 14, left: 2, bottom: 10 }}>
+        <ComposedChart data={props.data} margin={{ top: 14, right: 14, left: 2, bottom: 10 }}>
+          <defs><linearGradient id="wimm-spending-glass-area" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#9473e8" stopOpacity={0.23}/>
+            <stop offset="68%" stopColor="#bba8ff" stopOpacity={0.08}/>
+            <stop offset="100%" stopColor="#bba8ff" stopOpacity={0}/>
+          </linearGradient></defs>
           <CartesianGrid vertical={false} stroke="var(--border)" />
           <XAxis dataKey="label" tick={{ fill: "var(--muted)", fontSize: 11 }}
             minTickGap={22} interval="preserveStartEnd"
@@ -362,13 +376,14 @@ export default function Charts(
               String(name),
             ]}
           />
+          {props.series.some(series => series.id === "__total") && <Area type="monotone" dataKey="__total" stroke="none" fill="url(#wimm-spending-glass-area)" fillOpacity={1} activeDot={false} isAnimationActive={false} legendType="none"/>}
           {props.series.map(series => (
             <Line key={series.id} dataKey={series.id} name={series.name}
-              stroke={series.color} strokeWidth={series.id === "__total" ? 3 : 2}
+              stroke={series.id === "__total" ? "#7953d6" : series.color} strokeWidth={series.id === "__total" ? 3.5 : 2.5}
               type="monotone" dot={props.data.length <= 8 ? { r: 2.5 } : false}
               activeDot={{ r: 4 }} isAnimationActive={false} />
           ))}
-        </LineChart>
+        </ComposedChart>
       </ResponsiveContainer>
     );
   }
