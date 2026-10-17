@@ -290,3 +290,70 @@
   .app .analysis-pie-visual .recharts-pie-sector,
   .app .analysis-local-filters button { transition:none !important; }
 }
+
+/* V2 dark-mode polish, 2026-10-17.
+ * Specifically fixes the harsh dark donut separators and bright chart wash.
+ * Intentionally scoped to [data-mode=dark]: light mode remains identical.
+ */
+:root[data-mode="dark"] .app :is(
+  .analysis-distribution,
+  .analysis-trend,
+  .projection-chart-card,
+  .pro-an .pro-an-card:has(.pro-v3-chart)
+)::before {
+  /* The light-mode radial white highlight washed out the y-axis in dark mode. */
+  background: none !important;
+}
+:root[data-mode="dark"] .app :is(
+  .analysis-distribution,
+  .analysis-trend,
+  .projection-chart-card,
+  .pro-an .pro-an-card:has(.pro-v3-chart)
+) {
+  /* Refined, even charcoal glass: no large white bloom behind graph labels. */
+  background:
+    radial-gradient(ellipse 80% 55% at 95% 2%, rgba(115,94,182,.075), transparent 74%),
+    linear-gradient(145deg, #293237 0%, #283036 60%, #263138 100%) !important;
+  border-color: rgba(199,188,225,.16);
+}
+:root[data-mode="dark"] .app .analysis-pie-visual .recharts-sector,
+:root[data-mode="dark"] .app .analysis-pie-visual .recharts-pie-sector path {
+  /* The SVG used var(--surface), which made black-looking slice outlines. */
+  stroke: rgba(205,195,222,.27) !important;
+  stroke-width: 1.7px !important;
+  stroke-linejoin: round;
+}
+:root[data-mode="dark"] .app .analysis-pie-visual .recharts-pie-sector {
+  filter: drop-shadow(0 2px 5px rgba(10,16,26,.12));
+}
+:root[data-mode="dark"] .app .analysis-pie-visual .analysis-pie-core {
+  background: radial-gradient(circle at 38% 25%, rgba(54,48,75,.94), rgba(38,38,59,.95) 79%);
+  border: 1px solid rgba(190,177,215,.18);
+  box-shadow: inset 0 1px 3px rgba(236,225,255,.06), 0 0 13px rgba(121,91,180,.10);
+}
+:root[data-mode="dark"] .app :is(
+  .analysis-trend-visual,
+  .projection-chart-v2,
+  .personal-projection-chart,
+  .pro-v3-chart
+) .recharts-cartesian-axis-tick-value {
+  fill: #c9cdd9 !important;
+  font-weight: 500;
+}
+:root[data-mode="dark"] .app :is(
+  .analysis-trend-visual,
+  .projection-chart-v2,
+  .personal-projection-chart,
+  .pro-v3-chart
+) .recharts-cartesian-grid line {
+  stroke: rgba(184,188,213,.19) !important;
+  stroke-opacity: 1 !important;
+}
+:root[data-mode="dark"] .app .analysis-trend-visual,
+:root[data-mode="dark"] .app .projection-chart-v2 {
+  background: none;
+}
+:root[data-mode="dark"] .app .analysis-trend-visual .recharts-cartesian-axis-line,
+:root[data-mode="dark"] .app .analysis-trend-visual .recharts-cartesian-axis-tick-line {
+  stroke: rgba(179,182,199,.5);
+}
