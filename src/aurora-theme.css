@@ -1429,3 +1429,122 @@ html:root body #root {
    max-width:35px !important;height:35px !important;min-height:35px !important;max-height:35px !important;
  }
 }
+
+
+/* Accueil — cinq dernières dépenses, compactes et dans le verre Wimm. */
+.app .wimm-home-clean > .home-recent-expenses {
+  padding: 17px 20px 12px;
+  overflow: hidden;
+  border-radius: 24px;
+}
+:root:not([data-mode="dark"]) .app .wimm-home-clean > .home-recent-expenses {
+  background: linear-gradient(142deg,rgba(255,255,255,.88),rgba(245,248,247,.72)) !important;
+  border: 1px solid rgba(255,255,255,.88) !important;
+  box-shadow: 0 12px 32px rgba(40,60,66,.08),inset 0 1px 0 rgba(255,255,255,.94) !important;
+}
+:root[data-mode="dark"] .app .wimm-home-clean > .home-recent-expenses {
+  background: linear-gradient(139deg,rgba(49,58,63,.88),rgba(36,45,50,.80)) !important;
+  border: 1px solid rgba(230,240,238,.13) !important;
+  box-shadow: 0 12px 30px rgba(0,0,0,.16),inset 0 1px 0 rgba(255,255,255,.07) !important;
+}
+.app .home-recent-expenses-heading {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  margin:0 0 5px;
+}
+.app .home-recent-expenses-heading h2 { margin:0; font-size:1.06rem; }
+.app .home-recent-expenses-all {
+  display:inline-flex;
+  align-items:center;
+  gap:4px;
+  font-size:.82rem;
+  white-space:nowrap;
+}
+.app .home-recent-expenses-list { display:grid; }
+.app .home-recent-expense {
+  display:grid;
+  grid-template-columns:38px minmax(0,1fr) auto;
+  align-items:center;
+  width:100%;
+  min-width:0;
+  gap:10px;
+  padding:12px 0;
+  border:0;
+  border-top:1px solid color-mix(in srgb,var(--border) 74%,transparent);
+  border-radius:0;
+  background:transparent;
+  box-shadow:none;
+  color:var(--ink);
+  text-align:left;
+}
+.app .home-recent-expense:first-child { border-top:0; }
+.app .home-recent-expense:focus-visible {
+  outline:2px solid var(--accent-deep);
+  outline-offset:-2px;
+  border-radius:9px;
+}
+@media (hover:hover) {
+  .app .home-recent-expense:hover { background:color-mix(in srgb,var(--surface) 35%,transparent); }
+}
+.app .home-recent-expense-icon {
+  width:36px;
+  height:36px;
+  display:grid;
+  place-items:center;
+  flex-shrink:0;
+  border-radius:12px;
+  background:var(--wimm-coral-wash);
+  color:var(--wimm-coral);
+}
+.app .home-recent-expense-details {
+  display:flex;
+  flex-direction:column;
+  gap:3px;
+  min-width:0;
+}
+.app .home-recent-expense-details strong {
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  font-size:.86rem;
+  font-weight:700;
+}
+.app .home-recent-expense-details small {
+  color:var(--muted);
+  font-size:.73rem;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.app .home-recent-expense-amount {
+  white-space:nowrap;
+  font-family:Manrope,sans-serif;
+  font-weight:750;
+  font-size:.88rem;
+  font-variant-numeric:tabular-nums;
+}
+.app .home-recent-expenses-empty {
+  color:var(--muted);
+  font-size:.85rem;
+  padding:15px 0 8px;
+  margin:0;
+}
+@media(max-width:560px) {
+  .app .wimm-home-clean > .home-recent-expenses {padding:16px 15px 9px;}
+  .app .home-recent-expense {grid-template-columns:34px minmax(0,1fr) auto;gap:8px;}
+  .app .home-recent-expense-icon {width:32px;height:32px;}
+  .app .home-recent-expense-amount {font-size:.83rem;}
+}
+
+/* Couleur financière sémantique : un montant négatif doit toujours être rouge,
+   même lorsque le thème Aurora force une couleur d'accent sur les indicateurs. */
+:root { --wimm-negative-text: #b13e4b; }
+:root[data-mode="dark"] { --wimm-negative-text: #ff9aa6; }
+.app .negative-money,
+.app .negative,
+.app .wimm-home-clean .home-balance-available strong.negative,
+:root[data-mode="dark"] .app .wimm-home-clean .home-balance-available strong.negative {
+  color:var(--wimm-negative-text) !important;
+}
