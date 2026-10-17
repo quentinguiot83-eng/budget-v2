@@ -314,7 +314,7 @@ export function Row({
   onClick?: () => void;
 }) {
   const negativeCurrencyValue =
-    typeof value === "string" && /^\\s*[-−]\\s*\\d/.test(value);
+    typeof value === "string" && /^\s*[-−]\s*\d/.test(value);
   const content = (
     <>
       <span className="row-icon">{icon}</span>
