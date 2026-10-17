@@ -5741,6 +5741,34 @@ export default function App() {
 
               {savingsPanel("home")}
 
+              {(salaryAlert || alerts.length > 0 || (!savingMonthMarkedDone && (totals.forecast?.savings ?? savingsTarget) > totals.saved)) && (
+                <section className="card home-actions">
+                  <div className="section-head"><h2>À faire</h2></div>
+                  {salaryAlert && <button type="button" className="home-action-row" onClick={confirmSalary}>
+                    <CalendarDays size={19}/><span><strong>Confirmer votre salaire</strong><small>Prévu le {dateLabel(salaryPlannedDate)}</small></span><ChevronRight size={18}/>
+                  </button>}
+                  {alerts.length > 0 && <button type="button" className="home-action-row" onClick={() => navigate("calendar")}>
+                    <CalendarDays size={19}/><span><strong>{alerts.length} paiement{alerts.length > 1 ? "s" : ""} à valider</strong><small>Vérifier les échéances sur votre banque</small></span><ChevronRight size={18}/>
+                  </button>}
+                  {!savingMonthMarkedDone && (totals.forecast?.savings ?? savingsTarget) > totals.saved && <button type="button" className="home-action-row" onClick={() => navigate("wealth")}>
+                    <Wallet size={19}/><span><strong>Effectuer l'épargne restante</strong><small>{money((totals.forecast?.savings ?? savingsTarget) - totals.saved)} à verser</small></span><ChevronRight size={18}/>
+                  </button>}
+                </section>
+              )}
+
+              {(exceededBudgets.length > 0 || (selectedMonth === month() && current && availableThisMonth.available < 0)) && (
+                <section className="card home-alerts" aria-label="Alertes financières">
+                  <div className="section-head"><h2><Bell size={18}/> Alertes</h2></div>
+                  {selectedMonth === month() && current && availableThisMonth.available < 0 &&
+                    <button className="home-action-row" type="button" onClick={() => navigate("budget")}>
+                      <Bell size={18}/><span><strong>Solde prévisionnel insuffisant</strong><small>{money(-availableThisMonth.available)} manquants pour les réserves du mois</small></span><ChevronRight size={17}/>
+                    </button>}
+                  {exceededBudgets.map(b => <button className="home-action-row" type="button" key={b.id} onClick={() => navigate("budget")}>
+                    <Bell size={18}/><span><strong>{b.name} : budget dépassé</strong><small>{money(b.spent)} sur {money(b.limit)} · +{money(b.excess)}</small></span><ChevronRight size={17}/>
+                  </button>)}
+                </section>
+              )}
+
               <section className="card home-recent-expenses" aria-label="Cinq dernières dépenses du mois">
                 <div className="section-head home-recent-expenses-heading">
                   <h2>Dernières dépenses</h2>
@@ -5769,34 +5797,6 @@ export default function App() {
                   <p className="home-recent-expenses-empty">Aucune dépense enregistrée pour ce mois.</p>
                 )}
               </section>
-
-              {(salaryAlert || alerts.length > 0 || (!savingMonthMarkedDone && (totals.forecast?.savings ?? savingsTarget) > totals.saved)) && (
-                <section className="card home-actions">
-                  <div className="section-head"><h2>À faire</h2></div>
-                  {salaryAlert && <button type="button" className="home-action-row" onClick={confirmSalary}>
-                    <CalendarDays size={19}/><span><strong>Confirmer votre salaire</strong><small>Prévu le {dateLabel(salaryPlannedDate)}</small></span><ChevronRight size={18}/>
-                  </button>}
-                  {alerts.length > 0 && <button type="button" className="home-action-row" onClick={() => navigate("calendar")}>
-                    <CalendarDays size={19}/><span><strong>{alerts.length} paiement{alerts.length > 1 ? "s" : ""} à valider</strong><small>Vérifier les échéances sur votre banque</small></span><ChevronRight size={18}/>
-                  </button>}
-                  {!savingMonthMarkedDone && (totals.forecast?.savings ?? savingsTarget) > totals.saved && <button type="button" className="home-action-row" onClick={() => navigate("wealth")}>
-                    <Wallet size={19}/><span><strong>Effectuer l'épargne restante</strong><small>{money((totals.forecast?.savings ?? savingsTarget) - totals.saved)} à verser</small></span><ChevronRight size={18}/>
-                  </button>}
-                </section>
-              )}
-
-              {(exceededBudgets.length > 0 || (selectedMonth === month() && current && availableThisMonth.available < 0)) && (
-                <section className="card home-alerts" aria-label="Alertes financières">
-                  <div className="section-head"><h2><Bell size={18}/> Alertes</h2></div>
-                  {selectedMonth === month() && current && availableThisMonth.available < 0 &&
-                    <button className="home-action-row" type="button" onClick={() => navigate("budget")}>
-                      <Bell size={18}/><span><strong>Solde prévisionnel insuffisant</strong><small>{money(-availableThisMonth.available)} manquants pour les réserves du mois</small></span><ChevronRight size={17}/>
-                    </button>}
-                  {exceededBudgets.map(b => <button className="home-action-row" type="button" key={b.id} onClick={() => navigate("budget")}>
-                    <Bell size={18}/><span><strong>{b.name} : budget dépassé</strong><small>{money(b.spent)} sur {money(b.limit)} · +{money(b.excess)}</small></span><ChevronRight size={17}/>
-                  </button>)}
-                </section>
-              )}
             </div>
           )}
           {route === "budget" && (
