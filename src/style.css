@@ -2900,3 +2900,10 @@ body{min-height:100dvh}
     }
   }
 }
+
+/* Confirmation d'inscription : action principale visible avant connexion. */
+.auth-email-check{margin:20px 0;padding:22px;border:1px solid rgba(50,105,79,.24);border-radius:20px;background:rgba(50,105,79,.06);text-align:left}
+.auth-email-check h3{margin:8px 0 12px;font-size:1.3rem;line-height:1.25}
+.auth-email-check p{line-height:1.6;margin:0 0 12px;overflow-wrap:anywhere}
+.auth-email-check-icon{font-size:28px;line-height:1}
+.auth-email-check button{width:100%;margin-top:8px;white-space:normal;min-height:44px}
