@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { CalendarClock, CheckCircle2, Pencil, Plus, RefreshCw, Trash2, X } from "lucide-react";
 import { rpc } from "./api";
 import ProDateTimeInput from "./ProDateTimeInput";
@@ -97,7 +97,7 @@ export default function ProRecurringExpenses({
     }
   }
 
-  function save(e: React.FormEvent<HTMLFormElement>) {
+  function save(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (!draft) return;
     const amount = cents(draft.amount);
@@ -215,8 +215,8 @@ export default function ProRecurringExpenses({
         <option value="yearly">Tous les ans</option>
       </select></label>
       <div className="prosuite-form2">
-        <label>Première échéance<ProDateTimeInput type="date" required value={draft.startDate} onChange={startDate => setDraft({ ...draft, startDate })}/></label>
-        <label>Fin (facultatif)<ProDateTimeInput type="date" min={draft.startDate} value={draft.endDate} onChange={endDate => setDraft({ ...draft, endDate })}/></label>
+        <label>Première échéance<ProDateTimeInput type="date" required value={draft.startDate} onChange={e => setDraft({ ...draft, startDate: e.target.value })}/></label>
+        <label>Fin (facultatif)<ProDateTimeInput type="date" min={draft.startDate} value={draft.endDate} onChange={e => setDraft({ ...draft, endDate: e.target.value })}/></label>
       </div>
       <p>La charge ne sera comptabilisée que lorsque vous confirmerez le paiement.</p>
       <div className="pro-rexp-formbuttons">
