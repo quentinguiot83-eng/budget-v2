@@ -33,6 +33,7 @@ import ProDateTimeInput from "./ProDateTimeInput";
 import ProClientPicker, {type ProClientDraft, type ProClientChoice} from "./ProClientPicker";
 import ProDashboard from "./ProDashboard";
 import ProAnalysis from "./ProAnalysis";
+import ProRecurringExpenses from "./ProRecurringExpenses";
 import {currentProMonth,formatProMonth,moveProMonth,proCashAtMonth} from "./proFinance";
 import "./pro-suite.css";
 
@@ -253,6 +254,7 @@ export default function ProWorkspace({ native = false, onOpenQuickAdd }: { nativ
             {section==="catalog"&&<CatalogPage products={suite.products} add={()=>setModal({type:"product"})} edit={p=>setModal({type:"product",product:p})} remove={p=>void removeProduct(p)}/>} 
             {section==="agenda"&&<AgendaPage month={selectedProMonth} connect={suite.activeBusinessId?()=>setModal({type:"calendar",businessId:suite.activeBusinessId!}):undefined} events={suite.events} clients={suite.clients} add={date=>setModal({type:"event",initialDate:date})} edit={e=>setModal({type:"event",event:e})} remove={e=>void removeEvent(e)}/>}
             {section==="treasury"&&<TreasuryPage month={selectedProMonth} suite={suite} balance={proCashAtMonth(suite.transactions,suite.account.openingBalance,selectedProMonth)??accountBalance} contribution={{estimated:currentContribution,paid:paidContrib}} tax={{estimated:currentTax,paid:paidTax}} income={()=>setModal({type:"income"})} expense={()=>setModal({type:"expense"})} transfer={()=>setModal({type:"transfer"})} contributionPay={()=>setModal({type:"payment",paymentType:"contribution"})} taxPay={()=>setModal({type:"payment",paymentType:"tax"})} account={()=>setModal({type:"account"})} profile={()=>setModal({type:"profile"})} removeTx={id=>void removeTx(id)}/>} 
+            {section==="treasury"&&<ProRecurringExpenses businessId={suite.activeBusinessId??""} month={selectedProMonth} onPaid={()=>void load()}/>}
           </>}
         </main>
       </div>
