@@ -1322,9 +1322,15 @@ html:root body #root {
   border: 1px solid rgba(221,232,228,.15) !important;
   box-shadow: 0 12px 29px rgba(0,0,0,.14),inset 0 1px 0 rgba(255,255,255,.09) !important;
 }
-/* "Disponible" is not an incoming transaction. Match the chosen accent. */
-.app .wimm-home-clean .home-balance-available strong {
-  color: var(--accent-deep) !important;
+/* Montant disponible : vert s'il est positif, rouge s'il est négatif.
+   Cette information financière reste indépendante de la couleur du thème. */
+:root { --wimm-available-positive: #287c55; }
+:root[data-mode="dark"] { --wimm-available-positive: #94d8b5; }
+.app .wimm-home-clean .home-balance-available strong.positive-money {
+  color: var(--wimm-available-positive) !important;
+}
+.app .wimm-home-clean .home-balance-available strong.neutral-money {
+  color: var(--ink) !important;
 }
 /* Other navigation/action accents should be theme-selected, not mint. */
 .app :is(

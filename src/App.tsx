@@ -5708,7 +5708,7 @@ export default function App() {
                 {selectedMonth === month() && current && (
                   <div className="home-balance-available">
                     <div className="block-title"><span>Disponible jusqu’à la fin du mois</span>{availableInfoButton()}</div>
-                    <strong className={availableThisMonth.available < 0 ? "negative" : ""}>{money(availableThisMonth.available)}</strong>
+                    <strong className={availableThisMonth.available > 0 ? "positive-money" : availableThisMonth.available < 0 ? "negative" : "neutral-money"}>{money(availableThisMonth.available)}</strong>
                     {availableThisMonth.available < 0 && <small className="negative">Les charges et réserves prévues dépassent le solde disponible.</small>}
                     {!availableThisMonth.hasRealIncome && <small>Les revenus du mois restent à renseigner pour calculer l'épargne réservée.</small>}
                   </div>
