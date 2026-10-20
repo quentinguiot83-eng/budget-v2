@@ -1554,3 +1554,38 @@ html:root body #root {
 :root[data-mode="dark"] .app .wimm-home-clean .home-balance-available strong.negative {
   color:var(--wimm-negative-text) !important;
 }
+
+/* Capacité d'épargne : garder l'essentiel lisible, détails à la demande. */
+.capacity-summary { display:grid; gap:0; min-width:0; }
+.capacity-summary > .row { padding-block:13px; }
+.capacity-summary > .row:last-child {
+  border-top:1px solid var(--border);
+  margin-top:5px;
+  padding-top:17px;
+  font-weight:800;
+}
+.capacity-intro { margin:0 0 12px; line-height:1.5; }
+.capacity-hint { margin:12px 0 0; font-size:.82rem; line-height:1.55; }
+.capacity-detail-toggle {
+  margin-top:16px;
+  padding-top:11px;
+  border-top:1px solid var(--border);
+}
+.capacity-detail-toggle > summary {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  list-style:none;
+  margin:0;
+  padding:8px 0;
+  color:var(--wimm-green);
+  font-weight:750;
+  font-size:.85rem;
+}
+.capacity-detail-toggle > summary::-webkit-details-marker { display:none; }
+.capacity-detail-toggle > summary svg { flex:0 0 auto; transition:transform .2s ease; }
+.capacity-detail-toggle[open] > summary svg { transform:rotate(90deg); }
+.capacity-detail-content { padding-top:7px; min-width:0; }
+.capacity-detail-content .row { padding-block:11px; }
+.capacity-detail-content > p { font-size:.8rem; line-height:1.55; margin:13px 0 0; }
