@@ -4508,65 +4508,52 @@ export default function App() {
     explain(
       "Calcul de la capacité d’épargne",
       <>
-        <p className="muted">La capacité varie selon les charges dues chaque mois. Ce calcul utilise les revenus estimés, les budgets et les échéances du mois sélectionné.</p>
-        <Row
-          title="Revenus mensuels estimés"
-          value={displayMoney(incomeUsed)}
-        />
-
-        <p className="muted">
-          Cette projection utilise votre revenu mensuel estimé, indépendamment des revenus déjà enregistrés ou affectés au mois.
+        <p className="muted capacity-intro">
+          Estimation pour {monthLabel(selectedMonth)} : vos revenus prévus, moins les charges fixes et les budgets variables.
         </p>
 
-        <Row
-          title="Charges et mensualités dues"
-          value={"− " + displayMoney(totals.fixed)}
-        />
+        <div className="capacity-summary">
+          <Row title="Revenus prévus" value={displayMoney(incomeUsed)} />
+          <Row title="Charges fixes" value={"− " + displayMoney(totals.fixed)} />
+          <Row title="Budgets variables" value={"− " + displayMoney(totals.variable)} />
+          <Row title="Capacité d’épargne estimée" value={displayMoney(capacityUsed)} />
+        </div>
 
-        {!totals.forecast && totals.scheduled.map((d) => (
-          <Row
-            key={d.key}
-            title={d.rule.name}
-            sub={dateLabel(d.date)}
-            value={displayMoney(d.rule.amount)}
-          />
-        ))}
-
-        <Row
-          title="Enveloppes variables"
-          value={"− " + displayMoney(totals.variable)}
-        />
-
-        {s.categories
-          .filter((c) => categoryVariableBudget(c) > 0)
-          .map((c) => (
-            <Row
-              key={c.id}
-              title={c.name}
-              value={displayMoney(categoryVariableBudget(c))}
-            />
-          ))}
-
-        <Row
-          title="Capacité d’épargne retenue"
-          value={displayMoney(capacityUsed)}
-        />
-
-        <p>
-          Les charges fixes ne sont déduites qu’une seule fois. Les virements et
-          dépenses voyage ne sont pas considérés comme des revenus ou des
-          enveloppes ordinaires. Les salaires suivent le réglage choisi dans Réglages.
+        <p className="muted capacity-hint">
+          Ce montant est une prévision, pas le solde disponible sur vos comptes.
+          Les revenus estimés sont pris en compte même s’ils n’ont pas encore été reçus.
         </p>
 
-        <p>
-          Le plan d’épargne prévisionnel est calculé à partir du revenu estimé pour ce mois, soit {displayMoney(incomeUsed)}.
-        </p>
-
-        <p>
-          Cette capacité ne garantit pas la disponibilité sur le compte courant.
-          Les voyages, prêts et écarts aux budgets modifient aussi la
-          trésorerie.
-        </p>
+        <details className="capacity-detail-toggle">
+          <summary>
+            Voir le détail des charges et budgets
+            <ChevronRight size={17} aria-hidden="true" />
+          </summary>
+          <div className="capacity-detail-content">
+            {!totals.forecast && totals.scheduled.map((d) => (
+              <Row
+                key={d.key}
+                title={d.rule.name}
+                sub={dateLabel(d.date)}
+                value={displayMoney(d.rule.amount)}
+              />
+            ))}
+            {s.categories
+              .filter((c) => categoryVariableBudget(c) > 0)
+              .map((c) => (
+                <Row
+                  key={c.id}
+                  title={c.name}
+                  value={displayMoney(categoryVariableBudget(c))}
+                />
+              ))}
+            <p className="muted">
+              Les charges ne sont déduites qu’une fois. Les virements entre comptes
+              et les dépenses de voyage ne sont pas comptés comme des dépenses
+              courantes.
+            </p>
+          </div>
+        </details>
       </>,
     );
   }
@@ -5610,6 +5597,7 @@ export default function App() {
           {[
             "home",
             "budget",
+            "wealth",
             "personal",
             "calendar",
             "fixed",
