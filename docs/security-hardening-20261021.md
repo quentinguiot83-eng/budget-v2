@@ -108,3 +108,17 @@ migration. Do not use automatic `grant all` for API roles.
   migrated from a completely empty database as-is.
 
 Reference: https://supabase.com/docs/guides/api/securing-your-api
+
+## Local test execution — 2026-10-21
+
+GitHub Actions run: https://github.com/quentinguiot83-eng/budget-v2/actions/runs/39565343072
+
+**PASS:** `npm run build` and `npm test`, including the isolated PostgreSQL/PGlite suites:
+
+- `src/supabasePrivileges.test.ts` — existing SQL grants remain unchanged, newly created table/sequence/RPC objects deny automatic API access, and explicit GRANT opt-in is possible.
+- `src/householdIsolationSql.test.ts` — executes real `supabase/01-installation.sql` using three synthetic identities across two households. Confirms unauthenticated calls are rejected, membership confines reads/writes to the right household, non-owners cannot reset and optimistic write revisions reject stale edits.
+- `src/personalPrivacySql.test.ts` — loads a date-stamped snapshot of `budget_personal_load`, `budget_personal_save` and their private helper functions read-only from production. Confirms that two members of the same household have different personal accounts, an outsider sees neither, and stale personal writes fail.
+
+The harness simulates `auth.uid()` through an isolated test setting; it **does not** validate real Supabase JWT issuance or session handling. The personal RPCs are a point-in-time snapshot and must be rechecked after future changes. No production records or real identities were used, and **no Supabase test branch was created or billed**.
+
+These local tests are a strong regression check but not a substitute for an end-to-end security test on deployed Supabase/Vercel, including Wimm Pro invoice RPCs, storage policies and notifications. The SQL migration in this PR remains unapplied.
