@@ -30,7 +30,6 @@ async function rpc<T = unknown>(
   db: PGlite,
   fn: string,
   params: unknown[] = [],
-  types = "",
 ): Promise<T> {
   const placeholders = params.map((_, i) => `$${i + 1}`).join(", ");
   const { rows } = await db.query<Record<string, T>>(
@@ -106,7 +105,7 @@ test("Wimm SQL: households are isolated and a member shares only their own house
     let a = await rpc<Loaded>(db, "budget_create", ["Alice household"]);
     const aliceHousehold = a.household!.id;
     assert.equal(a.revision, 0);
-    await rpc(db, "budget_save", [JSON.stringify(projectState(a, "alice-project", "PRIVATE-ALICE")), 0, "Alice update"], "::jsonb");
+    await rpc(db, "budget_save", [JSON.stringify(projectState(a, "alice-project", "PRIVATE-ALICE")), 0, "Alice update"]);
     a = await rpc<Loaded>(db, "budget_load");
     assert.equal(a.state!.projects![0].name, "PRIVATE-ALICE");
     const invite = await rpc<string>(db, "budget_invite");
@@ -118,7 +117,7 @@ test("Wimm SQL: households are isolated and a member shares only their own house
     assert.equal(b.state!.projects!.length, 0);
     assert.equal(JSON.stringify(b).includes("PRIVATE-ALICE"), false);
 
-    await rpc(db, "budget_save", [JSON.stringify(projectState(b, "bob-project", "PRIVATE-BOB")), 0, "Bob update"], "::jsonb");
+    await rpc(db, "budget_save", [JSON.stringify(projectState(b, "bob-project", "PRIVATE-BOB")), 0, "Bob update"]);
     b = await rpc<Loaded>(db, "budget_load");
     assert.equal(b.state!.projects![0].name, "PRIVATE-BOB");
 
@@ -134,7 +133,7 @@ test("Wimm SQL: households are isolated and a member shares only their own house
       rpc(db, "budget_reset", ["REINITIALISER", 1]),
       /Confirmation ou autorisation invalide/,
     );
-    await rpc(db, "budget_save", [JSON.stringify(projectState(joined, "member-project", "MEMBER-OF-ALICE")), 1, "Member update"], "::jsonb");
+    await rpc(db, "budget_save", [JSON.stringify(projectState(joined, "member-project", "MEMBER-OF-ALICE")), 1, "Member update"]);
 
     await asUser(db, bob);
     b = await rpc<Loaded>(db, "budget_load");
@@ -144,7 +143,7 @@ test("Wimm SQL: households are isolated and a member shares only their own house
 
     // Bob is owner of another household: removing Alice's member must not
     // remove the person from Alice's household.
-    await rpc(db, "budget_remove_member", [member], "::uuid");
+    await rpc(db, "budget_remove_member", [member]);
     await asUser(db, alice);
     a = await rpc<Loaded>(db, "budget_load");
     assert.equal(a.state!.projects![0].name, "MEMBER-OF-ALICE");
@@ -160,9 +159,9 @@ test("Wimm SQL: optimistic revisions block stale writes and only owners can rese
     await asUser(db, alice);
     const household = await rpc<Loaded>(db, "budget_create", ["My household"]);
     const updated = projectState(household, "p1", "HISTORY");
-    await rpc(db, "budget_save", [JSON.stringify(updated), 0, "first write"], "::jsonb");
+    await rpc(db, "budget_save", [JSON.stringify(updated), 0, "first write"]);
     await assert.rejects(
-      rpc(db, "budget_save", [JSON.stringify(updated), 0, "stale write"], "::jsonb"),
+      rpc(db, "budget_save", [JSON.stringify(updated), 0, "stale write"]),
       /CONFLICT/,
     );
     await assert.rejects(
