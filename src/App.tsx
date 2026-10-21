@@ -428,6 +428,7 @@ export default function App() {
     [theme, setTheme] = useState("blue"),
     [appearanceMode, setAppearanceMode] = useState<AppearanceMode>(readAppearanceMode),
     [authMode, setAuthMode] = useState("login"),
+    [signupEmail, setSignupEmail] = useState(""),
     [saving, setSaving] = useState(false),
     [invite, setInvite] = useState(""),
     [years, setYears] = useState(10),
@@ -5201,6 +5202,28 @@ export default function App() {
                   : "Se connecter"}
           </h2>
           <p className="muted">Un compte personnel pour votre foyer partagé.</p>
+          {authMode === "signup" && signupEmail ? (
+            <div className="auth-email-check" role="status" aria-live="polite">
+              <div className="auth-email-check-icon">✉</div>
+              <h3>Vérifiez votre boîte mail</h3>
+              <p>Pour activer votre compte Wimm, ouvrez le lien de confirmation envoyé à <strong>{signupEmail}</strong>.</p>
+              <p className="muted">Pensez aussi à vérifier les courriers indésirables. Revenez ensuite sur Wimm pour vous connecter.</p>
+              <button type="button" className="secondary" onClick={async () => {
+                setError("");
+                try {
+                  const { error: resendError } = await api.auth.resend({
+                    type: "signup",
+                    email: signupEmail,
+                    options: { emailRedirectTo: location.origin },
+                  });
+                  if (resendError) throw resendError;
+                  setNotice("Si une confirmation est nécessaire, un nouveau lien vous a été envoyé.");
+                } catch (e) {
+                  setError(e instanceof Error ? e.message : String(e));
+                }
+              }}>Renvoyer l’e-mail de confirmation</button>
+            </div>
+          ) : (
           <Form
             key={authMode}
             label={
@@ -5233,15 +5256,18 @@ export default function App() {
               if (authMode === "signup") {
                 if (v.password.length < 10)
                   throw Error("Choisissez au moins 10 caractères.");
-                const { error } = await api.auth.signUp({
+                const { data, error } = await api.auth.signUp({
                   email: v.email,
                   password: v.password,
                   options: { emailRedirectTo: location.origin, data: { display_name: v.displayName.trim() } },
                 });
                 if (error) throw error;
-                setNotice(
-                  "Consultez votre messagerie pour confirmer votre adresse.",
-                );
+                if (!data.session) {
+                  setSignupEmail(v.email.trim());
+                  setNotice("");
+                } else {
+                  setNotice("Votre compte a été créé et votre session est active.");
+                }
               } else if (authMode === "reset") {
                 const { error } = await api.auth.resetPasswordForEmail(
                   v.email,
@@ -5267,6 +5293,7 @@ export default function App() {
               }
             }}
           />
+          )}
           <button
             className="text wide"
             onClick={() =>
