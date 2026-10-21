@@ -33,7 +33,7 @@ async function rpc<T = unknown>(
 ): Promise<T> {
   const placeholders = params.map((_, i) => `$${i + 1}`).join(", ");
   const { rows } = await db.query<Record<string, T>>(
-    `select public.${fn}(${placeholders}${types}) as value`, params,
+    `select public.${fn}(${placeholders}) as value`, params,
   );
   return rows[0].value;
 }
