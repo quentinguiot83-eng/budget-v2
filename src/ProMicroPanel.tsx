@@ -16,10 +16,11 @@ type Props = {
   onIncome: ()=>void;
   onInvoice: ()=>void;
   onTransfer: ()=>void;
+  onSettingsChange?: (next: MicroSettings)=>void;
 };
 
 const defaultSettings: MicroSettings={frequency:"monthly",taxMode:"none"};
-function readPreferences(id:string): MicroSettings {
+export function readPreferences(id:string): MicroSettings {
   try{
     if(!id)return defaultSettings;
     const saved=JSON.parse(localStorage.getItem("wimm:pro:micro:"+id)??"null") as Partial<MicroSettings> | null;
@@ -30,13 +31,14 @@ function readPreferences(id:string): MicroSettings {
   }catch{return defaultSettings;}
 }
 
-export default function ProMicroPanel({businessId,profile,transactions,month,balance,onActivitySettings,onContributionPayment,onTaxPayment,onIncome,onInvoice,onTransfer}:Props){
+export default function ProMicroPanel({businessId,profile,transactions,month,balance,onActivitySettings,onContributionPayment,onTaxPayment,onIncome,onInvoice,onTransfer,onSettingsChange}:Props){
   const [settings,setSettings]=useState<MicroSettings>(()=>readPreferences(businessId));
   const [expanded,setExpanded]=useState(false);
   useEffect(()=>{setSettings(readPreferences(businessId));setExpanded(false);},[businessId]);
   const update=(change:Partial<MicroSettings>)=>{
     const next={...settings,...change};
     setSettings(next);
+    onSettingsChange?.(next);
     try{if(businessId)localStorage.setItem("wimm:pro:micro:"+businessId,JSON.stringify(next));}catch{ /* blocked storage: keep in memory */ }
   };
   const s=microSummary(transactions,profile,month,settings);
