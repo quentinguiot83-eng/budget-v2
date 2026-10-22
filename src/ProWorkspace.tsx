@@ -4,6 +4,7 @@ import {
   ArrowRightLeft,
   Briefcase,
   CalendarDays,
+  CircleHelp,
   CheckCircle2,
   ChevronLeft,
   ChevronRight,
@@ -41,7 +42,7 @@ import {createReceiptInvoicePayload,type ProReceiptInvoiceInput} from "./proRece
 import "./pro-suite.css";
 import "./pro-v4.css";
 
-type Section = "dashboard" | "analysis" | "billing" | "management" | "clients" | "catalog" | "agenda" | "treasury" | "fiscal" | "settings";
+type Section = "dashboard" | "analysis" | "billing" | "management" | "clients" | "catalog" | "agenda" | "treasury" | "settings";
 type PaymentMethod = "card" | "check" | "cash" | "transfer" | "other";
 
 type Profile = { businessName:string; legalStatus:string; activityType:string; siret:string; contributionRate:number; taxRate:number; vatEnabled:boolean; vatRate:number };
@@ -323,15 +324,13 @@ export default function ProWorkspace({
           <ProNav active={section==="catalog"} icon={<Package/>} label="Catalogue" onClick={()=>setSection("catalog")}/>
           <ProNav active={section==="agenda"} icon={<CalendarDays/>} label="Agenda" onClick={()=>setSection("agenda")}/>
           <span className="pro-v4-menu-caption">GESTION & SUIVI</span>
-          <ProNav active={section==="treasury"} icon={<Wallet/>} label="Trésorerie" onClick={()=>setSection("treasury")}/>
-          {suite?.profile.legalStatus==="micro"&&
-            <ProNav active={section==="fiscal"} icon={<CheckCircle2/>} label="Cotisations" onClick={()=>setSection("fiscal")}/>}
+          <ProNav active={section==="treasury"} icon={<Wallet/>} label="Finances" onClick={()=>setSection("treasury")}/>
           <ProNav active={section==="analysis"} icon={<ChartNoAxesCombined/>} label="Analyse" onClick={()=>setSection("analysis")}/>
           <ProNav active={section==="settings"} icon={<Settings2/>} label="Réglages Pro" onClick={()=>setSection("settings")}/>
         </nav>
         <main className="prosuite-main">
           {error&&<div className="prosuite-error">{error}</div>}{notice&&<div className="prosuite-notice">{notice}</div>}
-          {["dashboard","analysis","agenda","treasury","fiscal"].includes(section)&&
+          {["dashboard","analysis","agenda","treasury"].includes(section)&&
             <ProMonthNavigator month={selectedProMonth} onChange={setSelectedProMonth} allowFuture={section==="agenda"}/>}
           
           {busy&&!suite?<div className="prosuite-loading">Chargement…</div>:suite&&<>
@@ -348,22 +347,8 @@ export default function ProWorkspace({
               onIncome={()=>setModal({type:"income"})}
               onExpense={()=>setModal({type:"expense"})}
               onTreasury={()=>setSection("treasury")}
-              onFiscal={()=>setSection(suite.profile.legalStatus==="micro"?"fiscal":"treasury")}
+              
             />}
-            {section==="fiscal"&&micro&&<div className="pro-v4-subpage">
-              <div className="pro-v4-subpage-header"><span>COTISATIONS & IMPÔTS</span><h1>Déclarations et réserves</h1>
-                <p>Retrouve ici les montants à déclarer, tes paiements et tes paramètres Urssaf.</p></div>
-              <ProMicroStatus
-                profile={suite.profile} transactions={suite.transactions} month={selectedProMonth}
-                settings={microSettings} onSettingsChange={saveMicroSettings}
-                onRates={()=>setModal({type:"profile"})}
-                onContributionPayment={()=>setModal({type:"payment",paymentType:"contribution"})}
-                onTaxPayment={()=>setModal({type:"payment",paymentType:"tax"})}
-              />
-              <button type="button" className="pro-v4-subpage-link" onClick={()=>setSection("treasury")}>
-                <Wallet size={16}/> Consulter les mouvements de trésorerie <ChevronRight size={16}/>
-              </button>
-            </div>}
             {section==="settings"&&<div className="pro-v4-subpage">
               <div className="pro-v4-subpage-header"><span>PARAMÈTRES</span><h1>Réglages professionnels</h1>
                 <p>Configure ton activité, ton compte professionnel et tes documents de facturation.</p></div>
@@ -371,7 +356,7 @@ export default function ProWorkspace({
                 <button type="button" onClick={()=>setModal({type:"profile"})}><Briefcase size={19}/><span><strong>Mon activité et mes taux</strong><small>Statut, SIRET, cotisations, impôt, TVA</small></span><ChevronRight size={17}/></button>
                 <button type="button" onClick={()=>setModal({type:"account"})}><Wallet size={19}/><span><strong>Compte professionnel</strong><small>Nom du compte et solde de départ</small></span><ChevronRight size={17}/></button>
                 <button type="button" onClick={()=>setModal({type:"billing-settings"})}><ReceiptText size={19}/><span><strong>Coordonnées de facturation</strong><small>Adresse, IBAN, mentions des factures</small></span><ChevronRight size={17}/></button>
-                {suite.profile.legalStatus==="micro"&&<button type="button" onClick={()=>setSection("fiscal")}><CheckCircle2 size={19}/><span><strong>Urssaf et impôts</strong><small>Périodicité, réserve fiscale, paiements</small></span><ChevronRight size={17}/></button>}
+                {suite.profile.legalStatus==="micro"&&<button type="button" onClick={()=>setSection("treasury")}><CheckCircle2 size={19}/><span><strong>Urssaf et impôts</strong><small>Déclarations, cotisations et prélèvements</small></span><ChevronRight size={17}/></button>}
                 <button type="button" onClick={()=>void exportCurrentBusiness()} disabled={busy}><Download size={19}/><span><strong>Exporter mes données Pro</strong><small>Copie JSON de l’entreprise active</small></span><ChevronRight size={17}/></button>
               </div>
             </div>}
@@ -385,14 +370,26 @@ export default function ProWorkspace({
             {section==="management"&&<section className="pro-v3-management">
               <div className="pro-v3-pageheading"><span>ACTIVITÉ</span><h1>Mon activité</h1><p>Mes clients, mes produits, mon agenda et ma trésorerie.</p></div>
               <div className="pro-v3-management-grid">
-                {([{key:"clients",label:"Clients",desc:"Fiches et coordonnées",Icon:Users},{key:"catalog",label:"Produits & services",desc:"Catalogue et tarifs",Icon:Package},{key:"treasury",label:"Trésorerie",desc:"Opérations, virements et cotisations",Icon:Wallet},{key:"agenda",label:"Agenda",desc:"Interventions et rendez-vous",Icon:CalendarDays}] as const).map(({key,label,desc,Icon})=><button type="button" key={key} onClick={()=>setSection(key)}><Icon size={22}/><span><strong>{label}</strong><small>{desc}</small></span><ChevronRight size={17}/></button>)}
+                {([{key:"clients",label:"Clients",desc:"Fiches et coordonnées",Icon:Users},{key:"catalog",label:"Produits & services",desc:"Catalogue et tarifs",Icon:Package},{key:"treasury",label:"Finances",desc:"Trésorerie, cotisations, dépenses et virements",Icon:Wallet},{key:"agenda",label:"Agenda",desc:"Interventions et rendez-vous",Icon:CalendarDays}] as const).map(({key,label,desc,Icon})=><button type="button" key={key} onClick={()=>setSection(key)}><Icon size={22}/><span><strong>{label}</strong><small>{desc}</small></span><ChevronRight size={17}/></button>)}
               </div>
             </section>}
             {section==="clients"&&<ClientsPage clients={suite.clients} add={()=>setModal({type:"client"})} edit={c=>setModal({type:"client",client:c})} remove={c=>void removeClient(c)}/>} 
             {section==="billing"&&<ProBillingV2 suite={suite} initialAction={billingQuickCreate} onSuite={next=>setSuite(next as Suite)} setError={setError} setNotice={setNotice}/>} 
             {section==="catalog"&&<CatalogPage products={suite.products} add={()=>setModal({type:"product"})} edit={p=>setModal({type:"product",product:p})} remove={p=>void removeProduct(p)}/>} 
             {section==="agenda"&&<AgendaPage month={selectedProMonth} connect={suite.activeBusinessId?()=>setModal({type:"calendar",businessId:suite.activeBusinessId!}):undefined} events={suite.events} clients={suite.clients} add={date=>setModal({type:"event",initialDate:date})} edit={e=>setModal({type:"event",event:e})} remove={e=>void removeEvent(e)}/>}
-            {section==="treasury"&&reserves&&<TreasuryPage month={selectedProMonth} suite={suite} balance={proCashAtMonth(suite.transactions,suite.account.openingBalance,selectedProMonth)??accountBalance} reserves={reserves} contribution={{estimated:micro?.estimatedContribution??reserves.monthContributions,paid:micro?.paidContribution??paidContrib}} tax={{estimated:micro?.estimatedTax??reserves.monthTax,paid:micro?.paidTax??paidTax}} income={()=>setModal({type:"income"})} expense={()=>setModal({type:"expense"})} transfer={()=>setModal({type:"transfer"})} contributionPay={()=>setModal({type:"payment",paymentType:"contribution"})} taxPay={()=>setModal({type:"payment",paymentType:"tax"})} account={()=>setModal({type:"account"})} profile={()=>setModal({type:"profile"})} removeTx={id=>void removeTx(id)}/>} 
+            {section==="treasury"&&reserves&&<TreasuryPage
+              month={selectedProMonth} suite={suite} reserves={reserves}
+              micro={micro} microSettings={microSettings} onMicroSettingsChange={saveMicroSettings}
+              transferReady={PRO_TRANSFER_SERVER_ENABLED} hasCheckingAccount={transferTargets.length>0}
+              income={()=>setModal({type:"income"})}
+              expense={()=>setModal({type:"expense"})}
+              transfer={()=>setModal({type:"transfer"})}
+              contributionPay={()=>setModal({type:"payment",paymentType:"contribution"})}
+              taxPay={()=>setModal({type:"payment",paymentType:"tax"})}
+              account={()=>setModal({type:"account"})}
+              profile={()=>setModal({type:"profile"})}
+              removeTx={id=>void removeTx(id)}
+            />}
           </>}
         </main>
       </div>
@@ -496,57 +493,83 @@ function AgendaPage({month,events,clients,add,edit,remove,connect}:{month:string
 }
 
 function TreasuryPage({
-  month,suite,balance,reserves,contribution,tax,income,expense,transfer,contributionPay,taxPay,account,profile,removeTx,
+  month,suite,reserves,micro,microSettings,onMicroSettingsChange,
+  transferReady,hasCheckingAccount,income,expense,transfer,contributionPay,taxPay,account,profile,removeTx,
 }:{
-  month:string;suite:Suite;balance:number;reserves:ReserveEstimate;
-  contribution:{estimated:number;paid:number};tax:{estimated:number;paid:number};
+  month:string;suite:Suite;reserves:ReserveEstimate;
+  micro:ReturnType<typeof microSummary>|null;
+  microSettings:MicroSettings;onMicroSettingsChange:(settings:MicroSettings)=>void;
+  transferReady:boolean;hasCheckingAccount:boolean;
   income:()=>void;expense:()=>void;transfer:()=>void;contributionPay:()=>void;taxPay:()=>void;
   account:()=>void;profile:()=>void;removeTx:(id:string)=>void;
 }) {
   const [allRows,setAllRows]=useState(false);
   const monthRows=suite.transactions.filter(t=>t.date.slice(0,7)===month)
-    .sort((a,b)=>b.date.localeCompare(a.date));
-  const rows=allRows?monthRows:monthRows.slice(0,12);
-  return <div className="pro-v4-treasury">
-    <PageHead eyebrow="MES FINANCES" title="Trésorerie"
-      text="Savoir ce qui est encaissé, ce qu’il faut mettre de côté et ce que tu peux te verser."
-      actions={<><Btn secondary onClick={profile}><Settings2 size={16}/> Taux & activité</Btn>
-        <Btn secondary onClick={account}><Wallet size={16}/> Compte Pro</Btn></>}/>
-    <div className="pro-v4-treasury-summary">
-      <div><span>Solde du compte Pro</span><strong>{euro(balance)}</strong></div>
-      <div><span>Réserves estimées</span><strong>{euro(reserves.totalToKeep)}</strong></div>
-      <div className="pro-v4-treasury-available"><span>Disponible après réserves</span><strong>{reserves.availableForPay===null?"—":euro(reserves.availableForPay)}</strong></div>
+    .slice().sort((a,b)=>b.date.localeCompare(a.date)||b.id.localeCompare(a.id));
+  const rows=allRows?monthRows:monthRows.slice(0,10);
+  const isMicro=!!micro;
+  const taxProvisioned=!isMicro||microSettings.taxMode!=="none";
+  const canTransfer=transferReady&&hasCheckingAccount&&reserves.ratesConfigured&&reserves.availableForPay!==null&&reserves.availableForPay>0;
+  const hasReserved=reserves.totalToKeep>0;
+  return <div className="pro-v4-finances">
+    <div className="pro-v4-finances-title">
+      <div><span>MON ENTREPRISE</span><h1>Finances</h1>
+        <p>Ton argent, les montants à réserver et les échéances au même endroit.</p></div>
+      <button type="button" className="pro-v4-finances-account" onClick={account}><Settings2 size={16}/> Compte Pro</button>
     </div>
+    <section className="pro-v4-finances-summary" aria-label="Résumé de la trésorerie">
+      <div><span>Solde du compte Pro</span><strong>{reserves.cashBalance===null?"—":euro(reserves.cashBalance)}</strong></div>
+      <div><span>Réserves encore à prévoir</span><strong>{euro(reserves.totalToKeep)}</strong><small>Estimation cumulée, toutes périodes</small></div>
+      <div className="pro-v4-treasury-available"><span>Disponible estimé</span><strong>{reserves.availableForPay===null?"—":euro(reserves.availableForPay)}</strong></div>
+    </section>
+
+    {isMicro?<ProMicroStatus
+      profile={suite.profile}
+      transactions={suite.transactions}
+      month={month}
+      settings={microSettings}
+      onSettingsChange={onMicroSettingsChange}
+      onRates={profile}
+      onContributionPayment={contributionPay}
+      onTaxPayment={taxPay}
+    />:<section className="pro-v4-finances-fiscal" aria-label="Cotisations et impôts">
+      <div className="pro-v4-finances-section-title">
+        <div><h2>Charges et fiscalité</h2><p>Prévisions et paiements associés au mois sélectionné.</p></div>
+        <button type="button" onClick={profile}><Settings2 size={15}/> Taux</button>
+      </div>
+      <div className="pro-v4-finances-charge-lines">
+        <div><span>Cotisations restantes estimées</span><strong>{euro(reserves.contributionsOwed)}</strong>
+          <button type="button" onClick={contributionPay}>Enregistrer un paiement</button></div>
+        <div><span>Impôts restants estimés</span><strong>{euro(reserves.taxOwed)}</strong>
+          <button type="button" onClick={taxPay}>Enregistrer un paiement</button></div>
+      </div>
+    </section>}
+
+    {suite.profile.vatEnabled&&<p className="pro-v4-finances-vat"><CircleHelp size={15}/> TVA nette indicative à conserver : <strong>{euro(reserves.vatToKeep)}</strong> (incluse dans les réserves cumulées).</p>}
     {!reserves.ratesConfigured&&<button className="pro-v4-config-warning" type="button" onClick={profile}>
-      <Settings2 size={17}/> Définir mes taux de cotisations et d’impôts <ChevronRight size={17}/>
+      <Settings2 size={17}/> Vérifier les taux des cotisations et des impôts <ChevronRight size={16}/>
     </button>}
-    <div className="pro-v4-treasury-grid">
-      <Card title="Réserves à prévoir">
-        <div className="pro-v4-treasury-reserve-intro">
-          Calcul automatique à partir du chiffre d’affaires encaissé, pas des factures en attente.
-        </div>
-        <div className="pro-v4-treasury-reserve-line"><span>Cotisations restant à provisionner</span><strong>{euro(reserves.contributionsOwed)}</strong></div>
-        <div className="pro-v4-treasury-reserve-line"><span>Impôts restant à provisionner</span><strong>{euro(reserves.taxOwed)}</strong></div>
-        {suite.profile.vatEnabled&&<div className="pro-v4-treasury-reserve-line"><span>TVA nette indicative à conserver</span><strong>{euro(reserves.vatToKeep)}</strong></div>}
-        <p className="pro-v4-form-note">Provision virtuelle uniquement, non transférée sur un compte bancaire. Les taux sont configurés dans « Taux & activité ».</p>
-        <div className="pro-v4-treasury-payments">
-          <ReserveLine label={"Cotisations de "+formatProMonth(month)}
-            estimated={contribution.estimated} paid={contribution.paid} action={contributionPay}/>
-          <ReserveLine label={"Impôts de "+formatProMonth(month)}
-            estimated={tax.estimated} paid={tax.paid} action={taxPay}/>
-        </div>
-      </Card>
-      <Card title="Actions rapides">
-        <div className="pro-v4-treasury-buttons">
-          <Btn onClick={income}><Plus size={17}/> Encaisser</Btn>
-          <Btn secondary onClick={expense}><Plus size={17}/> Ajouter une dépense</Btn>
-          <Btn secondary onClick={transfer}><ArrowRightLeft size={17}/> Vers mon compte courant</Btn>
-        </div>
-        <p className="pro-v4-form-note">Un versement vers ton compte courant est enregistré côté Pro et côté foyer. Effectue séparément le mouvement dans ta banque.</p>
-      </Card>
-    </div>
-    <Card title={"Opérations de "+formatProMonth(month)}>
-      <div className="prosuite-tablewrap">
+    {!taxProvisioned&&<p className="pro-v4-finances-info"><CircleHelp size={15}/> L’impôt sur le revenu n’est pas provisionné : le disponible estimé ne le déduit pas.</p>}
+    {!hasReserved&&<p className="pro-v4-finances-info"><CircleHelp size={15}/> Aucune somme réservée pour le moment. Les provisions se calculent à partir des encaissements.</p>}
+
+    <section className="pro-v4-finances-actions" aria-label="Actions de trésorerie">
+      <div className="pro-v4-finances-section-title"><h2>Actions rapides</h2></div>
+      <div>
+        <button type="button" onClick={income}><Plus size={17}/> Encaisser</button>
+        <button type="button" onClick={expense}><Plus size={17}/> Ajouter une dépense</button>
+        <button type="button" onClick={transfer} disabled={!canTransfer} title={!transferReady?"Le versement vers le foyer attend la validation du serveur":!hasCheckingAccount?"Ajoute un compte courant dans Patrimoine":"Versement vers mon compte courant"}>
+          <ArrowRightLeft size={17}/> Vers mon compte courant
+        </button>
+      </div>
+      {!transferReady&&<small>Les virements vers les comptes personnels seront disponibles après activation sécurisée côté serveur.</small>}
+      {transferReady&&!hasCheckingAccount&&<small>Ajoute un compte courant dans Patrimoine pour pouvoir recevoir un transfert.</small>}
+    </section>
+
+    <section className="pro-v4-finances-transactions">
+      <div className="pro-v4-finances-section-title">
+        <div><h2>Opérations de {formatProMonth(month)}</h2><p>{monthRows.length} opération{monthRows.length>1?"s":""} enregistrée{monthRows.length>1?"s":""}</p></div>
+      </div>
+      {rows.length>0?<div className="prosuite-tablewrap">
         <table className="prosuite-table prosuite-treasury-table">
           <thead><tr><th>Date</th><th>Opération</th><th>Règlement</th><th>Montant</th><th></th></tr></thead>
           <tbody>{rows.map(t=><tr key={t.id}>
@@ -554,19 +577,17 @@ function TreasuryPage({
             <td>{t.label}<small className="prosuite-block">{t.category||t.kind}</small></td>
             <td>{t.paymentMethod?payLabel[t.paymentMethod]:"—"}</td>
             <td className={t.kind==="income"?"positive":""}>{t.kind==="income"?"+":"−"}{euro(t.amount)}</td>
-            <td><button type="button" className="prosuite-trash" title={"Supprimer "+t.label}
-              aria-label={"Supprimer "+t.label} onClick={()=>removeTx(t.id)}><Trash2 size={15}/></button></td>
+            <td><button type="button" className="prosuite-trash" title={"Supprimer "+t.label} aria-label={"Supprimer "+t.label} onClick={()=>removeTx(t.id)}><Trash2 size={15}/></button></td>
           </tr>)}</tbody>
         </table>
-      </div>
-      {!rows.length&&<Empty text="Aucune opération enregistrée sur ce mois."/>}
-      {monthRows.length>12&&<button type="button" className="pro-v4-show-more" onClick={()=>setAllRows(v=>!v)}>
-        {allRows?"Afficher moins":"Voir toutes les "+monthRows.length+" opérations"}
+      </div>:<p className="pro-v4-finances-empty">Aucune opération ce mois-ci.</p>}
+      {monthRows.length>10&&<button type="button" className="pro-v4-show-more" onClick={()=>setAllRows(value=>!value)}>
+        {allRows?"Réduire la liste":"Voir les "+monthRows.length+" opérations"}
       </button>}
-    </Card>
+    </section>
+    <p className="pro-v4-finances-disclaimer">Les réserves sont virtuelles : Wimm n’effectue ni virement ni déclaration Urssaf. Les prélèvements personnels d’un micro-entrepreneur ne constituent pas des salaires.</p>
   </div>;
 }
-function ReserveLine({label,estimated,paid,action}:{label:string;estimated:number;paid:number;action:()=>void}){return <div className="prosuite-reserve"><div><strong>{label}</strong><small>Estimé {euro(estimated)} · payé {euro(paid)}</small></div><strong>{euro(Math.max(0,estimated-paid))}</strong><button onClick={action}>Enregistrer un paiement</button></div>}
 
 function Modal({children,close}:{children:ReactNode;close:()=>void}){
   useEffect(()=>{

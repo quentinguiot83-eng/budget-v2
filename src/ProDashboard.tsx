@@ -23,12 +23,11 @@ type DashboardProps={
   onIncome:()=>void;
   onExpense:()=>void;
   onTreasury:()=>void;
-  onFiscal:()=>void;
 };
 
 export default function ProDashboard({
   month,transactions,invoices,events,openingBalance,profile,declaration,
-  onAgenda,onBilling,onIncome,onExpense,onTreasury,onFiscal,
+  onAgenda,onBilling,onIncome,onExpense,onTreasury,
 }:DashboardProps){
   const isCurrent=month===currentProMonth();
   const reserve=calculateProReserve(transactions,openingBalance,profile,month);
@@ -56,7 +55,7 @@ export default function ProDashboard({
         <button type="button" className="pro-v4-textlink" onClick={onTreasury}>Voir le détail <ChevronRight size={16}/></button>
       </div>
       <div className="pro-v4-cash-flow">
-        <button className="pro-v4-cash-reserved pro-v4-cash-detail" type="button" onClick={onFiscal} title="Voir le détail des cotisations et des impôts">
+        <button className="pro-v4-cash-reserved pro-v4-cash-detail" type="button" onClick={onTreasury} title="Voir le détail des cotisations et des impôts">
           <span>À mettre de côté</span><strong>{proEuro(reserve.totalToKeep)}</strong>
           <small>Voir les cotisations <ChevronRight size={13}/></small>
         </button>
@@ -65,7 +64,7 @@ export default function ProDashboard({
       <p className="pro-v4-fiscal-note"><CircleHelp size={14}/> Réserves estimées, sans prélèvement automatique.</p>
     </section>
 
-    {declaration&&<button className="pro-v4-declaration-strip" type="button" onClick={onFiscal}>
+    {declaration&&<button className="pro-v4-declaration-strip" type="button" onClick={onTreasury}>
       <span className="pro-v4-declaration-icon"><CalendarDays size={20}/></span>
       <span><strong>Déclaration Urssaf</strong><small>{declaration.label} · Échéance indicative le {dueDate}</small></span>
       <ChevronRight size={18}/>
