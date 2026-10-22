@@ -290,7 +290,7 @@ export default function ProWorkspace({
         {modal.type==="transfer"&&<TransferForm accounts={transferTargets} balance={currentReserve?.cashBalance??accountBalance}
           available={currentReserve?.availableForPay??0} ratesConfigured={currentReserve?.ratesConfigured??false}
           submit={async v=>{
-            const ok=await call("budget_pro_transfer_personal",{p_transfer:v},"Virement vers le compte courant enregistré");
+            const ok=await call("budget_pro_transfer_to_current",{p_transfer:v},"Versement vers le compte courant enregistré");
             if(ok){await load();if(onHouseholdRefresh)await onHouseholdRefresh();}
             return ok;
           }}/>} 
