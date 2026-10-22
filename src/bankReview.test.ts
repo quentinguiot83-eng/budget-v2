@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { isLikelyBankTransfer, suggestedBulkMatches } from "./bankReview";
+import { isLikelyBankTransfer, suggestedBulkMatches, suggestStatementCategories } from "./bankReview";
 import { findBankDuplicateCandidates, reconcileBankRows, type BankRow, type BankDuplicateCandidate } from "./bankImport";
 import type { Tx } from "./engine";
 
@@ -48,4 +48,26 @@ test("manual choices stay authoritative", () => {
   const existing = [tx("one","2026-10-10")];
   const {result,candidates} = calculate([bankRow(0,"2026-10-11")],existing);
   assert.deepEqual(suggestedBulkMatches(result,candidates,existing,{0:{action:"import"}}),[]);
+});
+
+test("category suggestions reuse identical merchant history on the selected account", () => {
+  const sample: Tx[] = [
+    {...tx("one","2026-10-01","CB SUPERMARCHE"),category:"courses"},
+    {...tx("two","2026-10-05","cb supermarche"),category:"courses"},
+    {...tx("other","2026-10-05","CB SUPERMARCHE"),account:"other",category:"transport"},
+  ];
+  const statement = reconcileBankRows([
+    bankRow(0,"2026-10-15","CB SUPERMARCHE"),
+    bankRow(1,"2026-10-15","CB INCONNU"),
+  ],sample,"a");
+  const result=suggestStatementCategories(statement,sample,"a",new Set(["courses","transport"]));
+  assert.deepEqual(result,{0:"courses"});
+});
+test("conflicting merchant history does not automatically invent a category", () => {
+  const sample: Tx[] = [
+    {...tx("one","2026-10-01","CB SUPERETTE"),category:"courses"},
+    {...tx("two","2026-10-02","CB SUPERETTE"),category:"loisirs"},
+  ];
+  const statement=reconcileBankRows([bankRow(0,"2026-10-15","CB SUPERETTE")],sample,"a");
+  assert.deepEqual(suggestStatementCategories(statement,sample,"a",new Set(["courses","loisirs"])),{});
 });
