@@ -22,6 +22,7 @@ type DashboardProps={
   clientsCount:number;
   catalogCount:number;
   hasCheckingAccount:boolean;
+  transferReady:boolean;
   onAnalysis:()=>void;
   onAgenda:()=>void;
   onBilling:()=>void;
@@ -34,7 +35,7 @@ type DashboardProps={
 };
 export default function ProDashboard({
   businessName,month,transactions,invoices,events,openingBalance,profile,
-  clientsCount,catalogCount,hasCheckingAccount,
+  clientsCount,catalogCount,hasCheckingAccount,transferReady,
   onAnalysis,onAgenda,onBilling,onClients,onCatalog,onIncome,onTreasury,onProfile,onTransfer,
 }:DashboardProps) {
   const isCurrent=month===currentProMonth();
@@ -77,9 +78,10 @@ export default function ProDashboard({
         Elles ne déplacent pas l’argent et ne remplacent pas les montants calculés par l’Urssaf ou les impôts.
       </p>
       <button type="button" className="pro-v4-transfer-main" onClick={onTransfer}
-        disabled={!hasCheckingAccount||reserve.availableForPay===null||reserve.availableForPay<=0||!reserve.ratesConfigured}>
+        disabled={!transferReady||!hasCheckingAccount||reserve.availableForPay===null||reserve.availableForPay<=0||!reserve.ratesConfigured}>
         <ArrowRightLeft size={18}/> Me verser sur mon compte courant <ArrowRight size={17}/>
       </button>
+      {!transferReady&&<small className="pro-v4-transfer-hint">Versement lié au foyer : interface préparée, activation serveur encore à valider avant utilisation.</small>}
       {!hasCheckingAccount&&<small className="pro-v4-transfer-hint">Ajoute d’abord un compte courant dans Patrimoine pour enregistrer le virement dans le foyer.</small>}
     </section>
 
