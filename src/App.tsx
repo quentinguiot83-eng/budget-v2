@@ -436,6 +436,7 @@ export default function App() {
     [coverUploading, setCoverUploading] = useState<string | null>(null),
     [txFilter, setTxFilter] = useState(""),
     [txCategoryFilter, setTxCategoryFilter] = useState(""),
+    [showTransactionReconciliation, setShowTransactionReconciliation] = useState(false),
     [proEnabled, setProEnabled] = useState(false),
     [mobileQuickAddOpen, setMobileQuickAddOpen] = useState(false),
     [projectsSection, setProjectsSection] = useState<"trips" | "other">("trips"),
@@ -5426,13 +5427,13 @@ export default function App() {
     today() >= salaryPlannedDate &&
     !salaryReceivedThisMonth;
   // Foyer uniquement : ne pas inclure les comptes privés ni les comptes archivés.
-  // Le total additionne chaque compte une seule fois (courant + placements + voyage).
+  // Patrimoine du foyer hors épargne dédiée aux voyages (sans comptes personnels/archivés).
   const activeHouseholdAccounts = s.accounts.filter(
     (a) => !a.archived && a.group !== "personal",
   );
-  const householdAccountsTotal = activeHouseholdAccounts.reduce(
-    (sum, account) => sum + balance(s, account.id), 0,
-  );
+  const householdPatrimony = activeHouseholdAccounts
+    .filter((a) => a.group !== "travel")
+    .reduce((sum, account) => sum + balance(s, account.id), 0);
   const currentBalance = activeHouseholdAccounts
     .filter((a) => a.group === "current")
     .reduce((sum, a) => sum + balance(s, a.id), 0);
@@ -5924,6 +5925,26 @@ export default function App() {
                   </Empty>
                 )}
               </section>
+              {s.rules.some(r => r.kind === "credit" && (!r.end || r.end >= selectedMonth + "-01")) && (
+                <section className="card fixed-credits-overview" aria-label="Crédits et achats en plusieurs fois">
+                  <div className="section-head">
+                    <div className="block-title">
+                      <h2>Crédits et achats en plusieurs fois</h2>
+                      <BlockInfo title="Mensualités de crédits"><p>Les mensualités prévues figurent dans les charges fixes du mois où elles sont dues. Elles ne sont pas comptées une seconde fois.</p></BlockInfo>
+                    </div>
+                    <button className="secondary compact" type="button" onClick={() => navigate("loans")}>Gérer <ChevronRight size={16}/></button>
+                  </div>
+                  {s.rules.filter(r => r.kind === "credit" && (!r.end || r.end >= selectedMonth + "-01")).map(r => (
+                    <div className="rule-row" key={r.id}>
+                      <div className="grow">
+                        <strong>{r.name}</strong>
+                        <small>{money(r.amount)} par mensualité · {r.count || 0} échéance(s) prévues</small>
+                      </div>
+                      <button type="button" className="text" onClick={() => editRule(r, "credit")} aria-label={"Modifier " + r.name}><Pencil size={17}/></button>
+                    </div>
+                  ))}
+                </section>
+              )}
             </>
           )}
           {route === "calendar" && (
@@ -6988,20 +7009,20 @@ export default function App() {
           {route === "wealth" && (
             <div className="wealth-page-v2">
               <WealthPageStyles/>
-              <section className="wealth-total-card" data-tour="wealth-overview" aria-label="Total de vos comptes du foyer">
+              <section className="wealth-total-card" data-tour="wealth-overview" aria-label="Patrimoine du foyer hors voyages">
                 <div className="wealth-total-header">
                   <div className="block-title">
-                    <span>Total de vos comptes</span>
+                    <span>Patrimoine</span>
                     <button
                       type="button"
                       className="block-info"
-                      aria-label="Comprendre le total des comptes"
-                      onClick={() => explain("Total de vos comptes", <>
-                        <p>Somme des soldes actuels de vos comptes courants, livrets, placements et épargne voyage. Chaque compte est compté une seule fois.</p>
+                      aria-label="Comprendre le patrimoine hors voyages"
+                      onClick={() => explain("Patrimoine hors voyage", <>
+                        <p>Vos comptes courants et vos placements, sans les comptes réservés aux voyages. Chaque compte est compté une seule fois.</p>
                         <Row title="Épargne et placements" value={money(wealth)}/>
-                        <Row title="Épargne voyage" value={money(travelBalance)}/>
                         <Row title="Comptes courants" value={money(currentBalance)}/>
-                        <p>Les comptes personnels privés, les comptes archivés, les prêts et les dettes sont exclus. Ce montant n’est pas un patrimoine net.</p>
+                        <Row title="Épargne voyage exclue" value={money(travelBalance)}/>
+                        <p>Les comptes personnels, les comptes archivés, les prêts et les dettes ne sont pas pris en compte : il ne s’agit pas d’un patrimoine net.</p>
                       </>)}
                     >
                       <Info size={17}/>
@@ -7009,8 +7030,8 @@ export default function App() {
                   </div>
                   <Wallet size={21} aria-hidden="true"/>
                 </div>
-                <strong className={`wealth-total-amount${householdAccountsTotal < 0 ? " negative-money" : ""}`}>{money(householdAccountsTotal)}</strong>
-                <p>Comptes courants, épargne et placements · sans double comptage</p>
+                <strong className={`wealth-total-amount${householdPatrimony < 0 ? " negative-money" : ""}`}>{money(householdPatrimony)}</strong>
+                <p>Hors voyages · comptes courants, épargne et placements</p>
               </section>
 
               <div className="wealth-breakdown">
@@ -7126,20 +7147,20 @@ export default function App() {
               </div>
 
               <section className="projection-main-card">
-                <div className="projection-main-heading"><ChartNoAxesCombined size={19}/>Patrimoine global estimé dans {years} an{years > 1 ? "s" : ""}</div>
-                <strong className="projection-main-amount">{finalProjection ? projectionMoney(finalProjection.total) : "—"}</strong>
-                <p>{finalProjection ? monthLabel(finalProjection.date) : "Simulation en cours"} · Avant fiscalité estimée · Comptes courants, placements et voyages inclus.</p>
+                <div className="projection-main-heading"><ChartNoAxesCombined size={19}/>Patrimoine hors voyage estimé dans {years} an{years > 1 ? "s" : ""}</div>
+                <strong className="projection-main-amount">{finalProjection ? projectionMoney(finalProjection.current + finalProjection.wealth) : "—"}</strong>
+                <p>{finalProjection ? monthLabel(finalProjection.date) : "Simulation en cours"} · Avant fiscalité estimée · Comptes courants et placements, hors épargne voyage.</p>
               </section>
 
               <div className="projection-kpis">
                 <section className="projection-kpi">
                   <Wallet size={21}/>
-                  <span>Hors épargne voyage</span>
-                  <strong>{finalProjection ? projectionMoney(finalProjection.current + finalProjection.wealth) : "—"}</strong>
+                  <span>Après fiscalité estimée (hors voyage)</span>
+                  <strong>{finalProjection ? projectionMoney(finalProjection.current + finalProjection.wealthNet) : "—"}</strong>
                 </section>
                 <section className="projection-kpi">
                   <Plane size={21}/>
-                  <span>Dont épargne voyage</span>
+                  <span>Épargne voyage (séparée)</span>
                   <strong>{finalProjection ? projectionMoney(finalProjection.travel) : "—"}</strong>
                 </section>
               </div>
@@ -7166,8 +7187,9 @@ export default function App() {
                   </p>
                   <p>
                     Les sommes non affectées à un placement restent sur le compte courant
-                    et sont incluses dans la courbe Patrimoine. L’épargne dédiée
-                    aux voyages est incluse dans le patrimoine global et affichée séparément.
+                    et sont incluses dans la courbe verte « Patrimoine hors voyage ».
+                    L’épargne dédiée aux voyages est exclue des courbes de patrimoine
+                    brut et après fiscalité ; elle reste visible sur sa propre courbe.
                     Les rendements sont des hypothèses, pas des garanties. Un
                     projet lié à un voyage est réduit des virements de
                     financement déjà effectués.
@@ -7252,11 +7274,11 @@ export default function App() {
                     <details key={p.date} className="projection-year-card">
                       <summary>
                         <span>{monthLabel(p.date)}</span>
-                        <strong>{projectionMoney(p.total)}</strong>
+                        <strong>{projectionMoney(p.current + p.wealth)}</strong>
                         <ChevronRight size={15}/>
                       </summary>
                       <div className="projection-year-details">
-                        <div><span>Après fiscalité</span><strong>{projectionMoney(p.current + p.wealthNet + p.travel)}</strong></div>
+                        <div><span>Après fiscalité (hors voyage)</span><strong>{projectionMoney(p.current + p.wealthNet)}</strong></div>
                         <div><span>Épargne investie cumulée</span><strong>{projectionMoney(p.savedTotal)}</strong></div>
                         <div><span>Intérêts année précédente</span><strong>{p.interest > 0 ? "+ " + projectionMoney(p.interest) : "—"}</strong></div>
                         <div><span>Fiscalité estimée</span><strong>{projectionMoney(p.taxEstimate)}</strong></div>
@@ -7267,13 +7289,13 @@ export default function App() {
                 </div>
                 <div className="projection-annual-table">
                   <table>
-                    <thead><tr><th>Date</th><th>Patrimoine global</th><th>Après fiscalité</th><th>Intérêts année précédente</th><th>Épargne investie</th><th>Dont voyages</th></tr></thead>
+                    <thead><tr><th>Date</th><th>Patrimoine hors voyage</th><th>Après fiscalité (hors voyage)</th><th>Intérêts année précédente</th><th>Épargne investie</th><th>Épargne voyage</th></tr></thead>
                     <tbody>
                       {projectionData.filter(p => p.date.endsWith("-01")).map(p => (
                         <tr key={p.date}>
                           <td>{monthLabel(p.date)}</td>
-                          <td><strong>{projectionMoney(p.total)}</strong></td>
-                          <td>{projectionMoney(p.current + p.wealthNet + p.travel)}</td>
+                          <td><strong>{projectionMoney(p.current + p.wealth)}</strong></td>
+                          <td>{projectionMoney(p.current + p.wealthNet)}</td>
                           <td>{p.interest > 0 ? "+ " + projectionMoney(p.interest) : "—"}</td>
                           <td>{projectionMoney(p.savedTotal)}</td>
                           <td>{projectionMoney(p.travel)}</td>
@@ -7557,60 +7579,40 @@ export default function App() {
                           </div>
                         </details>
 
-                        <details className="trips-disclosure trips-management-card" aria-label="Gérer le voyage">
-                          <summary>
-                            <span className="trips-disclosure-icon"><SlidersHorizontal size={20}/></span>
-                            <span className="trips-disclosure-copy">
-                              <strong>Gérer le voyage</strong>
-                              <small>Modifier, clôturer ou supprimer</small>
-                            </span>
-                            <ChevronRight size={18}/>
-                          </summary>
-                          <div className="trips-disclosure-content trips-management-content">
-                            <p>{t.closedAt
-                              ? "Voyage clôturé le " + dateLabel(t.closedAt) + ". Son historique est conservé."
-                              : "Clôturez votre voyage lorsque vous le souhaitez. Les dépenses et les enveloppes resteront consultables."}</p>
-                            <div className="trips-management-actions">
-                              {t.closedAt ? (
-                                <button type="button" className="secondary" onClick={() => confirmAction(
-                                  "Réouvrir ce voyage ?",
-                                  "Vous pourrez de nouveau ajouter des dépenses et modifier ses enveloppes.",
-                                  async () => change(d => {
-                                    d.trips.find(x => x.id === t.id)!.closedAt = undefined;
-                                  }, "Voyage réouvert")
-                                )}>Réouvrir le voyage</button>
-                              ) : (
-                                <>
-                                  <button type="button" className="secondary" onClick={() => editTrip(t)}>
-                                    <Pencil size={16}/> Modifier
-                                  </button>
-                                  <button type="button" className="secondary" onClick={() => confirmAction(
-                                    "Clôturer ce voyage ?",
-                                    "Il sera déplacé dans Voyages terminés. Son historique et son coût total resteront accessibles.",
-                                    async () => change(d => {
-                                      d.trips.find(x => x.id === t.id)!.closedAt = today();
-                                    }, "Voyage clôturé")
-                                  )}>Clôturer le voyage</button>
-                                </>
-                              )}
-                              <button type="button" className="text danger-text" onClick={() => confirmAction(
-                                "Supprimer le voyage ?",
-                                "La suppression est possible seulement sans transaction liée. Sinon conservez-le pour garder son historique.",
-                                async () => {
-                                  await change(d => {
-                                    if (d.transactions.some(x => x.trip === t.id))
-                                      throw Error("Ce voyage possède des transactions. Il est conservé pour votre historique.");
-                                    d.trips = d.trips.filter(x => x.id !== t.id);
-                                    setActiveTrip("");
-                                  }, "Voyage supprimé");
-                                  if (t.coverPath) {
-                                    try { await deleteTripCover(t.coverPath); } catch { /* Clean up later if needed. */ }
-                                  }
-                                }
-                              )}><Trash2 size={16}/> Supprimer</button>
-                            </div>
-                          </div>
-                        </details>
+                        <div className="trips-management-actions trips-management-inline" aria-label="Actions du voyage">
+                          {t.closedAt ? (
+                            <button type="button" className="secondary" onClick={() => confirmAction(
+                              "Réouvrir ce voyage ?",
+                              "Vous pourrez de nouveau ajouter des dépenses et modifier ses enveloppes.",
+                              async () => change(d => {
+                                d.trips.find(x => x.id === t.id)!.closedAt = undefined;
+                              }, "Voyage réouvert")
+                            )}>Réouvrir le voyage</button>
+                          ) : (
+                            <button type="button" className="secondary" onClick={() => confirmAction(
+                              "Clôturer ce voyage ?",
+                              "Il sera déplacé dans Voyages terminés. Son historique et son coût total resteront accessibles.",
+                              async () => change(d => {
+                                d.trips.find(x => x.id === t.id)!.closedAt = today();
+                              }, "Voyage clôturé")
+                            )}>Clôturer le voyage</button>
+                          )}
+                          <button type="button" className="text danger-text" onClick={() => confirmAction(
+                            "Supprimer le voyage ?",
+                            "La suppression est possible seulement sans transaction liée. Sinon conservez-le pour garder son historique.",
+                            async () => {
+                              await change(d => {
+                                if (d.transactions.some(x => x.trip === t.id))
+                                  throw Error("Ce voyage possède des transactions. Il est conservé pour votre historique.");
+                                d.trips = d.trips.filter(x => x.id !== t.id);
+                                setActiveTrip("");
+                              }, "Voyage supprimé");
+                              if (t.coverPath) {
+                                try { await deleteTripCover(t.coverPath); } catch { /* Clean up later if needed. */ }
+                              }
+                            }
+                          )}><Trash2 size={16}/> Supprimer</button>
+                        </div>
                       </>
                     );
                   })()}
@@ -7621,7 +7623,11 @@ export default function App() {
             </div>
           )}
           {route === "transactions" && (
-            <TransactionSearch initialType={txFilter} initialCategory={txCategoryFilter} state={s} month={selectedMonth} setMonth={setMonth} add={() => navigate("add")} rows={txRows}/>
+            <TransactionSearch initialType={txFilter} initialCategory={txCategoryFilter} state={s} month={selectedMonth} setMonth={setMonth} add={() => navigate("add")} rows={txRows}
+              reconciliationOpen={showTransactionReconciliation}
+              toggleReconciliation={() => setShowTransactionReconciliation(open => !open)}
+              reconciliation={<BankReconciliation state={s} onImport={importBankDrafts}/>}
+            />
           )}
           {route === "analysis" && (
             <div data-tour="analysis"><AnalysisDashboard state={s} selectedMonth={selectedMonth} /></div>

@@ -1,0 +1,11 @@
+/* iOS installed PWA: recover viewport layout after returning to foreground.
+   Keep the approved navigation and header styling unchanged. */
+@supports (-webkit-touch-callout: none) {
+  @media (display-mode: standalone) {
+    .app dialog[open] {
+      max-height: calc(100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - 16px);
+      overflow-y: auto;
+      overscroll-behavior: contain;
+    }
+  }
+}

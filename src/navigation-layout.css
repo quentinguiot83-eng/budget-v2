@@ -565,3 +565,21 @@
     outline:2px solid var(--action,#7653bc);outline-offset:2px;
   }
 }
+
+
+/* Feature preview: finance actions consolidated without changing existing themes. */
+.fixed-credits-overview .rule-row { display:flex; gap:12px; align-items:center; padding:11px 0; border-top:1px solid var(--border); }
+.fixed-credits-overview .rule-row:first-of-type { border-top:0; }
+.fixed-credits-overview .rule-row .grow { min-width:0; display:grid; gap:4px; }
+.trips-management-inline { justify-content:flex-end; margin:6px 0 20px; padding:0 3px; }
+.transaction-reconcile-entry { display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin:12px 0 16px; }
+.transaction-reconcile-entry button { display:inline-flex; align-items:center; gap:8px; }
+.transaction-reconcile-entry small { font-size:.78rem; }
+.transaction-reconcile-panel { margin:12px 0 18px; }
+@media (max-width:560px) {
+  .transaction-reconcile-entry { flex-direction:column; align-items:stretch; gap:6px; }
+  .transaction-reconcile-entry button { width:100%; justify-content:center; }
+  .transaction-reconcile-entry small { padding-inline:5px; }
+  .trips-management-inline { justify-content:stretch; }
+  .trips-management-inline button { flex:1; }
+}

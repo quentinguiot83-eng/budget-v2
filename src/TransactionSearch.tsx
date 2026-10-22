@@ -1,9 +1,9 @@
 import { useMemo, useState, type ReactNode } from "react";
-import { Search, SlidersHorizontal, Plus } from "lucide-react";
+import { Search, SlidersHorizontal, Plus, ArrowLeftRight, ChevronRight } from "lucide-react";
 import { month as currentMonth, type State, type Tx } from "./engine";
 import { amountInCents, filterTransactions, type TransactionFilters } from "./transactionSearch";
 
-export default function TransactionSearch({ state, month, setMonth, add, rows, initialType, initialCategory = "" }: { initialType: string; initialCategory?: string; state: State; month: string; setMonth: (month: string) => void; add: () => void; rows: (transactions: Tx[]) => ReactNode }) {
+export default function TransactionSearch({ state, month, setMonth, add, rows, initialType, initialCategory = "", reconciliation, reconciliationOpen, toggleReconciliation }: { initialType: string; initialCategory?: string; state: State; month: string; setMonth: (month: string) => void; add: () => void; rows: (transactions: Tx[]) => ReactNode; reconciliation: ReactNode; reconciliationOpen: boolean; toggleReconciliation: () => void }) {
   const defaults: TransactionFilters = { query: "", type: initialType, category: initialCategory, account: "", period: "month", month, from: "", to: "", min: "", max: "" };
   const [filters, setFilters] = useState(defaults);
   const [expanded, setExpanded] = useState(false);
@@ -57,6 +57,13 @@ export default function TransactionSearch({ state, month, setMonth, add, rows, i
       {current.period === "custom" && <p className="muted">La période suit la date de l’opération.</p>}
       {current.period === "month" && current.type === "income" && <p className="muted">Les revenus suivent leur mois budgétaire.</p>}
     </section>
+    <div className="transaction-reconcile-entry">
+      <button type="button" className="secondary" aria-expanded={reconciliationOpen} onClick={toggleReconciliation}>
+        <ArrowLeftRight size={17}/> {reconciliationOpen ? "Fermer le rapprochement" : "Rapprochement bancaire"} <ChevronRight size={16} aria-hidden="true"/>
+      </button>
+      <small className="muted">Comparer un relevé CSV à vos transactions, sans créer de doublons.</small>
+    </div>
+    {reconciliationOpen && <div className="transaction-reconcile-panel">{reconciliation}</div>}
     <section className="card transaction-search-results">
       <p className="muted" role="status">{results.length} opération{results.length !== 1 ? "s" : ""}</p>
       {results.length ? rows(results) : <p className="muted padded">{error ? "Corrige les filtres pour afficher les opérations." : "Aucune opération ne correspond à ta recherche."}</p>}
