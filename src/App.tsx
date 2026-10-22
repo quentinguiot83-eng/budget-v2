@@ -1214,6 +1214,7 @@ export default function App() {
           throw Error("La date du solde doit être actuelle ou passée.");
         const opening = euro(v.opening);
         if (!Number.isSafeInteger(opening)) throw Error("Solde du compte invalide.");
+        const hasActiveCurrent = d.accounts.some(a => a.group === "current" && !a.archived);
         d.accounts.push({
           id: uid(), name, group: "current",
           opening, date: v.date, rate: 0,
@@ -1221,9 +1222,8 @@ export default function App() {
           cap: 0, capType: "balance",
           contributed: 0, relay: "", allocation: 0,
         });
-        // Les catégories existantes et les comptes précédents restent inchangés.
-        if (!d.accounts.some(a => a.group === "current" && a.id !== d.accounts[d.accounts.length - 1].id))
-          seedStarterCategories(d, month());
+        // Un compte supplémentaire n'altère ni les budgets ni les comptes existants.
+        if (!hasActiveCurrent) seedStarterCategories(d, month());
       }, "Compte courant ajouté"),
       "Ajouter le compte",
     );
