@@ -3,8 +3,7 @@ import { AlertCircle, ArrowLeftRight, CheckCircle2, ChevronDown, FileSpreadsheet
 import { today, money, type State, type Tx } from "./engine";
 import { convertBankRows, findBankDuplicateCandidates, guessBankMapping, parseBankCsv, reconcileBankRows,
   MAX_BANK_CSV_BYTES, type BankDuplicateCandidate, type CsvMapping, type CsvTable, type BankRow, type ReconciledRow } from "./bankImport";
-import { quickSuggestions } from "./quickEntry";
-import { isLikelyBankTransfer, suggestedBulkMatches } from "./bankReview";
+import { isLikelyBankTransfer, suggestedBulkMatches, suggestStatementCategories } from "./bankReview";
 import "./bankReconciliation.css";
 
 export type BankDraft = Pick<Tx,"date"|"type"|"amount"|"description"|"account"|"category"|"incomeType"|"bankImportKey">;
@@ -37,24 +36,16 @@ export default function BankReconciliation({state,onImport}:Props){
   const accountStart=accounts.find(a=>a.id===account)?.date||today();
   const matched=useMemo(()=>reconcileBankRows(rows,state.transactions,account),[rows,state.transactions,account]);
   const matchedCount=matched.filter(r=>r.status==="matched").length;
-  const possibleCount=matched.filter(r=>r.status==="possible"&&!duplicateChoices[r.index]).length;
   const resolvedExisting=matched.filter(r=>r.status==="possible"&&duplicateChoices[r.index]?.action==="skip").length;
-  const resolvedNew=matched.filter(r=>r.status==="possible"&&duplicateChoices[r.index]?.action==="import").length;
   const candidatesByRow=useMemo(()=>{
     const list=new Map<number,BankDuplicateCandidate[]>();
     for(const row of matched)if(row.status==="possible")
       list.set(row.index,findBankDuplicateCandidates(row,state.transactions,account));
     return list;
   },[matched,state.transactions,account]);
-  const suggestions=useMemo(()=>{
-    const out:Record<number,string>={};
-    for(const row of matched){
-      if(row.type!=="expense")continue;
-      const best=quickSuggestions(state,"expense",row.description,1)[0];
-      if(best?.category && categories.some(c=>c.id===best.category))out[row.index]=best.category;
-    }
-    return out;
-  },[matched,state]);
+  const suggestions=useMemo(()=>suggestStatementCategories(
+    matched,state.transactions,account,new Set(state.categories.filter(c=>!c.archived).map(c=>c.id))
+  ),[matched,state.transactions,account,state.categories]);
   const selection=selected.map(i=>matched.find(row=>row.index===i)).filter((r):r is ReconciledRow=>!!r);
   const countNew=matched.filter(r=>r.status==="new" || (r.status==="possible"&&duplicateChoices[r.index]?.action==="import")).length;
   const countToReview=matched.filter(r=>r.status==="possible"&&!duplicateChoices[r.index]).length;
@@ -68,6 +59,10 @@ export default function BankReconciliation({state,onImport}:Props){
     if(reviewTab==="possible")return unresolved;
     if(reviewTab==="todo")return unresolved || newOperation;
     return true;
+  }).sort((a,b)=>{
+    const priority=(r:ReconciledRow)=>r.status==="possible"&&!duplicateChoices[r.index]?0:
+      r.status==="new"||(r.status==="possible"&&duplicateChoices[r.index]?.action==="import")?1:2;
+    return priority(a)-priority(b) || b.date.localeCompare(a.date) || a.index-b.index;
   });
   const newRowsForBatch=matched.filter(r=>r.status==="new" && r.date>=accountStart && r.date<=today() &&
     !isLikelyBankTransfer(r.description));
