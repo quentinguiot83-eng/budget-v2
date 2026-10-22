@@ -35,6 +35,7 @@ import ProDashboard from "./ProDashboard";
 import ProAnalysis from "./ProAnalysis";
 import {currentProMonth,formatProMonth,moveProMonth,proCashAtMonth} from "./proFinance";
 import {calculateProReserve,previewReceiptReserves,type ReserveEstimate,type ProReserveProfile} from "./proReserve";
+import {createReceiptInvoicePayload,type ProReceiptInvoiceInput} from "./proReceiptInvoice";
 import "./pro-suite.css";
 import "./pro-v4.css";
 
@@ -184,6 +185,70 @@ export default function ProWorkspace({
     finally{setBusy(false);}
   }
 
+  /**
+   * One invoice, one payment, one income transaction.
+   *
+   * Existing RPCs are used in order: create draft -> issue -> add payment.
+   * NEVER also call budget_pro_transaction_save here; payment_save is the
+   * only RPC inserting the cash transaction. If a step fails, leave any
+   * existing invoice for manual review and close the receipt form to
+   * prevent unsafe blind retries and duplicate documents.
+   */
+  async function createInvoiceForReceipt(input:ProReceiptInvoiceInput):Promise<boolean>{
+    if(busy || !suite) return false;
+    const payload=createReceiptInvoicePayload(input);
+    let attemptedWrite=false;
+    let stage="création de la facture";
+    let newInvoiceId:string|null=null;
+    setBusy(true);setError("");setNotice("");
+    try {
+      const previousIds=new Set(suite.invoices.map(invoice=>invoice.id));
+      attemptedWrite=true;
+      const draftSuite=await rpc("budget_pro_invoice_save",{p_invoice:payload.invoice}) as Suite;
+      setSuite(draftSuite);
+      const candidates=draftSuite.invoices.filter(invoice=>!previousIds.has(invoice.id) &&
+        invoice.status==="draft" && invoice.clientId===input.clientId &&
+        invoice.totalTtc===input.amount);
+      if(candidates.length!==1)
+        throw Error("Impossible d’identifier sans ambiguïté la nouvelle facture.");
+      newInvoiceId=candidates[0].id;
+
+      stage="émission de la facture";
+      const issuedSuite=await rpc("budget_pro_invoice_issue",{p_id:newInvoiceId}) as Suite;
+      setSuite(issuedSuite);
+      const issued=issuedSuite.invoices.find(invoice=>invoice.id===newInvoiceId);
+      if(!issued || issued.status!=="sent")
+        throw Error("La facture n’a pas été confirmée comme émise.");
+
+      stage="enregistrement du paiement";
+      const paidSuite=await rpc("budget_pro_invoice_payment_save",{
+        p_payment:{...payload.payment,invoiceId:newInvoiceId},
+      }) as Suite;
+      setSuite(paidSuite);
+      const paid=paidSuite.invoices.find(invoice=>invoice.id===newInvoiceId);
+      if(!paid || paid.status!=="paid" || (paid.remainingAmount??0)>0)
+        throw Error("Le règlement n’a pas été confirmé comme entièrement reçu.");
+
+      setModal({type:"none"});
+      setSection("billing");
+      setNotice("Facture "+paid.number+" créée, émise et payée. Un seul encaissement a été enregistré dans la trésorerie.");
+      return true;
+    }catch(error){
+      const details=error instanceof Error?error.message:String(error);
+      if(attemptedWrite){
+        setModal({type:"none"});
+        setSection("billing");
+        setError("Facturation interrompue à l’étape « "+stage+" » : "+details+
+          " Consulte tes factures et leurs paiements avant toute nouvelle tentative, pour éviter un doublon.");
+      } else {
+        setError(details);
+      }
+      return false;
+    }finally{
+      setBusy(false);
+    }
+  }
+
   const transactions=suite?.transactions??[];
   const current=transactions.filter(t=>t.paid&&t.date.slice(0,7)===selectedProMonth);
   const monthIncome=current.filter(t=>t.kind==="income").reduce((s,t)=>s+t.amount,0);
@@ -288,7 +353,9 @@ export default function ProWorkspace({
         {modal.type==="product"&&<ProductForm value={modal.product} defaultVat={suite.profile.vatEnabled?suite.profile.vatRate:0} submit={v=>call("budget_pro_product_save",{p_product:v},"Catalogue mis à jour")}/>} 
         {modal.type==="invoice"&&<InvoiceForm value={modal.invoice} clients={suite.clients} products={suite.products} vatEnabled={suite.profile.vatEnabled} submit={v=>call("budget_pro_invoice_save",{p_invoice:v},"Facture enregistrée")}/>} 
         {modal.type==="event"&&<EventForm value={modal.event} initialDate={modal.initialDate} clients={suite.clients} createClient={createQuickClient} submit={v=>call("budget_pro_event_save",{p_event:v},"Agenda mis à jour")} remove={modal.event?()=>removeEvent(modal.event!):undefined}/>} 
-        {modal.type==="income"&&<TransactionForm kind="income" clients={suite.clients} createClient={createQuickClient} products={suite.products} vatEnabled={suite.profile.vatEnabled} defaultVat={suite.profile.vatRate} profile={suite.profile} submit={v=>call("budget_pro_transaction_save",{p_transaction:v},"Encaissement enregistré et réserves recalculées")}/>} 
+        {modal.type==="income"&&<TransactionForm kind="income" clients={suite.clients} createClient={createQuickClient} products={suite.products} vatEnabled={suite.profile.vatEnabled} defaultVat={suite.profile.vatRate} profile={suite.profile}
+          submit={v=>call("budget_pro_transaction_save",{p_transaction:v},"Encaissement enregistré et réserves recalculées")}
+          submitWithInvoice={createInvoiceForReceipt}/>} 
         {modal.type==="expense"&&<TransactionForm kind="expense" clients={suite.clients} createClient={createQuickClient} products={[]} vatEnabled={suite.profile.vatEnabled} defaultVat={suite.profile.vatRate} profile={suite.profile} submit={v=>call("budget_pro_transaction_save",{p_transaction:v},"Dépense enregistrée")}/>} 
         {modal.type==="transfer"&&<TransferForm accounts={transferTargets} balance={currentReserve?.cashBalance??accountBalance}
           available={currentReserve?.availableForPay??0} ratesConfigured={currentReserve?.ratesConfigured??false}
