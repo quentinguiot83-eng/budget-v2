@@ -595,12 +595,13 @@ function EventForm({value,initialDate,clients,createClient,submit,remove}:{value
 }
 
 function TransactionForm({
-  kind,clients,products,vatEnabled,defaultVat,profile,createClient,submit,
+  kind,clients,products,vatEnabled,defaultVat,profile,createClient,submit,submitWithInvoice,
 }:{
   kind:"income"|"expense";clients:Client[];products:Product[];
   vatEnabled:boolean;defaultVat:number;profile:ProReserveProfile;
   createClient:(draft:ProClientDraft)=>Promise<ProClientChoice>;
   submit:(v:Record<string,unknown>)=>Promise<boolean>;
+  submitWithInvoice?:(input:ProReceiptInvoiceInput)=>Promise<boolean>;
 }) {
   const [label,setLabel]=useState("");
   const [amount,setAmount]=useState("");
@@ -612,6 +613,7 @@ function TransactionForm({
   const [vatRate,setVatRate]=useState(defaultVat);
   const [saving,setSaving]=useState(false);
   const [error,setLocalError]=useState("");
+  const [createInvoice,setCreateInvoice]=useState(false);
   const choose=(id:string)=>{
     setProductId(id);
     const p=products.find(x=>x.id===id);
@@ -625,6 +627,24 @@ function TransactionForm({
     if(saving)return;
     setLocalError("");
     if(!label.trim()||amountC<=0||!date){setLocalError("Renseigne un montant, une date et un libellé.");return;}
+    if(createInvoice && kind==="income"){
+      if(!submitWithInvoice){setLocalError("La facturation liée n’est pas disponible.");return;}
+      try{
+        // Validate VAT rounding, customer and dates before any server write.
+        const request:ProReceiptInvoiceInput={
+          amount:amountC,description:label.trim(),clientId,
+          productId:productId||null,
+          productKind:products.find(p=>p.id===productId)?.kind??"service",
+          paymentDate:date,issueDate:today(),paymentMethod:method,
+          vatEnabled:vatEnabled&&includeVat,vatRate:vatEnabled&&includeVat?vatRate:0,
+        };
+        createReceiptInvoicePayload(request);
+        setSaving(true);
+        await submitWithInvoice(request);
+      }catch(e){setLocalError(e instanceof Error?e.message:"Création de la facture impossible.");}
+      finally{setSaving(false);}
+      return;
+    }
     setSaving(true);
     try{
       const success=await submit({
@@ -657,6 +677,19 @@ function TransactionForm({
       </select></label>
     </>}
     {vatEnabled&&<label className="prosuite-check"><input type="checkbox" checked={includeVat} onChange={e=>setIncludeVat(e.target.checked)}/> TVA incluse ({vatRate} % · {euro(vatAmount)})</label>}
+    {kind==="income"&&<div className="pro-v4-receipt-invoice-choice">
+      <label className="pro-v4-receipt-invoice-switch">
+        <input type="checkbox" checked={createInvoice} disabled={saving} onChange={e=>{setCreateInvoice(e.target.checked);setLocalError("");}}/>
+        <span><strong>Créer une facture pour cet encaissement</strong>
+          <small>Facture émise et marquée payée, sans ajouter deux fois le règlement</small></span>
+      </label>
+      {createInvoice&&<div className="pro-v4-receipt-invoice-explain">
+        <strong>Facturation liée</strong>
+        <p>La facture reprendra le client, le produit ou service, le montant et la TVA renseignés ci-dessus. Sa date d’émission sera celle d’aujourd’hui ({today()}). Le paiement sera enregistré à la date choisie.</p>
+        {!clientId&&<p className="pro-v4-receipt-invoice-required" role="status">Sélectionne ou crée un client au-dessus : il est obligatoire pour émettre une facture.</p>}
+        <p>Vérifie les coordonnées de l’entreprise et du client avant de confirmer. Si une facture existe déjà pour ce règlement, utilise plutôt le paiement de cette facture dans l’onglet « Factures ».</p>
+      </div>}
+    </div>}
     {kind==="income"&&amountC>0&&<div className="pro-v4-receipt-preview">
       <strong>Sur cet encaissement de {euro(amountC)}</strong>
       <div><span>Cotisations à prévoir</span><b>{euro(forecast.contributions)}</b></div>
@@ -667,7 +700,9 @@ function TransactionForm({
     </div>}
     {kind==="income"&&<p className="pro-v4-form-note">Pour un règlement lié à une facture Wimm, utilise plutôt « Enregistrer un paiement » depuis cette facture pour éviter un doublon.</p>}
     {error&&<p role="alert" className="prosuite-error">{error}</p>}
-    <button className="prosuite-btn" type="submit" disabled={saving}>{saving?"Enregistrement…":"Enregistrer"}</button>
+    <button className="prosuite-btn" type="submit" disabled={saving||!!(kind==="income"&&createInvoice&&!clientId)}>
+      {saving?"Enregistrement…":kind==="income"&&createInvoice?"Créer la facture et encaisser":"Enregistrer"}
+    </button>
   </form>;
 }
 
