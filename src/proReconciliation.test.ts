@@ -18,6 +18,6 @@ test("adjustable contribution and tax payments remain assigned to declaration pe
     {id:"c3",kind:"contribution_payment",amount:12000,date:"2027-01-31",paid:false,contributionPeriodKey:"2026-12"},
     {id:"income",kind:"income",amount:50000,date:"2026-10-01",paid:true},
   ];
-  assert.deepEqual(proPaymentsForPeriod(rows,"2026-10","2026-12").map(r=>r.id),["c1","t1"]);
+  assert.deepEqual(proPaymentsForPeriod(rows,"2026-10","2026-12").map(r=>r.id),["t1","c1"]);
   assert.deepEqual(proPaymentsForPeriod(rows,"2026-09","2026-09").map(r=>r.id),["c2"]);
 });
