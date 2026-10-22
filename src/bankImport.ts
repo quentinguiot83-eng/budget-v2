@@ -175,9 +175,16 @@ export function findBankDuplicateCandidates(
 export function reconcileBankRows(rows:BankRow[], transactions:Tx[], account:string):ReconciledRow[]{
   const existing=transactions.filter(t=>t.account===account&&(t.type==="income"||t.type==="expense"));
   const exactCounts=new Map<string,number>();
+  const knownImportKeys=new Set<string>();
+  const indexedCandidates=new Map<string,Tx[]>();
   for(const t of existing){
     const sig=signature({date:t.date,type:t.type as "expense"|"income",amount:t.amount,description:t.description});
     exactCounts.set(sig,(exactCounts.get(sig)||0)+1);
+    if(t.bankImportKey)knownImportKeys.add(t.bankImportKey);
+    const key=t.type+":"+t.amount;
+    const matches=indexedCandidates.get(key)||[];
+    matches.push(t);
+    indexedCandidates.set(key,matches);
   }
   const consumed=new Map<string,number>();
   const seen=new Map<string,number>();
@@ -186,11 +193,11 @@ export function reconcileBankRows(rows:BankRow[], transactions:Tx[], account:str
     const occurrence=(seen.get(sig)||0)+1;
     seen.set(sig,occurrence);
     const key=["csv",account,sig,occurrence].join(":");
-    const alreadyImported=existing.some(t=>t.bankImportKey===key);
+    const alreadyImported=knownImportKeys.has(key);
     const matched=(consumed.get(sig)||0)<(exactCounts.get(sig)||0);
     if(matched)consumed.set(sig,(consumed.get(sig)||0)+1);
     // A suggestion is only a warning; never silently merge two operations.
-    const possible=!matched && findBankDuplicateCandidates(row,existing,account).length>0;
+    const possible=!matched && findBankDuplicateCandidates(row,indexedCandidates.get(row.type+":"+row.amount)||[],account).length>0;
     return {...row,key,status:alreadyImported||matched?"matched":possible?"possible":"new",
       matches:(exactCounts.get(sig)||0)};
   });
