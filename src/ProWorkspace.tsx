@@ -1,9 +1,10 @@
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import {
   ArrowRightLeft,
   Briefcase,
   CalendarDays,
+  CircleHelp,
   CheckCircle2,
   ChevronLeft,
   ChevronRight,
@@ -32,11 +33,17 @@ import ProCalendarSubscription from "./ProCalendarSubscription";
 import ProDateTimeInput from "./ProDateTimeInput";
 import ProClientPicker, {type ProClientDraft, type ProClientChoice} from "./ProClientPicker";
 import ProDashboard from "./ProDashboard";
+import ProMicroStatus from "./ProMicroStatus";
+import {microEffectiveRates,microSummary,type MicroSettings} from "./proMicro";
 import ProAnalysis from "./ProAnalysis";
 import {currentProMonth,formatProMonth,moveProMonth,proCashAtMonth} from "./proFinance";
+import {calculateProReserve,previewReceiptReserves,type ReserveEstimate,type ProReserveProfile} from "./proReserve";
+import {createReceiptInvoicePayload,type ProReceiptInvoiceInput} from "./proReceiptInvoice";
+import {proOpeningForTargetBalance,proPaymentsForPeriod} from "./proReconciliation";
 import "./pro-suite.css";
+import "./pro-v4.css";
 
-type Section = "dashboard" | "analysis" | "billing" | "management" | "clients" | "catalog" | "agenda" | "treasury";
+type Section = "dashboard" | "analysis" | "billing" | "management" | "clients" | "catalog" | "agenda" | "treasury" | "settings";
 type PaymentMethod = "card" | "check" | "cash" | "transfer" | "other";
 
 type Profile = { businessName:string; legalStatus:string; activityType:string; siret:string; contributionRate:number; taxRate:number; vatEnabled:boolean; vatRate:number };
@@ -50,6 +57,8 @@ type Invoice = { archivedAt?:string|null; id:string; number:string; clientId:str
 type EventItem = { id:string; clientId:string|null; title:string; eventType:string; startsAt:string; endsAt:string; location:string; notes:string };
 type Suite = { enabled:boolean; activeBusinessId?:string|null; businesses?:{id:string;name:string}[]; profile:Profile; account:Account; billing:BillingSettings; clients:Client[]; products:Product[]; transactions:Transaction[]; invoices:Invoice[]; events:EventItem[] };
 type PersonalAccount = { id:string; name:string; archived?:boolean };
+// Never invoke the new Pro → foyer write until the separately reviewed SQL migration is deployed.
+const PRO_TRANSFER_SERVER_ENABLED = false;
 
 type Modal =
   | {type:"none"}
@@ -61,7 +70,7 @@ type Modal =
   | {type:"income"}
   | {type:"expense"}
   | {type:"transfer"}
-  | {type:"payment"; paymentType:"contribution"|"tax"}
+  | {type:"payment"; paymentType:"contribution"|"tax"; payment?:Transaction}
   | {type:"profile"}
   | {type:"billing-settings"}
   | {type:"account"}
@@ -73,10 +82,29 @@ const euros=(v:number)=>(v/100).toFixed(2);
 const today=()=>new Date().toISOString().slice(0,10);
 const monthKey=()=>today().slice(0,7);
 const payLabel:Record<string,string>={card:"CB",check:"Chèque",cash:"Espèces",transfer:"Virement",other:"Autre"};
+function readMicroPreferences(businessId:string,existingTaxRate:number):MicroSettings {
+  const fallback:MicroSettings={frequency:"monthly",taxMode:existingTaxRate>0?"estimate":"none"};
+  if(!businessId)return fallback;
+  try {
+    const saved=JSON.parse(localStorage.getItem("wimm:pro:micro:"+businessId)??"null") as Partial<MicroSettings>|null;
+    return {
+      frequency:saved?.frequency==="quarterly"?"quarterly":"monthly",
+      taxMode:saved?.taxMode==="liberatoire"||saved?.taxMode==="estimate"||saved?.taxMode==="none"
+        ?saved.taxMode:fallback.taxMode,
+    };
+  }catch{return fallback;}
+}
 const eventLabel:Record<string,string>={appointment:"Rendez-vous",shooting:"Prestation",deadline:"Échéance",admin:"Administratif",other:"Autre"};
 const invoiceStatus:Record<string,string>={draft:"Brouillon",sent:"Envoyée",partially_paid:"Paiement partiel",paid:"Payée",cancelled:"Annulée"};
 
-export default function ProWorkspace({ native = false, onOpenQuickAdd }: { native?: boolean; onOpenQuickAdd?: ()=>void } = {}){
+export default function ProWorkspace({
+  native = false, onOpenQuickAdd, householdCurrentAccounts = [], onHouseholdRefresh,
+}: {
+  native?: boolean;
+  onOpenQuickAdd?: ()=>void;
+  householdCurrentAccounts?: PersonalAccount[];
+  onHouseholdRefresh?: ()=>Promise<void>;
+} = {}){
   const [enabled,setEnabled]=useState(native);
   const [open,setOpen]=useState(native);
   const [section,setSection]=useState<Section>("dashboard");
@@ -89,6 +117,16 @@ export default function ProWorkspace({ native = false, onOpenQuickAdd }: { nativ
   const [notice,setNotice]=useState("");
   const [busy,setBusy]=useState(false);
   const [personalAccounts,setPersonalAccounts]=useState<PersonalAccount[]>([]);
+  const [microSettings,setMicroSettings]=useState<MicroSettings>({frequency:"monthly",taxMode:"none"});
+  useEffect(()=>{
+    if(!suite)return;
+    setMicroSettings(readMicroPreferences(suite.activeBusinessId??suite.account.id,suite.profile.taxRate));
+  },[suite?.activeBusinessId,suite?.account.id,suite?.profile.taxRate]);
+  const saveMicroSettings=(settings:MicroSettings)=>{
+    setMicroSettings(settings);
+    const id=suite?.activeBusinessId??suite?.account.id;
+    try{if(id)localStorage.setItem("wimm:pro:micro:"+id,JSON.stringify(settings));}catch{/*storage inaccessible*/}
+  };
   const [printInvoice,setPrintInvoice]=useState<Invoice|null>(null);
   const [,tick]=useState(0);
   useEffect(()=>{if(section!=="billing")setBillingQuickCreate(null);},[section]);
@@ -159,6 +197,30 @@ export default function ProWorkspace({ native = false, onOpenQuickAdd }: { nativ
     finally{setBusy(false);}
   }
 
+  async function saveProAccount(values:{name:string;mode:"current"|"opening";amount:number;balanceEdited:boolean}):Promise<boolean>{
+    if(busy||!suite)return false;
+    setBusy(true);setError("");
+    try{
+      const fresh=await rpc("budget_pro_suite_load") as Suite;
+      if(fresh.activeBusinessId!==suite.activeBusinessId)throw Error("L'entreprise active a changé. Ouvre à nouveau les paramètres du compte.");
+      let opening=fresh.account.openingBalance;
+      if(values.balanceEdited){
+        if(values.mode==="opening")opening=values.amount;
+        else {
+          const profile=fresh.profile.legalStatus==="micro"?microEffectiveRates(fresh.profile,microSettings):fresh.profile;
+          const cash=calculateProReserve(fresh.transactions,fresh.account.openingBalance,profile,currentProMonth()).cashBalance;
+          if(cash===null)throw Error("Le solde actuel n'est pas disponible pour le rapprochement.");
+          opening=proOpeningForTargetBalance(fresh.account.openingBalance,cash,values.amount);
+        }
+      }
+      const next=await rpc("budget_pro_account_save",{p_account:{name:values.name,openingBalance:opening}}) as Suite;
+      setSuite(next);setModal({type:"none"});
+      setNotice(values.balanceEdited?"Solde professionnel réajusté. L'historique des soldes est recalculé depuis l'ouverture du compte.":"Compte professionnel mis à jour.");
+      return true;
+    }catch(e){setError(e instanceof Error?e.message:String(e));return false;}
+    finally{setBusy(false);}
+  }
+
   async function createQuickClient(draft:ProClientDraft):Promise<ProClientChoice>{
     if(busy||!suite)throw Error("L’espace Pro est déjà occupé.");
     setBusy(true);setError("");
@@ -173,6 +235,72 @@ export default function ProWorkspace({ native = false, onOpenQuickAdd }: { nativ
     finally{setBusy(false);}
   }
 
+  /**
+   * One invoice, one payment, one income transaction.
+   *
+   * Existing RPCs are used in order: create draft -> issue -> add payment.
+   * NEVER also call budget_pro_transaction_save here; payment_save is the
+   * only RPC inserting the cash transaction. If a step fails, leave any
+   * existing invoice for manual review and close the receipt form to
+   * prevent unsafe blind retries and duplicate documents.
+   */
+  async function createInvoiceForReceipt(input:ProReceiptInvoiceInput):Promise<boolean>{
+    if(busy || !suite) return false;
+    const payload=createReceiptInvoicePayload(input);
+    let attemptedWrite=false;
+    let stage="création de la facture";
+    let newInvoiceId:string|null=null;
+    setBusy(true);setError("");setNotice("");
+    try {
+      const previousIds=new Set(suite.invoices.map(invoice=>invoice.id));
+      attemptedWrite=true;
+      const draftSuite=await rpc("budget_pro_invoice_save",{p_invoice:payload.invoice}) as Suite;
+      setSuite(draftSuite);
+      const candidates=draftSuite.invoices.filter(invoice=>!previousIds.has(invoice.id) &&
+        invoice.status==="draft" && invoice.clientId===input.clientId &&
+        invoice.totalTtc===input.amount);
+      if(candidates.length!==1)
+        throw Error("Impossible d’identifier sans ambiguïté la nouvelle facture.");
+      newInvoiceId=candidates[0].id;
+
+      stage="émission de la facture";
+      const issuedSuite=await rpc("budget_pro_invoice_issue",{p_id:newInvoiceId}) as Suite;
+      setSuite(issuedSuite);
+      const issued=issuedSuite.invoices.find(invoice=>invoice.id===newInvoiceId);
+      if(!issued || issued.status!=="sent")
+        throw Error("La facture n’a pas été confirmée comme émise.");
+
+      stage="enregistrement du paiement";
+      const paidSuite=await rpc("budget_pro_invoice_payment_save",{
+        p_payment:{...payload.payment,invoiceId:newInvoiceId},
+      }) as Suite;
+      setSuite(paidSuite);
+      const paid=paidSuite.invoices.find(invoice=>invoice.id===newInvoiceId);
+      if(!paid || paid.status!=="paid" || (paid.remainingAmount??0)>0)
+        throw Error("Le règlement n’a pas été confirmé comme entièrement reçu.");
+
+      setModal({type:"none"});
+      setSection("billing");
+      setNotice("Facture "+paid.number+" créée, émise et payée. Un seul encaissement a été enregistré dans la trésorerie.");
+      return true;
+    }catch(error){
+      const details=error instanceof Error?error.message:String(error);
+      if(attemptedWrite){
+        setModal({type:"none"});
+        setSection("billing");
+        setError("Facturation interrompue à l’étape « "+stage+" » : "+details+
+          " Consulte tes factures et leurs paiements avant toute nouvelle tentative, pour éviter un doublon.");
+      } else {
+        setError(details);
+      }
+      return false;
+    }finally{
+      setBusy(false);
+    }
+  }
+
+  const reserveProfile=suite?.profile.legalStatus==="micro"?microEffectiveRates(suite.profile,microSettings):suite?.profile??null;
+  const micro=suite?.profile.legalStatus==="micro"?microSummary(suite.transactions,suite.profile,selectedProMonth,microSettings):null;
   const transactions=suite?.transactions??[];
   const current=transactions.filter(t=>t.paid&&t.date.slice(0,7)===selectedProMonth);
   const monthIncome=current.filter(t=>t.kind==="income").reduce((s,t)=>s+t.amount,0);
@@ -183,10 +311,15 @@ export default function ProWorkspace({ native = false, onOpenQuickAdd }: { nativ
   },[suite]);
   const nextEvents=(suite?.events??[]).filter(e=>new Date(e.endsAt)>=new Date()).slice(0,5);
   const openInvoices=(suite?.invoices??[]).filter(i=>i.status==="draft"||i.status==="sent"||i.status==="partially_paid");
-  const currentContribution=Math.round(monthIncome*((suite?.profile.contributionRate??0)/100));
-  const currentTax=Math.round(monthIncome*((suite?.profile.taxRate??0)/100));
-  const paidContrib=transactions.filter(t=>t.paid&&t.kind==="contribution_payment"&&(t.contributionPeriodKey??t.date.slice(0,7))===selectedProMonth).reduce((s,t)=>s+t.amount,0);
+      const paidContrib=transactions.filter(t=>t.paid&&t.kind==="contribution_payment"&&(t.contributionPeriodKey??t.date.slice(0,7))===selectedProMonth).reduce((s,t)=>s+t.amount,0);
   const paidTax=transactions.filter(t=>t.paid&&t.kind==="tax_payment"&&(t.taxPeriodKey??t.date.slice(0,7))===selectedProMonth).reduce((s,t)=>s+t.amount,0);
+  // Shared source of truth: Home and Finances must use exactly the same reserve snapshot.
+  const reserves=useMemo(()=>suite&&reserveProfile?calculateProReserve(
+    suite.transactions,suite.account.openingBalance,reserveProfile,selectedProMonth,
+  ):null,[suite,selectedProMonth,microSettings]);
+  const currentReserve=useMemo(()=>suite&&reserveProfile?calculateProReserve(suite.transactions,suite.account.openingBalance,reserveProfile):null,[suite,microSettings]);
+  const transferTargets=native?householdCurrentAccounts:personalAccounts;
+
 
   const nav=(mobile=false)=>enabled?<button type="button" className={open?"active":""} onClick={()=>void enter()}><Briefcase size={mobile?20:24}/><span>Professionnel</span></button>:null;
 
@@ -210,31 +343,49 @@ export default function ProWorkspace({ native = false, onOpenQuickAdd }: { nativ
         {!native&&<button className="prosuite-icon" onClick={()=>setOpen(false)}><X size={20}/></button>}
       </header>
       <div className="prosuite-shell">
-        <nav className="prosuite-nav prosuite-v3-nav" aria-label="Navigation professionnelle">
+        <nav className="prosuite-nav prosuite-v3-nav pro-v4-nav" aria-label="Navigation professionnelle">
+          <span className="pro-v4-menu-caption">MON ENTREPRISE</span>
           <ProNav active={section==="dashboard"} icon={<LayoutDashboard/>} label="Accueil" onClick={()=>setSection("dashboard")}/>
-          <ProNav active={section==="analysis"} icon={<ChartNoAxesCombined/>} label="Analyse" onClick={()=>setSection("analysis")}/>
           <ProNav active={section==="billing"} icon={<ReceiptText/>} label="Facturation" onClick={()=>setSection("billing")}/>
-          <ProNav active={["management","clients","catalog","agenda","treasury"].includes(section)} icon={<Briefcase/>} label="Gestion" onClick={()=>setSection("management")}/>
+          <span className="pro-v4-menu-caption">MON ACTIVITÉ</span>
+          <ProNav active={section==="clients"} icon={<Users/>} label="Clients" onClick={()=>setSection("clients")}/>
+          <ProNav active={section==="catalog"} icon={<Package/>} label="Catalogue" onClick={()=>setSection("catalog")}/>
+          <ProNav active={section==="agenda"} icon={<CalendarDays/>} label="Agenda" onClick={()=>setSection("agenda")}/>
+          <span className="pro-v4-menu-caption">GESTION & SUIVI</span>
+          <ProNav active={section==="treasury"} icon={<Wallet/>} label="Finances" onClick={()=>setSection("treasury")}/>
+          <ProNav active={section==="analysis"} icon={<ChartNoAxesCombined/>} label="Analyse" onClick={()=>setSection("analysis")}/>
+          <ProNav active={section==="settings"} icon={<Settings2/>} label="Réglages Pro" onClick={()=>setSection("settings")}/>
         </nav>
         <main className="prosuite-main">
           {error&&<div className="prosuite-error">{error}</div>}{notice&&<div className="prosuite-notice">{notice}</div>}
           {["dashboard","analysis","agenda","treasury"].includes(section)&&
             <ProMonthNavigator month={selectedProMonth} onChange={setSelectedProMonth} allowFuture={section==="agenda"}/>}
           
-          {["clients","catalog","agenda","treasury"].includes(section)&&<button type="button" className="pro-v3-back" onClick={()=>setSection("management")}><ChevronLeft size={16}/> Gestion</button>}
           {busy&&!suite?<div className="prosuite-loading">Chargement…</div>:suite&&<>
             {section==="dashboard"&&<ProDashboard
-              businessName={suite.profile.businessName}
               month={selectedProMonth}
-              transactions={suite.transactions}
               invoices={suite.invoices}
               events={suite.events}
-              openingBalance={suite.account.openingBalance}
-              onAnalysis={()=>setSection("analysis")}
+              reserve={reserves!}
+              declaration={micro?{label:micro.period.label,dueDate:micro.period.dueDate}:undefined}
               onAgenda={()=>setSection("agenda")}
               onBilling={()=>setSection("billing")}
-              onTransfer={()=>setModal({type:"transfer"})}
+              onIncome={()=>setModal({type:"income"})}
+              onExpense={()=>setModal({type:"expense"})}
+              onTreasury={()=>setSection("treasury")}
+              
             />}
+            {section==="settings"&&<div className="pro-v4-subpage">
+              <div className="pro-v4-subpage-header"><span>PARAMÈTRES</span><h1>Réglages professionnels</h1>
+                <p>Configure ton activité, ton compte professionnel et tes documents de facturation.</p></div>
+              <div className="pro-v4-settings-links">
+                <button type="button" onClick={()=>setModal({type:"profile"})}><Briefcase size={19}/><span><strong>Mon activité et mes taux</strong><small>Statut, SIRET, cotisations, impôt, TVA</small></span><ChevronRight size={17}/></button>
+                <button type="button" onClick={()=>setModal({type:"account"})}><Wallet size={19}/><span><strong>Compte professionnel</strong><small>Nom du compte et solde de départ</small></span><ChevronRight size={17}/></button>
+                <button type="button" onClick={()=>setModal({type:"billing-settings"})}><ReceiptText size={19}/><span><strong>Coordonnées de facturation</strong><small>Adresse, IBAN, mentions des factures</small></span><ChevronRight size={17}/></button>
+                {suite.profile.legalStatus==="micro"&&<button type="button" onClick={()=>setSection("treasury")}><CheckCircle2 size={19}/><span><strong>Urssaf et impôts</strong><small>Déclarations, cotisations et prélèvements</small></span><ChevronRight size={17}/></button>}
+                <button type="button" onClick={()=>void exportCurrentBusiness()} disabled={busy}><Download size={19}/><span><strong>Exporter mes données Pro</strong><small>Copie JSON de l’entreprise active</small></span><ChevronRight size={17}/></button>
+              </div>
+            </div>}
             {section==="analysis"&&<ProAnalysis
               month={selectedProMonth}
               transactions={suite.transactions}
@@ -243,16 +394,29 @@ export default function ProWorkspace({ native = false, onOpenQuickAdd }: { nativ
               openingBalance={suite.account.openingBalance}
             />}
             {section==="management"&&<section className="pro-v3-management">
-              <div className="pro-v3-pageheading"><span>GESTION</span><h1>Mon entreprise</h1><p>Les outils au même endroit.</p></div>
+              <div className="pro-v3-pageheading"><span>ACTIVITÉ</span><h1>Mon activité</h1><p>Mes clients, mes produits, mon agenda et ma trésorerie.</p></div>
               <div className="pro-v3-management-grid">
-                {([{key:"clients",label:"Clients",desc:"Fiches et coordonnées",Icon:Users},{key:"catalog",label:"Produits & services",desc:"Catalogue et tarifs",Icon:Package},{key:"treasury",label:"Trésorerie",desc:"Opérations, virements et cotisations",Icon:Wallet},{key:"agenda",label:"Agenda",desc:"Interventions et rendez-vous",Icon:CalendarDays}] as const).map(({key,label,desc,Icon})=><button type="button" key={key} onClick={()=>setSection(key)}><Icon size={22}/><span><strong>{label}</strong><small>{desc}</small></span><ChevronRight size={17}/></button>)}
+                {([{key:"clients",label:"Clients",desc:"Fiches et coordonnées",Icon:Users},{key:"catalog",label:"Produits & services",desc:"Catalogue et tarifs",Icon:Package},{key:"treasury",label:"Finances",desc:"Trésorerie, cotisations, dépenses et virements",Icon:Wallet},{key:"agenda",label:"Agenda",desc:"Interventions et rendez-vous",Icon:CalendarDays}] as const).map(({key,label,desc,Icon})=><button type="button" key={key} onClick={()=>setSection(key)}><Icon size={22}/><span><strong>{label}</strong><small>{desc}</small></span><ChevronRight size={17}/></button>)}
               </div>
             </section>}
             {section==="clients"&&<ClientsPage clients={suite.clients} add={()=>setModal({type:"client"})} edit={c=>setModal({type:"client",client:c})} remove={c=>void removeClient(c)}/>} 
             {section==="billing"&&<ProBillingV2 suite={suite} initialAction={billingQuickCreate} onSuite={next=>setSuite(next as Suite)} setError={setError} setNotice={setNotice}/>} 
             {section==="catalog"&&<CatalogPage products={suite.products} add={()=>setModal({type:"product"})} edit={p=>setModal({type:"product",product:p})} remove={p=>void removeProduct(p)}/>} 
             {section==="agenda"&&<AgendaPage month={selectedProMonth} connect={suite.activeBusinessId?()=>setModal({type:"calendar",businessId:suite.activeBusinessId!}):undefined} events={suite.events} clients={suite.clients} add={date=>setModal({type:"event",initialDate:date})} edit={e=>setModal({type:"event",event:e})} remove={e=>void removeEvent(e)}/>}
-            {section==="treasury"&&<TreasuryPage month={selectedProMonth} suite={suite} balance={proCashAtMonth(suite.transactions,suite.account.openingBalance,selectedProMonth)??accountBalance} contribution={{estimated:currentContribution,paid:paidContrib}} tax={{estimated:currentTax,paid:paidTax}} income={()=>setModal({type:"income"})} expense={()=>setModal({type:"expense"})} transfer={()=>setModal({type:"transfer"})} contributionPay={()=>setModal({type:"payment",paymentType:"contribution"})} taxPay={()=>setModal({type:"payment",paymentType:"tax"})} account={()=>setModal({type:"account"})} profile={()=>setModal({type:"profile"})} removeTx={id=>void removeTx(id)}/>} 
+            {section==="treasury"&&reserves&&<TreasuryPage
+              month={selectedProMonth} suite={suite} reserves={reserves}
+              micro={micro} microSettings={microSettings} onMicroSettingsChange={saveMicroSettings}
+              transferReady={PRO_TRANSFER_SERVER_ENABLED} hasCheckingAccount={transferTargets.length>0}
+              income={()=>setModal({type:"income"})}
+              expense={()=>setModal({type:"expense"})}
+              transfer={()=>setModal({type:"transfer"})}
+              contributionPay={()=>setModal({type:"payment",paymentType:"contribution"})}
+              taxPay={()=>setModal({type:"payment",paymentType:"tax"})}
+              account={()=>setModal({type:"account"})}
+              profile={()=>setModal({type:"profile"})}
+              removeTx={id=>void removeTx(id)}
+              editPayment={t=>setModal({type:"payment",paymentType:t.kind==="contribution_payment"?"contribution":"tax",payment:t})}
+            />}
           </>}
         </main>
       </div>
@@ -262,12 +426,30 @@ export default function ProWorkspace({ native = false, onOpenQuickAdd }: { nativ
         {modal.type==="product"&&<ProductForm value={modal.product} defaultVat={suite.profile.vatEnabled?suite.profile.vatRate:0} submit={v=>call("budget_pro_product_save",{p_product:v},"Catalogue mis à jour")}/>} 
         {modal.type==="invoice"&&<InvoiceForm value={modal.invoice} clients={suite.clients} products={suite.products} vatEnabled={suite.profile.vatEnabled} submit={v=>call("budget_pro_invoice_save",{p_invoice:v},"Facture enregistrée")}/>} 
         {modal.type==="event"&&<EventForm value={modal.event} initialDate={modal.initialDate} clients={suite.clients} createClient={createQuickClient} submit={v=>call("budget_pro_event_save",{p_event:v},"Agenda mis à jour")} remove={modal.event?()=>removeEvent(modal.event!):undefined}/>} 
-        {modal.type==="income"&&<TransactionForm kind="income" clients={suite.clients} createClient={createQuickClient} products={suite.products} vatEnabled={suite.profile.vatEnabled} defaultVat={suite.profile.vatRate} submit={v=>call("budget_pro_transaction_save",{p_transaction:v},"Encaissement enregistré")}/>} 
-        {modal.type==="expense"&&<TransactionForm kind="expense" clients={suite.clients} createClient={createQuickClient} products={[]} vatEnabled={suite.profile.vatEnabled} defaultVat={suite.profile.vatRate} submit={v=>call("budget_pro_transaction_save",{p_transaction:v},"Dépense enregistrée")}/>} 
-        {modal.type==="transfer"&&<TransferForm accounts={personalAccounts} balance={accountBalance} submit={async v=>{const ok=await call("budget_pro_transfer_personal",{p_transfer:v},"Virement enregistré");if(ok)await load();return ok;}}/>} 
-        {modal.type==="payment"&&<ReservePaymentForm type={modal.paymentType} periodKey={selectedProMonth} estimated={modal.paymentType==="contribution"?Math.max(0,currentContribution-paidContrib):Math.max(0,currentTax-paidTax)} submit={v=>call(modal.paymentType==="contribution"?"budget_pro_contribution_payment_save":"budget_pro_tax_payment_save",{p_payment:v},"Paiement enregistré")}/>} 
+        {modal.type==="income"&&<TransactionForm kind="income" clients={suite.clients} createClient={createQuickClient} products={suite.products} vatEnabled={suite.profile.vatEnabled} defaultVat={suite.profile.vatRate} profile={reserveProfile??suite.profile}
+          submit={v=>call("budget_pro_transaction_save",{p_transaction:v},"Encaissement enregistré et réserves recalculées")}
+          submitWithInvoice={createInvoiceForReceipt}/>} 
+        {modal.type==="expense"&&<TransactionForm kind="expense" clients={suite.clients} createClient={createQuickClient} products={[]} vatEnabled={suite.profile.vatEnabled} defaultVat={suite.profile.vatRate} profile={suite.profile} submit={v=>call("budget_pro_transaction_save",{p_transaction:v},"Dépense enregistrée")}/>} 
+        {modal.type==="transfer"&&<TransferForm accounts={transferTargets} balance={currentReserve?.cashBalance??accountBalance}
+          available={currentReserve?.availableForPay??0} ratesConfigured={currentReserve?.ratesConfigured??false}
+          serverReady={PRO_TRANSFER_SERVER_ENABLED}
+          submit={async v=>{
+            const ok=await call("budget_pro_transfer_to_current",{p_transfer:v},"Versement vers le compte courant enregistré");
+            if(ok){await load();if(onHouseholdRefresh)await onHouseholdRefresh();}
+            return ok;
+          }}/>} 
+        {modal.type==="payment"&&<ReservePaymentForm
+          type={modal.paymentType}
+          value={modal.payment}
+          periodKey={micro?.period.key??selectedProMonth}
+          estimated={modal.paymentType==="contribution"?(micro?.dueContribution??Math.max(0,(reserves?.monthContributions??0)-paidContrib)):(micro?.dueTax??Math.max(0,(reserves?.monthTax??0)-paidTax))}
+          submit={v=>call(modal.paymentType==="contribution"?"budget_pro_contribution_payment_save":"budget_pro_tax_payment_save",{p_payment:v},modal.payment?"Paiement corrigé et soldes recalculés":"Paiement enregistré et soldes recalculés")}
+        />}
         {modal.type==="billing-settings"&&<BillingSettingsForm value={suite.billing} submit={v=>call("budget_pro_billing_save",{p_settings:v},"Coordonnées de facturation enregistrées")}/>} 
-        {modal.type==="account"&&<AccountForm value={suite.account} submit={v=>call("budget_pro_account_save",{p_account:v},"Compte professionnel mis à jour")}/>} 
+        {modal.type==="account"&&<AccountForm
+          value={suite.account} currentBalance={currentReserve?.cashBalance??accountBalance}
+          submit={saveProAccount}
+        />}
         {modal.type==="profile"&&<ProfileForm value={suite.profile} submit={v=>call("budget_pro_profile_save",{p_profile:v},"Activité mise à jour")}/>} 
         {modal.type==="invoice-paid"&&<InvoicePaidForm invoice={modal.invoice} submit={v=>call("budget_pro_invoice_mark_paid",{p_id:modal.invoice.id,p_payment_method:v.method,p_paid_date:v.date},"Facture marquée payée")}/>} 
       </Modal>}
@@ -346,8 +528,118 @@ function AgendaPage({month,events,clients,add,edit,remove,connect}:{month:string
   </>;
 }
 
-function TreasuryPage({month,suite,balance,contribution,tax,income,expense,transfer,contributionPay,taxPay,account,profile,removeTx}:{month:string;suite:Suite;balance:number;contribution:{estimated:number;paid:number};tax:{estimated:number;paid:number};income:()=>void;expense:()=>void;transfer:()=>void;contributionPay:()=>void;taxPay:()=>void;account:()=>void;profile:()=>void;removeTx:(id:string)=>void}){return <><PageHead eyebrow="TRÉSORERIE" title="Trésorerie & opérations" text="Encaissements, dépenses, virements et réserves obligatoires au même endroit." actions={<><Btn secondary onClick={profile}><Settings2 size={16}/> Activité</Btn><Btn secondary onClick={account}><Wallet size={16}/> Compte Pro</Btn><Btn onClick={income}><Plus size={16}/> Encaissement</Btn></>}/><div className="prosuite-metrics"><Metric label={"Trésorerie "+(month===currentProMonth()?"actuelle":"à fin de mois")} value={euro(balance)}/><Metric label="Cotisations restantes" value={euro(Math.max(0,contribution.estimated-contribution.paid))}/><Metric label="Impôt restant" value={euro(Math.max(0,tax.estimated-tax.paid))}/><Metric label="À encaisser" value={euro(suite.transactions.filter(t=>t.kind==="income"&&!t.paid).reduce((s,t)=>s+t.amount,0))}/></div><div className="prosuite-grid2"><Card title="Réserves du mois"><ReserveLine label="Cotisations" estimated={contribution.estimated} paid={contribution.paid} action={contributionPay}/><ReserveLine label="Impôt" estimated={tax.estimated} paid={tax.paid} action={taxPay}/></Card><Card title="Actions"><div className="prosuite-actiongrid"><Btn onClick={income}><Plus size={16}/> Encaissement</Btn><Btn secondary onClick={expense}><Plus size={16}/> Dépense</Btn><Btn secondary onClick={transfer}><ArrowRightLeft size={16}/> Vers le perso</Btn></div></Card></div><Card title={"Opérations de "+formatProMonth(month)}><div className="prosuite-tablewrap"><table className="prosuite-table prosuite-treasury-table"><thead><tr><th>Date</th><th>Opération</th><th>Règlement</th><th>Montant</th><th></th></tr></thead><tbody>{suite.transactions.filter(t=>t.date.slice(0,7)===month).slice(0,30).map(t=><tr key={t.id}><td>{new Date(t.date+"T12:00:00").toLocaleDateString("fr-FR")}</td><td>{t.label}<small className="prosuite-block">{t.category||t.kind}</small></td><td>{t.paymentMethod?payLabel[t.paymentMethod]:"—"}</td><td className={t.kind==="income"?"positive":""}>{t.kind==="income"?"+":"−"}{euro(t.amount)}</td><td><button className="prosuite-trash" onClick={()=>removeTx(t.id)}><Trash2 size={15}/></button></td></tr>)}</tbody></table></div></Card></>}
-function ReserveLine({label,estimated,paid,action}:{label:string;estimated:number;paid:number;action:()=>void}){return <div className="prosuite-reserve"><div><strong>{label}</strong><small>Estimé {euro(estimated)} · payé {euro(paid)}</small></div><strong>{euro(Math.max(0,estimated-paid))}</strong><button onClick={action}>Enregistrer un paiement</button></div>}
+function TreasuryPage({
+  month,suite,reserves,micro,microSettings,onMicroSettingsChange,
+  transferReady,hasCheckingAccount,income,expense,transfer,contributionPay,taxPay,account,profile,removeTx,editPayment,
+}:{
+  month:string;suite:Suite;reserves:ReserveEstimate;
+  micro:ReturnType<typeof microSummary>|null;
+  microSettings:MicroSettings;onMicroSettingsChange:(settings:MicroSettings)=>void;
+  transferReady:boolean;hasCheckingAccount:boolean;
+  income:()=>void;expense:()=>void;transfer:()=>void;contributionPay:()=>void;taxPay:()=>void;
+  account:()=>void;profile:()=>void;removeTx:(id:string)=>void;editPayment:(row:Transaction)=>void;
+}) {
+  const [allRows,setAllRows]=useState(false);
+  const monthRows=suite.transactions.filter(t=>t.date.slice(0,7)===month)
+    .slice().sort((a,b)=>b.date.localeCompare(a.date)||b.id.localeCompare(a.id));
+  const rows=allRows?monthRows:monthRows.slice(0,10);
+  const isMicro=!!micro;
+  const taxProvisioned=!isMicro||microSettings.taxMode!=="none";
+  const canTransfer=transferReady&&hasCheckingAccount&&reserves.ratesConfigured&&reserves.availableForPay!==null&&reserves.availableForPay>0;
+  const hasReserved=reserves.totalToKeep>0;
+  const periodFrom=micro?.period.key??month;
+  const periodTo=micro?.period.end??month;
+  const adjustablePayments=proPaymentsForPeriod(suite.transactions,periodFrom,periodTo);
+  return <div className="pro-v4-finances">
+    <div className="pro-v4-finances-title">
+      <div><span>MON ENTREPRISE</span><h1>Finances</h1>
+        <p>Ton argent, les montants à réserver et les échéances au même endroit.</p></div>
+      <button type="button" className="pro-v4-finances-account" onClick={account}><Settings2 size={16}/> Compte Pro</button>
+    </div>
+    <section className="pro-v4-finances-summary" aria-label="Résumé de la trésorerie">
+      <div><span>Solde du compte Pro</span><strong>{reserves.cashBalance===null?"—":euro(reserves.cashBalance)}</strong></div>
+      <div><span>Réserves encore à prévoir</span><strong>{euro(reserves.totalToKeep)}</strong><small>Estimation cumulée, toutes périodes</small></div>
+      <div className="pro-v4-treasury-available"><span>Disponible estimé</span><strong>{reserves.availableForPay===null?"—":euro(reserves.availableForPay)}</strong></div>
+    </section>
+
+    {isMicro?<ProMicroStatus
+      profile={suite.profile}
+      transactions={suite.transactions}
+      month={month}
+      settings={microSettings}
+      onSettingsChange={onMicroSettingsChange}
+      onRates={profile}
+      onContributionPayment={contributionPay}
+      onTaxPayment={taxPay}
+    />:<section className="pro-v4-finances-fiscal" aria-label="Cotisations et impôts">
+      <div className="pro-v4-finances-section-title">
+        <div><h2>Charges et fiscalité</h2><p>Prévisions et paiements associés au mois sélectionné.</p></div>
+        <button type="button" onClick={profile}><Settings2 size={15}/> Taux</button>
+      </div>
+      <div className="pro-v4-finances-charge-lines">
+        <div><span>Cotisations restantes estimées</span><strong>{euro(reserves.contributionsOwed)}</strong>
+          <button type="button" onClick={contributionPay}>Enregistrer un paiement</button></div>
+        <div><span>Impôts restants estimés</span><strong>{euro(reserves.taxOwed)}</strong>
+          <button type="button" onClick={taxPay}>Enregistrer un paiement</button></div>
+      </div>
+    </section>}
+
+    {adjustablePayments.length>0&&<section className="pro-v4-finances-payments">
+      <div className="pro-v4-finances-section-title"><div><h2>Paiements sociaux et fiscaux enregistrés</h2>
+        <p>Corrige le montant, la date ou la période d'un paiement existant sans le comptabiliser deux fois.</p></div></div>
+      <div className="pro-v4-payment-list">
+        {adjustablePayments.map(t=><div className="pro-v4-payment-item" key={t.id}>
+          <span><strong>{t.kind==="contribution_payment"?"Cotisations Urssaf":"Impôt"}</strong>
+            <small>{new Date(t.date+"T12:00:00").toLocaleDateString("fr-FR")} · Période {t.kind==="contribution_payment"?(t.contributionPeriodKey??t.date.slice(0,7)):(t.taxPeriodKey??t.date.slice(0,7))}</small></span>
+          <strong>{euro(t.amount)}</strong>
+          <button type="button" onClick={()=>editPayment(t)}><Pencil size={15}/> Modifier</button>
+        </div>)}
+      </div>
+    </section>}
+
+    {suite.profile.vatEnabled&&<p className="pro-v4-finances-vat"><CircleHelp size={15}/> TVA nette indicative à conserver : <strong>{euro(reserves.vatToKeep)}</strong> (incluse dans les réserves cumulées).</p>}
+    {!reserves.ratesConfigured&&<button className="pro-v4-config-warning" type="button" onClick={profile}>
+      <Settings2 size={17}/> Vérifier les taux des cotisations et des impôts <ChevronRight size={16}/>
+    </button>}
+    {!taxProvisioned&&<p className="pro-v4-finances-info"><CircleHelp size={15}/> L’impôt sur le revenu n’est pas provisionné : le disponible estimé ne le déduit pas.</p>}
+    {!hasReserved&&<p className="pro-v4-finances-info"><CircleHelp size={15}/> Aucune somme réservée pour le moment. Les provisions se calculent à partir des encaissements.</p>}
+
+    <section className="pro-v4-finances-actions" aria-label="Actions de trésorerie">
+      <div className="pro-v4-finances-section-title"><h2>Actions rapides</h2></div>
+      <div>
+        <button type="button" onClick={income}><Plus size={17}/> Encaisser</button>
+        <button type="button" onClick={expense}><Plus size={17}/> Ajouter une dépense</button>
+        <button type="button" onClick={transfer} disabled={!canTransfer} title={!transferReady?"Le versement vers le foyer attend la validation du serveur":!hasCheckingAccount?"Ajoute un compte courant dans Patrimoine":"Versement vers mon compte courant"}>
+          <ArrowRightLeft size={17}/> Vers mon compte courant
+        </button>
+      </div>
+      {!transferReady&&<small>Les virements vers les comptes personnels seront disponibles après activation sécurisée côté serveur.</small>}
+      {transferReady&&!hasCheckingAccount&&<small>Ajoute un compte courant dans Patrimoine pour pouvoir recevoir un transfert.</small>}
+    </section>
+
+    <section className="pro-v4-finances-transactions">
+      <div className="pro-v4-finances-section-title">
+        <div><h2>Opérations de {formatProMonth(month)}</h2><p>{monthRows.length} opération{monthRows.length>1?"s":""} enregistrée{monthRows.length>1?"s":""}</p></div>
+      </div>
+      {rows.length>0?<div className="prosuite-tablewrap">
+        <table className="prosuite-table prosuite-treasury-table">
+          <thead><tr><th>Date</th><th>Opération</th><th>Règlement</th><th>Montant</th><th></th></tr></thead>
+          <tbody>{rows.map(t=><tr key={t.id}>
+            <td>{new Date(t.date+"T12:00:00").toLocaleDateString("fr-FR")}</td>
+            <td>{t.label}<small className="prosuite-block">{t.category||t.kind}</small></td>
+            <td>{t.paymentMethod?payLabel[t.paymentMethod]:"—"}</td>
+            <td className={t.kind==="income"?"positive":""}>{t.kind==="income"?"+":"−"}{euro(t.amount)}</td>
+            <td><button type="button" className="prosuite-trash" title={"Supprimer "+t.label} aria-label={"Supprimer "+t.label} onClick={()=>removeTx(t.id)}><Trash2 size={15}/></button></td>
+          </tr>)}</tbody>
+        </table>
+      </div>:<p className="pro-v4-finances-empty">Aucune opération ce mois-ci.</p>}
+      {monthRows.length>10&&<button type="button" className="pro-v4-show-more" onClick={()=>setAllRows(value=>!value)}>
+        {allRows?"Réduire la liste":"Voir les "+monthRows.length+" opérations"}
+      </button>}
+    </section>
+    <p className="pro-v4-finances-disclaimer">Les réserves sont virtuelles : Wimm n’effectue ni virement ni déclaration Urssaf. Les prélèvements personnels d’un micro-entrepreneur ne constituent pas des salaires.</p>
+  </div>;
+}
 
 function Modal({children,close}:{children:ReactNode;close:()=>void}){
   useEffect(()=>{
@@ -424,15 +716,269 @@ function EventForm({value,initialDate,clients,createClient,submit,remove}:{value
   </form>
 }
 
-function TransactionForm({kind,clients,products,vatEnabled,defaultVat,createClient,submit}:{kind:"income"|"expense";clients:Client[];products:Product[];vatEnabled:boolean;defaultVat:number;createClient:(draft:ProClientDraft)=>Promise<ProClientChoice>;submit:(v:Record<string,unknown>)=>Promise<boolean>}){const [label,setLabel]=useState("");const [amount,setAmount]=useState("");const [date,setDate]=useState(today());const [clientId,setClientId]=useState("");const [productId,setProductId]=useState("");const [method,setMethod]=useState<PaymentMethod>("transfer");const [includeVat,setIncludeVat]=useState(vatEnabled);const [vatRate,setVatRate]=useState(defaultVat);const choose=(id:string)=>{setProductId(id);const p=products.find(x=>x.id===id);if(p){setLabel(p.name);setAmount(euros(p.unitPrice+Math.round(p.unitPrice*p.vatRate/100)));setVatRate(p.vatRate);setIncludeVat(vatEnabled&&p.vatRate>0);}};const amountC=cents(amount);const vatAmount=includeVat?Math.round(amountC-amountC/(1+vatRate/100)):0;return <form className="prosuite-form" onSubmit={e=>{e.preventDefault();void submit({kind,label,amount:amountC,date,category:kind==="income"?(productId?"Vente":"Encaissement"):"Dépense",clientId:clientId||null,productId:productId||null,vatAmount,paid:true,notes:"",paymentMethod:kind==="income"?method:null})}}><FormTitle eyebrow={kind==="income"?"ENCAISSEMENT":"DÉPENSE"} title={kind==="income"?"Ajouter un encaissement":"Ajouter une dépense"}/>{kind==="income"&&products.length>0&&<label>Produit / service vendu<select value={productId} onChange={e=>choose(e.target.value)}><option value="">Saisie libre</option>{products.filter(p=>p.active).map(p=><option key={p.id} value={p.id}>{p.name}</option>)}</select></label>}<label>Libellé<input required value={label} onChange={e=>setLabel(e.target.value)}/></label><div className="prosuite-form2"><label>Montant TTC (€)<input type="number" min="0.01" step="0.01" required value={amount} onChange={e=>setAmount(e.target.value)}/></label><label>Date<ProDateTimeInput type="date" required value={date} onChange={e=>setDate(e.target.value)}/></label></div>{kind==="income"&&<><ProClientPicker clients={clients} value={clientId} onChange={setClientId} onCreate={createClient}/><label>Mode de règlement<select value={method} onChange={e=>setMethod(e.target.value as PaymentMethod)}><option value="card">CB</option><option value="check">Chèque</option><option value="cash">Espèces</option><option value="transfer">Virement</option><option value="other">Autre</option></select></label></>}{vatEnabled&&<label className="prosuite-check"><input type="checkbox" checked={includeVat} onChange={e=>setIncludeVat(e.target.checked)}/> TVA incluse ({vatRate}% · {euro(vatAmount)})</label>}<button className="prosuite-btn">Enregistrer</button></form>}
+function TransactionForm({
+  kind,clients,products,vatEnabled,defaultVat,profile,createClient,submit,submitWithInvoice,
+}:{
+  kind:"income"|"expense";clients:Client[];products:Product[];
+  vatEnabled:boolean;defaultVat:number;profile:ProReserveProfile;
+  createClient:(draft:ProClientDraft)=>Promise<ProClientChoice>;
+  submit:(v:Record<string,unknown>)=>Promise<boolean>;
+  submitWithInvoice?:(input:ProReceiptInvoiceInput)=>Promise<boolean>;
+}) {
+  const [label,setLabel]=useState("");
+  const [amount,setAmount]=useState("");
+  const [date,setDate]=useState(today());
+  const [clientId,setClientId]=useState("");
+  const [productId,setProductId]=useState("");
+  const [method,setMethod]=useState<PaymentMethod>("transfer");
+  const [includeVat,setIncludeVat]=useState(vatEnabled);
+  const [vatRate,setVatRate]=useState(defaultVat);
+  const [saving,setSaving]=useState(false);
+  const [error,setLocalError]=useState("");
+  const [createInvoice,setCreateInvoice]=useState(false);
+  const choose=(id:string)=>{
+    setProductId(id);
+    const p=products.find(x=>x.id===id);
+    if(p){const appliedVat=vatEnabled?p.vatRate:0;setLabel(p.name);setAmount(euros(p.unitPrice+Math.round(p.unitPrice*appliedVat/100)));setVatRate(appliedVat);setIncludeVat(vatEnabled&&appliedVat>0);}
+  };
+  const amountC=cents(amount);
+  const vatAmount=includeVat&&vatRate>0?Math.round(amountC-amountC/(1+vatRate/100)):0;
+  const forecast=previewReceiptReserves(amountC,vatAmount,profile);
+  const save=async(event:FormEvent)=>{
+    event.preventDefault();
+    if(saving)return;
+    setLocalError("");
+    if(!label.trim()||amountC<=0||!date){setLocalError("Renseigne un montant, une date et un libellé.");return;}
+    if(createInvoice && kind==="income"){
+      if(!submitWithInvoice){setLocalError("La facturation liée n’est pas disponible.");return;}
+      try{
+        // Validate VAT rounding, customer and dates before any server write.
+        const request:ProReceiptInvoiceInput={
+          amount:amountC,description:label.trim(),clientId,
+          productId:productId||null,
+          productKind:products.find(p=>p.id===productId)?.kind??"service",
+          paymentDate:date,issueDate:today(),paymentMethod:method,
+          vatEnabled:vatEnabled&&includeVat,vatRate:vatEnabled&&includeVat?vatRate:0,
+        };
+        createReceiptInvoicePayload(request);
+        setSaving(true);
+        await submitWithInvoice(request);
+      }catch(e){setLocalError(e instanceof Error?e.message:"Création de la facture impossible.");}
+      finally{setSaving(false);}
+      return;
+    }
+    setSaving(true);
+    try{
+      const success=await submit({
+        kind,label:label.trim(),amount:amountC,date,
+        category:kind==="income"?(productId?"Vente":"Encaissement"):"Dépense",
+        clientId:clientId||null,productId:productId||null,vatAmount,
+        paid:true,notes:"",paymentMethod:kind==="income"?method:null,
+      });
+      if(!success)setLocalError("L’opération n’a pas pu être enregistrée. Vérifie le message affiché.");
+    }catch(e){setLocalError(e instanceof Error?e.message:"Enregistrement impossible.");}
+    finally{setSaving(false);}
+  };
+  return <form className="prosuite-form pro-v4-entry-form" onSubmit={e=>void save(e)}>
+    <FormTitle eyebrow={kind==="income"?"ENCAISSEMENT":"DÉPENSE"} title={kind==="income"?"Enregistrer un encaissement":"Enregistrer une dépense"}
+      text={kind==="income"?"Dès l’enregistrement, tes réserves de cotisations et d’impôts sont recalculées automatiquement.":"La dépense sera déduite de la trésorerie professionnelle."}/>
+    {kind==="income"&&products.some(p=>p.active)&&<label>Produit ou service vendu
+      <select value={productId} onChange={e=>choose(e.target.value)}><option value="">Saisie libre</option>
+        {products.filter(p=>p.active).map(p=><option key={p.id} value={p.id}>{p.name}</option>)}
+      </select>
+    </label>}
+    <label>Libellé<input required maxLength={180} value={label} onChange={e=>setLabel(e.target.value)} placeholder={kind==="income"?"Prestation, règlement client…":"Achat ou frais professionnel…"}/></label>
+    <div className="prosuite-form2">
+      <label>Montant TTC (€)<input type="number" min="0.01" step="0.01" required value={amount} onChange={e=>setAmount(e.target.value)}/></label>
+      <label>Date<ProDateTimeInput type="date" required value={date} onChange={e=>setDate(e.target.value)}/></label>
+    </div>
+    {kind==="income"&&<>
+      <ProClientPicker clients={clients} value={clientId} onChange={setClientId} onCreate={createClient}/>
+      <label>Règlement<select value={method} onChange={e=>setMethod(e.target.value as PaymentMethod)}>
+        <option value="card">Carte</option><option value="check">Chèque</option><option value="cash">Espèces</option><option value="transfer">Virement</option><option value="other">Autre</option>
+      </select></label>
+    </>}
+    {vatEnabled&&<label className="prosuite-check"><input type="checkbox" checked={includeVat} onChange={e=>setIncludeVat(e.target.checked)}/> TVA incluse ({vatRate} % · {euro(vatAmount)})</label>}
+    {kind==="income"&&<div className="pro-v4-receipt-invoice-choice">
+      <label className="pro-v4-receipt-invoice-switch">
+        <input type="checkbox" checked={createInvoice} disabled={saving} onChange={e=>{setCreateInvoice(e.target.checked);setLocalError("");}}/>
+        <span><strong>Créer une facture pour cet encaissement</strong>
+          <small>Facture émise et marquée payée, sans ajouter deux fois le règlement</small></span>
+      </label>
+      {createInvoice&&<div className="pro-v4-receipt-invoice-explain">
+        <strong>Facturation liée</strong>
+        <p>La facture reprendra le client, le produit ou service, le montant et la TVA renseignés ci-dessus. Sa date d’émission sera celle d’aujourd’hui ({today()}). Le paiement sera enregistré à la date choisie.</p>
+        {!clientId&&<p className="pro-v4-receipt-invoice-required" role="status">Sélectionne ou crée un client au-dessus : il est obligatoire pour émettre une facture.</p>}
+        <p>Vérifie les coordonnées de l’entreprise et du client avant de confirmer. Si une facture existe déjà pour ce règlement, utilise plutôt le paiement de cette facture dans l’onglet « Factures ».</p>
+      </div>}
+    </div>}
+    {kind==="income"&&amountC>0&&<div className="pro-v4-receipt-preview">
+      <strong>Sur cet encaissement de {euro(amountC)}</strong>
+      <div><span>Cotisations à prévoir</span><b>{euro(forecast.contributions)}</b></div>
+      <div><span>Impôts à prévoir</span><b>{euro(forecast.tax)}</b></div>
+      {profile.vatEnabled&&<div><span>TVA indicative à isoler</span><b>{euro(forecast.vat)}</b></div>}
+      <div className="pro-v4-receipt-net"><span>Reste estimé avant autres frais</span><b>{euro(forecast.remaining)}</b></div>
+      <small>Ces sommes sont réservées virtuellement selon tes taux, sans virement bancaire automatique.</small>
+    </div>}
+    {kind==="income"&&<p className="pro-v4-form-note">Pour un règlement lié à une facture Wimm, utilise plutôt « Enregistrer un paiement » depuis cette facture pour éviter un doublon.</p>}
+    {error&&<p role="alert" className="prosuite-error">{error}</p>}
+    <button className="prosuite-btn" type="submit" disabled={saving||!!(kind==="income"&&createInvoice&&!clientId)}>
+      {saving?"Enregistrement…":kind==="income"&&createInvoice?"Créer la facture et encaisser":"Enregistrer"}
+    </button>
+  </form>;
+}
 
-function TransferForm({accounts,balance,submit}:{accounts:PersonalAccount[];balance:number;submit:(v:Record<string,unknown>)=>Promise<boolean>}){const [amount,setAmount]=useState("");const [date,setDate]=useState(today());const [target,setTarget]=useState(accounts[0]?.id??"");const [sync,setSync]=useState(accounts.length>0);return <form className="prosuite-form" onSubmit={e=>{e.preventDefault();void submit({amount:cents(amount),date,label:"Virement activité pro",syncToHousehold:sync,targetAccountId:sync?target:null})}}><FormTitle eyebrow="PRO → PERSO" title="Faire un virement" text={`Trésorerie actuelle : ${euro(balance)}`}/><label>Montant (€)<input type="number" min="0.01" step="0.01" required value={amount} onChange={e=>setAmount(e.target.value)}/></label><label>Date<ProDateTimeInput type="date" max={today()} value={date} onChange={e=>setDate(e.target.value)}/></label>{accounts.length>0&&<><label className="prosuite-check"><input type="checkbox" checked={sync} onChange={e=>setSync(e.target.checked)}/> Ajouter aussi au budget personnel</label>{sync&&<label>Compte destinataire<select value={target} onChange={e=>setTarget(e.target.value)}>{accounts.map(a=><option key={a.id} value={a.id}>{a.name}</option>)}</select></label>}</>}<button className="prosuite-btn">Enregistrer le virement</button></form>}
+function TransferForm({
+  accounts,balance,available,ratesConfigured,serverReady,submit,
+}:{
+  accounts:PersonalAccount[];balance:number;available:number;ratesConfigured:boolean;serverReady:boolean;
+  submit:(v:Record<string,unknown>)=>Promise<boolean>;
+}) {
+  const [amount,setAmount]=useState("");
+  const [date,setDate]=useState(today());
+  const [target,setTarget]=useState(accounts[0]?.id??"");
+  const [saving,setSaving]=useState(false);
+  const [error,setError]=useState("");
+  const amountC=cents(amount);
+  const max=Math.max(0,Math.min(balance,available));
+  const save=async(event:FormEvent)=>{
+    event.preventDefault();
+    if(saving)return;
+    if(!serverReady){setError("Le versement sera disponible après la mise à jour sécurisée du serveur Pro.");return;}
+    if(!ratesConfigured){setError("Renseigne d’abord tes taux de cotisations ou d’impôts dans Activité.");return;}
+    if(!accounts.length||!target||!accounts.some(a=>a.id===target)){setError("Ajoute ou choisis un compte courant dans Patrimoine.");return;}
+    if(amountC<=0||amountC>max){setError("Le montant ne doit pas dépasser le disponible estimé, après réserves.");return;}
+    if(!date||date>today()){setError("La date doit être actuelle ou passée.");return;}
+    setError("");setSaving(true);
+    try{
+      const success=await submit({amount:amountC,date,label:"Rémunération activité pro",syncToHousehold:true,targetAccountId:target});
+      if(!success)setError("Le virement n’a pas été enregistré. Vérifie les messages de Wimm.");
+    }catch(e){setError(e instanceof Error?e.message:"Virement impossible.");}
+    finally{setSaving(false);}
+  };
+  return <form className="prosuite-form pro-v4-transfer-form" onSubmit={e=>void save(e)}>
+    <FormTitle eyebrow="PRO → COMPTE COURANT" title="Me verser une rémunération"
+      text="Enregistre un prélèvement dans l’entreprise et le même montant comme revenu sur ton compte courant Wimm."/>
+    <div className="pro-v4-transfer-summary">
+      <div><span>Trésorerie Pro</span><strong>{euro(balance)}</strong></div>
+      <div><span>Disponible après réserves</span><strong>{euro(max)}</strong></div>
+    </div>
+    <label>Montant (€)<input type="number" min="0.01" max={Math.max(0,max/100)} step="0.01" required value={amount} onChange={e=>setAmount(e.target.value)}/></label>
+    <label>Compte courant à créditer
+      <select required value={target} onChange={e=>setTarget(e.target.value)}>
+        {!accounts.length&&<option value="">Aucun compte courant disponible</option>}
+        {accounts.map(a=><option key={a.id} value={a.id}>{a.name}</option>)}
+      </select>
+    </label>
+    <label>Date<ProDateTimeInput type="date" max={today()} required value={date} onChange={e=>setDate(e.target.value)}/></label>
+    <p className="pro-v4-form-note">Wimm enregistre les deux écritures de façon liée via le module Pro. Réalise le véritable virement séparément dans ta banque. Il ne s’agit pas d’un salaire avec bulletin de paie.</p>
+    {!serverReady&&<p className="prosuite-error" role="status">Cette fonction attend la validation et l’activation de sa mise à jour serveur. Aucun virement ne sera enregistré pour le moment.</p>}
+    {!ratesConfigured&&<p className="prosuite-error" role="status">Renseigne d’abord les taux estimés dans les paramètres de ton activité pour calculer le disponible.</p>}
+    {!accounts.length&&<p className="prosuite-error" role="status">Crée un compte courant dans Patrimoine avant de poursuivre.</p>}
+    {error&&<p role="alert" className="prosuite-error">{error}</p>}
+    <button type="submit" className="prosuite-btn" disabled={saving||!serverReady||!ratesConfigured||!accounts.length||max<=0}>
+      {saving?"Enregistrement…":"Enregistrer le versement"}
+    </button>
+  </form>;
+}
 
-function ReservePaymentForm({type,estimated,periodKey,submit}:{type:"contribution"|"tax";estimated:number;periodKey:string;submit:(v:Record<string,unknown>)=>Promise<boolean>}){const [amount,setAmount]=useState(estimated?euros(estimated):"");const [date,setDate]=useState(today());const [period,setPeriod]=useState(periodKey);return <form className="prosuite-form" onSubmit={e=>{e.preventDefault();void submit({amount:cents(amount),paidDate:date,periodKey:period,notes:""})}}><FormTitle eyebrow={type==="contribution"?"COTISATIONS":"IMPÔT"} title="Enregistrer un paiement"/><label>Montant payé (€)<input type="number" min="0.01" step="0.01" required value={amount} onChange={e=>setAmount(e.target.value)}/></label><div className="prosuite-form2"><label>Date<ProDateTimeInput type="date" max={today()} value={date} onChange={e=>setDate(e.target.value)}/></label><label>Période<input type="month" value={period} onChange={e=>setPeriod(e.target.value)}/></label></div><button className="prosuite-btn">Valider le paiement</button></form>}
+
+function ReservePaymentForm({type,estimated,periodKey,value,submit}:{
+  type:"contribution"|"tax";estimated:number;periodKey:string;value?:Transaction;
+  submit:(v:Record<string,unknown>)=>Promise<boolean>;
+}){
+  const [amount,setAmount]=useState(value?euros(value.amount):estimated?euros(estimated):"");
+  const [date,setDate]=useState(value?.date??today());
+  const [period,setPeriod]=useState(value?(type==="contribution"?value.contributionPeriodKey:value.taxPeriodKey)??value.date.slice(0,7):periodKey);
+  const [notes,setNotes]=useState(value?.notes??"");
+  const [sending,setSending]=useState(false);
+  const [error,setError]=useState("");
+  async function save(e:FormEvent){
+    e.preventDefault();
+    if(sending)return;
+    const amountValue=cents(amount);
+    if(!Number.isSafeInteger(amountValue)||amountValue<=0||amountValue>1000000000000){setError("Montant de paiement invalide.");return;}
+    if(!date||date>today()){setError("La date ne peut pas être future.");return;}
+    if(!/^\d{4}-(0[1-9]|1[0-2])$/.test(period)){setError("Choisis un mois de déclaration valide.");return;}
+    setError("");setSending(true);
+    try{
+      const success=await submit({id:value?.id,amount:amountValue,paidDate:date,periodKey:period,notes:notes.trim()});
+      if(!success)setError("Modification non enregistrée : consulte le message d'erreur affiché.");
+    }catch(err){setError(err instanceof Error?err.message:"Erreur d'enregistrement.");}
+    finally{setSending(false);}
+  }
+  return <form className="prosuite-form" onSubmit={e=>void save(e)}>
+    <FormTitle eyebrow={type==="contribution"?"COTISATIONS URSSAF":"IMPÔTS"}
+      title={value?"Corriger un paiement":"Enregistrer un paiement"}
+      text={value?"La correction remplace le paiement précédent, sans créer une seconde dépense.": "Le paiement réel réduira le solde de trésorerie et les réserves à verser."}/>
+    <label>Montant réellement payé (€)<input type="number" min="0.01" max="10000000000" step="0.01" required value={amount} onChange={e=>setAmount(e.target.value)}/></label>
+    <div className="prosuite-form2">
+      <label>Date du prélèvement<ProDateTimeInput type="date" max={today()} required value={date} onChange={e=>setDate(e.target.value)}/></label>
+      <label>Mois de déclaration<input type="month" required value={period} onChange={e=>setPeriod(e.target.value)}/></label>
+    </div>
+    <label>Note (facultatif)<textarea rows={2} maxLength={400} value={notes} onChange={e=>setNotes(e.target.value)}/></label>
+    {value&&<p className="pro-v4-form-note">Le montant et la date du mouvement existant seront corrigés. Accueil, Finances et réserves se recalculeront ensemble.</p>}
+    {error&&<p className="prosuite-error" role="alert">{error}</p>}
+    <button className="prosuite-btn" type="submit" disabled={sending}>{sending?"Enregistrement…":value?"Enregistrer la correction":"Valider le paiement"}</button>
+  </form>;
+}
 
 function BillingSettingsForm({value,submit}:{value:BillingSettings;submit:(v:Record<string,unknown>)=>Promise<boolean>}){const [v,setV]=useState(value);return <form className="prosuite-form" onSubmit={e=>{e.preventDefault();void submit(v)}}><FormTitle eyebrow="FACTURATION" title="Coordonnées de facturation" text="Ces informations apparaîtront sur les nouvelles factures."/><label>Adresse<input value={v.address} onChange={e=>setV({...v,address:e.target.value})}/></label><div className="prosuite-form2"><label>Code postal<input value={v.postalCode} onChange={e=>setV({...v,postalCode:e.target.value})}/></label><label>Ville<input value={v.city} onChange={e=>setV({...v,city:e.target.value})}/></label></div><div className="prosuite-form2"><label>E-mail<input value={v.email} onChange={e=>setV({...v,email:e.target.value})}/></label><label>Téléphone<input value={v.phone} onChange={e=>setV({...v,phone:e.target.value})}/></label></div><label>IBAN<input value={v.iban} onChange={e=>setV({...v,iban:e.target.value})}/></label><label>Préfixe des factures<input value={v.invoicePrefix} onChange={e=>setV({...v,invoicePrefix:e.target.value.toUpperCase()})}/></label><label>Note de bas de facture<textarea rows={3} value={v.footerNote} onChange={e=>setV({...v,footerNote:e.target.value})}/></label><button className="prosuite-btn">Enregistrer</button></form>}
 
-function AccountForm({value,submit}:{value:Account;submit:(v:Record<string,unknown>)=>Promise<boolean>}){const [name,setName]=useState(value.name);const [balance,setBalance]=useState(euros(value.openingBalance));return <form className="prosuite-form" onSubmit={e=>{e.preventDefault();void submit({name,openingBalance:cents(balance)})}}><FormTitle eyebrow="COMPTE PRO" title="Paramètres du compte"/><label>Nom<input value={name} onChange={e=>setName(e.target.value)}/></label><label>Solde de départ (€)<input type="number" step="0.01" value={balance} onChange={e=>setBalance(e.target.value)}/></label><button className="prosuite-btn">Enregistrer</button></form>}
+
+function AccountForm({value,currentBalance,submit}:{
+  value:Account;currentBalance:number;
+  submit:(v:{name:string;mode:"current"|"opening";amount:number;balanceEdited:boolean})=>Promise<boolean>;
+}){
+  const [name,setName]=useState(value.name);
+  const [mode,setMode]=useState<"current"|"opening">("current");
+  const [current,setCurrent]=useState(euros(currentBalance));
+  const [opening,setOpening]=useState(euros(value.openingBalance));
+  const [error,setError]=useState("");
+  const [saving,setSaving]=useState(false);
+  const currentEdited=cents(current)!==currentBalance;
+  const openingEdited=cents(opening)!==value.openingBalance;
+  const edited=mode==="current"?currentEdited:openingEdited;
+  const delta=cents(current)-currentBalance;
+  const save=async(e:FormEvent)=>{
+    e.preventDefault();
+    if(saving)return;
+    const input=mode==="current"?current:opening;
+    if(!input.trim()||!Number.isSafeInteger(cents(input))||Math.abs(cents(input))>1000000000000){setError("Montant invalide.");return;}
+    if(!name.trim()){setError("Renseigne un nom pour le compte.");return;}
+    if(mode==="current"&&edited){
+      try{proOpeningForTargetBalance(value.openingBalance,currentBalance,cents(current));}catch(err){setError(err instanceof Error?err.message:"Solde impossible.");return;}
+    }
+    setError("");setSaving(true);
+    try{
+      const success=await submit({name:name.trim(),mode,amount:cents(input),balanceEdited:edited});
+      if(!success)setError("La mise à jour n'a pas été enregistrée.");
+    }catch(err){setError(err instanceof Error?err.message:"Mise à jour impossible.");}
+    finally{setSaving(false);}
+  };
+  return <form className="prosuite-form pro-v4-account-adjust" onSubmit={e=>void save(e)}>
+    <FormTitle eyebrow="COMPTE PROFESSIONNEL" title="Mettre à jour mon compte"
+      text="Tu peux corriger le solde constaté à la banque ou modifier le solde de départ."/>
+    <label>Nom du compte<input required maxLength={120} value={name} onChange={e=>setName(e.target.value)}/></label>
+    <div className="pro-v4-balance-modes" role="group" aria-label="Méthode de correction du solde">
+      <button type="button" className={mode==="current"?"active":""} onClick={()=>setMode("current")}>Solde actuel</button>
+      <button type="button" className={mode==="opening"?"active":""} onClick={()=>setMode("opening")}>Solde de départ</button>
+    </div>
+    {mode==="current"?<>
+      <div className="pro-v4-balance-reference"><span>Solde calculé dans Wimm</span><strong>{euro(currentBalance)}</strong></div>
+      <label>Solde réel de mon compte bancaire (€)
+        <input type="number" step="0.01" required value={current} onChange={e=>setCurrent(e.target.value)}/>
+      </label>
+      {currentEdited&&<p className="pro-v4-balance-delta">Écart à corriger : <strong>{delta>0?"+":""}{euro(delta)}</strong></p>}
+    </>:<label>Solde à l'ouverture du suivi (€)
+        <input type="number" step="0.01" required value={opening} onChange={e=>setOpening(e.target.value)}/>
+      </label>}
+    {edited&&<p className="pro-v4-account-warning" role="status"><CircleHelp size={16}/>
+      Cette correction modifie le solde de départ sous-jacent et recalcule aussi les soldes historiques. Les transactions et le chiffre d'affaires restent inchangés. Vérifie les opérations manquantes avant de l'appliquer.</p>}
+    {error&&<p className="prosuite-error" role="alert">{error}</p>}
+    <button className="prosuite-btn" type="submit" disabled={saving}>{saving?"Mise à jour…":edited?"Confirmer le réajustement":"Enregistrer le compte"}</button>
+  </form>;
+}
 function ProfileForm({value,submit}:{value:Profile;submit:(v:Record<string,unknown>)=>Promise<boolean>}){const [v,setV]=useState(value);return <form className="prosuite-form" onSubmit={e=>{e.preventDefault();void submit(v)}}><FormTitle eyebrow="ACTIVITÉ" title="Paramètres professionnels"/><label>Nom de l’activité<input value={v.businessName} onChange={e=>setV({...v,businessName:e.target.value})}/></label><label>SIRET<input value={v.siret} onChange={e=>setV({...v,siret:e.target.value})}/></label><div className="prosuite-form2"><label>Cotisations estimées (%)<input type="number" step="0.01" value={v.contributionRate} onChange={e=>setV({...v,contributionRate:Number(e.target.value)})}/></label><label>Impôt estimé (%)<input type="number" step="0.01" value={v.taxRate} onChange={e=>setV({...v,taxRate:Number(e.target.value)})}/></label></div><label className="prosuite-check"><input type="checkbox" checked={v.vatEnabled} onChange={e=>setV({...v,vatEnabled:e.target.checked})}/> TVA activée</label>{v.vatEnabled&&<label>Taux TVA (%)<input type="number" step="0.01" value={v.vatRate} onChange={e=>setV({...v,vatRate:Number(e.target.value)})}/></label>}<button className="prosuite-btn">Enregistrer</button></form>}
 function InvoicePaidForm({invoice,submit}:{invoice:Invoice;submit:(v:{method:PaymentMethod;date:string})=>Promise<boolean>}){const [method,setMethod]=useState<PaymentMethod>("transfer");const [date,setDate]=useState(today());return <form className="prosuite-form" onSubmit={e=>{e.preventDefault();void submit({method,date})}}><FormTitle eyebrow="FACTURE" title={`Marquer ${invoice.number} comme payée`} text={euro(invoice.totalTtc)}/><label>Mode de règlement<select value={method} onChange={e=>setMethod(e.target.value as PaymentMethod)}><option value="card">CB</option><option value="check">Chèque</option><option value="cash">Espèces</option><option value="transfer">Virement</option><option value="other">Autre</option></select></label><label>Date de paiement<ProDateTimeInput type="date" value={date} max={today()} onChange={e=>setDate(e.target.value)}/></label><button className="prosuite-btn">Marquer payée</button></form>}
 

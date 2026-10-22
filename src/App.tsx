@@ -5723,7 +5723,7 @@ export default function App() {
               </button>
             </section>
           )}
-          {route === "pro" && <ProWorkspace native onOpenQuickAdd={()=>setMobileQuickAddOpen(true)} />}
+          {route === "pro" && <ProWorkspace native onOpenQuickAdd={()=>setMobileQuickAddOpen(true)} householdCurrentAccounts={currentAccounts.map(a=>({id:a.id,name:a.name,archived:a.archived}))} onHouseholdRefresh={load} />}
           {route === "home" && (
             <div className="wimm-home-clean">
               {onboardingChecklistPreviewEnabled && (
