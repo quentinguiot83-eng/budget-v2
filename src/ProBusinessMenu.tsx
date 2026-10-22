@@ -39,7 +39,7 @@ const emptyBusiness:Omit<Business,"id">={
   legalStatus:"micro",
   activityType:"service",
   siret:"",
-  contributionRate:0,
+  contributionRate:21.2,
   taxRate:0,
   vatEnabled:false,
   vatRate:20,
@@ -174,7 +174,7 @@ function BusinessForm({value,busy,cancel,submit}:{value:Business|Omit<Business,"
     <div className="pro-business-formgrid">
       <label className="wide">Nom de l’entreprise<input required value={v.name} onChange={e=>update("name",e.target.value)}/></label>
       <label>Statut<select value={v.legalStatus} onChange={e=>update("legalStatus",e.target.value)}><option value="micro">Micro-entreprise</option><option value="ei">EI</option><option value="eurl">EURL</option><option value="sasu">SASU</option><option value="sarl">SARL</option><option value="sas">SAS</option><option value="other">Autre</option></select></label>
-      <label>Activité<select value={v.activityType} onChange={e=>update("activityType",e.target.value)}><option value="service">Services</option><option value="commerce">Commerce</option><option value="mixed">Mixte</option><option value="liberal">Libérale</option><option value="other">Autre</option></select></label>
+      <label>Activité<select value={v.activityType} onChange={e=>{const next=e.target.value;const rates:Record<string,number>={service:21.2,commerce:12.3,liberal:25.6};const previous=rates[v.activityType];setV(current=>({...current,activityType:next,contributionRate:current.contributionRate===0||current.contributionRate===previous?(rates[next]??0):current.contributionRate}));}}><option value="service">Services</option><option value="commerce">Commerce</option><option value="mixed">Mixte</option><option value="liberal">Libérale</option><option value="other">Autre</option></select></label>
       <label className="wide">SIRET<input inputMode="numeric" value={v.siret} onChange={e=>update("siret",e.target.value)}/></label>
       <label className="wide">Adresse<input value={v.address} onChange={e=>update("address",e.target.value)}/></label>
       <label>Code postal<input value={v.postalCode} onChange={e=>update("postalCode",e.target.value)}/></label>
@@ -185,8 +185,8 @@ function BusinessForm({value,busy,cancel,submit}:{value:Business|Omit<Business,"
       <label>Préfixe factures<input value={v.invoicePrefix} onChange={e=>update("invoicePrefix",e.target.value.toUpperCase())}/></label>
       <label>Nom du compte Pro<input value={v.accountName} onChange={e=>update("accountName",e.target.value)}/></label>
       <label>Solde de départ (€)<input type="number" step="0.01" value={opening} onChange={e=>setOpening(e.target.value)}/></label>
-      <label>Cotisations estimées (%)<input type="number" step="0.01" min="0" max="100" value={v.contributionRate} onChange={e=>update("contributionRate",Number(e.target.value))}/></label>
-      <label>Impôt estimé (%)<input type="number" step="0.01" min="0" max="100" value={v.taxRate} onChange={e=>update("taxRate",Number(e.target.value))}/></label>
+      <label>Cotisations Urssaf estimées (%)<input type="number" step="0.01" min="0" max="100" value={v.contributionRate} onChange={e=>update("contributionRate",Number(e.target.value))}/></label>
+      <label>Provision IR personnalisée (%)<input type="number" step="0.01" min="0" max="100" value={v.taxRate} onChange={e=>update("taxRate",Number(e.target.value))}/></label>
       <label className="pro-business-check"><input type="checkbox" checked={v.vatEnabled} onChange={e=>update("vatEnabled",e.target.checked)}/> TVA activée</label>
       {v.vatEnabled&&<label>Taux de TVA (%)<input type="number" step="0.01" min="0" max="100" value={v.vatRate} onChange={e=>update("vatRate",Number(e.target.value))}/></label>}
       <label className="wide">Pied de facture<textarea rows={3} value={v.footerNote} onChange={e=>update("footerNote",e.target.value)}/></label>
