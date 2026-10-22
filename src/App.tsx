@@ -1198,38 +1198,6 @@ export default function App() {
     );
   }
 
-  function addCurrentAccount() {
-    openForm(
-      "Ajouter un compte courant",
-      [
-        field("name", "Nom du compte", "", "text",
-          "Exemples : Compte commun, BoursoBank, Compte secondaire…"),
-        field("opening", "Solde bancaire actuel (€)", 0, "number",
-          "Indiquez le solde réel affiché par votre banque, même s’il est négatif. Les anciennes opérations déjà incluses dans ce solde ne doivent pas être ressaisies."),
-        field("date", "Solde constaté au", today(), "date",
-          "Wimm conservera les opérations de ce compte séparément des autres."),
-      ],
-      async (v) => change(d => {
-        const name = validateAccountName(v.name, d.accounts);
-        if (!v.date || v.date > today())
-          throw Error("La date du solde doit être actuelle ou passée.");
-        const opening = euro(v.opening);
-        if (!Number.isSafeInteger(opening)) throw Error("Solde du compte invalide.");
-        const hasActiveCurrent = d.accounts.some(a => a.group === "current" && !a.archived);
-        d.accounts.push({
-          id: uid(), name, group: "current",
-          opening, date: v.date, rate: 0,
-          taxMode: "none", taxRate: 0,
-          cap: 0, capType: "balance",
-          contributed: 0, relay: "", allocation: 0,
-        });
-        // Un compte supplémentaire n'altère ni les budgets ni les comptes existants.
-        if (!hasActiveCurrent) seedStarterCategories(d, month());
-      }, "Compte courant ajouté"),
-      "Ajouter le compte",
-    );
-  }
-
   function renameAccount(a: Account) {
     openForm(
       "Renommer " + a.name,
@@ -1300,7 +1268,7 @@ export default function App() {
             ["wealth", "Patrimoine"],
             ["travel", "Voyages"],
           ],
-          a?.group || (!current ? "current" : "wealth"),
+          a?.group || "current",
         ),
         ...(!a
           ? [
@@ -7166,11 +7134,8 @@ export default function App() {
                     <button type="button" className="secondary wealth-reconcile-accounts" onClick={reconcileHouseholdAccounts}>
                       <RefreshCw size={16}/> Mettre à jour mes comptes
                     </button>
-                    <button type="button" className="primary wealth-add-account wealth-add-current" onClick={addCurrentAccount}>
-                      <Plus size={17}/> Compte courant
-                    </button>
-                    <button type="button" className="secondary wealth-add-account" onClick={() => editAccount()}>
-                      <Plus size={17}/> Autre compte
+                    <button type="button" className="primary wealth-add-account" onClick={() => editAccount()} aria-label="Ajouter un compte">
+                      Ajouter <Plus size={17} aria-hidden="true"/>
                     </button>
                   </div>
                 </div>
