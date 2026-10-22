@@ -1,6 +1,38 @@
 import { normalizeBankLabel, type BankDuplicateCandidate, type ReconciledRow } from "./bankImport";
 import type { Tx } from "./engine";
 
+/** Index merchant/category history once instead of rescanning and sorting every transaction
+ * for each CSV row. Only identical normalized labels within the same account
+ * receive a suggestion; uncertain labels remain uncategorized for review.
+ */
+export function suggestStatementCategories(
+  rows: readonly ReconciledRow[],
+  transactions: readonly Tx[],
+  account: string,
+  allowedCategoryIds: ReadonlySet<string>,
+): Record<number,string> {
+  const frequency=new Map<string,Map<string,number>>();
+  for(const tx of transactions) {
+    if(tx.account!==account || tx.type!=="expense" || !tx.category ||
+       !allowedCategoryIds.has(tx.category) || !tx.description?.trim())continue;
+    const label=normalizeBankLabel(tx.description);
+    if(!label)continue;
+    const counts=frequency.get(label)??new Map<string,number>();
+    counts.set(tx.category,(counts.get(tx.category)??0)+1);
+    frequency.set(label,counts);
+  }
+  const out:Record<number,string>={};
+  for(const row of rows) {
+    if(row.type!=="expense")continue;
+    const counts=frequency.get(normalizeBankLabel(row.description));
+    if(!counts)continue;
+    const ranked=[...counts].sort((a,b)=>b[1]-a[1]);
+    if(ranked.length && (ranked.length===1 || ranked[0][1]>ranked[1][1]))
+      out[row.index]=ranked[0][0];
+  }
+  return out;
+}
+
 /** Bank transfers need an explicit review: a CSV inflow is not necessarily income. */
 export function isLikelyBankTransfer(description: string): boolean {
   const label = normalizeBankLabel(description);
