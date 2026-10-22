@@ -66,7 +66,7 @@ export function microSummary(
   const suggestedRate = microSuggestedRate(profile.activityType);
   const contributionRate = Number.isFinite(profile.contributionRate) && profile.contributionRate > 0
     ? profile.contributionRate : suggestedRate ?? 0;
-  const ratesNeedReview = (suggestedRate === null && profile.contributionRate <= 0) || contributionRate <= 0;
+  const ratesNeedReview = profile.contributionRate <= 0 || suggestedRate === null;
   const taxRate = settings.taxMode === "none" ? 0
     : settings.taxMode === "liberatoire"
       ? microLiberatoireRate(profile.activityType) ?? Math.max(0, profile.taxRate)
@@ -92,4 +92,15 @@ export function microSummary(
     dueTax: Math.max(0, estimatedTax - paidTax),
     afterEstimatedCharges: ttc - expenses - estimatedContribution - estimatedTax - vat,
   };
+}
+
+/** Keep Wimm V4's cumulative cash reserve coherent with the selected micro tax mode. */
+export function microEffectiveRates(profile:MicroProfile,settings:MicroSettings) {
+  const suggested=microSuggestedRate(profile.activityType);
+  const contributionRate=Number.isFinite(profile.contributionRate)&&profile.contributionRate>0
+    ?profile.contributionRate:suggested??0;
+  const taxRate=settings.taxMode==="none"?0:settings.taxMode==="liberatoire"
+    ?microLiberatoireRate(profile.activityType)??Math.max(0,profile.taxRate)
+    :Math.max(0,profile.taxRate);
+  return {contributionRate,taxRate,vatEnabled:profile.vatEnabled};
 }
