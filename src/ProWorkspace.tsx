@@ -617,7 +617,7 @@ function TransactionForm({
   const choose=(id:string)=>{
     setProductId(id);
     const p=products.find(x=>x.id===id);
-    if(p){setLabel(p.name);setAmount(euros(p.unitPrice+Math.round(p.unitPrice*p.vatRate/100)));setVatRate(p.vatRate);setIncludeVat(vatEnabled&&p.vatRate>0);}
+    if(p){const appliedVat=vatEnabled?p.vatRate:0;setLabel(p.name);setAmount(euros(p.unitPrice+Math.round(p.unitPrice*appliedVat/100)));setVatRate(appliedVat);setIncludeVat(vatEnabled&&appliedVat>0);}
   };
   const amountC=cents(amount);
   const vatAmount=includeVat&&vatRate>0?Math.round(amountC-amountC/(1+vatRate/100)):0;
