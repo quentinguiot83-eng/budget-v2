@@ -32,6 +32,8 @@ import ProCalendarSubscription from "./ProCalendarSubscription";
 import ProDateTimeInput from "./ProDateTimeInput";
 import ProClientPicker, {type ProClientDraft, type ProClientChoice} from "./ProClientPicker";
 import ProDashboard from "./ProDashboard";
+import ProMicroStatus from "./ProMicroStatus";
+import {microEffectiveRates,microSummary,type MicroSettings} from "./proMicro";
 import ProAnalysis from "./ProAnalysis";
 import {currentProMonth,formatProMonth,moveProMonth,proCashAtMonth} from "./proFinance";
 import {calculateProReserve,previewReceiptReserves,type ReserveEstimate,type ProReserveProfile} from "./proReserve";
@@ -78,6 +80,18 @@ const euros=(v:number)=>(v/100).toFixed(2);
 const today=()=>new Date().toISOString().slice(0,10);
 const monthKey=()=>today().slice(0,7);
 const payLabel:Record<string,string>={card:"CB",check:"Chèque",cash:"Espèces",transfer:"Virement",other:"Autre"};
+function readMicroPreferences(businessId:string,existingTaxRate:number):MicroSettings {
+  const fallback:MicroSettings={frequency:"monthly",taxMode:existingTaxRate>0?"estimate":"none"};
+  if(!businessId)return fallback;
+  try {
+    const saved=JSON.parse(localStorage.getItem("wimm:pro:micro:"+businessId)??"null") as Partial<MicroSettings>|null;
+    return {
+      frequency:saved?.frequency==="quarterly"?"quarterly":"monthly",
+      taxMode:saved?.taxMode==="liberatoire"||saved?.taxMode==="estimate"||saved?.taxMode==="none"
+        ?saved.taxMode:fallback.taxMode,
+    };
+  }catch{return fallback;}
+}
 const eventLabel:Record<string,string>={appointment:"Rendez-vous",shooting:"Prestation",deadline:"Échéance",admin:"Administratif",other:"Autre"};
 const invoiceStatus:Record<string,string>={draft:"Brouillon",sent:"Envoyée",partially_paid:"Paiement partiel",paid:"Payée",cancelled:"Annulée"};
 
@@ -101,6 +115,16 @@ export default function ProWorkspace({
   const [notice,setNotice]=useState("");
   const [busy,setBusy]=useState(false);
   const [personalAccounts,setPersonalAccounts]=useState<PersonalAccount[]>([]);
+  const [microSettings,setMicroSettings]=useState<MicroSettings>({frequency:"monthly",taxMode:"none"});
+  useEffect(()=>{
+    if(!suite)return;
+    setMicroSettings(readMicroPreferences(suite.activeBusinessId??suite.account.id,suite.profile.taxRate));
+  },[suite?.activeBusinessId,suite?.account.id,suite?.profile.taxRate]);
+  const saveMicroSettings=(settings:MicroSettings)=>{
+    setMicroSettings(settings);
+    const id=suite?.activeBusinessId??suite?.account.id;
+    try{if(id)localStorage.setItem("wimm:pro:micro:"+id,JSON.stringify(settings));}catch{/*storage inaccessible*/}
+  };
   const [printInvoice,setPrintInvoice]=useState<Invoice|null>(null);
   const [,tick]=useState(0);
   useEffect(()=>{if(section!=="billing")setBillingQuickCreate(null);},[section]);
@@ -249,6 +273,8 @@ export default function ProWorkspace({
     }
   }
 
+  const reserveProfile=suite?.profile.legalStatus==="micro"?microEffectiveRates(suite.profile,microSettings):suite?.profile??null;
+  const micro=suite?.profile.legalStatus==="micro"?microSummary(suite.transactions,suite.profile,selectedProMonth,microSettings):null;
   const transactions=suite?.transactions??[];
   const current=transactions.filter(t=>t.paid&&t.date.slice(0,7)===selectedProMonth);
   const monthIncome=current.filter(t=>t.kind==="income").reduce((s,t)=>s+t.amount,0);
@@ -261,8 +287,8 @@ export default function ProWorkspace({
   const openInvoices=(suite?.invoices??[]).filter(i=>i.status==="draft"||i.status==="sent"||i.status==="partially_paid");
       const paidContrib=transactions.filter(t=>t.paid&&t.kind==="contribution_payment"&&(t.contributionPeriodKey??t.date.slice(0,7))===selectedProMonth).reduce((s,t)=>s+t.amount,0);
   const paidTax=transactions.filter(t=>t.paid&&t.kind==="tax_payment"&&(t.taxPeriodKey??t.date.slice(0,7))===selectedProMonth).reduce((s,t)=>s+t.amount,0);
-  const reserves=useMemo(()=>suite?calculateProReserve(suite.transactions,suite.account.openingBalance,suite.profile,selectedProMonth):null,[suite,selectedProMonth]);
-  const currentReserve=useMemo(()=>suite?calculateProReserve(suite.transactions,suite.account.openingBalance,suite.profile):null,[suite]);
+  const reserves=useMemo(()=>suite&&reserveProfile?calculateProReserve(suite.transactions,suite.account.openingBalance,reserveProfile,selectedProMonth):null,[suite,selectedProMonth,microSettings]);
+  const currentReserve=useMemo(()=>suite&&reserveProfile?calculateProReserve(suite.transactions,suite.account.openingBalance,reserveProfile):null,[suite,microSettings]);
   const transferTargets=native?householdCurrentAccounts:personalAccounts;
 
 
@@ -290,19 +316,16 @@ export default function ProWorkspace({
       <div className="prosuite-shell">
         <nav className="prosuite-nav prosuite-v3-nav pro-v4-nav" aria-label="Navigation professionnelle">
           <ProNav active={section==="dashboard"} icon={<LayoutDashboard/>} label="Accueil" onClick={()=>setSection("dashboard")}/>
-          <ProNav active={section==="billing"} icon={<ReceiptText/>} label="Factures" onClick={()=>setSection("billing")}/>
-          <ProNav active={section==="clients"} icon={<Users/>} label="Clients" onClick={()=>setSection("clients")}/>
-          <ProNav active={section==="catalog"} icon={<Package/>} label="Catalogue" onClick={()=>setSection("catalog")}/>
-          <ProNav active={section==="agenda"} icon={<CalendarDays/>} label="Agenda" onClick={()=>setSection("agenda")}/>
+          <ProNav active={section==="billing"} icon={<ReceiptText/>} label="Facturation" onClick={()=>setSection("billing")}/>
+          <ProNav active={["management","clients","catalog","agenda","treasury"].includes(section)} icon={<Briefcase/>} label="Activité" onClick={()=>setSection("management")}/>
           <ProNav active={section==="analysis"} icon={<ChartNoAxesCombined/>} label="Analyse" onClick={()=>setSection("analysis")}/>
-          <ProNav active={section==="treasury"} icon={<Wallet/>} label="Trésorerie" onClick={()=>setSection("treasury")}/>
         </nav>
         <main className="prosuite-main">
           {error&&<div className="prosuite-error">{error}</div>}{notice&&<div className="prosuite-notice">{notice}</div>}
           {["dashboard","analysis","agenda","treasury"].includes(section)&&
             <ProMonthNavigator month={selectedProMonth} onChange={setSelectedProMonth} allowFuture={section==="agenda"}/>}
           
-          {section!=="dashboard"&&section!=="management"&&<button type="button" className="pro-v3-back pro-v4-back" onClick={()=>setSection("dashboard")}><ChevronLeft size={16}/> Tableau de bord</button>}
+          {["clients","catalog","agenda","treasury"].includes(section)&&<button type="button" className="pro-v3-back pro-v4-back" onClick={()=>setSection("management")}><ChevronLeft size={16}/> Activité</button>}
           {busy&&!suite?<div className="prosuite-loading">Chargement…</div>:suite&&<>
             {section==="dashboard"&&<ProDashboard
               businessName={suite.profile.businessName}
@@ -315,7 +338,14 @@ export default function ProWorkspace({
               onAgenda={()=>setSection("agenda")}
               onBilling={()=>setSection("billing")}
               onTransfer={()=>setModal({type:"transfer"})}
-              profile={suite.profile}
+              profile={reserveProfile??suite.profile}
+              microStatus={micro?<ProMicroStatus
+                profile={suite.profile} transactions={suite.transactions} month={selectedProMonth}
+                settings={microSettings} onSettingsChange={saveMicroSettings}
+                onRates={()=>setModal({type:"profile"})}
+                onContributionPayment={()=>setModal({type:"payment",paymentType:"contribution"})}
+                onTaxPayment={()=>setModal({type:"payment",paymentType:"tax"})}
+              />:undefined}
               clientsCount={suite.clients.length}
               catalogCount={suite.products.filter(p=>p.active).length}
               hasCheckingAccount={transferTargets.length>0}
@@ -334,7 +364,7 @@ export default function ProWorkspace({
               openingBalance={suite.account.openingBalance}
             />}
             {section==="management"&&<section className="pro-v3-management">
-              <div className="pro-v3-pageheading"><span>GESTION</span><h1>Mon entreprise</h1><p>Les outils au même endroit.</p></div>
+              <div className="pro-v3-pageheading"><span>ACTIVITÉ</span><h1>Mon activité</h1><p>Mes clients, mes produits, mon agenda et ma trésorerie.</p></div>
               <div className="pro-v3-management-grid">
                 {([{key:"clients",label:"Clients",desc:"Fiches et coordonnées",Icon:Users},{key:"catalog",label:"Produits & services",desc:"Catalogue et tarifs",Icon:Package},{key:"treasury",label:"Trésorerie",desc:"Opérations, virements et cotisations",Icon:Wallet},{key:"agenda",label:"Agenda",desc:"Interventions et rendez-vous",Icon:CalendarDays}] as const).map(({key,label,desc,Icon})=><button type="button" key={key} onClick={()=>setSection(key)}><Icon size={22}/><span><strong>{label}</strong><small>{desc}</small></span><ChevronRight size={17}/></button>)}
               </div>
@@ -343,7 +373,7 @@ export default function ProWorkspace({
             {section==="billing"&&<ProBillingV2 suite={suite} initialAction={billingQuickCreate} onSuite={next=>setSuite(next as Suite)} setError={setError} setNotice={setNotice}/>} 
             {section==="catalog"&&<CatalogPage products={suite.products} add={()=>setModal({type:"product"})} edit={p=>setModal({type:"product",product:p})} remove={p=>void removeProduct(p)}/>} 
             {section==="agenda"&&<AgendaPage month={selectedProMonth} connect={suite.activeBusinessId?()=>setModal({type:"calendar",businessId:suite.activeBusinessId!}):undefined} events={suite.events} clients={suite.clients} add={date=>setModal({type:"event",initialDate:date})} edit={e=>setModal({type:"event",event:e})} remove={e=>void removeEvent(e)}/>}
-            {section==="treasury"&&reserves&&<TreasuryPage month={selectedProMonth} suite={suite} balance={proCashAtMonth(suite.transactions,suite.account.openingBalance,selectedProMonth)??accountBalance} reserves={reserves} contribution={{estimated:reserves.monthContributions,paid:paidContrib}} tax={{estimated:reserves.monthTax,paid:paidTax}} income={()=>setModal({type:"income"})} expense={()=>setModal({type:"expense"})} transfer={()=>setModal({type:"transfer"})} contributionPay={()=>setModal({type:"payment",paymentType:"contribution"})} taxPay={()=>setModal({type:"payment",paymentType:"tax"})} account={()=>setModal({type:"account"})} profile={()=>setModal({type:"profile"})} removeTx={id=>void removeTx(id)}/>} 
+            {section==="treasury"&&reserves&&<TreasuryPage month={selectedProMonth} suite={suite} balance={proCashAtMonth(suite.transactions,suite.account.openingBalance,selectedProMonth)??accountBalance} reserves={reserves} contribution={{estimated:micro?.estimatedContribution??reserves.monthContributions,paid:micro?.paidContribution??paidContrib}} tax={{estimated:micro?.estimatedTax??reserves.monthTax,paid:micro?.paidTax??paidTax}} income={()=>setModal({type:"income"})} expense={()=>setModal({type:"expense"})} transfer={()=>setModal({type:"transfer"})} contributionPay={()=>setModal({type:"payment",paymentType:"contribution"})} taxPay={()=>setModal({type:"payment",paymentType:"tax"})} account={()=>setModal({type:"account"})} profile={()=>setModal({type:"profile"})} removeTx={id=>void removeTx(id)}/>} 
           </>}
         </main>
       </div>
@@ -353,7 +383,7 @@ export default function ProWorkspace({
         {modal.type==="product"&&<ProductForm value={modal.product} defaultVat={suite.profile.vatEnabled?suite.profile.vatRate:0} submit={v=>call("budget_pro_product_save",{p_product:v},"Catalogue mis à jour")}/>} 
         {modal.type==="invoice"&&<InvoiceForm value={modal.invoice} clients={suite.clients} products={suite.products} vatEnabled={suite.profile.vatEnabled} submit={v=>call("budget_pro_invoice_save",{p_invoice:v},"Facture enregistrée")}/>} 
         {modal.type==="event"&&<EventForm value={modal.event} initialDate={modal.initialDate} clients={suite.clients} createClient={createQuickClient} submit={v=>call("budget_pro_event_save",{p_event:v},"Agenda mis à jour")} remove={modal.event?()=>removeEvent(modal.event!):undefined}/>} 
-        {modal.type==="income"&&<TransactionForm kind="income" clients={suite.clients} createClient={createQuickClient} products={suite.products} vatEnabled={suite.profile.vatEnabled} defaultVat={suite.profile.vatRate} profile={suite.profile}
+        {modal.type==="income"&&<TransactionForm kind="income" clients={suite.clients} createClient={createQuickClient} products={suite.products} vatEnabled={suite.profile.vatEnabled} defaultVat={suite.profile.vatRate} profile={reserveProfile??suite.profile}
           submit={v=>call("budget_pro_transaction_save",{p_transaction:v},"Encaissement enregistré et réserves recalculées")}
           submitWithInvoice={createInvoiceForReceipt}/>} 
         {modal.type==="expense"&&<TransactionForm kind="expense" clients={suite.clients} createClient={createQuickClient} products={[]} vatEnabled={suite.profile.vatEnabled} defaultVat={suite.profile.vatRate} profile={suite.profile} submit={v=>call("budget_pro_transaction_save",{p_transaction:v},"Dépense enregistrée")}/>} 
@@ -365,7 +395,7 @@ export default function ProWorkspace({
             if(ok){await load();if(onHouseholdRefresh)await onHouseholdRefresh();}
             return ok;
           }}/>} 
-        {modal.type==="payment"&&<ReservePaymentForm type={modal.paymentType} periodKey={selectedProMonth} estimated={modal.paymentType==="contribution"?Math.max(0,(reserves?.monthContributions??0)-paidContrib):Math.max(0,(reserves?.monthTax??0)-paidTax)} submit={v=>call(modal.paymentType==="contribution"?"budget_pro_contribution_payment_save":"budget_pro_tax_payment_save",{p_payment:v},"Paiement enregistré")}/>} 
+        {modal.type==="payment"&&<ReservePaymentForm type={modal.paymentType} periodKey={micro?.period.key??selectedProMonth} estimated={modal.paymentType==="contribution"?(micro?.dueContribution??Math.max(0,(reserves?.monthContributions??0)-paidContrib)):(micro?.dueTax??Math.max(0,(reserves?.monthTax??0)-paidTax))} submit={v=>call(modal.paymentType==="contribution"?"budget_pro_contribution_payment_save":"budget_pro_tax_payment_save",{p_payment:v},"Paiement enregistré")}/>} 
         {modal.type==="billing-settings"&&<BillingSettingsForm value={suite.billing} submit={v=>call("budget_pro_billing_save",{p_settings:v},"Coordonnées de facturation enregistrées")}/>} 
         {modal.type==="account"&&<AccountForm value={suite.account} submit={v=>call("budget_pro_account_save",{p_account:v},"Compte professionnel mis à jour")}/>} 
         {modal.type==="profile"&&<ProfileForm value={suite.profile} submit={v=>call("budget_pro_profile_save",{p_profile:v},"Activité mise à jour")}/>} 
