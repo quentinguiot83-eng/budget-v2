@@ -1,4 +1,4 @@
-import { balance, type State } from "./engine";
+import { balance, today, type State } from "./engine";
 
 /** Account references are stored by stable ID. Deleting an account with references
  * would orphan banking history or future obligations, so those require a separate,
@@ -7,6 +7,7 @@ import { balance, type State } from "./engine";
  */
 export type AccountLinks = {
   transactions: number;
+  futureTransactions: number;
   rules: number;
   projects: number;
   loans: number;
@@ -18,6 +19,8 @@ export function accountLinks(state: State, accountId: string): AccountLinks {
   return {
     transactions: state.transactions.filter(tx =>
       tx.account === accountId || tx.to === accountId).length,
+    futureTransactions: state.transactions.filter(tx =>
+      (tx.account === accountId || tx.to === accountId) && tx.date > today()).length,
     rules: state.rules.filter(rule => rule.account === accountId).length,
     projects: state.projects.filter(project => project.account === accountId).length,
     loans: state.loans.filter(loan => loan.account === accountId).length,
@@ -32,7 +35,7 @@ export function canDeleteAccount(links: AccountLinks): boolean {
     links.favorites === 0 && links.incomingRelays === 0;
 }
 export function canArchiveAccount(links: AccountLinks): boolean {
-  return links.transactions > 0 &&
+  return links.transactions > 0 && links.futureTransactions === 0 &&
     links.rules === 0 && links.projects === 0 && links.loans === 0 &&
     links.favorites === 0 && links.incomingRelays === 0 &&
     links.balance === 0;
@@ -40,6 +43,7 @@ export function canArchiveAccount(links: AccountLinks): boolean {
 /** Includes the reason an account with history cannot be removed from the active view. */
 export function accountRemovalBlockers(links: AccountLinks): string[] {
   const parts: string[] = [];
+  if (links.futureTransactions) parts.push(links.futureTransactions+" paiement(s) déjà programmés dans le futur");
   if (links.rules) parts.push(links.rules+" échéance(s) ou crédit(s) à transférer ou arrêter");
   if (links.projects) parts.push(links.projects+" projet(s) à rattacher à un autre compte");
   if (links.loans) parts.push(links.loans+" prêt(s) lié(s) à ce compte");
