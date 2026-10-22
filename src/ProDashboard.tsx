@@ -1,3 +1,4 @@
+import {type ReactNode} from "react";
 import {
   ArrowDownLeft, ArrowRight, ArrowRightLeft, ArrowUpRight, CalendarDays,
   ChevronRight, CircleHelp, Clock3, FileText, Package, Plus, Settings2,
@@ -19,6 +20,7 @@ type DashboardProps={
   events:ProEventSummary[];
   openingBalance:number;
   profile:ProReserveProfile;
+  microStatus?:ReactNode;
   clientsCount:number;
   catalogCount:number;
   hasCheckingAccount:boolean;
@@ -34,7 +36,7 @@ type DashboardProps={
   onTransfer:()=>void;
 };
 export default function ProDashboard({
-  businessName,month,transactions,invoices,events,openingBalance,profile,
+  businessName,month,transactions,invoices,events,openingBalance,profile,microStatus,
   clientsCount,catalogCount,hasCheckingAccount,transferReady,
   onAnalysis,onAgenda,onBilling,onClients,onCatalog,onIncome,onTreasury,onProfile,onTransfer,
 }:DashboardProps) {
@@ -85,6 +87,7 @@ export default function ProDashboard({
       {!hasCheckingAccount&&<small className="pro-v4-transfer-hint">Ajoute d’abord un compte courant dans Patrimoine pour enregistrer le virement dans le foyer.</small>}
     </section>
 
+    {microStatus}
     <div className="pro-v4-month-metrics" aria-label="Activité du mois">
       <div><span><ArrowDownLeft size={17}/> Encaissements</span><strong>{proEuro(data.income)}</strong><small>Réellement reçus</small></div>
       <div><span><ArrowUpRight size={17}/> Dépenses</span><strong>{proEuro(data.expenses)}</strong><small>Réglées</small></div>
