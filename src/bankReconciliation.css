@@ -81,3 +81,53 @@
   .wimm-bank-review-tools { align-items:stretch; flex-direction:column; }
   .wimm-bank-review-tools label { padding:7px 2px; }
 }
+
+
+/* Compact reconciliation review: keep it legible and touch-friendly on PWA and desktop. */
+.wimm-bank-file-summary{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;min-width:0}
+.wimm-bank-file-summary h3{min-width:0;overflow-wrap:anywhere}
+.wimm-bank-file-ready{display:inline-flex;align-items:center;gap:6px;color:var(--wimm-green);font-size:.72rem;font-weight:730}
+.wimm-bank-mapping-toggle{display:inline-flex;align-items:center;gap:7px;justify-self:start;font-size:.74rem}
+.wimm-bank-mapping-toggle svg{transition:transform .2s}
+.wimm-bank-mapping-toggle svg.expanded{transform:rotate(180deg)}
+.wimm-bank-summary{gap:8px}
+.wimm-bank-summary div{background:color-mix(in srgb,var(--surface) 82%,var(--accent-soft));border:1px solid var(--border);padding:12px 8px}
+.wimm-bank-summary strong{font-size:1.15rem;font-variant-numeric:tabular-nums}
+.wimm-bank-fast-matches{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:10px;align-items:center;border:1px solid color-mix(in srgb,var(--wimm-green) 30%,var(--border));border-radius:14px;padding:12px;background:color-mix(in srgb,var(--surface) 87%,var(--wimm-mint-wash))}
+.wimm-bank-fast-matches>svg{color:var(--wimm-green);align-self:start}
+.wimm-bank-fast-matches>div{display:grid;gap:4px;min-width:0}
+.wimm-bank-fast-matches strong{font-size:.8rem;color:var(--ink)}
+.wimm-bank-fast-matches small{font-size:.7rem;line-height:1.45;color:var(--muted)}
+.wimm-bank-fast-matches button{white-space:normal;min-height:39px;padding:8px 12px;font-size:.73rem}
+.wimm-bank-review-tabs{display:flex;align-items:center;gap:6px;overflow-x:auto;padding:3px 0 8px;scrollbar-width:thin;-webkit-overflow-scrolling:touch}
+.wimm-bank-review-tabs button{display:inline-flex;align-items:center;justify-content:center;gap:6px;white-space:nowrap;flex-shrink:0;border:1px solid var(--border);border-radius:11px;padding:9px 11px;background:var(--surface);color:var(--muted);font-size:.73rem;font-weight:720;min-height:38px}
+.wimm-bank-review-tabs button strong{font-size:.72rem;font-variant-numeric:tabular-nums}
+.wimm-bank-review-tabs button.selected{color:var(--wimm-green);background:var(--wimm-mint-wash);border-color:color-mix(in srgb,var(--wimm-green) 27%,var(--border))}
+.wimm-bank-review-tabs button:focus-visible{outline:2px solid var(--wimm-green);outline-offset:2px}
+.wimm-bank-review-tools{padding:0 0 5px;gap:8px}
+.wimm-bank-review-tools button{min-height:38px}
+.wimm-bank-empty{display:grid;justify-items:center;gap:7px;padding:28px 13px;text-align:center}
+.wimm-bank-empty svg{color:var(--wimm-green)}
+.wimm-bank-empty strong{font-size:.88rem}
+.wimm-bank-empty p{margin:0;font-size:.75rem}
+.wimm-bank-transfer-warning{color:var(--wimm-amber,#a56821)!important;font-weight:670;line-height:1.35}
+.wimm-bank-confirm h3{margin:0;font-size:.95rem;color:var(--ink)}
+.wimm-bank-batch-category{display:flex;flex-wrap:wrap;align-items:flex-end;gap:10px;padding:10px 0;border-top:1px solid var(--border)}
+.wimm-bank-batch-category label{display:grid;gap:7px;flex:1 1 195px;min-width:0;font-size:.75rem;font-weight:720}
+.wimm-bank-batch-category button{min-height:42px;min-width:93px}
+.wimm-bank-category-alert{color:var(--wimm-amber,#a56821);font-size:.76rem;font-weight:720;margin:0}
+.wimm-bank-confirm{background:color-mix(in srgb,var(--surface) 78%,var(--accent-soft));border:1px solid var(--border)}
+.wimm-bank-confirm>button.primary{min-height:45px}
+@media(max-width:640px){
+ .wimm-bank-fast-matches{grid-template-columns:auto minmax(0,1fr)}
+ .wimm-bank-fast-matches button{grid-column:1/-1;width:100%}
+ .wimm-bank-summary div{padding:9px 6px}
+ .wimm-bank-summary span{font-size:.64rem}
+ .wimm-bank-row{padding:12px 0}
+ .wimm-bank-review-tabs{margin-inline:-4px}
+ .wimm-bank-row-main{align-items:flex-start}
+ .wimm-bank-row-main>strong{padding-top:3px}
+ .wimm-bank-batch-category{flex-direction:column;align-items:stretch}
+ .wimm-bank-batch-category label,.wimm-bank-batch-category button{width:100%;flex:auto}
+}
+@media(prefers-reduced-motion:reduce){.wimm-bank-mapping-toggle svg{transition:none}}
