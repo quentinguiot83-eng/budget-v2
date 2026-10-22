@@ -266,3 +266,31 @@
   .pro-v4-finances-actions>div:last-of-type>button{flex:1 1 100%}
   .pro-v4-finances-title p{font-size:.72rem}
 }
+
+
+/* Wimm Pro V4 — payment corrections and reconciled account balances. */
+.pro-v4-finances-payments{
+  display:grid;gap:10px;min-width:0;
+  padding:clamp(14px,2.5vw,20px);border:1px solid var(--border);
+  border-radius:19px;background:var(--surface);box-shadow:var(--wimm-card-shadow)
+}
+.pro-v4-payment-list{display:grid;gap:0}
+.pro-v4-payment-item{display:flex;align-items:center;gap:12px;padding:12px 0;border-top:1px solid var(--border);min-width:0}
+.pro-v4-payment-item>span{flex:1;min-width:0;display:grid;gap:4px}
+.pro-v4-payment-item>span strong{font-size:.77rem;color:var(--ink)}
+.pro-v4-payment-item>span small{font-size:.67rem;color:var(--muted);line-height:1.4}
+.pro-v4-payment-item>strong{white-space:nowrap;color:var(--ink);font-size:.85rem;font-variant-numeric:tabular-nums}
+.pro-v4-payment-item button{display:inline-flex;align-items:center;gap:6px;padding:8px 10px;border-radius:10px;border:1px solid var(--border);background:var(--surface);color:var(--ink);font-size:.7rem;font-weight:760;cursor:pointer}
+.pro-v4-balance-modes{display:flex;gap:7px;border-radius:12px;padding:4px;background:color-mix(in srgb,var(--wimm-mint-wash) 35%,var(--surface))}
+.pro-v4-balance-modes>button{flex:1;min-height:40px;border:1px solid transparent;background:transparent;border-radius:9px;color:var(--muted);font-weight:750;cursor:pointer}
+.pro-v4-balance-modes>button.active{background:var(--surface);border-color:var(--border);color:var(--ink);box-shadow:0 1px 5px rgba(0,0,0,.05)}
+.pro-v4-balance-reference{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 14px;border-radius:12px;border:1px solid var(--border);background:var(--surface)}
+.pro-v4-balance-reference span{font-size:.76rem;color:var(--muted)}
+.pro-v4-balance-reference strong{font-size:.99rem;color:var(--ink);font-variant-numeric:tabular-nums}
+.pro-v4-balance-delta{margin:0;padding:10px 12px;border-radius:11px;background:color-mix(in srgb,var(--wimm-mint-wash) 44%,var(--surface));color:var(--ink);display:flex;justify-content:space-between;gap:8px;font-size:.78rem}
+.pro-v4-balance-delta strong{font-variant-numeric:tabular-nums}
+.pro-v4-account-warning{display:flex;gap:8px;align-items:flex-start;margin:0;padding:12px 13px;border-radius:12px;border:1px solid color-mix(in srgb,#c58c42 38%,var(--border));color:var(--ink);background:color-mix(in srgb,#c58c42 8%,var(--surface));font-size:.73rem;line-height:1.5}
+.pro-v4-account-warning svg{flex-shrink:0;margin-top:2px}
+:root[data-mode="dark"] .pro-v4-finances-payments{background:#17212b;border-color:#2a3744}
+:root[data-mode="dark"] .pro-v4-payment-item button{background:#17212b;border-color:#334250}
+@media(max-width:540px){.pro-v4-payment-item{flex-wrap:wrap}.pro-v4-payment-item>span{flex:1 1 60%}.pro-v4-payment-item button{margin-left:auto}}
