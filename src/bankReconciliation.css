@@ -70,3 +70,14 @@
   .wimm-bank-duplicate-candidate{grid-template-columns:minmax(0,1fr)}
   .wimm-bank-duplicate-choice{width:100%}
 }
+
+
+.wimm-bank-review-tools { display:flex; flex-wrap:wrap; align-items:center; gap:10px; padding:10px 0 14px; }
+.wimm-bank-review-tools label { display:inline-flex; gap:7px; align-items:center; font-size:.78rem; color:var(--ink); }
+.wimm-bank-review-tools input[type=checkbox] { width:17px; height:17px; }
+.wimm-bank-review-tools button { min-height:35px; font-size:.76rem; }
+.wimm-bank-visible-count { font-size:.76rem; margin:4px 0 9px; }
+@media (max-width:560px) {
+  .wimm-bank-review-tools { align-items:stretch; flex-direction:column; }
+  .wimm-bank-review-tools label { padding:7px 2px; }
+}
