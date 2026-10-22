@@ -2,21 +2,19 @@ import {
   ArrowDownLeft, ArrowRight, ArrowUpRight, CalendarDays,
   ChevronRight, CircleHelp, Clock3, FilePlus2, Plus, Wallet,
 } from "lucide-react";
-import {calculateProReserve,type ProReserveProfile} from "./proReserve";
+import {type ReserveEstimate} from "./proReserve";
 import {
   currentProMonth,formatProMonth,proEuro,proInvoiceRemaining,unpaidProInvoices,
-  type ProCashEntry,type ProInvoiceSummary,type ProEventSummary,
+  type ProInvoiceSummary,type ProEventSummary,
 } from "./proFinance";
 import "./pro-dashboard.css";
 import "./pro-v4.css";
 
 type DashboardProps={
   month:string;
-  transactions:ProCashEntry[];
   invoices:ProInvoiceSummary[];
   events:ProEventSummary[];
-  openingBalance:number;
-  profile:ProReserveProfile;
+  reserve:ReserveEstimate;
   declaration?:{label:string;dueDate:string};
   onAgenda:()=>void;
   onBilling:()=>void;
@@ -26,11 +24,10 @@ type DashboardProps={
 };
 
 export default function ProDashboard({
-  month,transactions,invoices,events,openingBalance,profile,declaration,
+  month,invoices,events,reserve,declaration,
   onAgenda,onBilling,onIncome,onExpense,onTreasury,
 }:DashboardProps){
   const isCurrent=month===currentProMonth();
-  const reserve=calculateProReserve(transactions,openingBalance,profile,month);
   const alerts=unpaidProInvoices(invoices).sort((a,b)=>(a.dueDate??"9999").localeCompare(b.dueDate??"9999"));
   const now=new Date();
   const todayLocal=now.getFullYear()+"-"+String(now.getMonth()+1).padStart(2,"0")+"-"+String(now.getDate()).padStart(2,"0");
