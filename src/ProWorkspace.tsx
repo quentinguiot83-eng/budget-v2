@@ -364,12 +364,9 @@ export default function ProWorkspace({
           {busy&&!suite?<div className="prosuite-loading">Chargement…</div>:suite&&<>
             {section==="dashboard"&&<ProDashboard
               month={selectedProMonth}
-              transactions={suite.transactions}
               invoices={suite.invoices}
               events={suite.events}
-              openingBalance={suite.account.openingBalance}
-              profile={reserveProfile??suite.profile}
-              reserve={reserves}
+              reserve={reserves!}
               declaration={micro?{label:micro.period.label,dueDate:micro.period.dueDate}:undefined}
               onAgenda={()=>setSection("agenda")}
               onBilling={()=>setSection("billing")}
