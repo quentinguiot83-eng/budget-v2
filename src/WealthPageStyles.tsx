@@ -78,6 +78,9 @@ const styles = String.raw`/* Patrimoine v2 — chiffres du foyer, puis comptes e
 .wealth-accounts-heading-actions {display:flex;align-items:center;justify-content:flex-end;gap:8px;flex-wrap:wrap;min-width:0;}
 .wealth-reconcile-accounts {display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:40px;border-radius:13px;padding:9px 12px;font-size:.78rem;white-space:nowrap;}
 .wealth-reconcile-accounts svg {flex-shrink:0;}
+.wealth-add-current {background:var(--wimm-green);color:white;border-color:transparent;}
+.wealth-account-actions .wealth-rename-account {font-weight:750;}
+.wealth-account-actions .wealth-rename-account svg {flex-shrink:0;}
 .wealth-accounts-list {
   border:1px solid var(--border);border-radius:20px;background:var(--surface);
   box-shadow:var(--wimm-card-shadow);overflow:hidden;
@@ -152,7 +155,10 @@ const styles = String.raw`/* Patrimoine v2 — chiffres du foyer, puis comptes e
   .wealth-accounts-heading>div:first-child {flex:1 1 100%;}
   .wealth-accounts-heading-actions {display:flex;align-items:center;gap:8px;justify-content:flex-start;width:100%;flex-wrap:wrap;}
   .wealth-reconcile-accounts {flex:1 1 auto;min-width:0;font-size:.75rem;padding:8px 10px;}
-  .wealth-add-account {flex:0 0 auto;}
+  .wealth-add-account {flex:1 1 auto;min-width:0;}
+  .wealth-accounts-heading-actions .wealth-reconcile-accounts {flex:1 1 100%;}
+  .wealth-account-actions {gap:6px;}
+  .wealth-account-actions .wealth-rename-account {flex:1 1 auto;}
   .wealth-accounts-heading h2 {font-size:1.02rem;}
   .wealth-accounts-heading p {font-size:.7rem;}
   .wealth-add-account {padding:8px 11px;}
