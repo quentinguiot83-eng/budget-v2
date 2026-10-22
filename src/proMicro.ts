@@ -81,14 +81,17 @@ export function microSummary(
       (t[field] ?? t.date.slice(0, 7)) <= period.end
     ).reduce((n, t) => n + Math.max(0, t.amount), 0);
   const paidContribution = paymentForPeriod("contribution_payment", "contributionPeriodKey");
+  const contributionSettled = transactions.some(t=>t.paid && t.kind==="contribution_payment" && t.amount>0 &&
+    (t.contributionPeriodKey??t.date.slice(0,7)) >= period.key &&
+    (t.contributionPeriodKey??t.date.slice(0,7)) <= period.end);
   const paidTax = paymentForPeriod("tax_payment", "taxPeriodKey");
   const expenses = transactions.filter(t => t.kind === "expense" && t.paid && txInPeriod(t))
     .reduce((n,t) => n + Math.max(0, t.amount), 0);
   return {
     period, ttc, vat, turnover, expenses,
     contributionRate, taxRate, ratesNeedReview, taxRateNeedsReview,
-    estimatedContribution, estimatedTax, paidContribution, paidTax,
-    dueContribution: Math.max(0, estimatedContribution - paidContribution),
+    estimatedContribution, estimatedTax, paidContribution, paidTax, contributionSettled,
+    dueContribution: contributionSettled?0:estimatedContribution,
     dueTax: Math.max(0, estimatedTax - paidTax),
     afterEstimatedCharges: ttc - expenses - estimatedContribution - estimatedTax - vat,
   };
@@ -102,5 +105,5 @@ export function microEffectiveRates(profile:MicroProfile,settings:MicroSettings)
   const taxRate=settings.taxMode==="none"?0:settings.taxMode==="liberatoire"
     ?microLiberatoireRate(profile.activityType)??Math.max(0,profile.taxRate)
     :Math.max(0,profile.taxRate);
-  return {contributionRate,taxRate,vatEnabled:profile.vatEnabled};
+  return {contributionRate,taxRate,vatEnabled:profile.vatEnabled,settledContributionFrequency:settings.frequency};
 }
