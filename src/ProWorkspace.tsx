@@ -455,9 +455,134 @@ function EventForm({value,initialDate,clients,createClient,submit,remove}:{value
   </form>
 }
 
-function TransactionForm({kind,clients,products,vatEnabled,defaultVat,createClient,submit}:{kind:"income"|"expense";clients:Client[];products:Product[];vatEnabled:boolean;defaultVat:number;createClient:(draft:ProClientDraft)=>Promise<ProClientChoice>;submit:(v:Record<string,unknown>)=>Promise<boolean>}){const [label,setLabel]=useState("");const [amount,setAmount]=useState("");const [date,setDate]=useState(today());const [clientId,setClientId]=useState("");const [productId,setProductId]=useState("");const [method,setMethod]=useState<PaymentMethod>("transfer");const [includeVat,setIncludeVat]=useState(vatEnabled);const [vatRate,setVatRate]=useState(defaultVat);const choose=(id:string)=>{setProductId(id);const p=products.find(x=>x.id===id);if(p){setLabel(p.name);setAmount(euros(p.unitPrice+Math.round(p.unitPrice*p.vatRate/100)));setVatRate(p.vatRate);setIncludeVat(vatEnabled&&p.vatRate>0);}};const amountC=cents(amount);const vatAmount=includeVat?Math.round(amountC-amountC/(1+vatRate/100)):0;return <form className="prosuite-form" onSubmit={e=>{e.preventDefault();void submit({kind,label,amount:amountC,date,category:kind==="income"?(productId?"Vente":"Encaissement"):"Dépense",clientId:clientId||null,productId:productId||null,vatAmount,paid:true,notes:"",paymentMethod:kind==="income"?method:null})}}><FormTitle eyebrow={kind==="income"?"ENCAISSEMENT":"DÉPENSE"} title={kind==="income"?"Ajouter un encaissement":"Ajouter une dépense"}/>{kind==="income"&&products.length>0&&<label>Produit / service vendu<select value={productId} onChange={e=>choose(e.target.value)}><option value="">Saisie libre</option>{products.filter(p=>p.active).map(p=><option key={p.id} value={p.id}>{p.name}</option>)}</select></label>}<label>Libellé<input required value={label} onChange={e=>setLabel(e.target.value)}/></label><div className="prosuite-form2"><label>Montant TTC (€)<input type="number" min="0.01" step="0.01" required value={amount} onChange={e=>setAmount(e.target.value)}/></label><label>Date<ProDateTimeInput type="date" required value={date} onChange={e=>setDate(e.target.value)}/></label></div>{kind==="income"&&<><ProClientPicker clients={clients} value={clientId} onChange={setClientId} onCreate={createClient}/><label>Mode de règlement<select value={method} onChange={e=>setMethod(e.target.value as PaymentMethod)}><option value="card">CB</option><option value="check">Chèque</option><option value="cash">Espèces</option><option value="transfer">Virement</option><option value="other">Autre</option></select></label></>}{vatEnabled&&<label className="prosuite-check"><input type="checkbox" checked={includeVat} onChange={e=>setIncludeVat(e.target.checked)}/> TVA incluse ({vatRate}% · {euro(vatAmount)})</label>}<button className="prosuite-btn">Enregistrer</button></form>}
+function TransactionForm({
+  kind,clients,products,vatEnabled,defaultVat,profile,createClient,submit,
+}:{
+  kind:"income"|"expense";clients:Client[];products:Product[];
+  vatEnabled:boolean;defaultVat:number;profile:ProReserveProfile;
+  createClient:(draft:ProClientDraft)=>Promise<ProClientChoice>;
+  submit:(v:Record<string,unknown>)=>Promise<boolean>;
+}) {
+  const [label,setLabel]=useState("");
+  const [amount,setAmount]=useState("");
+  const [date,setDate]=useState(today());
+  const [clientId,setClientId]=useState("");
+  const [productId,setProductId]=useState("");
+  const [method,setMethod]=useState<PaymentMethod>("transfer");
+  const [includeVat,setIncludeVat]=useState(vatEnabled);
+  const [vatRate,setVatRate]=useState(defaultVat);
+  const [saving,setSaving]=useState(false);
+  const [error,setLocalError]=useState("");
+  const choose=(id:string)=>{
+    setProductId(id);
+    const p=products.find(x=>x.id===id);
+    if(p){setLabel(p.name);setAmount(euros(p.unitPrice+Math.round(p.unitPrice*p.vatRate/100)));setVatRate(p.vatRate);setIncludeVat(vatEnabled&&p.vatRate>0);}
+  };
+  const amountC=cents(amount);
+  const vatAmount=includeVat&&vatRate>0?Math.round(amountC-amountC/(1+vatRate/100)):0;
+  const forecast=previewReceiptReserves(amountC,vatAmount,profile);
+  const save=async(event:React.FormEvent)=>{
+    event.preventDefault();
+    if(saving)return;
+    setLocalError("");
+    if(!label.trim()||amountC<=0||!date){setLocalError("Renseigne un montant, une date et un libellé.");return;}
+    setSaving(true);
+    try{
+      const success=await submit({
+        kind,label:label.trim(),amount:amountC,date,
+        category:kind==="income"?(productId?"Vente":"Encaissement"):"Dépense",
+        clientId:clientId||null,productId:productId||null,vatAmount,
+        paid:true,notes:"",paymentMethod:kind==="income"?method:null,
+      });
+      if(!success)setLocalError("L’opération n’a pas pu être enregistrée. Vérifie le message affiché.");
+    }catch(e){setLocalError(e instanceof Error?e.message:"Enregistrement impossible.");}
+    finally{setSaving(false);}
+  };
+  return <form className="prosuite-form pro-v4-entry-form" onSubmit={e=>void save(e)}>
+    <FormTitle eyebrow={kind==="income"?"ENCAISSEMENT":"DÉPENSE"} title={kind==="income"?"Enregistrer un encaissement":"Enregistrer une dépense"}
+      text={kind==="income"?"Dès l’enregistrement, tes réserves de cotisations et d’impôts sont recalculées automatiquement.":"La dépense sera déduite de la trésorerie professionnelle."}/>
+    {kind==="income"&&products.some(p=>p.active)&&<label>Produit ou service vendu
+      <select value={productId} onChange={e=>choose(e.target.value)}><option value="">Saisie libre</option>
+        {products.filter(p=>p.active).map(p=><option key={p.id} value={p.id}>{p.name}</option>)}
+      </select>
+    </label>}
+    <label>Libellé<input required maxLength={180} value={label} onChange={e=>setLabel(e.target.value)} placeholder={kind==="income"?"Prestation, règlement client…":"Achat ou frais professionnel…"}/></label>
+    <div className="prosuite-form2">
+      <label>Montant TTC (€)<input type="number" min="0.01" step="0.01" required value={amount} onChange={e=>setAmount(e.target.value)}/></label>
+      <label>Date<ProDateTimeInput type="date" required value={date} onChange={e=>setDate(e.target.value)}/></label>
+    </div>
+    {kind==="income"&&<>
+      <ProClientPicker clients={clients} value={clientId} onChange={setClientId} onCreate={createClient}/>
+      <label>Règlement<select value={method} onChange={e=>setMethod(e.target.value as PaymentMethod)}>
+        <option value="card">Carte</option><option value="check">Chèque</option><option value="cash">Espèces</option><option value="transfer">Virement</option><option value="other">Autre</option>
+      </select></label>
+    </>}
+    {vatEnabled&&<label className="prosuite-check"><input type="checkbox" checked={includeVat} onChange={e=>setIncludeVat(e.target.checked)}/> TVA incluse ({vatRate} % · {euro(vatAmount)})</label>}
+    {kind==="income"&&amountC>0&&<div className="pro-v4-receipt-preview">
+      <strong>Sur cet encaissement de {euro(amountC)}</strong>
+      <div><span>Cotisations à prévoir</span><b>{euro(forecast.contributions)}</b></div>
+      <div><span>Impôts à prévoir</span><b>{euro(forecast.tax)}</b></div>
+      {profile.vatEnabled&&<div><span>TVA indicative à isoler</span><b>{euro(forecast.vat)}</b></div>}
+      <div className="pro-v4-receipt-net"><span>Reste estimé avant autres frais</span><b>{euro(forecast.remaining)}</b></div>
+      <small>Ces sommes sont réservées virtuellement selon tes taux, sans virement bancaire automatique.</small>
+    </div>}
+    {kind==="income"&&<p className="pro-v4-form-note">Pour un règlement lié à une facture Wimm, utilise plutôt « Enregistrer un paiement » depuis cette facture pour éviter un doublon.</p>}
+    {error&&<p role="alert" className="prosuite-error">{error}</p>}
+    <button className="prosuite-btn" type="submit" disabled={saving}>{saving?"Enregistrement…":"Enregistrer"}</button>
+  </form>;
+}
 
-function TransferForm({accounts,balance,submit}:{accounts:PersonalAccount[];balance:number;submit:(v:Record<string,unknown>)=>Promise<boolean>}){const [amount,setAmount]=useState("");const [date,setDate]=useState(today());const [target,setTarget]=useState(accounts[0]?.id??"");const [sync,setSync]=useState(accounts.length>0);return <form className="prosuite-form" onSubmit={e=>{e.preventDefault();void submit({amount:cents(amount),date,label:"Virement activité pro",syncToHousehold:sync,targetAccountId:sync?target:null})}}><FormTitle eyebrow="PRO → PERSO" title="Faire un virement" text={`Trésorerie actuelle : ${euro(balance)}`}/><label>Montant (€)<input type="number" min="0.01" step="0.01" required value={amount} onChange={e=>setAmount(e.target.value)}/></label><label>Date<ProDateTimeInput type="date" max={today()} value={date} onChange={e=>setDate(e.target.value)}/></label>{accounts.length>0&&<><label className="prosuite-check"><input type="checkbox" checked={sync} onChange={e=>setSync(e.target.checked)}/> Ajouter aussi au budget personnel</label>{sync&&<label>Compte destinataire<select value={target} onChange={e=>setTarget(e.target.value)}>{accounts.map(a=><option key={a.id} value={a.id}>{a.name}</option>)}</select></label>}</>}<button className="prosuite-btn">Enregistrer le virement</button></form>}
+function TransferForm({
+  accounts,balance,available,ratesConfigured,submit,
+}:{
+  accounts:PersonalAccount[];balance:number;available:number;ratesConfigured:boolean;
+  submit:(v:Record<string,unknown>)=>Promise<boolean>;
+}) {
+  const [amount,setAmount]=useState("");
+  const [date,setDate]=useState(today());
+  const [target,setTarget]=useState(accounts[0]?.id??"");
+  const [saving,setSaving]=useState(false);
+  const [error,setError]=useState("");
+  const amountC=cents(amount);
+  const max=Math.max(0,Math.min(balance,available));
+  const save=async(event:React.FormEvent)=>{
+    event.preventDefault();
+    if(saving)return;
+    if(!ratesConfigured){setError("Renseigne d’abord tes taux de cotisations ou d’impôts dans Activité.");return;}
+    if(!accounts.length||!target||!accounts.some(a=>a.id===target)){setError("Ajoute ou choisis un compte courant dans Patrimoine.");return;}
+    if(amountC<=0||amountC>max){setError("Le montant ne doit pas dépasser le disponible estimé, après réserves.");return;}
+    if(!date||date>today()){setError("La date doit être actuelle ou passée.");return;}
+    setError("");setSaving(true);
+    try{
+      const success=await submit({amount:amountC,date,label:"Rémunération activité pro",syncToHousehold:true,targetAccountId:target});
+      if(!success)setError("Le virement n’a pas été enregistré. Vérifie les messages de Wimm.");
+    }catch(e){setError(e instanceof Error?e.message:"Virement impossible.");}
+    finally{setSaving(false);}
+  };
+  return <form className="prosuite-form pro-v4-transfer-form" onSubmit={e=>void save(e)}>
+    <FormTitle eyebrow="PRO → COMPTE COURANT" title="Me verser une rémunération"
+      text="Enregistre un prélèvement dans l’entreprise et le même montant comme revenu sur ton compte courant Wimm."/>
+    <div className="pro-v4-transfer-summary">
+      <div><span>Trésorerie Pro</span><strong>{euro(balance)}</strong></div>
+      <div><span>Disponible après réserves</span><strong>{euro(max)}</strong></div>
+    </div>
+    <label>Montant (€)<input type="number" min="0.01" max={Math.max(0,max/100)} step="0.01" required value={amount} onChange={e=>setAmount(e.target.value)}/></label>
+    <label>Compte courant à créditer
+      <select required value={target} onChange={e=>setTarget(e.target.value)}>
+        {!accounts.length&&<option value="">Aucun compte courant disponible</option>}
+        {accounts.map(a=><option key={a.id} value={a.id}>{a.name}</option>)}
+      </select>
+    </label>
+    <label>Date<ProDateTimeInput type="date" max={today()} required value={date} onChange={e=>setDate(e.target.value)}/></label>
+    <p className="pro-v4-form-note">Wimm enregistre les deux écritures de façon liée via le module Pro. **Réalise le véritable virement séparément dans ta banque.** Il ne s’agit pas d’un salaire avec bulletin de paie.</p>
+    {!ratesConfigured&&<p className="prosuite-error" role="status">Renseigne d’abord les taux estimés dans les paramètres de ton activité pour calculer le disponible.</p>}
+    {!accounts.length&&<p className="prosuite-error" role="status">Crée un compte courant dans Patrimoine avant de poursuivre.</p>}
+    {error&&<p role="alert" className="prosuite-error">{error}</p>}
+    <button type="submit" className="prosuite-btn" disabled={saving||!ratesConfigured||!accounts.length||max<=0}>
+      {saving?"Enregistrement…":"Enregistrer le versement"}
+    </button>
+  </form>;
+}
 
 function ReservePaymentForm({type,estimated,periodKey,submit}:{type:"contribution"|"tax";estimated:number;periodKey:string;submit:(v:Record<string,unknown>)=>Promise<boolean>}){const [amount,setAmount]=useState(estimated?euros(estimated):"");const [date,setDate]=useState(today());const [period,setPeriod]=useState(periodKey);return <form className="prosuite-form" onSubmit={e=>{e.preventDefault();void submit({amount:cents(amount),paidDate:date,periodKey:period,notes:""})}}><FormTitle eyebrow={type==="contribution"?"COTISATIONS":"IMPÔT"} title="Enregistrer un paiement"/><label>Montant payé (€)<input type="number" min="0.01" step="0.01" required value={amount} onChange={e=>setAmount(e.target.value)}/></label><div className="prosuite-form2"><label>Date<ProDateTimeInput type="date" max={today()} value={date} onChange={e=>setDate(e.target.value)}/></label><label>Période<input type="month" value={period} onChange={e=>setPeriod(e.target.value)}/></label></div><button className="prosuite-btn">Valider le paiement</button></form>}
 
