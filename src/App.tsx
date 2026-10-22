@@ -1272,7 +1272,8 @@ export default function App() {
         ),
         ...(!a
           ? [
-              amountField("opening", "Solde de départ (€)"),
+              field("opening", "Solde de départ (€)", 0, "number",
+                "Indiquez le solde réellement affiché par la banque. Un compte courant peut avoir un solde négatif (découvert)."),
               field(
                 "date",
                 "Solde constaté au",
@@ -1518,6 +1519,9 @@ export default function App() {
           };
           if (entry.date > today())
             throw Error("La date du solde doit être passée ou actuelle.");
+          if (!Number.isSafeInteger(entry.opening) ||
+              (entry.group !== "current" && entry.opening < 0))
+            throw Error("Le solde de départ est invalide. Seul un compte courant peut commencer à découvert.");
           if (
             a &&
             a.group !== entry.group &&
