@@ -132,3 +132,27 @@
   .pro-v4-receipt-preview{padding:12px}
 }
 @media(prefers-reduced-motion:reduce){.pro-v4-quick-actions button{transition:none}}
+
+
+/* Create an invoice from a received payment without duplicating the cash entry. */
+.pro-v4-receipt-invoice-choice{display:grid;gap:8px;padding:12px;border-radius:15px;border:1px solid var(--border);background:var(--surface);min-width:0}
+.pro-v4-receipt-invoice-switch{
+  display:flex!important;flex-direction:row!important;gap:12px!important;
+  align-items:flex-start!important;cursor:pointer;font-weight:normal!important;
+  color:var(--ink)!important;padding:2px 0;
+}
+.pro-v4-receipt-invoice-switch input[type="checkbox"]{
+  width:19px!important;height:19px!important;flex:0 0 19px!important;
+  margin-top:3px;accent-color:var(--wimm-green);
+}
+.pro-v4-receipt-invoice-switch>span{min-width:0;display:grid;gap:5px}
+.pro-v4-receipt-invoice-switch strong{font-size:.84rem;line-height:1.3;font-weight:800;color:var(--ink)}
+.pro-v4-receipt-invoice-switch small{font-size:.7rem;line-height:1.45;color:var(--muted)}
+.pro-v4-receipt-invoice-explain{display:grid;gap:7px;border-top:1px solid var(--border);padding-top:11px}
+.pro-v4-receipt-invoice-explain>strong{font-size:.76rem;font-weight:790;color:var(--ink)}
+.pro-v4-receipt-invoice-explain p{margin:0;color:var(--muted);font-size:.72rem;line-height:1.55}
+.pro-v4-receipt-invoice-explain .pro-v4-receipt-invoice-required{
+  color:var(--wimm-amber,#a76d2b);font-weight:780;
+}
+:root[data-mode="dark"] .pro-v4-receipt-invoice-choice{background:#17212b;border-color:#334250}
+:root[data-mode="dark"] .pro-v4-receipt-invoice-explain{border-color:#334250}
