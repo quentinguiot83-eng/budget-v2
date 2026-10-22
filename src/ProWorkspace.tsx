@@ -41,7 +41,7 @@ import {createReceiptInvoicePayload,type ProReceiptInvoiceInput} from "./proRece
 import "./pro-suite.css";
 import "./pro-v4.css";
 
-type Section = "dashboard" | "analysis" | "billing" | "management" | "clients" | "catalog" | "agenda" | "treasury";
+type Section = "dashboard" | "analysis" | "billing" | "management" | "clients" | "catalog" | "agenda" | "treasury" | "fiscal" | "settings";
 type PaymentMethod = "card" | "check" | "cash" | "transfer" | "other";
 
 type Profile = { businessName:string; legalStatus:string; activityType:string; siret:string; contributionRate:number; taxRate:number; vatEnabled:boolean; vatRate:number };
@@ -315,47 +315,66 @@ export default function ProWorkspace({
       </header>
       <div className="prosuite-shell">
         <nav className="prosuite-nav prosuite-v3-nav pro-v4-nav" aria-label="Navigation professionnelle">
+          <span className="pro-v4-menu-caption">MON ENTREPRISE</span>
           <ProNav active={section==="dashboard"} icon={<LayoutDashboard/>} label="Accueil" onClick={()=>setSection("dashboard")}/>
           <ProNav active={section==="billing"} icon={<ReceiptText/>} label="Facturation" onClick={()=>setSection("billing")}/>
-          <ProNav active={["management","clients","catalog","agenda","treasury"].includes(section)} icon={<Briefcase/>} label="Activité" onClick={()=>setSection("management")}/>
+          <span className="pro-v4-menu-caption">MON ACTIVITÉ</span>
+          <ProNav active={section==="clients"} icon={<Users/>} label="Clients" onClick={()=>setSection("clients")}/>
+          <ProNav active={section==="catalog"} icon={<Package/>} label="Catalogue" onClick={()=>setSection("catalog")}/>
+          <ProNav active={section==="agenda"} icon={<CalendarDays/>} label="Agenda" onClick={()=>setSection("agenda")}/>
+          <span className="pro-v4-menu-caption">GESTION & SUIVI</span>
+          <ProNav active={section==="treasury"} icon={<Wallet/>} label="Trésorerie" onClick={()=>setSection("treasury")}/>
+          {suite?.profile.legalStatus==="micro"&&
+            <ProNav active={section==="fiscal"} icon={<CheckCircle2/>} label="Cotisations" onClick={()=>setSection("fiscal")}/>}
           <ProNav active={section==="analysis"} icon={<ChartNoAxesCombined/>} label="Analyse" onClick={()=>setSection("analysis")}/>
+          <ProNav active={section==="settings"} icon={<Settings2/>} label="Réglages Pro" onClick={()=>setSection("settings")}/>
         </nav>
         <main className="prosuite-main">
           {error&&<div className="prosuite-error">{error}</div>}{notice&&<div className="prosuite-notice">{notice}</div>}
-          {["dashboard","analysis","agenda","treasury"].includes(section)&&
+          {["dashboard","analysis","agenda","treasury","fiscal"].includes(section)&&
             <ProMonthNavigator month={selectedProMonth} onChange={setSelectedProMonth} allowFuture={section==="agenda"}/>}
           
-          {["clients","catalog","agenda","treasury"].includes(section)&&<button type="button" className="pro-v3-back pro-v4-back" onClick={()=>setSection("management")}><ChevronLeft size={16}/> Activité</button>}
           {busy&&!suite?<div className="prosuite-loading">Chargement…</div>:suite&&<>
             {section==="dashboard"&&<ProDashboard
-              businessName={suite.profile.businessName}
               month={selectedProMonth}
               transactions={suite.transactions}
               invoices={suite.invoices}
               events={suite.events}
               openingBalance={suite.account.openingBalance}
-              onAnalysis={()=>setSection("analysis")}
+              profile={reserveProfile??suite.profile}
+              declaration={micro?{label:micro.period.label,dueDate:micro.period.dueDate}:undefined}
               onAgenda={()=>setSection("agenda")}
               onBilling={()=>setSection("billing")}
-              onTransfer={()=>setModal({type:"transfer"})}
-              profile={reserveProfile??suite.profile}
-              microStatus={micro?<ProMicroStatus
+              onIncome={()=>setModal({type:"income"})}
+              onExpense={()=>setModal({type:"expense"})}
+              onTreasury={()=>setSection("treasury")}
+              onFiscal={()=>setSection(suite.profile.legalStatus==="micro"?"fiscal":"treasury")}
+            />}
+            {section==="fiscal"&&micro&&<div className="pro-v4-subpage">
+              <div className="pro-v4-subpage-header"><span>COTISATIONS & IMPÔTS</span><h1>Déclarations et réserves</h1>
+                <p>Retrouve ici les montants à déclarer, tes paiements et tes paramètres Urssaf.</p></div>
+              <ProMicroStatus
                 profile={suite.profile} transactions={suite.transactions} month={selectedProMonth}
                 settings={microSettings} onSettingsChange={saveMicroSettings}
                 onRates={()=>setModal({type:"profile"})}
                 onContributionPayment={()=>setModal({type:"payment",paymentType:"contribution"})}
                 onTaxPayment={()=>setModal({type:"payment",paymentType:"tax"})}
-              />:undefined}
-              clientsCount={suite.clients.length}
-              catalogCount={suite.products.filter(p=>p.active).length}
-              hasCheckingAccount={transferTargets.length>0}
-              transferReady={PRO_TRANSFER_SERVER_ENABLED}
-              onIncome={()=>setModal({type:"income"})}
-              onClients={()=>setSection("clients")}
-              onCatalog={()=>setSection("catalog")}
-              onTreasury={()=>setSection("treasury")}
-              onProfile={()=>setModal({type:"profile"})}
-            />}
+              />
+              <button type="button" className="pro-v4-subpage-link" onClick={()=>setSection("treasury")}>
+                <Wallet size={16}/> Consulter les mouvements de trésorerie <ChevronRight size={16}/>
+              </button>
+            </div>}
+            {section==="settings"&&<div className="pro-v4-subpage">
+              <div className="pro-v4-subpage-header"><span>PARAMÈTRES</span><h1>Réglages professionnels</h1>
+                <p>Configure ton activité, ton compte professionnel et tes documents de facturation.</p></div>
+              <div className="pro-v4-settings-links">
+                <button type="button" onClick={()=>setModal({type:"profile"})}><Briefcase size={19}/><span><strong>Mon activité et mes taux</strong><small>Statut, SIRET, cotisations, impôt, TVA</small></span><ChevronRight size={17}/></button>
+                <button type="button" onClick={()=>setModal({type:"account"})}><Wallet size={19}/><span><strong>Compte professionnel</strong><small>Nom du compte et solde de départ</small></span><ChevronRight size={17}/></button>
+                <button type="button" onClick={()=>setModal({type:"billing-settings"})}><ReceiptText size={19}/><span><strong>Coordonnées de facturation</strong><small>Adresse, IBAN, mentions des factures</small></span><ChevronRight size={17}/></button>
+                {suite.profile.legalStatus==="micro"&&<button type="button" onClick={()=>setSection("fiscal")}><CheckCircle2 size={19}/><span><strong>Urssaf et impôts</strong><small>Périodicité, réserve fiscale, paiements</small></span><ChevronRight size={17}/></button>}
+                <button type="button" onClick={()=>void exportCurrentBusiness()} disabled={busy}><Download size={19}/><span><strong>Exporter mes données Pro</strong><small>Copie JSON de l’entreprise active</small></span><ChevronRight size={17}/></button>
+              </div>
+            </div>}
             {section==="analysis"&&<ProAnalysis
               month={selectedProMonth}
               transactions={suite.transactions}
