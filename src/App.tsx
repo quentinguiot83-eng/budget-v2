@@ -1,4 +1,6 @@
 import { WimmWordmark } from "./WimmWordmark";
+import { validateAccountName } from "./accountNames";
+import { accountLinks, accountRemovalBlockers, canArchiveAccount, canDeleteAccount, removeAccountSafely } from "./accountRemoval";
 import { revisePaymentPlan, removeCreditPlan } from "./creditSchedules";
 import { APP_VERSION_LABEL, APP_BUILD_ID, APP_BUILD_DATE_LABEL } from "./appVersion";
 import SwipeActions from "./SwipeActions";
@@ -1196,6 +1198,59 @@ export default function App() {
     );
   }
 
+  function renameAccount(a: Account) {
+    openForm(
+      "Renommer " + a.name,
+      [field("name", "Nouveau nom du compte", a.name, "text",
+        "Le solde, les transactions et les réglages du compte restent inchangés.")],
+      async (v) => change(d => {
+        const target = d.accounts.find(x => x.id === a.id);
+        if (!target) throw Error("Ce compte n’existe plus.");
+        target.name = validateAccountName(v.name, d.accounts, target.id);
+      }, "Compte renommé"),
+      "Enregistrer le nom",
+    );
+  }
+
+  function deleteAccount(a: Account) {
+    // All dependent records are stored by account ID: never orphan transactions,
+    // fixed payments, loans or projects while deleting an account.
+    const links = accountLinks(s, a.id);
+    if (canDeleteAccount(links)) {
+      confirmAction(
+        "Supprimer définitivement « " + a.name + " » ?",
+        "Ce compte ne possède aucune opération, aucun crédit et aucune donnée liée. Sa suppression est définitive. Le solde enregistré (" +
+          money(links.balance) + ") ne figurera plus dans les totaux de Wimm.",
+        async () => change(d => removeAccountSafely(d, a.id, "delete"), "Compte supprimé"),
+      );
+      return;
+    }
+    if (canArchiveAccount(links)) {
+      confirmAction(
+        "Archiver « " + a.name + " » ?",
+        "Ce compte contient " + links.transactions + " opération(s) historiques. Elles seront conservées et le compte sera masqué des soldes actifs et des projections. " +
+          "Son solde est de 0 €. Vous pourrez le restaurer depuis la rubrique « Comptes archivés » de Patrimoine.",
+        async () => change(d => removeAccountSafely(d, a.id, "archive"), "Compte archivé"),
+      );
+      return;
+    }
+    const blockers = accountRemovalBlockers(links);
+    explain("Impossible de supprimer « " + a.name + " » pour le moment", <>
+      <p>Ce compte est encore lié à des données financières. Le supprimer maintenant pourrait fausser vos comptes et effacer des références importantes.</p>
+      {blockers.length > 0 && <ul>{blockers.map((item, index) => <li key={index}>{item}</li>)}</ul>}
+      <p>Conservez l'historique : transférez le solde restant, puis détachez les crédits, échéances, prêts ou projets liés. Une fois le compte à zéro et ses engagements retirés, vous pourrez l'archiver depuis ici.</p>
+      <p>Si le compte est nouveau et sans aucune donnée liée, le bouton « Supprimer » le retirera définitivement.</p>
+    </>);
+  }
+
+  function restoreArchivedAccount(a: Account) {
+    confirmAction(
+      "Restaurer « " + a.name + " » ?",
+      "Le compte réapparaîtra dans Patrimoine, dans l’accueil s’il s’agit d’un compte courant, et dans les listes d’opérations. Son historique sera conservé.",
+      async () => change(d => removeAccountSafely(d, a.id, "restore"), "Compte restauré"),
+    );
+  }
+
   function editAccount(a?: Account) {
     openForm(
       a ? "Modifier le compte" : "Ajouter un compte",
@@ -1213,11 +1268,12 @@ export default function App() {
             ["wealth", "Patrimoine"],
             ["travel", "Voyages"],
           ],
-          a?.group || (!current ? "current" : "wealth"),
+          a?.group || "current",
         ),
         ...(!a
           ? [
-              amountField("opening", "Solde de départ (€)"),
+              field("opening", "Solde de départ (€)", 0, "number",
+                "Indiquez le solde réellement affiché par la banque. Un compte courant peut avoir un solde négatif (découvert)."),
               field(
                 "date",
                 "Solde constaté au",
@@ -1444,7 +1500,7 @@ export default function App() {
           const entry = {
             ...a,
             id: a?.id || uid(),
-            name: v.name,
+            name: validateAccountName(v.name, d.accounts, a?.id),
             group: v.group as Account["group"],
             opening: a?.opening ?? euro(v.opening),
             date: a?.date ?? v.date,
@@ -1463,6 +1519,9 @@ export default function App() {
           };
           if (entry.date > today())
             throw Error("La date du solde doit être passée ou actuelle.");
+          if (!Number.isSafeInteger(entry.opening) ||
+              (entry.group !== "current" && entry.opening < 0))
+            throw Error("Le solde de départ est invalide. Seul un compte courant peut commencer à découvert.");
           if (
             a &&
             a.group !== entry.group &&
@@ -5434,9 +5493,8 @@ export default function App() {
   const householdPatrimony = activeHouseholdAccounts
     .filter((a) => a.group !== "travel")
     .reduce((sum, account) => sum + balance(s, account.id), 0);
-  const currentBalance = activeHouseholdAccounts
-    .filter((a) => a.group === "current")
-    .reduce((sum, a) => sum + balance(s, a.id), 0);
+  const currentAccounts = activeHouseholdAccounts.filter(a => a.group === "current");
+  const currentBalance = currentAccounts.reduce((sum, a) => sum + balance(s, a.id), 0);
   const wealth = activeHouseholdAccounts
     .filter((a) => a.group === "wealth")
     .reduce((sum, a) => sum + balance(s, a.id), 0);
@@ -5680,11 +5738,11 @@ export default function App() {
               <section className="balance-card home-balance-main" data-tour="home-overview">
                 <div className="split">
                   <div className="block-title">
-                    <span>Solde du compte commun</span>
+                    <span>{currentAccounts.length > 1 ? "Solde des comptes courants" : "Solde du compte commun"}</span>
                     <button type="button" className="block-info" aria-label="Détail du solde"
                       onClick={() => explain("Calcul du solde réel",
                         <><p>Solde des comptes courants, calculé depuis leur solde de départ et les mouvements validés.</p>
-                          {s.accounts.filter(a => a.group === "current").map(a =>
+                          {currentAccounts.map(a =>
                             <Row key={a.id} title={a.name} sub={dateLabel(a.date)} value={money(balance(s,a.id))}/>)}
                           <p>Les échéances à venir ne sont pas incluses dans le solde actuel.</p></>)}>
                       <Info size={17}/>
@@ -5694,6 +5752,25 @@ export default function App() {
                 </div>
                 <div className={`hero-number${currentBalance < 0 ? " negative-money" : ""}`}>{money(currentBalance)}</div>
                 <div className="home-balance-date">Solde actuel · {dateLabel(today())}</div>
+                {currentAccounts.length > 0 && (
+                  <div className="home-current-accounts" aria-label="Soldes de tous les comptes courants">
+                    <div className="home-current-accounts-head">
+                      <strong>Mes comptes courants</strong>
+                      <button type="button" className="text" onClick={() => navigate("wealth")}>
+                        Gérer <ChevronRight size={15} aria-hidden="true"/>
+                      </button>
+                    </div>
+                    <div className="home-current-accounts-list">
+                      {currentAccounts.map(a => (
+                        <button type="button" className="home-current-account-row" key={a.id}
+                          onClick={() => navigate("wealth")} aria-label={a.name + " : " + money(balance(s, a.id)) + ". Voir dans Patrimoine"}>
+                          <span className="home-current-account-name"><Wallet size={16} aria-hidden="true"/><span>{a.name}</span></span>
+                          <strong className={balance(s, a.id) < 0 ? "negative-money" : undefined}>{money(balance(s, a.id))}</strong>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
                 {selectedMonth === month() && current && (
                   <div className="home-balance-available">
                     <div className="block-title"><span>Disponible jusqu’à la fin du mois</span>{availableInfoButton()}</div>
@@ -5704,14 +5781,14 @@ export default function App() {
                 )}
               </section>
 
-              {!s.hidden.includes("personal") && (
+              {ps.account && !s.hidden.includes("personal") && (
                  <button type="button" className="home-personal-shortcut" onClick={()=>navigate("personal")}
-                   aria-label={ps.account?"Ouvrir mon compte perso":"Créer mon compte perso"}>
+                   aria-label="Ouvrir mon compte perso">
                    <span className="home-personal-icon"><UserRound size={22}/></span>
                    <span className="home-personal-copy">
                      <small>Compte perso</small>
-                     <strong className={ps.account && personalBalance(ps,s,personalOwnerId) < 0 ? "negative-money" : undefined}>{ps.account?money(personalBalance(ps,s,personalOwnerId)):"Configurer mon espace"}</strong>
-                     <small>{ps.account?"Mon espace privé":"Suivre mes dépenses personnelles"}</small>
+                     <strong className={personalBalance(ps,s,personalOwnerId) < 0 ? "negative-money" : undefined}>{money(personalBalance(ps,s,personalOwnerId))}</strong>
+                     <small>Mon espace privé</small>
                    </span>
                    <ChevronRight size={20}/>
                  </button>
@@ -7055,21 +7132,25 @@ export default function App() {
                 <div className="section-head wealth-accounts-heading">
                   <div>
                     <h2>Mes comptes</h2>
-                    <p className="muted">Touchez un compte pour voir ses détails et ses opérations.</p>
+                    <p className="muted">Chaque compte conserve son solde et ses opérations. Touchez-le pour le renommer ou voir son historique.</p>
                   </div>
                   <div className="wealth-accounts-heading-actions">
                     <button type="button" className="secondary wealth-reconcile-accounts" onClick={reconcileHouseholdAccounts}>
                       <RefreshCw size={16}/> Mettre à jour mes comptes
                     </button>
-                    <button type="button" className="primary wealth-add-account" onClick={() => editAccount()}>
-                      <Plus size={17}/> Ajouter
+                    <button type="button" className="primary wealth-add-account" onClick={() => editAccount()} aria-label="Ajouter un compte">
+                      Ajouter <Plus size={17} aria-hidden="true"/>
                     </button>
                   </div>
                 </div>
                 <div className="wealth-accounts-list">
                   {activeHouseholdAccounts.map((a) => (
                     <SwipeActions key={a.id} label={a.name} className="account-swipe-row"
-                      actions={[{ label: "Modifier", icon: <Pencil size={17}/>, onClick: () => editAccount(a) }]}>
+                      actions={[
+                        { label: "Renommer", icon: <Pencil size={17}/>, onClick: () => renameAccount(a) },
+                        { label: "Modifier", icon: <SlidersHorizontal size={17}/>, onClick: () => editAccount(a) },
+                        { label: "Supprimer", icon: <Trash2 size={17}/>, tone: "danger" as const, onClick: () => deleteAccount(a) },
+                      ]}>
                     <details className={"wealth-account-row wealth-account-" + a.group}>
                       <summary className="wealth-account-summary">
                         <span className="wealth-account-icon">
@@ -7094,6 +7175,15 @@ export default function App() {
                           </div>
                         )}
                         <div className="wealth-account-actions">
+                          <button type="button" className="secondary compact wealth-rename-account" onClick={() => renameAccount(a)}>
+                            <Pencil size={15}/> Renommer
+                          </button>
+                          <button type="button" className="text compact" onClick={() => editAccount(a)}>
+                            <SlidersHorizontal size={15}/> Modifier
+                          </button>
+                          <button type="button" className="text compact wealth-delete-account danger-text" onClick={() => deleteAccount(a)}>
+                            <Trash2 size={15}/> Supprimer
+                          </button>
                           {a.group !== "current" && <button type="button" className="primary compact" onClick={() => transfer(a)}>Épargner</button>}
                           <button type="button" className="secondary compact" onClick={() => transfer(undefined, undefined, a)}>Virement</button>
 
@@ -7120,6 +7210,20 @@ export default function App() {
                   ))}
                   {!activeHouseholdAccounts.length && <p className="muted wealth-account-empty">Aucun compte disponible. Ajoutez votre premier compte.</p>}
                 </div>
+                {s.accounts.some(a => a.archived && a.group !== "personal") && (
+                  <details className="wealth-archived-section">
+                    <summary>Comptes archivés ({s.accounts.filter(a => a.archived && a.group !== "personal").length})</summary>
+                    <p className="muted">Leur historique est conservé ; ils sont exclus des soldes actifs.</p>
+                    <div className="wealth-archived-list">
+                      {s.accounts.filter(a => a.archived && a.group !== "personal").map(a => (
+                        <div className="wealth-archived-row" key={a.id}>
+                          <span className="wealth-archived-name"><strong>{a.name}</strong><small>{a.group === "current" ? "Compte courant" : a.group === "travel" ? "Voyage" : "Épargne"}</small></span>
+                          <button type="button" className="secondary compact" onClick={() => restoreArchivedAccount(a)}>Restaurer</button>
+                        </div>
+                      ))}
+                    </div>
+                  </details>
+                )}
               </section>
 
               <button type="button" className="wealth-projection-link" onClick={() => navigate("projection")}>

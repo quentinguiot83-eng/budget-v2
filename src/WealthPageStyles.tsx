@@ -78,6 +78,8 @@ const styles = String.raw`/* Patrimoine v2 — chiffres du foyer, puis comptes e
 .wealth-accounts-heading-actions {display:flex;align-items:center;justify-content:flex-end;gap:8px;flex-wrap:wrap;min-width:0;}
 .wealth-reconcile-accounts {display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:40px;border-radius:13px;padding:9px 12px;font-size:.78rem;white-space:nowrap;}
 .wealth-reconcile-accounts svg {flex-shrink:0;}
+.wealth-account-actions .wealth-rename-account {font-weight:750;}
+.wealth-account-actions .wealth-rename-account svg {flex-shrink:0;}
 .wealth-accounts-list {
   border:1px solid var(--border);border-radius:20px;background:var(--surface);
   box-shadow:var(--wimm-card-shadow);overflow:hidden;
@@ -123,6 +125,28 @@ const styles = String.raw`/* Patrimoine v2 — chiffres du foyer, puis comptes e
 }
 .wealth-account-actions .text {padding:8px 5px;}
 .wealth-account-empty {padding:18px;margin:0;}
+.wealth-account-actions .wealth-delete-account {
+  display:inline-flex;align-items:center;gap:5px;
+  margin-left:auto;color:var(--negative,#c54b53);font-weight:730;
+}
+.wealth-archived-section {border:1px solid var(--border);border-radius:15px;background:var(--surface);overflow:hidden;}
+.wealth-archived-section > summary {
+  cursor:pointer;min-height:46px;display:flex;align-items:center;
+  font-size:.79rem;font-weight:750;padding:12px 15px;color:var(--muted);
+}
+.wealth-archived-section > summary:hover {color:var(--ink);background:var(--wimm-mint-wash);}
+.wealth-archived-section > p {font-size:.74rem;padding:0 15px;margin:0 0 8px;}
+.wealth-archived-list {display:grid;margin:0 12px 12px;gap:4px;}
+.wealth-archived-row {
+  display:flex;align-items:center;justify-content:space-between;
+  gap:12px;min-height:54px;padding:8px 11px;border-radius:10px;
+  background:color-mix(in srgb,var(--surface) 85%,var(--wimm-mint-wash));
+}
+.wealth-archived-name {min-width:0;display:grid;gap:4px;overflow-wrap:anywhere;}
+.wealth-archived-name strong {font-size:.78rem;color:var(--ink);}
+.wealth-archived-name small {font-size:.69rem;color:var(--muted);}
+.wealth-archived-row button {flex:0 0 auto;min-height:34px;font-size:.73rem;}
+
 .wealth-projection-link {
   display:flex;align-items:center;text-align:left;width:100%;gap:14px;
   border-radius:18px;border:1px solid color-mix(in srgb,var(--wimm-lavender) 20%,var(--border));
@@ -152,7 +176,10 @@ const styles = String.raw`/* Patrimoine v2 — chiffres du foyer, puis comptes e
   .wealth-accounts-heading>div:first-child {flex:1 1 100%;}
   .wealth-accounts-heading-actions {display:flex;align-items:center;gap:8px;justify-content:flex-start;width:100%;flex-wrap:wrap;}
   .wealth-reconcile-accounts {flex:1 1 auto;min-width:0;font-size:.75rem;padding:8px 10px;}
-  .wealth-add-account {flex:0 0 auto;}
+  .wealth-add-account {flex:1 1 auto;min-width:0;}
+  .wealth-accounts-heading-actions .wealth-reconcile-accounts {flex:1 1 100%;}
+  .wealth-account-actions {gap:6px;}
+  .wealth-account-actions .wealth-rename-account {flex:1 1 auto;}
   .wealth-accounts-heading h2 {font-size:1.02rem;}
   .wealth-accounts-heading p {font-size:.7rem;}
   .wealth-add-account {padding:8px 11px;}
@@ -165,6 +192,9 @@ const styles = String.raw`/* Patrimoine v2 — chiffres du foyer, puis comptes e
   .wealth-account-chevron {width:15px;height:15px;}
   .wealth-account-expanded {padding:8px 12px 15px;gap:10px;}
   .wealth-account-actions button {font-size:.72rem;}
+  .wealth-account-actions .wealth-delete-account {margin-left:0;}
+  .wealth-archived-section > summary {padding:12px;}
+  .wealth-archived-row {padding:8px;}
 }
 @media(prefers-reduced-motion:reduce) {
   .wealth-account-chevron,.wealth-account-summary {transition:none;}

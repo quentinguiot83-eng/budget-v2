@@ -880,3 +880,29 @@ test("livret fiscalisé capitalise après fiscalité", () => {
   );
 
 });
+
+test("plusieurs comptes courants gardent leurs soldes individuels et un total consolidé", () => {
+  const s=fixture();
+  s.accounts.push({...s.accounts[0],id:"second-current",name:"Compte secondaire",opening:70000});
+  assert.doesNotThrow(()=>validate(s));
+  s.transactions.push({id:"interbank",type:"transfer",account:"current",to:"second-current",
+    amount:15000,date:today(),description:"Virement entre comptes courants"});
+  s.transactions.push({id:"card",type:"expense",account:"second-current",
+    amount:2000,date:today(),description:"Achat",category:"food"});
+  assert.equal(balance(s,"current"),85000);
+  assert.equal(balance(s,"second-current"),83000);
+  assert.equal(monthEndAvailable(s).cash,168000);
+  assert.equal(s.accounts.filter(a=>a.group==="current").length,2);
+});
+
+test("renommer un compte bancaire conserve son ID, son solde et toutes ses opérations", () => {
+  const s=fixture();
+  s.transactions.push({id:"income-1",type:"income",account:"current",date:today(),
+    amount:12345,description:"Revenu"});
+  const before=balance(s,"current");
+  s.accounts.find(a=>a.id==="current")!.name="Mon compte BoursoBank";
+  assert.doesNotThrow(()=>validate(s));
+  assert.equal(balance(s,"current"),before);
+  assert.equal(s.transactions[0].account,"current");
+  assert.equal(s.accounts.find(a=>a.id==="current")!.name,"Mon compte BoursoBank");
+});
