@@ -9,7 +9,8 @@
     "preview": "vite preview --host 0.0.0.0",
     "test": "node --import tsx --test src/engine.test.ts src/accountNames.test.ts src/accountRemoval.test.ts src/calendarFeed.test.ts src/calendarEndpoint.test.ts src/transactionSearch.test.ts src/monthlyComparison.test.ts src/spendingAnalysis.test.ts src/categoryDeletion.test.ts src/pushAlerts.test.ts src/pushDatabase.test.ts src/pushEndpoint.test.ts src/starterCategories.test.ts src/analysisDashboard.test.ts src/secureExport.test.ts src/backupRestore.test.ts src/restoreSql.test.ts src/dailyTransactionReminder.test.ts src/pushScheduler.test.ts src/bankImport.test.ts src/bankReview.test.ts src/quickEntry.test.ts src/creditSchedules.test.ts src/TutorialContent.test.ts src/tutorialTargeting.test.ts src/projectionMoney.test.ts src/projectionSeries.test.ts src/GuidedJourneyContent.test.ts src/guidedJourneyLayout.test.ts src/proReserve.test.ts src/proReceiptInvoice.test.ts src/proMicro.test.ts",
     "test:pro-invoice": "node --import tsx --test src/proReceiptInvoice.test.ts",
-    "prebuild": "npm run test:pro-invoice"
+    "test:pro-micro": "node --import tsx --test src/proMicro.test.ts",
+    "prebuild": "npm run test:pro-invoice && npm run test:pro-micro"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.57.0",
