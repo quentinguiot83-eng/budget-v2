@@ -78,7 +78,6 @@ const styles = String.raw`/* Patrimoine v2 — chiffres du foyer, puis comptes e
 .wealth-accounts-heading-actions {display:flex;align-items:center;justify-content:flex-end;gap:8px;flex-wrap:wrap;min-width:0;}
 .wealth-reconcile-accounts {display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:40px;border-radius:13px;padding:9px 12px;font-size:.78rem;white-space:nowrap;}
 .wealth-reconcile-accounts svg {flex-shrink:0;}
-.wealth-add-current {background:var(--wimm-green);color:white;border-color:transparent;}
 .wealth-account-actions .wealth-rename-account {font-weight:750;}
 .wealth-account-actions .wealth-rename-account svg {flex-shrink:0;}
 .wealth-accounts-list {
