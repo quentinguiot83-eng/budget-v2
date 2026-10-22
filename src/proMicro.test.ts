@@ -25,7 +25,8 @@ test("only paid receipts less VAT count; invoices are not a cash transaction", (
   assert.equal(result.turnover,100000);
   assert.equal(result.vat,20000);
   assert.equal(result.estimatedContribution,21200);
-  assert.equal(result.dueContribution,13200);
+  assert.equal(result.contributionSettled,true);
+  assert.equal(result.dueContribution,0);
   assert.equal(result.dueTax,700);
   assert.equal(result.afterEstimatedCharges,63100);
 });
@@ -40,4 +41,29 @@ test("quarterly payments are collected by their assigned period and tax can be d
   assert.equal(r.turnover,30000);
   assert.equal(r.dueContribution,0);
   assert.equal(r.dueTax,0);
+});
+
+test("partial or above-estimate social debit settles the declaration while income tax remains separate",()=>{
+  for(const amount of [1,5000,30000]){
+    const rows=[
+      {kind:"income",amount:100000,paid:true,date:"2026-10-04",vatAmount:0},
+      {kind:"contribution_payment",amount,paid:true,date:"2026-10-22",contributionPeriodKey:"2026-10"},
+    ];
+    const result=microSummary(rows,profile,"2026-10",{frequency:"monthly",taxMode:"liberatoire"});
+    assert.equal(result.estimatedContribution,21200);
+    assert.equal(result.paidContribution,amount);
+    assert.equal(result.contributionSettled,true);
+    assert.equal(result.dueContribution,0);
+    assert.equal(result.dueTax,1700);
+  }
+});
+test("a social payment for another period or not marked paid must not clear this period",()=>{
+ const tx=[
+  {kind:"income",amount:100000,paid:true,date:"2026-10-04"},
+  {kind:"contribution_payment",amount:5000,paid:false,date:"2026-10-22",contributionPeriodKey:"2026-10"},
+  {kind:"contribution_payment",amount:7000,paid:true,date:"2026-10-22",contributionPeriodKey:"2026-09"},
+ ];
+ const r=microSummary(tx,profile,"2026-10",{frequency:"monthly",taxMode:"none"});
+ assert.equal(r.contributionSettled,false);
+ assert.equal(r.dueContribution,21200);
 });
