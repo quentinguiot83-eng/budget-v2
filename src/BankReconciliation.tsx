@@ -30,6 +30,7 @@ export default function BankReconciliation({state,onImport}:Props){
   const [message,setMessage]=useState("");
   const [error,setError]=useState("");
   const [visible,setVisible]=useState(100);
+  const [pendingOnly,setPendingOnly]=useState(true);
   const accountStart=accounts.find(a=>a.id===account)?.date||today();
   const matched=useMemo(()=>reconcileBankRows(rows,state.transactions,account),[rows,state.transactions,account]);
   const matchedCount=matched.filter(r=>r.status==="matched").length;
@@ -52,6 +53,11 @@ export default function BankReconciliation({state,onImport}:Props){
     return out;
   },[matched,state]);
   const selection=selected.map(i=>matched.find(row=>row.index===i)).filter((r):r is ReconciledRow=>!!r);
+  const visibleRows=matched.filter(r=>!pendingOnly || (r.status!=="matched" && !(r.status==="possible" && duplicateChoices[r.index]?.action==="skip")));
+  const safeNewRows=matched.filter(r=>r.status==="new" && r.date>=accountStart && r.date<=today()
+    && (r.type==="income" || !!(categoriesByRow[r.index]??suggestions[r.index]))
+    // Virements internes : jamais pré-sélectionnés, car il ne faut pas les compter comme dépenses/revenus.
+    && !/\\b(vir|virement|transfert|livret|interne|compte a compte)\\b/i.test(r.description.normalize("NFD").replace(/[\\u0300-\\u036f]/g,"")));
   function effectiveCategory(row:ReconciledRow){return categoriesByRow[row.index]??suggestions[row.index]??"";}
   function resetPreview(){
     setRows([]);setSelected([]);setCategoriesByRow({});
@@ -121,7 +127,7 @@ export default function BankReconciliation({state,onImport}:Props){
       <div className="section-head"><div className="block-title"><h2><ArrowLeftRight size={19}/> Rapprochement bancaire</h2></div></div>
       <p className="muted">Importez un relevé CSV pour comparer les opérations de votre banque avec Wimm. Le fichier reste sur votre appareil et aucune opération n’est enregistrée automatiquement.</p>
       <div className="wimm-bank-toolbar">
-        <label>Compte à rapprocher<select value={account} onChange={e=>{setAccount(e.target.value);setSelected([]);setDuplicateChoices({});setExpandedCandidates([]);setConfirm(false);}}>
+        <label>Compte à rapprocher<select value={account} onChange={e=>{setAccount(e.target.value);setTable(null);setFileName("");resetPreview();setMessage("");setError("");}}>
           {accounts.map(a=><option value={a.id} key={a.id}>{a.name}</option>)}
         </select></label>
         <label className="wimm-bank-file"><UploadCloud size={18}/> Choisir un relevé CSV<input type="file" accept=".csv,.txt,text/csv,text/plain" onChange={e=>void openFile(e)}/></label>
@@ -147,9 +153,17 @@ export default function BankReconciliation({state,onImport}:Props){
         <div><strong>{possibleCount}</strong><span>À vérifier</span></div>
         <div><strong>{matched.filter(r=>r.status==="new").length+resolvedNew}</strong><span>À importer</span></div>
       </div>
-      <p className="muted">Pour chaque doublon possible, Wimm propose les opérations qui pourraient correspondre. Choisissez celle déjà enregistrée ou indiquez qu’aucune ne correspond. Rien n’est modifié sans votre confirmation. Vérifiez aussi les virements internes, qui ne doivent pas être saisis comme des dépenses.</p>
+      <div className="wimm-bank-review-tools">
+        <label><input type="checkbox" checked={pendingOnly} onChange={e=>{setPendingOnly(e.target.checked);setVisible(100);}}/> Masquer les opérations déjà rapprochées</label>
+        <button type="button" className="secondary" disabled={busy||!safeNewRows.length} onClick={()=>{
+          setSelected(safeNewRows.map(r=>r.index));setConfirm(false);
+        }}>Sélectionner les nouvelles opérations prêtes ({safeNewRows.length})</button>
+        <button type="button" className="text" disabled={busy||!selected.length} onClick={()=>{setSelected([]);setConfirm(false);}}>Tout désélectionner</button>
+      </div>
+      <p className="muted">Les nouvelles opérations avec une catégorie reconnue peuvent être sélectionnées ensemble. Les virements internes et les doublons possibles restent à vérifier un par un. Rien n’est importé sans votre confirmation.</p>
+      <p className="muted wimm-bank-visible-count">{visibleRows.length} ligne(s) affichée(s) après filtrage.</p>
       <div className="wimm-bank-list">
-        {matched.slice(0,visible).map(row=>{
+        {visibleRows.slice(0,visible).map(row=>{
           const decision=duplicateChoices[row.index];
           const candidates=candidatesByRow.get(row.index)||[];
           const allowed=row.status!=="matched"&&row.date>=accountStart&&row.date<=today()&&
@@ -214,7 +228,7 @@ export default function BankReconciliation({state,onImport}:Props){
           </div>;
         })}
       </div>
-      {visible<matched.length&&<button className="secondary" type="button" onClick={()=>setVisible(v=>v+100)}>Afficher 100 lignes supplémentaires</button>}
+      {visible<visibleRows.length&&<button className="secondary" type="button" onClick={()=>setVisible(v=>v+100)}>Afficher 100 lignes supplémentaires</button>}
       <div className="wimm-bank-confirm">
         <strong>{selected.length} opération(s) sélectionnée(s) · {money(selection.filter(r=>r.type==="expense").reduce((n,r)=>n+r.amount,0))} en débits</strong>
         <label><input type="checkbox" checked={confirm} disabled={!selection.length||busy} onChange={e=>setConfirm(e.target.checked)}/>
