@@ -15,11 +15,11 @@ export function proOpeningForTargetBalance(
     throw new Error("Le solde demandé dépasse les limites du compte professionnel");
   return corrected;
 }
-export function proPaymentsForPeriod(
-  rows: readonly ProPaymentEntry[],
+export function proPaymentsForPeriod<T extends ProPaymentEntry>(
+  rows: readonly T[],
   fromMonth: string,
   throughMonth: string,
-): ProPaymentEntry[] {
+): T[] {
   if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(fromMonth) || !/^\d{4}-(0[1-9]|1[0-2])$/.test(throughMonth) || fromMonth>throughMonth)
     throw new Error("Période invalide");
   return rows.filter(row => {
