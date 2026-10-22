@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import {
   ArrowRightLeft,
@@ -192,9 +192,7 @@ export default function ProWorkspace({
   },[suite]);
   const nextEvents=(suite?.events??[]).filter(e=>new Date(e.endsAt)>=new Date()).slice(0,5);
   const openInvoices=(suite?.invoices??[]).filter(i=>i.status==="draft"||i.status==="sent"||i.status==="partially_paid");
-  const currentContribution=Math.round(monthIncome*((suite?.profile.contributionRate??0)/100));
-  const currentTax=Math.round(monthIncome*((suite?.profile.taxRate??0)/100));
-  const paidContrib=transactions.filter(t=>t.paid&&t.kind==="contribution_payment"&&(t.contributionPeriodKey??t.date.slice(0,7))===selectedProMonth).reduce((s,t)=>s+t.amount,0);
+      const paidContrib=transactions.filter(t=>t.paid&&t.kind==="contribution_payment"&&(t.contributionPeriodKey??t.date.slice(0,7))===selectedProMonth).reduce((s,t)=>s+t.amount,0);
   const paidTax=transactions.filter(t=>t.paid&&t.kind==="tax_payment"&&(t.taxPeriodKey??t.date.slice(0,7))===selectedProMonth).reduce((s,t)=>s+t.amount,0);
   const reserves=useMemo(()=>suite?calculateProReserve(suite.transactions,suite.account.openingBalance,suite.profile,selectedProMonth):null,[suite,selectedProMonth]);
   const currentReserve=useMemo(()=>suite?calculateProReserve(suite.transactions,suite.account.openingBalance,suite.profile):null,[suite]);
@@ -377,7 +375,77 @@ function AgendaPage({month,events,clients,add,edit,remove,connect}:{month:string
   </>;
 }
 
-function TreasuryPage({month,suite,balance,contribution,tax,income,expense,transfer,contributionPay,taxPay,account,profile,removeTx}:{month:string;suite:Suite;balance:number;contribution:{estimated:number;paid:number};tax:{estimated:number;paid:number};income:()=>void;expense:()=>void;transfer:()=>void;contributionPay:()=>void;taxPay:()=>void;account:()=>void;profile:()=>void;removeTx:(id:string)=>void}){return <><PageHead eyebrow="TRÉSORERIE" title="Trésorerie & opérations" text="Encaissements, dépenses, virements et réserves obligatoires au même endroit." actions={<><Btn secondary onClick={profile}><Settings2 size={16}/> Activité</Btn><Btn secondary onClick={account}><Wallet size={16}/> Compte Pro</Btn><Btn onClick={income}><Plus size={16}/> Encaissement</Btn></>}/><div className="prosuite-metrics"><Metric label={"Trésorerie "+(month===currentProMonth()?"actuelle":"à fin de mois")} value={euro(balance)}/><Metric label="Cotisations restantes" value={euro(Math.max(0,contribution.estimated-contribution.paid))}/><Metric label="Impôt restant" value={euro(Math.max(0,tax.estimated-tax.paid))}/><Metric label="À encaisser" value={euro(suite.transactions.filter(t=>t.kind==="income"&&!t.paid).reduce((s,t)=>s+t.amount,0))}/></div><div className="prosuite-grid2"><Card title="Réserves du mois"><ReserveLine label="Cotisations" estimated={contribution.estimated} paid={contribution.paid} action={contributionPay}/><ReserveLine label="Impôt" estimated={tax.estimated} paid={tax.paid} action={taxPay}/></Card><Card title="Actions"><div className="prosuite-actiongrid"><Btn onClick={income}><Plus size={16}/> Encaissement</Btn><Btn secondary onClick={expense}><Plus size={16}/> Dépense</Btn><Btn secondary onClick={transfer}><ArrowRightLeft size={16}/> Vers le perso</Btn></div></Card></div><Card title={"Opérations de "+formatProMonth(month)}><div className="prosuite-tablewrap"><table className="prosuite-table prosuite-treasury-table"><thead><tr><th>Date</th><th>Opération</th><th>Règlement</th><th>Montant</th><th></th></tr></thead><tbody>{suite.transactions.filter(t=>t.date.slice(0,7)===month).slice(0,30).map(t=><tr key={t.id}><td>{new Date(t.date+"T12:00:00").toLocaleDateString("fr-FR")}</td><td>{t.label}<small className="prosuite-block">{t.category||t.kind}</small></td><td>{t.paymentMethod?payLabel[t.paymentMethod]:"—"}</td><td className={t.kind==="income"?"positive":""}>{t.kind==="income"?"+":"−"}{euro(t.amount)}</td><td><button className="prosuite-trash" onClick={()=>removeTx(t.id)}><Trash2 size={15}/></button></td></tr>)}</tbody></table></div></Card></>}
+function TreasuryPage({
+  month,suite,balance,reserves,contribution,tax,income,expense,transfer,contributionPay,taxPay,account,profile,removeTx,
+}:{
+  month:string;suite:Suite;balance:number;reserves:ReserveEstimate;
+  contribution:{estimated:number;paid:number};tax:{estimated:number;paid:number};
+  income:()=>void;expense:()=>void;transfer:()=>void;contributionPay:()=>void;taxPay:()=>void;
+  account:()=>void;profile:()=>void;removeTx:(id:string)=>void;
+}) {
+  const [allRows,setAllRows]=useState(false);
+  const monthRows=suite.transactions.filter(t=>t.date.slice(0,7)===month)
+    .sort((a,b)=>b.date.localeCompare(a.date));
+  const rows=allRows?monthRows:monthRows.slice(0,12);
+  return <div className="pro-v4-treasury">
+    <PageHead eyebrow="MES FINANCES" title="Trésorerie"
+      text="Savoir ce qui est encaissé, ce qu’il faut mettre de côté et ce que tu peux te verser."
+      actions={<><Btn secondary onClick={profile}><Settings2 size={16}/> Taux & activité</Btn>
+        <Btn secondary onClick={account}><Wallet size={16}/> Compte Pro</Btn></>}/>
+    <div className="pro-v4-treasury-summary">
+      <div><span>Solde du compte Pro</span><strong>{euro(balance)}</strong></div>
+      <div><span>Réserves estimées</span><strong>{euro(reserves.totalToKeep)}</strong></div>
+      <div className="pro-v4-treasury-available"><span>Disponible après réserves</span><strong>{reserves.availableForPay===null?"—":euro(reserves.availableForPay)}</strong></div>
+    </div>
+    {!reserves.ratesConfigured&&<button className="pro-v4-config-warning" type="button" onClick={profile}>
+      <Settings2 size={17}/> Définir mes taux de cotisations et d’impôts <ChevronRight size={17}/>
+    </button>}
+    <div className="pro-v4-treasury-grid">
+      <Card title="Réserves à prévoir">
+        <div className="pro-v4-treasury-reserve-intro">
+          Calcul automatique à partir du chiffre d’affaires encaissé, pas des factures en attente.
+        </div>
+        <div className="pro-v4-treasury-reserve-line"><span>Cotisations restant à provisionner</span><strong>{euro(reserves.contributionsOwed)}</strong></div>
+        <div className="pro-v4-treasury-reserve-line"><span>Impôts restant à provisionner</span><strong>{euro(reserves.taxOwed)}</strong></div>
+        {suite.profile.vatEnabled&&<div className="pro-v4-treasury-reserve-line"><span>TVA nette indicative à conserver</span><strong>{euro(reserves.vatToKeep)}</strong></div>}
+        <p className="pro-v4-form-note">Provision virtuelle uniquement, non transférée sur un compte bancaire. Les taux sont configurés dans « Taux & activité ».</p>
+        <div className="pro-v4-treasury-payments">
+          <ReserveLine label={"Cotisations de "+formatProMonth(month)}
+            estimated={contribution.estimated} paid={contribution.paid} action={contributionPay}/>
+          <ReserveLine label={"Impôts de "+formatProMonth(month)}
+            estimated={tax.estimated} paid={tax.paid} action={taxPay}/>
+        </div>
+      </Card>
+      <Card title="Actions rapides">
+        <div className="pro-v4-treasury-buttons">
+          <Btn onClick={income}><Plus size={17}/> Encaisser</Btn>
+          <Btn secondary onClick={expense}><Plus size={17}/> Ajouter une dépense</Btn>
+          <Btn secondary onClick={transfer}><ArrowRightLeft size={17}/> Vers mon compte courant</Btn>
+        </div>
+        <p className="pro-v4-form-note">Un versement vers ton compte courant est enregistré côté Pro et côté foyer. Effectue séparément le mouvement dans ta banque.</p>
+      </Card>
+    </div>
+    <Card title={"Opérations de "+formatProMonth(month)}>
+      <div className="prosuite-tablewrap">
+        <table className="prosuite-table prosuite-treasury-table">
+          <thead><tr><th>Date</th><th>Opération</th><th>Règlement</th><th>Montant</th><th></th></tr></thead>
+          <tbody>{rows.map(t=><tr key={t.id}>
+            <td>{new Date(t.date+"T12:00:00").toLocaleDateString("fr-FR")}</td>
+            <td>{t.label}<small className="prosuite-block">{t.category||t.kind}</small></td>
+            <td>{t.paymentMethod?payLabel[t.paymentMethod]:"—"}</td>
+            <td className={t.kind==="income"?"positive":""}>{t.kind==="income"?"+":"−"}{euro(t.amount)}</td>
+            <td><button type="button" className="prosuite-trash" title={"Supprimer "+t.label}
+              aria-label={"Supprimer "+t.label} onClick={()=>removeTx(t.id)}><Trash2 size={15}/></button></td>
+          </tr>)}</tbody>
+        </table>
+      </div>
+      {!rows.length&&<Empty text="Aucune opération enregistrée sur ce mois."/>}
+      {monthRows.length>12&&<button type="button" className="pro-v4-show-more" onClick={()=>setAllRows(v=>!v)}>
+        {allRows?"Afficher moins":"Voir toutes les "+monthRows.length+" opérations"}
+      </button>}
+    </Card>
+  </div>;
+}
 function ReserveLine({label,estimated,paid,action}:{label:string;estimated:number;paid:number;action:()=>void}){return <div className="prosuite-reserve"><div><strong>{label}</strong><small>Estimé {euro(estimated)} · payé {euro(paid)}</small></div><strong>{euro(Math.max(0,estimated-paid))}</strong><button onClick={action}>Enregistrer un paiement</button></div>}
 
 function Modal({children,close}:{children:ReactNode;close:()=>void}){
@@ -481,7 +549,7 @@ function TransactionForm({
   const amountC=cents(amount);
   const vatAmount=includeVat&&vatRate>0?Math.round(amountC-amountC/(1+vatRate/100)):0;
   const forecast=previewReceiptReserves(amountC,vatAmount,profile);
-  const save=async(event:React.FormEvent)=>{
+  const save=async(event:FormEvent)=>{
     event.preventDefault();
     if(saving)return;
     setLocalError("");
@@ -545,7 +613,7 @@ function TransferForm({
   const [error,setError]=useState("");
   const amountC=cents(amount);
   const max=Math.max(0,Math.min(balance,available));
-  const save=async(event:React.FormEvent)=>{
+  const save=async(event:FormEvent)=>{
     event.preventDefault();
     if(saving)return;
     if(!ratesConfigured){setError("Renseigne d’abord tes taux de cotisations ou d’impôts dans Activité.");return;}
@@ -574,7 +642,7 @@ function TransferForm({
       </select>
     </label>
     <label>Date<ProDateTimeInput type="date" max={today()} required value={date} onChange={e=>setDate(e.target.value)}/></label>
-    <p className="pro-v4-form-note">Wimm enregistre les deux écritures de façon liée via le module Pro. **Réalise le véritable virement séparément dans ta banque.** Il ne s’agit pas d’un salaire avec bulletin de paie.</p>
+    <p className="pro-v4-form-note">Wimm enregistre les deux écritures de façon liée via le module Pro. Réalise le véritable virement séparément dans ta banque. Il ne s’agit pas d’un salaire avec bulletin de paie.</p>
     {!ratesConfigured&&<p className="prosuite-error" role="status">Renseigne d’abord les taux estimés dans les paramètres de ton activité pour calculer le disponible.</p>}
     {!accounts.length&&<p className="prosuite-error" role="status">Crée un compte courant dans Patrimoine avant de poursuivre.</p>}
     {error&&<p role="alert" className="prosuite-error">{error}</p>}
