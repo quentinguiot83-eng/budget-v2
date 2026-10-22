@@ -5481,9 +5481,8 @@ export default function App() {
   const householdPatrimony = activeHouseholdAccounts
     .filter((a) => a.group !== "travel")
     .reduce((sum, account) => sum + balance(s, account.id), 0);
-  const currentBalance = activeHouseholdAccounts
-    .filter((a) => a.group === "current")
-    .reduce((sum, a) => sum + balance(s, a.id), 0);
+  const currentAccounts = activeHouseholdAccounts.filter(a => a.group === "current");
+  const currentBalance = currentAccounts.reduce((sum, a) => sum + balance(s, a.id), 0);
   const wealth = activeHouseholdAccounts
     .filter((a) => a.group === "wealth")
     .reduce((sum, a) => sum + balance(s, a.id), 0);
@@ -5727,11 +5726,11 @@ export default function App() {
               <section className="balance-card home-balance-main" data-tour="home-overview">
                 <div className="split">
                   <div className="block-title">
-                    <span>{activeHouseholdAccounts.filter(a => a.group === "current").length > 1 ? "Solde des comptes courants" : "Solde du compte commun"}</span>
+                    <span>{currentAccounts.length > 1 ? "Solde des comptes courants" : "Solde du compte commun"}</span>
                     <button type="button" className="block-info" aria-label="Détail du solde"
                       onClick={() => explain("Calcul du solde réel",
                         <><p>Solde des comptes courants, calculé depuis leur solde de départ et les mouvements validés.</p>
-                          {s.accounts.filter(a => a.group === "current").map(a =>
+                          {currentAccounts.map(a =>
                             <Row key={a.id} title={a.name} sub={dateLabel(a.date)} value={money(balance(s,a.id))}/>)}
                           <p>Les échéances à venir ne sont pas incluses dans le solde actuel.</p></>)}>
                       <Info size={17}/>
@@ -5741,6 +5740,25 @@ export default function App() {
                 </div>
                 <div className={`hero-number${currentBalance < 0 ? " negative-money" : ""}`}>{money(currentBalance)}</div>
                 <div className="home-balance-date">Solde actuel · {dateLabel(today())}</div>
+                {currentAccounts.length > 0 && (
+                  <div className="home-current-accounts" aria-label="Soldes de tous les comptes courants">
+                    <div className="home-current-accounts-head">
+                      <strong>Mes comptes courants</strong>
+                      <button type="button" className="text" onClick={() => navigate("wealth")}>
+                        Gérer <ChevronRight size={15} aria-hidden="true"/>
+                      </button>
+                    </div>
+                    <div className="home-current-accounts-list">
+                      {currentAccounts.map(a => (
+                        <button type="button" className="home-current-account-row" key={a.id}
+                          onClick={() => navigate("wealth")} aria-label={a.name + " : " + money(balance(s, a.id)) + ". Voir dans Patrimoine"}>
+                          <span className="home-current-account-name"><Wallet size={16} aria-hidden="true"/><span>{a.name}</span></span>
+                          <strong className={balance(s, a.id) < 0 ? "negative-money" : undefined}>{money(balance(s, a.id))}</strong>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
                 {selectedMonth === month() && current && (
                   <div className="home-balance-available">
                     <div className="block-title"><span>Disponible jusqu’à la fin du mois</span>{availableInfoButton()}</div>
@@ -5751,14 +5769,14 @@ export default function App() {
                 )}
               </section>
 
-              {!s.hidden.includes("personal") && (
+              {ps.account && !s.hidden.includes("personal") && (
                  <button type="button" className="home-personal-shortcut" onClick={()=>navigate("personal")}
-                   aria-label={ps.account?"Ouvrir mon compte perso":"Créer mon compte perso"}>
+                   aria-label="Ouvrir mon compte perso">
                    <span className="home-personal-icon"><UserRound size={22}/></span>
                    <span className="home-personal-copy">
                      <small>Compte perso</small>
-                     <strong className={ps.account && personalBalance(ps,s,personalOwnerId) < 0 ? "negative-money" : undefined}>{ps.account?money(personalBalance(ps,s,personalOwnerId)):"Configurer mon espace"}</strong>
-                     <small>{ps.account?"Mon espace privé":"Suivre mes dépenses personnelles"}</small>
+                     <strong className={personalBalance(ps,s,personalOwnerId) < 0 ? "negative-money" : undefined}>{money(personalBalance(ps,s,personalOwnerId))}</strong>
+                     <small>Mon espace privé</small>
                    </span>
                    <ChevronRight size={20}/>
                  </button>
