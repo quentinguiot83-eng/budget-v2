@@ -1,4 +1,5 @@
 import { WimmWordmark } from "./WimmWordmark";
+import { validateAccountName } from "./accountNames";
 import { revisePaymentPlan, removeCreditPlan } from "./creditSchedules";
 import { APP_VERSION_LABEL, APP_BUILD_ID, APP_BUILD_DATE_LABEL } from "./appVersion";
 import SwipeActions from "./SwipeActions";
@@ -1196,6 +1197,52 @@ export default function App() {
     );
   }
 
+  function addCurrentAccount() {
+    openForm(
+      "Ajouter un compte courant",
+      [
+        field("name", "Nom du compte", "", "text",
+          "Exemples : Compte commun, BoursoBank, Compte secondaire…"),
+        field("opening", "Solde bancaire actuel (€)", 0, "number",
+          "Indiquez le solde réel affiché par votre banque, même s’il est négatif. Les anciennes opérations déjà incluses dans ce solde ne doivent pas être ressaisies."),
+        field("date", "Solde constaté au", today(), "date",
+          "Wimm conservera les opérations de ce compte séparément des autres."),
+      ],
+      async (v) => change(d => {
+        const name = validateAccountName(v.name, d.accounts);
+        if (!v.date || v.date > today())
+          throw Error("La date du solde doit être actuelle ou passée.");
+        const opening = euro(v.opening);
+        if (!Number.isSafeInteger(opening)) throw Error("Solde du compte invalide.");
+        d.accounts.push({
+          id: uid(), name, group: "current",
+          opening, date: v.date, rate: 0,
+          taxMode: "none", taxRate: 0,
+          cap: 0, capType: "balance",
+          contributed: 0, relay: "", allocation: 0,
+        });
+        // Les catégories existantes et les comptes précédents restent inchangés.
+        if (!d.accounts.some(a => a.group === "current" && a.id !== d.accounts[d.accounts.length - 1].id))
+          seedStarterCategories(d, month());
+      }, "Compte courant ajouté"),
+      "Ajouter le compte",
+    );
+  }
+
+  function renameAccount(a: Account) {
+    openForm(
+      "Renommer " + a.name,
+      [field("name", "Nouveau nom du compte", a.name, "text",
+        "Le solde, les transactions et les réglages du compte restent inchangés.")],
+      async (v) => change(d => {
+        const target = d.accounts.find(x => x.id === a.id);
+        if (!target) throw Error("Ce compte n’existe plus.");
+        target.name = validateAccountName(v.name, d.accounts, target.id);
+      }, "Compte renommé"),
+      "Enregistrer le nom",
+    );
+  }
+
   function editAccount(a?: Account) {
     openForm(
       a ? "Modifier le compte" : "Ajouter un compte",
@@ -1444,7 +1491,7 @@ export default function App() {
           const entry = {
             ...a,
             id: a?.id || uid(),
-            name: v.name,
+            name: validateAccountName(v.name, d.accounts, a?.id),
             group: v.group as Account["group"],
             opening: a?.opening ?? euro(v.opening),
             date: a?.date ?? v.date,
@@ -5680,7 +5727,7 @@ export default function App() {
               <section className="balance-card home-balance-main" data-tour="home-overview">
                 <div className="split">
                   <div className="block-title">
-                    <span>Solde du compte commun</span>
+                    <span>{activeHouseholdAccounts.filter(a => a.group === "current").length > 1 ? "Solde des comptes courants" : "Solde du compte commun"}</span>
                     <button type="button" className="block-info" aria-label="Détail du solde"
                       onClick={() => explain("Calcul du solde réel",
                         <><p>Solde des comptes courants, calculé depuis leur solde de départ et les mouvements validés.</p>
@@ -7055,21 +7102,27 @@ export default function App() {
                 <div className="section-head wealth-accounts-heading">
                   <div>
                     <h2>Mes comptes</h2>
-                    <p className="muted">Touchez un compte pour voir ses détails et ses opérations.</p>
+                    <p className="muted">Chaque compte conserve son solde et ses opérations. Touchez-le pour le renommer ou voir son historique.</p>
                   </div>
                   <div className="wealth-accounts-heading-actions">
                     <button type="button" className="secondary wealth-reconcile-accounts" onClick={reconcileHouseholdAccounts}>
                       <RefreshCw size={16}/> Mettre à jour mes comptes
                     </button>
-                    <button type="button" className="primary wealth-add-account" onClick={() => editAccount()}>
-                      <Plus size={17}/> Ajouter
+                    <button type="button" className="primary wealth-add-account wealth-add-current" onClick={addCurrentAccount}>
+                      <Plus size={17}/> Compte courant
+                    </button>
+                    <button type="button" className="secondary wealth-add-account" onClick={() => editAccount()}>
+                      <Plus size={17}/> Autre compte
                     </button>
                   </div>
                 </div>
                 <div className="wealth-accounts-list">
                   {activeHouseholdAccounts.map((a) => (
                     <SwipeActions key={a.id} label={a.name} className="account-swipe-row"
-                      actions={[{ label: "Modifier", icon: <Pencil size={17}/>, onClick: () => editAccount(a) }]}>
+                      actions={[
+                        { label: "Renommer", icon: <Pencil size={17}/>, onClick: () => renameAccount(a) },
+                        { label: "Modifier", icon: <SlidersHorizontal size={17}/>, onClick: () => editAccount(a) },
+                      ]}>
                     <details className={"wealth-account-row wealth-account-" + a.group}>
                       <summary className="wealth-account-summary">
                         <span className="wealth-account-icon">
@@ -7094,6 +7147,12 @@ export default function App() {
                           </div>
                         )}
                         <div className="wealth-account-actions">
+                          <button type="button" className="secondary compact wealth-rename-account" onClick={() => renameAccount(a)}>
+                            <Pencil size={15}/> Renommer
+                          </button>
+                          <button type="button" className="text compact" onClick={() => editAccount(a)}>
+                            <SlidersHorizontal size={15}/> Modifier
+                          </button>
                           {a.group !== "current" && <button type="button" className="primary compact" onClick={() => transfer(a)}>Épargner</button>}
                           <button type="button" className="secondary compact" onClick={() => transfer(undefined, undefined, a)}>Virement</button>
 
