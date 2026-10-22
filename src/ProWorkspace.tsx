@@ -4,6 +4,7 @@ import {
   ArrowRightLeft,
   Briefcase,
   CalendarDays,
+  CircleHelp,
   CheckCircle2,
   ChevronLeft,
   ChevronRight,
