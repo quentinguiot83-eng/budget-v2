@@ -583,3 +583,53 @@
   .trips-management-inline { justify-content:stretch; }
   .trips-management-inline button { flex:1; }
 }
+
+
+/* Accueil : détail de tous les comptes courants, sans confondre les soldes individuels et le total. */
+.app .home-current-accounts {
+  display:grid;gap:7px;margin-top:15px;padding-top:13px;
+  border-top:1px solid var(--border);min-width:0;
+}
+.app .home-current-accounts-head {
+  display:flex;justify-content:space-between;align-items:center;gap:10px;
+}
+.app .home-current-accounts-head>strong {
+  font-size:.77rem;font-weight:770;color:var(--muted);
+}
+.app .home-current-accounts-head button {
+  display:inline-flex;align-items:center;gap:3px;font-size:.73rem;
+  min-height:32px;padding:5px 3px;
+}
+.app .home-current-accounts-list {display:grid;gap:3px;min-width:0;}
+.app .home-current-account-row {
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  width:100%;min-width:0;min-height:42px;padding:8px 10px;text-align:left;
+  border:1px solid transparent;border-radius:11px;
+  background:color-mix(in srgb,var(--surface) 71%,transparent);
+  color:var(--ink);transition:background .15s ease,border-color .15s ease;
+}
+.app .home-current-account-row:hover {
+  background:color-mix(in srgb,var(--wimm-mint-wash) 48%,var(--surface));
+  border-color:var(--border);
+}
+.app .home-current-account-row:focus-visible {outline:2px solid var(--wimm-green);outline-offset:2px;}
+.app .home-current-account-name {
+  display:flex;align-items:center;gap:9px;min-width:0;flex:1;
+  font-size:.79rem;font-weight:670;overflow-wrap:anywhere;
+}
+.app .home-current-account-name svg {flex:0 0 auto;color:var(--muted);}
+.app .home-current-account-name span {min-width:0;}
+.app .home-current-account-row>strong {
+  flex:0 0 auto;font-variant-numeric:tabular-nums;font-size:.82rem;
+  font-weight:800;color:var(--ink);white-space:nowrap;
+}
+.app .home-current-account-row>strong.negative-money {color:var(--negative,#c64a51);}
+@media(max-width:560px) {
+  .app .home-current-accounts {margin-top:11px;padding-top:10px;gap:5px;}
+  .app .home-current-account-row {padding:9px 7px;min-height:41px;gap:8px;}
+  .app .home-current-account-name {font-size:.74rem;gap:7px;}
+  .app .home-current-account-row>strong {font-size:.77rem;}
+}
+@media(prefers-reduced-motion:reduce) {
+  .app .home-current-account-row {transition:none;}
+}
