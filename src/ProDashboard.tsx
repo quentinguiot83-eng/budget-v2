@@ -1,3 +1,4 @@
+import {type ReactNode} from "react";
 import {ArrowDownLeft, ArrowRight, ArrowRightLeft, ArrowUpRight, CalendarDays, ChevronRight, Clock3, TrendingUp, Wallet} from "lucide-react";
 import {
   currentProMonth,formatProMonth,proCashAtMonth,proEuro,proInvoiceRemaining,proMonthStats,
@@ -7,9 +8,9 @@ import "./pro-dashboard.css";
 
 type DashboardProps={
   businessName:string; month:string;transactions:ProCashEntry[];invoices:ProInvoiceSummary[];events:ProEventSummary[];
-  openingBalance:number;onAnalysis:()=>void;onAgenda:()=>void;onBilling:()=>void;onTransfer:()=>void;
+  openingBalance:number;reserve?:ReactNode;onAnalysis:()=>void;onAgenda:()=>void;onBilling:()=>void;onTransfer:()=>void;
 };
-export default function ProDashboard({businessName,month,transactions,invoices,events,openingBalance,onAnalysis,onAgenda,onBilling,onTransfer}:DashboardProps){
+export default function ProDashboard({businessName,month,transactions,invoices,events,openingBalance,reserve,onAnalysis,onAgenda,onBilling,onTransfer}:DashboardProps){
   const isCurrent=month===currentProMonth();
   const data=proMonthStats(transactions,invoices,month);
   const cash=proCashAtMonth(transactions,openingBalance,month);
@@ -27,7 +28,7 @@ export default function ProDashboard({businessName,month,transactions,invoices,e
     <div className="pro-db-heading"><span>TABLEAU DE BORD</span><h1>{businessName||"Mon activité"}</h1><p>L’essentiel de mon entreprise · {formatProMonth(month)}</p></div>
     <section className="pro-db-overview" aria-label="Indicateurs du mois">
       <button className="pro-db-salary" type="button" onClick={onTransfer}>
-        <span className="pro-db-eyebrow">Salaire versé du mois</span>
+        <span className="pro-db-eyebrow">Transferts vers le personnel du mois</span>
         <strong>{proEuro(data.salary)}</strong>
         <span className="pro-db-subline"><ArrowRightLeft size={15}/> Virements Pro → perso <ChevronRight size={17}/></span>
       </button>
@@ -37,6 +38,7 @@ export default function ProDashboard({businessName,month,transactions,invoices,e
       </div>
       <div className="pro-db-treasury"><span><Wallet size={18}/> Trésorerie {isCurrent?"actuelle":"à fin de mois"}</span><strong>{cash===null?"—":proEuro(cash)}</strong><small>Solde du compte Pro, selon les opérations enregistrées</small></div>
     </section>
+    {reserve}
     <button className="pro-db-analysis" type="button" onClick={onAnalysis}>
       <span className="pro-db-analysis-icon"><TrendingUp size={23}/></span>
       <span><strong>Analyse mon entreprise</strong><small>Évolution du CA, charges, clients et trésorerie</small></span>
@@ -50,6 +52,6 @@ export default function ProDashboard({businessName,month,transactions,invoices,e
       <div className="pro-db-section-head"><h2>Factures en attente</h2><button type="button" onClick={onBilling}>Voir les factures <ChevronRight size={16}/></button></div>
       {alerts.length?<><div className="pro-db-alert-summary"><span><Clock3 size={17}/> {alerts.length} facture{alerts.length>1?"s":""} à encaisser</span><strong>{proEuro(alertAmount)}</strong></div>{overdue.length>0&&<p className="pro-db-overdue">{overdue.length} facture{overdue.length>1?"s":""} en retard de paiement</p>}<button type="button" className="pro-db-view-alerts" onClick={onBilling}>Consulter les factures en attente <ArrowRight size={17}/></button></>:<p className="pro-db-empty">Aucune facture impayée à suivre.</p>}
     </section>
-    <p className="pro-db-disclaimer">Le « salaire versé » correspond aux virements du compte Pro vers le personnel. Pour une micro-entreprise, ce sont des prélèvements personnels, pas un salaire comptable.</p>
+    <p className="pro-db-disclaimer">Les virements vers le personnel sont des prélèvements personnels et non des salaires comptables pour une micro-entreprise.</p>
   </div>;
 }
