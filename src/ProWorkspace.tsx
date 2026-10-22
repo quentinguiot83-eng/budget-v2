@@ -52,6 +52,8 @@ type Invoice = { archivedAt?:string|null; id:string; number:string; clientId:str
 type EventItem = { id:string; clientId:string|null; title:string; eventType:string; startsAt:string; endsAt:string; location:string; notes:string };
 type Suite = { enabled:boolean; activeBusinessId?:string|null; businesses?:{id:string;name:string}[]; profile:Profile; account:Account; billing:BillingSettings; clients:Client[]; products:Product[]; transactions:Transaction[]; invoices:Invoice[]; events:EventItem[] };
 type PersonalAccount = { id:string; name:string; archived?:boolean };
+// Never invoke the new Pro → foyer write until the separately reviewed SQL migration is deployed.
+const PRO_TRANSFER_SERVER_ENABLED = false;
 
 type Modal =
   | {type:"none"}
@@ -252,6 +254,7 @@ export default function ProWorkspace({
               clientsCount={suite.clients.length}
               catalogCount={suite.products.filter(p=>p.active).length}
               hasCheckingAccount={transferTargets.length>0}
+              transferReady={PRO_TRANSFER_SERVER_ENABLED}
               onIncome={()=>setModal({type:"income"})}
               onClients={()=>setSection("clients")}
               onCatalog={()=>setSection("catalog")}
@@ -289,6 +292,7 @@ export default function ProWorkspace({
         {modal.type==="expense"&&<TransactionForm kind="expense" clients={suite.clients} createClient={createQuickClient} products={[]} vatEnabled={suite.profile.vatEnabled} defaultVat={suite.profile.vatRate} profile={suite.profile} submit={v=>call("budget_pro_transaction_save",{p_transaction:v},"Dépense enregistrée")}/>} 
         {modal.type==="transfer"&&<TransferForm accounts={transferTargets} balance={currentReserve?.cashBalance??accountBalance}
           available={currentReserve?.availableForPay??0} ratesConfigured={currentReserve?.ratesConfigured??false}
+          serverReady={PRO_TRANSFER_SERVER_ENABLED}
           submit={async v=>{
             const ok=await call("budget_pro_transfer_to_current",{p_transfer:v},"Versement vers le compte courant enregistré");
             if(ok){await load();if(onHouseholdRefresh)await onHouseholdRefresh();}
@@ -601,9 +605,9 @@ function TransactionForm({
 }
 
 function TransferForm({
-  accounts,balance,available,ratesConfigured,submit,
+  accounts,balance,available,ratesConfigured,serverReady,submit,
 }:{
-  accounts:PersonalAccount[];balance:number;available:number;ratesConfigured:boolean;
+  accounts:PersonalAccount[];balance:number;available:number;ratesConfigured:boolean;serverReady:boolean;
   submit:(v:Record<string,unknown>)=>Promise<boolean>;
 }) {
   const [amount,setAmount]=useState("");
@@ -616,6 +620,7 @@ function TransferForm({
   const save=async(event:FormEvent)=>{
     event.preventDefault();
     if(saving)return;
+    if(!serverReady){setError("Le versement sera disponible après la mise à jour sécurisée du serveur Pro.");return;}
     if(!ratesConfigured){setError("Renseigne d’abord tes taux de cotisations ou d’impôts dans Activité.");return;}
     if(!accounts.length||!target||!accounts.some(a=>a.id===target)){setError("Ajoute ou choisis un compte courant dans Patrimoine.");return;}
     if(amountC<=0||amountC>max){setError("Le montant ne doit pas dépasser le disponible estimé, après réserves.");return;}
@@ -643,10 +648,11 @@ function TransferForm({
     </label>
     <label>Date<ProDateTimeInput type="date" max={today()} required value={date} onChange={e=>setDate(e.target.value)}/></label>
     <p className="pro-v4-form-note">Wimm enregistre les deux écritures de façon liée via le module Pro. Réalise le véritable virement séparément dans ta banque. Il ne s’agit pas d’un salaire avec bulletin de paie.</p>
+    {!serverReady&&<p className="prosuite-error" role="status">Cette fonction attend la validation et l’activation de sa mise à jour serveur. Aucun virement ne sera enregistré pour le moment.</p>}
     {!ratesConfigured&&<p className="prosuite-error" role="status">Renseigne d’abord les taux estimés dans les paramètres de ton activité pour calculer le disponible.</p>}
     {!accounts.length&&<p className="prosuite-error" role="status">Crée un compte courant dans Patrimoine avant de poursuivre.</p>}
     {error&&<p role="alert" className="prosuite-error">{error}</p>}
-    <button type="submit" className="prosuite-btn" disabled={saving||!ratesConfigured||!accounts.length||max<=0}>
+    <button type="submit" className="prosuite-btn" disabled={saving||!serverReady||!ratesConfigured||!accounts.length||max<=0}>
       {saving?"Enregistrement…":"Enregistrer le versement"}
     </button>
   </form>;
