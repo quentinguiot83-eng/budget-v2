@@ -32,6 +32,8 @@ import ProCalendarSubscription from "./ProCalendarSubscription";
 import ProDateTimeInput from "./ProDateTimeInput";
 import ProClientPicker, {type ProClientDraft, type ProClientChoice} from "./ProClientPicker";
 import ProDashboard from "./ProDashboard";
+import ProMicroPanel, {readPreferences} from "./ProMicroPanel";
+import {microSummary, type MicroSettings} from "./proMicro";
 import ProAnalysis from "./ProAnalysis";
 import {currentProMonth,formatProMonth,moveProMonth,proCashAtMonth} from "./proFinance";
 import "./pro-suite.css";
@@ -89,6 +91,7 @@ export default function ProWorkspace({ native = false, onOpenQuickAdd }: { nativ
   const [notice,setNotice]=useState("");
   const [busy,setBusy]=useState(false);
   const [personalAccounts,setPersonalAccounts]=useState<PersonalAccount[]>([]);
+  const [microSettings,setMicroSettings]=useState<MicroSettings>({frequency:"monthly",taxMode:"none"});
   const [printInvoice,setPrintInvoice]=useState<Invoice|null>(null);
   const [,tick]=useState(0);
   useEffect(()=>{if(section!=="billing")setBillingQuickCreate(null);},[section]);
@@ -173,9 +176,10 @@ export default function ProWorkspace({ native = false, onOpenQuickAdd }: { nativ
     finally{setBusy(false);}
   }
 
+  useEffect(()=>{setMicroSettings(readPreferences(suite?.activeBusinessId??suite?.account.id??""));},[suite?.activeBusinessId,suite?.account.id]);
   const transactions=suite?.transactions??[];
   const current=transactions.filter(t=>t.paid&&t.date.slice(0,7)===selectedProMonth);
-  const monthIncome=current.filter(t=>t.kind==="income").reduce((s,t)=>s+t.amount,0);
+  const monthIncome=current.filter(t=>t.kind==="income").reduce((s,t)=>s+Math.max(0,t.amount-Math.max(0,t.vatAmount??0)),0);
   const monthExpense=current.filter(t=>t.kind==="expense").reduce((s,t)=>s+t.amount,0);
   const accountBalance=useMemo(()=>{
     if(!suite)return 0; let v=suite.account.openingBalance;
@@ -183,8 +187,9 @@ export default function ProWorkspace({ native = false, onOpenQuickAdd }: { nativ
   },[suite]);
   const nextEvents=(suite?.events??[]).filter(e=>new Date(e.endsAt)>=new Date()).slice(0,5);
   const openInvoices=(suite?.invoices??[]).filter(i=>i.status==="draft"||i.status==="sent"||i.status==="partially_paid");
-  const currentContribution=Math.round(monthIncome*((suite?.profile.contributionRate??0)/100));
-  const currentTax=Math.round(monthIncome*((suite?.profile.taxRate??0)/100));
+  const micro=suite?.profile.legalStatus==="micro"?microSummary(transactions,suite.profile,selectedProMonth,microSettings):null;
+  const currentContribution=micro?.estimatedContribution??Math.round(monthIncome*((suite?.profile.contributionRate??0)/100));
+  const currentTax=micro?.estimatedTax??Math.round(monthIncome*((suite?.profile.taxRate??0)/100));
   const paidContrib=transactions.filter(t=>t.paid&&t.kind==="contribution_payment"&&(t.contributionPeriodKey??t.date.slice(0,7))===selectedProMonth).reduce((s,t)=>s+t.amount,0);
   const paidTax=transactions.filter(t=>t.paid&&t.kind==="tax_payment"&&(t.taxPeriodKey??t.date.slice(0,7))===selectedProMonth).reduce((s,t)=>s+t.amount,0);
 
@@ -212,16 +217,16 @@ export default function ProWorkspace({ native = false, onOpenQuickAdd }: { nativ
       <div className="prosuite-shell">
         <nav className="prosuite-nav prosuite-v3-nav" aria-label="Navigation professionnelle">
           <ProNav active={section==="dashboard"} icon={<LayoutDashboard/>} label="Accueil" onClick={()=>setSection("dashboard")}/>
-          <ProNav active={section==="analysis"} icon={<ChartNoAxesCombined/>} label="Analyse" onClick={()=>setSection("analysis")}/>
           <ProNav active={section==="billing"} icon={<ReceiptText/>} label="Facturation" onClick={()=>setSection("billing")}/>
-          <ProNav active={["management","clients","catalog","agenda","treasury"].includes(section)} icon={<Briefcase/>} label="Gestion" onClick={()=>setSection("management")}/>
+          <ProNav active={["management","clients","catalog","agenda","treasury"].includes(section)} icon={<Briefcase/>} label="Activité" onClick={()=>setSection("management")}/>
+          <ProNav active={section==="analysis"} icon={<ChartNoAxesCombined/>} label="Analyse" onClick={()=>setSection("analysis")}/>
         </nav>
         <main className="prosuite-main">
           {error&&<div className="prosuite-error">{error}</div>}{notice&&<div className="prosuite-notice">{notice}</div>}
           {["dashboard","analysis","agenda","treasury"].includes(section)&&
             <ProMonthNavigator month={selectedProMonth} onChange={setSelectedProMonth} allowFuture={section==="agenda"}/>}
           
-          {["clients","catalog","agenda","treasury"].includes(section)&&<button type="button" className="pro-v3-back" onClick={()=>setSection("management")}><ChevronLeft size={16}/> Gestion</button>}
+          {["clients","catalog","agenda","treasury"].includes(section)&&<button type="button" className="pro-v3-back" onClick={()=>setSection("management")}><ChevronLeft size={16}/> Activité</button>}
           {busy&&!suite?<div className="prosuite-loading">Chargement…</div>:suite&&<>
             {section==="dashboard"&&<ProDashboard
               businessName={suite.profile.businessName}
@@ -230,6 +235,18 @@ export default function ProWorkspace({ native = false, onOpenQuickAdd }: { nativ
               invoices={suite.invoices}
               events={suite.events}
               openingBalance={suite.account.openingBalance}
+              reserve={suite.profile.legalStatus==="micro"?<ProMicroPanel
+                businessId={suite.activeBusinessId??suite.account.id}
+                profile={suite.profile} transactions={suite.transactions}
+                month={selectedProMonth} balance={proCashAtMonth(suite.transactions,suite.account.openingBalance,selectedProMonth)??accountBalance}
+                onSettingsChange={setMicroSettings}
+                onActivitySettings={()=>setModal({type:"profile"})}
+                onContributionPayment={()=>setModal({type:"payment",paymentType:"contribution"})}
+                onTaxPayment={()=>setModal({type:"payment",paymentType:"tax"})}
+                onIncome={()=>setModal({type:"income"})}
+                onInvoice={()=>{setBillingQuickCreate("invoice");setSection("billing");}}
+                onTransfer={()=>setModal({type:"transfer"})}
+              />:undefined}
               onAnalysis={()=>setSection("analysis")}
               onAgenda={()=>setSection("agenda")}
               onBilling={()=>setSection("billing")}
@@ -243,7 +260,7 @@ export default function ProWorkspace({ native = false, onOpenQuickAdd }: { nativ
               openingBalance={suite.account.openingBalance}
             />}
             {section==="management"&&<section className="pro-v3-management">
-              <div className="pro-v3-pageheading"><span>GESTION</span><h1>Mon entreprise</h1><p>Les outils au même endroit.</p></div>
+              <div className="pro-v3-pageheading"><span>ACTIVITÉ</span><h1>Gérer mon activité</h1><p>Mes clients, mes prestations, mes rendez-vous et ma trésorerie.</p></div>
               <div className="pro-v3-management-grid">
                 {([{key:"clients",label:"Clients",desc:"Fiches et coordonnées",Icon:Users},{key:"catalog",label:"Produits & services",desc:"Catalogue et tarifs",Icon:Package},{key:"treasury",label:"Trésorerie",desc:"Opérations, virements et cotisations",Icon:Wallet},{key:"agenda",label:"Agenda",desc:"Interventions et rendez-vous",Icon:CalendarDays}] as const).map(({key,label,desc,Icon})=><button type="button" key={key} onClick={()=>setSection(key)}><Icon size={22}/><span><strong>{label}</strong><small>{desc}</small></span><ChevronRight size={17}/></button>)}
               </div>
@@ -252,7 +269,7 @@ export default function ProWorkspace({ native = false, onOpenQuickAdd }: { nativ
             {section==="billing"&&<ProBillingV2 suite={suite} initialAction={billingQuickCreate} onSuite={next=>setSuite(next as Suite)} setError={setError} setNotice={setNotice}/>} 
             {section==="catalog"&&<CatalogPage products={suite.products} add={()=>setModal({type:"product"})} edit={p=>setModal({type:"product",product:p})} remove={p=>void removeProduct(p)}/>} 
             {section==="agenda"&&<AgendaPage month={selectedProMonth} connect={suite.activeBusinessId?()=>setModal({type:"calendar",businessId:suite.activeBusinessId!}):undefined} events={suite.events} clients={suite.clients} add={date=>setModal({type:"event",initialDate:date})} edit={e=>setModal({type:"event",event:e})} remove={e=>void removeEvent(e)}/>}
-            {section==="treasury"&&<TreasuryPage month={selectedProMonth} suite={suite} balance={proCashAtMonth(suite.transactions,suite.account.openingBalance,selectedProMonth)??accountBalance} contribution={{estimated:currentContribution,paid:paidContrib}} tax={{estimated:currentTax,paid:paidTax}} income={()=>setModal({type:"income"})} expense={()=>setModal({type:"expense"})} transfer={()=>setModal({type:"transfer"})} contributionPay={()=>setModal({type:"payment",paymentType:"contribution"})} taxPay={()=>setModal({type:"payment",paymentType:"tax"})} account={()=>setModal({type:"account"})} profile={()=>setModal({type:"profile"})} removeTx={id=>void removeTx(id)}/>} 
+            {section==="treasury"&&<TreasuryPage month={selectedProMonth} suite={suite} balance={proCashAtMonth(suite.transactions,suite.account.openingBalance,selectedProMonth)??accountBalance} contribution={{estimated:currentContribution,paid:micro?.paidContribution??paidContrib}} tax={{estimated:currentTax,paid:micro?.paidTax??paidTax}} income={()=>setModal({type:"income"})} expense={()=>setModal({type:"expense"})} transfer={()=>setModal({type:"transfer"})} contributionPay={()=>setModal({type:"payment",paymentType:"contribution"})} taxPay={()=>setModal({type:"payment",paymentType:"tax"})} account={()=>setModal({type:"account"})} profile={()=>setModal({type:"profile"})} removeTx={id=>void removeTx(id)}/>} 
           </>}
         </main>
       </div>
@@ -265,7 +282,7 @@ export default function ProWorkspace({ native = false, onOpenQuickAdd }: { nativ
         {modal.type==="income"&&<TransactionForm kind="income" clients={suite.clients} createClient={createQuickClient} products={suite.products} vatEnabled={suite.profile.vatEnabled} defaultVat={suite.profile.vatRate} submit={v=>call("budget_pro_transaction_save",{p_transaction:v},"Encaissement enregistré")}/>} 
         {modal.type==="expense"&&<TransactionForm kind="expense" clients={suite.clients} createClient={createQuickClient} products={[]} vatEnabled={suite.profile.vatEnabled} defaultVat={suite.profile.vatRate} submit={v=>call("budget_pro_transaction_save",{p_transaction:v},"Dépense enregistrée")}/>} 
         {modal.type==="transfer"&&<TransferForm accounts={personalAccounts} balance={accountBalance} submit={async v=>{const ok=await call("budget_pro_transfer_personal",{p_transfer:v},"Virement enregistré");if(ok)await load();return ok;}}/>} 
-        {modal.type==="payment"&&<ReservePaymentForm type={modal.paymentType} periodKey={selectedProMonth} estimated={modal.paymentType==="contribution"?Math.max(0,currentContribution-paidContrib):Math.max(0,currentTax-paidTax)} submit={v=>call(modal.paymentType==="contribution"?"budget_pro_contribution_payment_save":"budget_pro_tax_payment_save",{p_payment:v},"Paiement enregistré")}/>} 
+        {modal.type==="payment"&&<ReservePaymentForm type={modal.paymentType} periodKey={micro?.period.key??selectedProMonth} estimated={modal.paymentType==="contribution"?(micro?.dueContribution??Math.max(0,currentContribution-paidContrib)):(micro?.dueTax??Math.max(0,currentTax-paidTax))} submit={v=>call(modal.paymentType==="contribution"?"budget_pro_contribution_payment_save":"budget_pro_tax_payment_save",{p_payment:v},"Paiement enregistré")}/>} 
         {modal.type==="billing-settings"&&<BillingSettingsForm value={suite.billing} submit={v=>call("budget_pro_billing_save",{p_settings:v},"Coordonnées de facturation enregistrées")}/>} 
         {modal.type==="account"&&<AccountForm value={suite.account} submit={v=>call("budget_pro_account_save",{p_account:v},"Compte professionnel mis à jour")}/>} 
         {modal.type==="profile"&&<ProfileForm value={suite.profile} submit={v=>call("budget_pro_profile_save",{p_profile:v},"Activité mise à jour")}/>} 
