@@ -1,9 +1,10 @@
 import { useMemo, useState, type ChangeEvent } from "react";
-import { AlertCircle, ArrowLeftRight, CheckCircle2, FileSpreadsheet, UploadCloud } from "lucide-react";
+import { AlertCircle, ArrowLeftRight, CheckCircle2, ChevronDown, FileSpreadsheet, UploadCloud } from "lucide-react";
 import { today, money, type State, type Tx } from "./engine";
 import { convertBankRows, findBankDuplicateCandidates, guessBankMapping, parseBankCsv, reconcileBankRows,
   MAX_BANK_CSV_BYTES, type BankDuplicateCandidate, type CsvMapping, type CsvTable, type BankRow, type ReconciledRow } from "./bankImport";
 import { quickSuggestions } from "./quickEntry";
+import { isLikelyBankTransfer, suggestedBulkMatches } from "./bankReview";
 import "./bankReconciliation.css";
 
 export type BankDraft = Pick<Tx,"date"|"type"|"amount"|"description"|"account"|"category"|"incomeType"|"bankImportKey">;
@@ -30,7 +31,9 @@ export default function BankReconciliation({state,onImport}:Props){
   const [message,setMessage]=useState("");
   const [error,setError]=useState("");
   const [visible,setVisible]=useState(100);
-  const [pendingOnly,setPendingOnly]=useState(true);
+  const [reviewTab,setReviewTab]=useState<"todo"|"new"|"possible"|"matched"|"all">("todo");
+  const [mappingOpen,setMappingOpen]=useState(false);
+  const [batchCategory,setBatchCategory]=useState("");
   const accountStart=accounts.find(a=>a.id===account)?.date||today();
   const matched=useMemo(()=>reconcileBankRows(rows,state.transactions,account),[rows,state.transactions,account]);
   const matchedCount=matched.filter(r=>r.status==="matched").length;
@@ -53,15 +56,30 @@ export default function BankReconciliation({state,onImport}:Props){
     return out;
   },[matched,state]);
   const selection=selected.map(i=>matched.find(row=>row.index===i)).filter((r):r is ReconciledRow=>!!r);
-  const visibleRows=matched.filter(r=>!pendingOnly || (r.status!=="matched" && !(r.status==="possible" && duplicateChoices[r.index]?.action==="skip")));
-  const safeNewRows=matched.filter(r=>r.status==="new" && r.date>=accountStart && r.date<=today()
-    && (r.type==="income" || !!(categoriesByRow[r.index]??suggestions[r.index]))
-    // Virements internes : jamais pré-sélectionnés, car il ne faut pas les compter comme dépenses/revenus.
-    && !/\\b(vir|virement|transfert|livret|interne|compte a compte)\\b/i.test(r.description.normalize("NFD").replace(/[\\u0300-\\u036f]/g,"")));
+  const countNew=matched.filter(r=>r.status==="new" || (r.status==="possible"&&duplicateChoices[r.index]?.action==="import")).length;
+  const countToReview=matched.filter(r=>r.status==="possible"&&!duplicateChoices[r.index]).length;
+  const countMatched=matchedCount+resolvedExisting;
+  const visibleRows=matched.filter(r=>{
+    const resolvedAsExisting=r.status==="matched" || (r.status==="possible"&&duplicateChoices[r.index]?.action==="skip");
+    const unresolved=r.status==="possible"&&!duplicateChoices[r.index];
+    const newOperation=r.status==="new"||(r.status==="possible"&&duplicateChoices[r.index]?.action==="import");
+    if(reviewTab==="matched")return resolvedAsExisting;
+    if(reviewTab==="new")return newOperation;
+    if(reviewTab==="possible")return unresolved;
+    if(reviewTab==="todo")return unresolved || newOperation;
+    return true;
+  });
+  const newRowsForBatch=matched.filter(r=>r.status==="new" && r.date>=accountStart && r.date<=today() &&
+    !isLikelyBankTransfer(r.description));
+  const unmatchedExpenses=selection.filter(r=>r.type==="expense" && !(categoriesByRow[r.index]??suggestions[r.index])).length;
+  const bestMatches=useMemo(()=>suggestedBulkMatches(
+    matched,candidatesByRow,state.transactions.filter(t=>t.account===account),duplicateChoices
+  ),[matched,candidatesByRow,state.transactions,account,duplicateChoices]);
   function effectiveCategory(row:ReconciledRow){return categoriesByRow[row.index]??suggestions[row.index]??"";}
   function resetPreview(){
     setRows([]);setSelected([]);setCategoriesByRow({});
     setDuplicateChoices({});setExpandedCandidates([]);setConfirm(false);setVisible(100);
+    setReviewTab("todo");setBatchCategory("");
   }
   async function openFile(e:ChangeEvent<HTMLInputElement>){
     const file=e.target.files?.[0];e.currentTarget.value="";
@@ -70,7 +88,17 @@ export default function BankReconciliation({state,onImport}:Props){
     try{
       if(file.size>MAX_BANK_CSV_BYTES)throw Error("Fichier CSV trop volumineux (4 Mo maximum).");
       const next=parseBankCsv(await file.text());
-      setTable(next);setMap(guessBankMapping(next.columns));setFileName(file.name);
+      const guessed=guessBankMapping(next.columns);
+      setTable(next);setMap(guessed);setFileName(file.name);
+      // Start comparison immediately when the bank's column names are recognized.
+      // If an uncommon export needs correction, retain the mapping form.
+      try {
+        const converted=convertBankRows(next,guessed);
+        if(converted.some(r=>r.date>today()))throw Error("Le relevé contient des opérations futures.");
+        setRows(converted);setMappingOpen(false);
+      }catch{
+        setMappingOpen(true);
+      }
     }catch(ex){setError(ex instanceof Error?ex.message:"Ce CSV ne peut pas être lu.");}
   }
   function analyse(){
@@ -79,7 +107,7 @@ export default function BankReconciliation({state,onImport}:Props){
     try{
       const result=convertBankRows(table,map);
       if(result.some(r=>r.date>today()))throw Error("Le CSV contient des opérations futures. Vérifiez le fichier et les dates.");
-      setRows(result);
+      setRows(result);setMappingOpen(false);
     }catch(e){setError(e instanceof Error?e.message:"Impossible d’analyser le fichier.");}
   }
   function toggle(index:number){
@@ -98,6 +126,32 @@ export default function BankReconciliation({state,onImport}:Props){
     setError("");
     setDuplicateChoices(old=>({...old,[index]:{action:"import"}}));
     setSelected(old=>old.includes(index)?old:[...old,index]);setConfirm(false);
+  }
+  function acceptClearMatches(){
+    if(!bestMatches.length)return;
+    setDuplicateChoices(old=>{
+      const next={...old};
+      for(const match of bestMatches)next[match.rowIndex]={action:"skip",transactionId:match.transactionId};
+      return next;
+    });
+    const confirmed=new Set(bestMatches.map(m=>m.rowIndex));
+    setSelected(old=>old.filter(i=>!confirmed.has(i)));
+    setConfirm(false);setMessage(bestMatches.length+" correspondance(s) confirmée(s) sans créer de nouvelle transaction.");
+  }
+  function selectAllNew(){
+    const ids=new Set(newRowsForBatch.map(r=>r.index));
+    setSelected(old=>[...new Set([...old,...ids])]);
+    setConfirm(false);
+    setReviewTab("new");
+  }
+  function applyCategoryToSelection(){
+    if(!batchCategory || !categories.some(c=>c.id===batchCategory))return;
+    setCategoriesByRow(old=>{
+      const next={...old};
+      for(const row of selection)if(row.type==="expense")next[row.index]=batchCategory;
+      return next;
+    });
+    setConfirm(false);
   }
   async function importRows(){
     if(busy||!confirm||!selection.length)return;
