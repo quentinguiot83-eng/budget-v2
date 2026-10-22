@@ -56,7 +56,9 @@ export default function ProMicroStatus({
         <small>{settings.taxMode==="none"?"Hors versement libératoire : à estimer séparément":s.taxRate.toLocaleString("fr-FR")+"% · "+proFullEuro(s.paidTax)+" payé"}</small></div>
     </div>
     <div className="pro-v4-micro-actions">
-      <button type="button" onClick={onContributionPayment}><CheckCircle2 size={16}/> Paiement Urssaf effectué</button>
+      {s.contributionSettled
+        ?<span className="pro-v4-micro-settled"><CheckCircle2 size={16}/> Cotisations réglées — réserve à 0 €. Pour corriger le montant payé, utilise « Modifier » dans les paiements enregistrés ci-dessous.</span>
+        :<button type="button" onClick={onContributionPayment}><CheckCircle2 size={16}/> Paiement Urssaf effectué</button>}
       {settings.taxMode!=="none"&&<button type="button" onClick={onTaxPayment}><CheckCircle2 size={16}/> Impôt payé</button>}
     </div>
     {(s.ratesNeedReview||s.taxRateNeedsReview)&&
