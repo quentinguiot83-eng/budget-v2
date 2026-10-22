@@ -7147,20 +7147,20 @@ export default function App() {
               </div>
 
               <section className="projection-main-card">
-                <div className="projection-main-heading"><ChartNoAxesCombined size={19}/>Patrimoine global estimé dans {years} an{years > 1 ? "s" : ""}</div>
-                <strong className="projection-main-amount">{finalProjection ? projectionMoney(finalProjection.total) : "—"}</strong>
-                <p>{finalProjection ? monthLabel(finalProjection.date) : "Simulation en cours"} · Avant fiscalité estimée · Comptes courants, placements et voyages inclus.</p>
+                <div className="projection-main-heading"><ChartNoAxesCombined size={19}/>Patrimoine hors voyage estimé dans {years} an{years > 1 ? "s" : ""}</div>
+                <strong className="projection-main-amount">{finalProjection ? projectionMoney(finalProjection.current + finalProjection.wealth) : "—"}</strong>
+                <p>{finalProjection ? monthLabel(finalProjection.date) : "Simulation en cours"} · Avant fiscalité estimée · Comptes courants et placements, hors épargne voyage.</p>
               </section>
 
               <div className="projection-kpis">
                 <section className="projection-kpi">
                   <Wallet size={21}/>
-                  <span>Hors épargne voyage</span>
-                  <strong>{finalProjection ? projectionMoney(finalProjection.current + finalProjection.wealth) : "—"}</strong>
+                  <span>Après fiscalité estimée (hors voyage)</span>
+                  <strong>{finalProjection ? projectionMoney(finalProjection.current + finalProjection.wealthNet) : "—"}</strong>
                 </section>
                 <section className="projection-kpi">
                   <Plane size={21}/>
-                  <span>Dont épargne voyage</span>
+                  <span>Épargne voyage (séparée)</span>
                   <strong>{finalProjection ? projectionMoney(finalProjection.travel) : "—"}</strong>
                 </section>
               </div>
@@ -7187,8 +7187,9 @@ export default function App() {
                   </p>
                   <p>
                     Les sommes non affectées à un placement restent sur le compte courant
-                    et sont incluses dans la courbe Patrimoine. L’épargne dédiée
-                    aux voyages est incluse dans le patrimoine global et affichée séparément.
+                    et sont incluses dans la courbe verte « Patrimoine hors voyage ».
+                    L’épargne dédiée aux voyages est exclue des courbes de patrimoine
+                    brut et après fiscalité ; elle reste visible sur sa propre courbe.
                     Les rendements sont des hypothèses, pas des garanties. Un
                     projet lié à un voyage est réduit des virements de
                     financement déjà effectués.
@@ -7273,11 +7274,11 @@ export default function App() {
                     <details key={p.date} className="projection-year-card">
                       <summary>
                         <span>{monthLabel(p.date)}</span>
-                        <strong>{projectionMoney(p.total)}</strong>
+                        <strong>{projectionMoney(p.current + p.wealth)}</strong>
                         <ChevronRight size={15}/>
                       </summary>
                       <div className="projection-year-details">
-                        <div><span>Après fiscalité</span><strong>{projectionMoney(p.current + p.wealthNet + p.travel)}</strong></div>
+                        <div><span>Après fiscalité (hors voyage)</span><strong>{projectionMoney(p.current + p.wealthNet)}</strong></div>
                         <div><span>Épargne investie cumulée</span><strong>{projectionMoney(p.savedTotal)}</strong></div>
                         <div><span>Intérêts année précédente</span><strong>{p.interest > 0 ? "+ " + projectionMoney(p.interest) : "—"}</strong></div>
                         <div><span>Fiscalité estimée</span><strong>{projectionMoney(p.taxEstimate)}</strong></div>
@@ -7288,13 +7289,13 @@ export default function App() {
                 </div>
                 <div className="projection-annual-table">
                   <table>
-                    <thead><tr><th>Date</th><th>Patrimoine global</th><th>Après fiscalité</th><th>Intérêts année précédente</th><th>Épargne investie</th><th>Dont voyages</th></tr></thead>
+                    <thead><tr><th>Date</th><th>Patrimoine hors voyage</th><th>Après fiscalité (hors voyage)</th><th>Intérêts année précédente</th><th>Épargne investie</th><th>Épargne voyage</th></tr></thead>
                     <tbody>
                       {projectionData.filter(p => p.date.endsWith("-01")).map(p => (
                         <tr key={p.date}>
                           <td>{monthLabel(p.date)}</td>
-                          <td><strong>{projectionMoney(p.total)}</strong></td>
-                          <td>{projectionMoney(p.current + p.wealthNet + p.travel)}</td>
+                          <td><strong>{projectionMoney(p.current + p.wealth)}</strong></td>
+                          <td>{projectionMoney(p.current + p.wealthNet)}</td>
                           <td>{p.interest > 0 ? "+ " + projectionMoney(p.interest) : "—"}</td>
                           <td>{projectionMoney(p.savedTotal)}</td>
                           <td>{projectionMoney(p.travel)}</td>
