@@ -1,5 +1,6 @@
 import { WimmWordmark } from "./WimmWordmark";
 import { validateAccountName } from "./accountNames";
+import { accountLinks, accountRemovalBlockers, canArchiveAccount, canDeleteAccount, removeAccountSafely } from "./accountRemoval";
 import { revisePaymentPlan, removeCreditPlan } from "./creditSchedules";
 import { APP_VERSION_LABEL, APP_BUILD_ID, APP_BUILD_DATE_LABEL } from "./appVersion";
 import SwipeActions from "./SwipeActions";
@@ -1240,6 +1241,45 @@ export default function App() {
         target.name = validateAccountName(v.name, d.accounts, target.id);
       }, "Compte renommé"),
       "Enregistrer le nom",
+    );
+  }
+
+  function deleteAccount(a: Account) {
+    // All dependent records are stored by account ID: never orphan transactions,
+    // fixed payments, loans or projects while deleting an account.
+    const links = accountLinks(s, a.id);
+    if (canDeleteAccount(links)) {
+      confirmAction(
+        "Supprimer définitivement « " + a.name + " » ?",
+        "Ce compte ne possède aucune opération, aucun crédit et aucune donnée liée. Sa suppression est définitive. Le solde enregistré (" +
+          money(links.balance) + ") ne figurera plus dans les totaux de Wimm.",
+        async () => change(d => removeAccountSafely(d, a.id, "delete"), "Compte supprimé"),
+      );
+      return;
+    }
+    if (canArchiveAccount(links)) {
+      confirmAction(
+        "Archiver « " + a.name + " » ?",
+        "Ce compte contient " + links.transactions + " opération(s) historiques. Elles seront conservées et le compte sera masqué des soldes actifs et des projections. " +
+          "Son solde est de 0 €. Vous pourrez le restaurer depuis la rubrique « Comptes archivés » de Patrimoine.",
+        async () => change(d => removeAccountSafely(d, a.id, "archive"), "Compte archivé"),
+      );
+      return;
+    }
+    const blockers = accountRemovalBlockers(links);
+    explain("Impossible de supprimer « " + a.name + " » pour le moment", <>
+      <p>Ce compte est encore lié à des données financières. Le supprimer maintenant pourrait fausser vos comptes et effacer des références importantes.</p>
+      {blockers.length > 0 && <ul>{blockers.map((item, index) => <li key={index}>{item}</li>)}</ul>}
+      <p>Conservez l'historique : transférez le solde restant, puis détachez les crédits, échéances, prêts ou projets liés. Une fois le compte à zéro et ses engagements retirés, vous pourrez l'archiver depuis ici.</p>
+      <p>Si le compte est nouveau et sans aucune donnée liée, le bouton « Supprimer » le retirera définitivement.</p>
+    </>);
+  }
+
+  function restoreArchivedAccount(a: Account) {
+    confirmAction(
+      "Restaurer « " + a.name + " » ?",
+      "Le compte réapparaîtra dans Patrimoine, dans l’accueil s’il s’agit d’un compte courant, et dans les listes d’opérations. Son historique sera conservé.",
+      async () => change(d => removeAccountSafely(d, a.id, "restore"), "Compte restauré"),
     );
   }
 
@@ -7140,6 +7180,7 @@ export default function App() {
                       actions={[
                         { label: "Renommer", icon: <Pencil size={17}/>, onClick: () => renameAccount(a) },
                         { label: "Modifier", icon: <SlidersHorizontal size={17}/>, onClick: () => editAccount(a) },
+                        { label: "Supprimer", icon: <Trash2 size={17}/>, tone: "danger" as const, onClick: () => deleteAccount(a) },
                       ]}>
                     <details className={"wealth-account-row wealth-account-" + a.group}>
                       <summary className="wealth-account-summary">
@@ -7171,6 +7212,9 @@ export default function App() {
                           <button type="button" className="text compact" onClick={() => editAccount(a)}>
                             <SlidersHorizontal size={15}/> Modifier
                           </button>
+                          <button type="button" className="text compact wealth-delete-account danger-text" onClick={() => deleteAccount(a)}>
+                            <Trash2 size={15}/> Supprimer
+                          </button>
                           {a.group !== "current" && <button type="button" className="primary compact" onClick={() => transfer(a)}>Épargner</button>}
                           <button type="button" className="secondary compact" onClick={() => transfer(undefined, undefined, a)}>Virement</button>
 
@@ -7197,6 +7241,20 @@ export default function App() {
                   ))}
                   {!activeHouseholdAccounts.length && <p className="muted wealth-account-empty">Aucun compte disponible. Ajoutez votre premier compte.</p>}
                 </div>
+                {s.accounts.some(a => a.archived && a.group !== "personal") && (
+                  <details className="wealth-archived-section">
+                    <summary>Comptes archivés ({s.accounts.filter(a => a.archived && a.group !== "personal").length})</summary>
+                    <p className="muted">Leur historique est conservé ; ils sont exclus des soldes actifs.</p>
+                    <div className="wealth-archived-list">
+                      {s.accounts.filter(a => a.archived && a.group !== "personal").map(a => (
+                        <div className="wealth-archived-row" key={a.id}>
+                          <span className="wealth-archived-name"><strong>{a.name}</strong><small>{a.group === "current" ? "Compte courant" : a.group === "travel" ? "Voyage" : "Épargne"}</small></span>
+                          <button type="button" className="secondary compact" onClick={() => restoreArchivedAccount(a)}>Restaurer</button>
+                        </div>
+                      ))}
+                    </div>
+                  </details>
+                )}
               </section>
 
               <button type="button" className="wealth-projection-link" onClick={() => navigate("projection")}>
