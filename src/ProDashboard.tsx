@@ -4,7 +4,7 @@ import {
 } from "lucide-react";
 import {type ReserveEstimate} from "./proReserve";
 import {
-  currentProMonth,formatProMonth,proEuro,proInvoiceRemaining,unpaidProInvoices,
+  currentProMonth,formatProMonth,proEuro,proFullEuro,proInvoiceRemaining,unpaidProInvoices,
   type ProInvoiceSummary,type ProEventSummary,
 } from "./proFinance";
 import "./pro-dashboard.css";
@@ -47,16 +47,16 @@ export default function ProDashboard({
     <section className="pro-v4-cash-hero" aria-label="Trésorerie professionnelle">
       <div className="pro-v4-cash-top">
         <div><small><Wallet size={17}/> Solde du compte professionnel</small>
-          <strong>{reserve.cashBalance===null?"—":proEuro(reserve.cashBalance)}</strong>
+          <strong>{reserve.cashBalance===null?"—":proFullEuro(reserve.cashBalance)}</strong>
         </div>
         <button type="button" className="pro-v4-textlink" onClick={onTreasury}>Voir le détail <ChevronRight size={16}/></button>
       </div>
       <div className="pro-v4-cash-flow">
         <button className="pro-v4-cash-reserved pro-v4-cash-detail" type="button" onClick={onTreasury} title="Voir le détail des cotisations et des impôts">
-          <span>À mettre de côté</span><strong>{proEuro(reserve.totalToKeep)}</strong>
+          <span>À mettre de côté</span><strong>{proFullEuro(reserve.totalToKeep)}</strong>
           <small>Voir les cotisations <ChevronRight size={13}/></small>
         </button>
-        <div className="pro-v4-cash-available"><span>Disponible estimé</span><strong>{reserve.availableForPay===null?"—":proEuro(reserve.availableForPay)}</strong></div>
+        <div className="pro-v4-cash-available"><span>Disponible estimé</span><strong>{reserve.availableForPay===null?"—":proFullEuro(reserve.availableForPay)}</strong></div>
       </div>
       <p className="pro-v4-fiscal-note"><CircleHelp size={14}/> Réserves estimées, sans prélèvement automatique.</p>
     </section>
