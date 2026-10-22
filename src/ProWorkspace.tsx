@@ -35,8 +35,8 @@ import ProDashboard from "./ProDashboard";
 import ProAnalysis from "./ProAnalysis";
 import {currentProMonth,formatProMonth,moveProMonth,proCashAtMonth} from "./proFinance";
 import {calculateProReserve,previewReceiptReserves,type ReserveEstimate} from "./proReserve";
-import "./pro-v4.css";
 import "./pro-suite.css";
+import "./pro-v4.css";
 
 type Section = "dashboard" | "analysis" | "billing" | "management" | "clients" | "catalog" | "agenda" | "treasury";
 type PaymentMethod = "card" | "check" | "cash" | "transfer" | "other";
