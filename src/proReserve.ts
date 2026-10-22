@@ -3,11 +3,14 @@
  * Percentages are user-configured, NOT statutory tax rates.
  */
 import { proCashAtMonth, currentProMonth, type ProCashEntry } from "./proFinance";
+import {microPeriod,type MicroFrequency} from "./proMicro";
 
 export type ProReserveProfile = {
   contributionRate: number;
   taxRate: number;
   vatEnabled: boolean;
+  // Micro only: any recorded Urssaf payment closes its declaration period.
+  settledContributionFrequency?: MicroFrequency;
 };
 export type ReserveEstimate = {
   month: string;
@@ -42,7 +45,7 @@ const todayLocal=()=>{
  * outstanding envelopes, not the original sales figure.
  */
 export function calculateProReserve(
-  items: readonly (ProCashEntry & {vatAmount?:number})[],
+  items: readonly (ProCashEntry & {vatAmount?:number;contributionPeriodKey?:string|null})[],
   openingBalance:number,
   profile:ProReserveProfile,
   month=currentProMonth(),
@@ -60,7 +63,18 @@ export function calculateProReserve(
   const accruedTax=income.reduce((n,t)=>n+Math.round(base(t)*rateTax/100),0);
   const paidContrib=eligible.filter(t=>t.kind==="contribution_payment").reduce((n,t)=>n+t.amount,0);
   const paidTax=eligible.filter(t=>t.kind==="tax_payment").reduce((n,t)=>n+t.amount,0);
-  const contributionsOwed=Math.max(0,accruedContrib-paidContrib);
+  // For a micro-business, declaring an actual Urssaf payment settles the assigned
+  // month/quarter regardless of the difference from the indicative estimate.
+  // Only *real* ledger debits affect cash. Later, unclosed periods still accrue.
+  const freq=profile.settledContributionFrequency;
+  let contributionsOwed=Math.max(0,accruedContrib-paidContrib);
+  if(freq){
+    const normalized=(dateOrMonth:string)=>microPeriod(dateOrMonth.slice(0,7),freq).key;
+    const settledPeriods=new Set(eligible.filter(t=>t.kind==="contribution_payment"&&t.amount>0)
+      .map(t=>normalized(t.contributionPeriodKey??t.date)));
+    contributionsOwed=income.reduce((due,t)=>
+      settledPeriods.has(normalized(t.date))?due:due+Math.round(base(t)*rateContrib/100),0);
+  }
   const taxOwed=Math.max(0,accruedTax-paidTax);
   // VAT collection is indicative: real VAT liability/payment reporting is not
   // yet tracked separately in the Pro ledger.
