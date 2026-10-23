@@ -14,29 +14,8 @@
         {
           "key": "Cache-Control",
           "value": "no-cache"
-        },
-        {
-          "key": "Service-Worker-Allowed",
-          "value": "/"
         }
       ]
     }
-  ],
-  "crons": [
-    {
-      "path": "/api/push-cron",
-      "schedule": "0 6 * * *"
-    }
-  ],
-  "functions": {
-    "api/push.ts": {
-      "maxDuration": 60
-    },
-    "api/push-cron.ts": {
-      "maxDuration": 60
-    },
-    "api/push-test.ts": {
-      "maxDuration": 60
-    }
-  }
+  ]
 }
