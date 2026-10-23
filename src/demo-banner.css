@@ -1,0 +1,5 @@
+.demo-banner.wimm-demo-public{display:flex;align-items:center;justify-content:space-between;gap:12px;position:relative;z-index:2}
+.demo-banner.wimm-demo-public .demo-banner-info{font-weight:600}
+.demo-banner.wimm-demo-public button{border:1px solid currentColor;border-radius:12px;padding:7px 12px;font-size:.78rem;font-weight:650}
+.demo-banner.wimm-demo-public button:hover{background:rgba(255,255,255,.1)}
+@media(max-width:500px){.demo-banner.wimm-demo-public{font-size:.7rem;gap:6px;padding:8px 11px}.demo-banner.wimm-demo-public button{padding:6px 8px;white-space:nowrap}}
