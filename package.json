@@ -11,7 +11,8 @@
     "test:pro-invoice": "node --import tsx --test src/proReceiptInvoice.test.ts",
     "test:pro-micro": "node --import tsx --test src/proMicro.test.ts",
     "test:pro-reconcile": "node --import tsx --test src/proReconciliation.test.ts",
-    "prebuild": "npm run test:pro-invoice && npm run test:pro-micro && npm run test:pro-reconcile"
+    "prebuild": "npm run test:pro-invoice && npm run test:pro-micro && npm run test:pro-reconcile && npm run test:demo",
+    "test:demo": "node --import tsx --test src/demo.test.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.57.0",
