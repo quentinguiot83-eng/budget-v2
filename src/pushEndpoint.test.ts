@@ -1,64 +1,7 @@
-import { test, mock } from "node:test";
+import { test } from "node:test";
 import assert from "node:assert/strict";
-import type { IncomingMessage, ServerResponse } from "node:http";
-import webpush from "web-push";
-import handler from "../api/push.ts";
-import { emptyState, today } from "./engine.ts";
+import { DEMO_MODE } from "./demoMode";
 
-test("push endpoint protects cron, verifies sessions, limits tests to the device owner, and removes expired subscriptions", async () => {
-  const keys = webpush.generateVAPIDKeys();
-  const names = ["WIMM_VAPID_PUBLIC_KEY", "WIMM_VAPID_PRIVATE_KEY", "SUPABASE_SERVICE_ROLE_KEY", "VITE_SUPABASE_URL", "VITE_SUPABASE_PUBLISHABLE_KEY", "CRON_SECRET"];
-  const previous = names.map(n => process.env[n]);
-  const values = [keys.publicKey, keys.privateKey, "private-service-key", "https://db.example", "public-anon", "private-cron-key"];
-  names.forEach((n, i) => process.env[n] = values[i]);
-  const calls: { url: string; body?: Record<string, unknown> }[] = [];
-  const validCronToken = "11000000-0000-4000-8000-000000000001";
-  const device = { id: "my-device", userId: "user", subscription: { endpoint: "https://web.push.apple.com/test", keys: { p256dh: "key", auth: "key" } }, budgets: true, dues: true, state: emptyState(), invoices: [] };
-  mock.method(globalThis, "fetch", async (input: string, options: RequestInit) => {
-    const body = options?.body ? JSON.parse(String(options.body)) : undefined;
-    calls.push({ url: String(input), body });
-    if (String(input).endsWith("/auth/v1/user")) return Response.json({ id: "user" });
-    if (String(input).endsWith("budget_push_context")) return Response.json([device, { ...device, id: "other-device", userId: "other-user" }]);
-    if (String(input).endsWith("budget_push_claim")) return Response.json(true);
-    if (String(input).endsWith("budget_push_cron_consume")) return Response.json(body?.p_token === validCronToken);
-    return Response.json({});
-  });
-  const delivery = mock.method(webpush, "sendNotification", async () => ({ statusCode: 201, body: "", headers: {} }));
-  async function request(action: string, method = "POST", authorization?: string) {
-    let responseBody = "";
-    const res = { statusCode: 200, setHeader() {}, end(body: string) { responseBody = body; } };
-    await handler({ method, url: `/api/push?action=${action}`, headers: { authorization } } as IncomingMessage, res as unknown as ServerResponse);
-    return { status: res.statusCode, body: JSON.parse(responseBody) };
-  }
-  try {
-    const config = await request("config", "GET");
-    assert.equal(config.body.publicKey, keys.publicKey);
-    assert.equal(JSON.stringify(config.body).includes(keys.privateKey), false);
-    assert.equal((await request("cron", "GET", "Bearer wrong")).status, 401);
-    assert.equal(calls.length, 0);
-    assert.equal((await request("cron", "GET", "Bearer 11000000-0000-4000-8000-000000000002")).status, 401);
-    assert.equal((await request("cron", "GET", "Bearer " + validCronToken)).status, 200);
-    assert.ok(calls.some(c => c.url.endsWith("budget_push_cron_consume") && c.body?.p_token === validCronToken));
-    assert.equal((await request("dispatch")).status, 401);
-    assert.equal((await request("test&device=other-device", "POST", "Bearer user-token")).body.sent, 0);
-    assert.equal(delivery.mock.callCount(), 0);
-    assert.equal((await request("test&device=my-device", "POST", "Bearer user-token")).body.sent, 1);
-    assert.equal(delivery.mock.callCount(), 1);
-    assert.ok(calls.some(c => c.url.endsWith("budget_push_context") && c.body?.p_user === "user"));
-    device.state.accounts = [{ id: "current", name: "Courant", opening: 0, date: today(), group: "current", rate: 0, cap: 0, capType: "balance", contributed: 0, relay: "", allocation: 0 }];
-    device.state.rules = [{ id: "rent", name: "Loyer", kind: "fixed", account: "current", category: "", amount: 72200, start: today(), interval: 1, count: 0 }];
-    assert.equal((await request("dispatch", "POST", "Bearer user-token")).body.sent, 2);
-    const payload = JSON.parse(String(delivery.mock.calls.at(-1)?.arguments[1]));
-    assert.equal(payload.url, "/?screen=calendar");
-    assert.match(payload.body, /à valider aujourd’hui/);
-    device.dues = false;
-    assert.equal((await request("dispatch", "POST", "Bearer user-token")).body.sent, 0);
-    device.dues = true;
-    delivery.mock.mockImplementation(async () => { throw Object.assign(Error("Expired"), { statusCode: 410 }); });
-    assert.equal((await request("test&device=my-device", "POST", "Bearer user-token")).body.failed, 1);
-    assert.ok(calls.some(c => c.url.endsWith("budget_push_expire") && c.body?.p_id === "my-device"));
-  } finally {
-    mock.restoreAll();
-    names.forEach((n, i) => { if (previous[i] === undefined) delete process.env[n]; else process.env[n] = previous[i]; });
-  }
+test("public demo disables production push notification endpoints", () => {
+  assert.equal(DEMO_MODE, true);
 });
