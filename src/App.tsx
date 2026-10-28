@@ -7724,7 +7724,16 @@ export default function App() {
                               const paid = expenses.filter(x => x.tripCategory === c.id)
                                 .reduce((n, x) => n + x.amount, 0);
                               return (
-                                <div className="trip-category" key={c.id}>
+                                <div className="trip-category trip-category-clickable" key={c.id} role="button" tabIndex={0}
+                                  style={{ cursor: "pointer" }} aria-label={"Voir toutes les dépenses de " + c.name}
+                                  onClick={event => {
+                                    if (!(event.target as HTMLElement).closest("button"))
+                                      explain("Dépenses · " + c.name, txRows([...expenses].filter(x => x.tripCategory === c.id).sort((a,b) => b.date.localeCompare(a.date))));
+                                  }}
+                                  onKeyDown={event => { if (event.target === event.currentTarget && (event.key === "Enter" || event.key === " ")) {
+                                    event.preventDefault();
+                                    explain("Dépenses · " + c.name, txRows([...expenses].filter(x => x.tripCategory === c.id).sort((a,b) => b.date.localeCompare(a.date))));
+                                  } }}>
                                   <div className="trips-category-top">
                                     <strong className="trips-category-name">{c.name}{c.archived ? " (archivée)" : ""}</strong>
                                     <span className="trips-category-amount">
@@ -7766,26 +7775,30 @@ export default function App() {
                           </div>
                         </section>
 
-                        <details className="trips-disclosure" aria-label="Historique du voyage">
-                          <summary>
-                            <span className="trips-disclosure-icon"><CalendarDays size={20}/></span>
-                            <span className="trips-disclosure-copy">
-                              <strong>Historique du voyage</strong>
-                              <small>{expenses.length} dépense(s) · {transfers.length} virement(s)</small>
-                            </span>
-                            <ChevronRight size={18}/>
-                          </summary>
-                          <div className="trips-disclosure-content">
-                            <section className="trips-disclosure-section">
-                              <h3>Dépenses</h3>
-                              {txRows([...expenses].sort((a,b) => b.date.localeCompare(a.date)))}
-                            </section>
-                            <section className="trips-disclosure-section">
-                              <h3>Virements</h3>
-                              {txRows(transfers)}
-                            </section>
+
+                        <section className="card home-recent-expenses" aria-label="Cinq dernières dépenses du voyage">
+                          <div className="section-head home-recent-expenses-heading">
+                            <h2>Dernières dépenses</h2>
+                            <button type="button" className="text home-recent-expenses-all"
+                              onClick={() => explain("Toutes les dépenses · " + t.name,
+                                txRows([...expenses].sort((a,b) => b.date.localeCompare(a.date))))}>
+                              Tout voir <ChevronRight size={16}/>
+                            </button>
                           </div>
-                        </details>
+                          {expenses.length ? <div className="home-recent-expenses-list">
+                            {[...expenses].reverse().sort((a,b) => b.date.localeCompare(a.date)).slice(0,5).map(tx => (
+                              <button type="button" className="home-recent-expense" key={tx.id}
+                                onClick={() => txDetails(tx)}>
+                                <span className="home-recent-expense-icon"><ArrowUpRight size={18}/></span>
+                                <span className="home-recent-expense-details">
+                                  <strong>{tx.description}</strong>
+                                  <small>{dateLabel(tx.date)} · {t.categories.find(c => c.id === tx.tripCategory)?.name || "Sans enveloppe"}</small>
+                                </span>
+                                <strong className="home-recent-expense-amount negative-money">−{money(tx.amount)}</strong>
+                              </button>
+                            ))}
+                          </div> : <p className="home-recent-expenses-empty">Aucune dépense pour ce voyage.</p>}
+                        </section>
 
                         <div className="trips-management-actions trips-management-inline" aria-label="Actions du voyage">
                           {t.closedAt ? (
