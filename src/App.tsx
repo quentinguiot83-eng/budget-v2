@@ -126,6 +126,10 @@ import {
   today,
   month,
   incomeBudgetMonth,
+  isPersonalBudgetExpense,
+  expenseBudgetMonth,
+  estimatedAnnualInterest,
+  consecutiveBudgetOverruns,
   shiftMonth,
   dateAt,
   dateLabel,
@@ -515,12 +519,19 @@ export default function App() {
   // reverse() conserve la dernière opération enregistrée en tête à date égale.
   const recentExpenses = [...s.transactions]
     .reverse()
-    .filter((tx) => tx.type === "expense" && month(tx.date) === selectedMonth)
+    .filter((tx) => ((tx.type === "expense" && month(tx.date) === selectedMonth) ||
+      (isPersonalBudgetExpense(tx) && expenseBudgetMonth(tx) === selectedMonth)) && tx.date <= today())
     .sort((a, b) => b.date.localeCompare(a.date))
     .slice(0, 5);
   const availableDate = today();
   const availableThisMonth = useMemo(() => monthEndAvailable(s), [s, availableDate]);
   const exceededBudgets = useMemo(() => budgetOverruns(s, selectedMonth), [s, selectedMonth, availableDate]);
+  const repeatedBudgetAlerts = useMemo(() => consecutiveBudgetOverruns(s, month(availableDate)), [s, availableDate]);
+  const interestReviewYear = Number(availableDate.slice(0, 4)) - 1;
+  const interestDue = useMemo(() => availableDate.slice(5) < "01-02" ? [] : s.accounts.filter(a =>
+    !a.archived && a.group !== "current" && a.group !== "personal" && a.rate > 0 &&
+    a.date <= String(interestReviewYear) + "-12-31" && !a.interestReviews?.[String(interestReviewYear)]),
+  [s, availableDate, interestReviewYear]);
   const savingsCapacity =
     totals.income > 0 ? totals.actualCapacity : totals.capacity;
   const savingMonthMarkedDone =
@@ -2860,6 +2871,71 @@ export default function App() {
   }
   // Un membre du foyer peut enregistrer le virement d'une enveloppe
   // commune vers le compte personnel lié, sans accéder à ses achats privés.
+
+  function raiseRepeatedBudget(item: ReturnType<typeof consecutiveBudgetOverruns>[number]) {
+    const category = s.categories.find(c => c.id === item.id);
+    if (!category) return;
+    openForm("Adapter le budget · " + category.name, [
+      amountField("amount", "Nouveau budget mensuel (€)", item.suggested,
+        "Suggestion fondée sur les deux derniers mois. Vous choisissez le nouveau montant."),
+      field("start", "Appliquer à partir du mois", month(), "month"),
+    ], async v => {
+      const amount = euro(v.amount);
+      if (amount <= 0) throw Error("Le budget doit être supérieur à zéro.");
+      if (!/^\d{4}-\d{2}$/.test(v.start) || v.start < month())
+        throw Error("Choisissez le mois en cours ou un mois futur.");
+      await change(d => {
+        const target = d.categories.find(c => c.id === item.id);
+        if (!target) throw Error("Budget introuvable.");
+        target.budgets[v.start] = amount;
+        d.budgetIncreaseDecisions ??= {};
+        d.budgetIncreaseDecisions[month() + ":" + item.id] = "accepted";
+      }, "Augmentation du budget " + category.name);
+    }, "Modifier le budget");
+  }
+  function declineRepeatedBudget(categoryId: string) {
+    void change(d => {
+      d.budgetIncreaseDecisions ??= {};
+      d.budgetIncreaseDecisions[month() + ":" + categoryId] = "declined";
+    }, "Proposition de budget refusée").catch(showError);
+  }
+  function reviewAccountInterest(account: Account, year: number) {
+    const previous = account.interestReviews?.[String(year)];
+    const expected = previous?.expected ?? estimatedAnnualInterest(s, account, year);
+    openForm("Intérêts " + year + " · " + account.name, [
+      choice("received", "Avez-vous reçu les intérêts ou le rendement ?",
+        [["yes", "Oui, montant reçu"], ["no", "Non, rien reçu"]],
+        previous && previous.actual === 0 ? "no" : "yes",
+        "Pour un placement sans crédit annuel (PEA, ETF…), répondez Non."),
+      { ...amountField("amount", "Montant réellement reçu (€)", previous?.actual ?? expected,
+          "Estimation Wimm : " + money(expected) + ". Indiquez le montant du relevé bancaire."),
+        showWhen: { field: "received", values: ["yes"] } },
+      { ...field("date", "Date bancaire de réception", today(), "date"),
+        showWhen: { field: "received", values: ["yes"] } },
+      { ...choice("included", "Ce montant figure-t-il déjà dans le solde Wimm ?",
+          [["no", "Non, l'ajouter au solde"], ["yes", "Oui, ne pas l'ajouter deux fois"]], "no"),
+        showWhen: { field: "received", values: ["yes"] } },
+    ], async v => {
+      const amount = v.received === "no" ? 0 : euro(v.amount);
+      if (amount < 0) throw Error("Le montant doit être positif.");
+      if (amount > 0 && (v.date > today() || v.date < account.date))
+        throw Error("Date bancaire invalide ou antérieure à l'ouverture du compte.");
+      await change(d => {
+        const a = d.accounts.find(x => x.id === account.id);
+        if (!a) throw Error("Compte introuvable.");
+        const oldId = a.interestReviews?.[String(year)]?.postedTransactionId;
+        if (oldId) d.transactions = d.transactions.filter(t => t.id !== oldId);
+        let postedTransactionId: string | undefined;
+        if (amount > 0 && v.included !== "yes") {
+          postedTransactionId = uid();
+          d.transactions.push({ id: postedTransactionId, type: "interest", account: a.id,
+            date: v.date, amount, description: "Intérêts " + year + " · " + a.name });
+        }
+        a.interestReviews ??= {};
+        a.interestReviews[String(year)] = { expected, actual: amount, confirmedAt: today(), postedTransactionId };
+      }, "Intérêts " + year + " vérifiés");
+    }, "Confirmer les intérêts");
+  }
   function transferPersonal(category?: Category) {
     if (!current) {
       setNotice("Ajoutez d’abord un compte courant commun.");
