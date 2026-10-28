@@ -1,4 +1,4 @@
-import { incomeBudgetMonth, type State, type Tx } from "./engine";
+import { expenseBudgetMonth, incomeBudgetMonth, isPersonalBudgetExpense, type State, type Tx } from "./engine";
 
 export type TransactionFilters = {
   query: string; type: string; category: string; account: string;
@@ -26,10 +26,10 @@ export function filterTransactions(state: State, filters: TransactionFilters): T
   const exactAmount = amountInCents(query);
   const words = normalizeSearch(query).split(/\s+/).filter(Boolean);
   return state.transactions.filter(t => {
-    if (filters.type && t.type !== filters.type) return false;
+    if (filters.type && !(filters.type === "expense" ? t.type === "expense" || isPersonalBudgetExpense(t) : t.type === filters.type)) return false;
     if (filters.category && t.category !== filters.category) return false;
     if (filters.account && t.account !== filters.account && t.to !== filters.account) return false;
-    if (filters.period === "month" && (filters.type === "income" ? incomeBudgetMonth(t) : t.date.slice(0, 7)) !== filters.month) return false;
+    if (filters.period === "month" && (filters.type === "income" ? incomeBudgetMonth(t) : filters.type === "expense" && isPersonalBudgetExpense(t) ? expenseBudgetMonth(t) : t.date.slice(0, 7)) !== filters.month) return false;
     if (filters.period === "custom" && ((filters.from && t.date < filters.from) || (filters.to && t.date > filters.to))) return false;
     if ((min !== null && t.amount < min) || (max !== null && t.amount > max)) return false;
     if (!query) return true;
