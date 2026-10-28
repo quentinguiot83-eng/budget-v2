@@ -126,6 +126,10 @@ import {
   today,
   month,
   incomeBudgetMonth,
+  isPersonalBudgetExpense,
+  expenseBudgetMonth,
+  estimatedAnnualInterest,
+  consecutiveBudgetOverruns,
   shiftMonth,
   dateAt,
   dateLabel,
@@ -515,12 +519,19 @@ export default function App() {
   // reverse() conserve la dernière opération enregistrée en tête à date égale.
   const recentExpenses = [...s.transactions]
     .reverse()
-    .filter((tx) => tx.type === "expense" && month(tx.date) === selectedMonth)
+    .filter((tx) => ((tx.type === "expense" && month(tx.date) === selectedMonth) ||
+      (isPersonalBudgetExpense(tx) && expenseBudgetMonth(tx) === selectedMonth)) && tx.date <= today())
     .sort((a, b) => b.date.localeCompare(a.date))
     .slice(0, 5);
   const availableDate = today();
   const availableThisMonth = useMemo(() => monthEndAvailable(s), [s, availableDate]);
   const exceededBudgets = useMemo(() => budgetOverruns(s, selectedMonth), [s, selectedMonth, availableDate]);
+  const repeatedBudgetAlerts = useMemo(() => consecutiveBudgetOverruns(s, month(availableDate)), [s, availableDate]);
+  const interestReviewYear = Number(availableDate.slice(0, 4)) - 1;
+  const interestDue = useMemo(() => availableDate.slice(5) < "01-02" ? [] : s.accounts.filter(a =>
+    !a.archived && a.group !== "current" && a.group !== "personal" && a.rate > 0 &&
+    a.date <= String(interestReviewYear) + "-12-31" && !a.interestReviews?.[String(interestReviewYear)]),
+  [s, availableDate, interestReviewYear]);
   const savingsCapacity =
     totals.income > 0 ? totals.actualCapacity : totals.capacity;
   const savingMonthMarkedDone =
@@ -2860,6 +2871,72 @@ export default function App() {
   }
   // Un membre du foyer peut enregistrer le virement d'une enveloppe
   // commune vers le compte personnel lié, sans accéder à ses achats privés.
+
+  function raiseRepeatedBudget(item: ReturnType<typeof consecutiveBudgetOverruns>[number]) {
+    const category = s.categories.find(c => c.id === item.id);
+    if (!category) return;
+    openForm("Adapter le budget · " + category.name, [
+      amountField("amount", "Nouveau budget mensuel (€)", item.suggested,
+        "Suggestion fondée sur les deux derniers mois. Vous choisissez le nouveau montant."),
+      field("start", "Appliquer à partir du mois", month(), "month"),
+    ], async v => {
+      const amount = euro(v.amount);
+      if (amount <= 0) throw Error("Le budget doit être supérieur à zéro.");
+      if (!/^\d{4}-\d{2}$/.test(v.start) || v.start < month())
+        throw Error("Choisissez le mois en cours ou un mois futur.");
+      await change(d => {
+        const target = d.categories.find(c => c.id === item.id);
+        if (!target) throw Error("Budget introuvable.");
+        target.budgets[v.start] = amount;
+        d.budgetIncreaseDecisions ??= {};
+        d.budgetIncreaseDecisions[month() + ":" + item.id] = "accepted";
+      }, "Augmentation du budget " + category.name);
+    }, "Modifier le budget");
+  }
+  function declineRepeatedBudget(categoryId: string) {
+    void change(d => {
+      d.budgetIncreaseDecisions ??= {};
+      d.budgetIncreaseDecisions[month() + ":" + categoryId] = "declined";
+    }, "Proposition de budget refusée").catch(showError);
+  }
+  function reviewAccountInterest(account: Account, year: number) {
+    const previous = account.interestReviews?.[String(year)];
+    const expected = previous?.expected ?? estimatedAnnualInterest(s, account, year);
+    openForm("Intérêts " + year + " · " + account.name, [
+      choice("received", "Avez-vous reçu les intérêts ou le rendement ?",
+        [["yes", "Oui, montant reçu"], ["no", "Non, rien reçu"]],
+        previous && previous.actual === 0 ? "no" : "yes",
+        "Pour un placement sans crédit annuel (PEA, ETF…), répondez Non."),
+      { ...amountField("amount", "Montant réellement reçu (€)", previous?.actual ?? expected,
+          "Estimation Wimm : " + money(expected) + ". Indiquez le montant du relevé bancaire."),
+        showWhen: { field: "received", values: ["yes"] } },
+      { ...field("date", "Date bancaire de réception", today(), "date"),
+        showWhen: { field: "received", values: ["yes"] } },
+      { ...choice("included", "Ce montant figure-t-il déjà dans le solde Wimm ?",
+          [["no", "Non, l'ajouter au solde"], ["yes", "Oui, ne pas l'ajouter deux fois"]],
+          previous && !previous.postedTransactionId ? "yes" : "no"),
+        showWhen: { field: "received", values: ["yes"] } },
+    ], async v => {
+      const amount = v.received === "no" ? 0 : euro(v.amount);
+      if (amount < 0) throw Error("Le montant doit être positif.");
+      if (amount > 0 && (v.date > today() || v.date < account.date))
+        throw Error("Date bancaire invalide ou antérieure à l'ouverture du compte.");
+      await change(d => {
+        const a = d.accounts.find(x => x.id === account.id);
+        if (!a) throw Error("Compte introuvable.");
+        const oldId = a.interestReviews?.[String(year)]?.postedTransactionId;
+        if (oldId) d.transactions = d.transactions.filter(t => t.id !== oldId);
+        let postedTransactionId: string | undefined;
+        if (amount > 0 && v.included !== "yes") {
+          postedTransactionId = uid();
+          d.transactions.push({ id: postedTransactionId, type: "interest", account: a.id,
+            date: v.date, amount, description: "Intérêts " + year + " · " + a.name });
+        }
+        a.interestReviews ??= {};
+        a.interestReviews[String(year)] = { expected, actual: amount, confirmedAt: today(), postedTransactionId };
+      }, "Intérêts " + year + " vérifiés");
+    }, "Confirmer les intérêts");
+  }
   function transferPersonal(category?: Category) {
     if (!current) {
       setNotice("Ajoutez d’abord un compte courant commun.");
@@ -2884,10 +2961,6 @@ export default function App() {
       ? personalBudgetEnvelope(s, owner, target.id, selectedMonth,
           own ? month(ps.account!.date) : target.personalSince)
       : personalEnvelope(s, legacy!.id, selectedMonth);
-    if (envelope.remaining <= 0) {
-      setNotice("Aucun montant ne reste à virer sur ce budget ce mois-ci.");
-      return;
-    }
     openForm(
       "Virement vers " + target.name,
       [
@@ -2895,14 +2968,21 @@ export default function App() {
           "Depuis " + current.name + " · Disponible sur ce budget : " +
           money(envelope.remaining) + ". Ce suivi ne déclenche pas de virement bancaire."),
         field("date", "Date du virement bancaire", today(), "date"),
+        field("budgetMonth", "Mois du budget concerné", selectedMonth, "month",
+          "La date bancaire reste réelle : un virement en octobre peut financer novembre."),
         choice("overdraft", "Autoriser un découvert sur le compte commun",
           [["no", "Non"], ["yes", "Oui, je confirme"]], "no"),
       ],
       async v => {
         const amount = euro(v.amount);
         if (amount <= 0) throw Error("Le montant doit être supérieur à zéro.");
-        if (amount > envelope.remaining) {
-          throw Error("Le budget ne dispose que de " + money(envelope.remaining) + " à virer.");
+        if (!/^\d{4}-\d{2}$/.test(v.budgetMonth)) throw Error("Mois budgétaire invalide.");
+        const targetEnvelope = owner
+          ? personalBudgetEnvelope(s, owner, target.id, v.budgetMonth,
+              own ? month(ps.account!.date) : target.personalSince)
+          : personalEnvelope(s, legacy!.id, v.budgetMonth);
+        if (amount > targetEnvelope.remaining) {
+          throw Error("Il reste " + money(targetEnvelope.remaining) + " à virer pour " + monthLabel(v.budgetMonth) + ".");
         }
         if (v.date > today()) throw Error("Enregistrez le virement à sa date réelle.");
         const firstDate = own ? ps.account!.date : legacy?.date ||
@@ -2919,7 +2999,7 @@ export default function App() {
               id: uid(), type: "personal_transfer", account: current.id,
               amount, date: v.date, description: "Budget perso · " + target.name,
               category: target.id, personalOwner: owner, personalKind: "budget",
-              personalMonths: 1, personalStartMonth: selectedMonth,
+              personalMonths: 1, personalStartMonth: v.budgetMonth,
             });
           } else if (legacy) {
             d.transactions.push({
@@ -4314,6 +4394,11 @@ export default function App() {
           d.rules = d.rules.filter(r => r.loanId !== t.loanId);
         }
         d.transactions = d.transactions.filter(x => x.id !== t.id);
+        if (t.type === "interest") for (const account of d.accounts) {
+          for (const [year, review] of Object.entries(account.interestReviews || {})) {
+            if (review.postedTransactionId === t.id) delete account.interestReviews![year];
+          }
+        }
       }, "Transaction supprimée"),
     );
   }
@@ -4323,7 +4408,10 @@ export default function App() {
     explain(t.description, <>
       <div className="big-number">{money(t.amount)}</div>
       <p>{dateLabel(t.date)} · {a?.name}</p>
-      <p>{t.type === "transfer"
+      <p>{t.type === "personal_transfer"
+        ? "Virement de budget personnel · imputé à " + monthLabel(t.personalStartMonth || month(t.date)) + ". Le débit bancaire reste daté du " + dateLabel(t.date) + ". Annulation disponible ci-dessous."
+        : t.type === "interest" ? "Intérêts réellement reçus et crédités sur ce compte, sans être comptés comme salaire."
+        : t.type === "transfer"
         ? `Virement vers ${s.accounts.find(v => v.id === t.to)?.name}. Aucun revenu ni dépense de consommation.`
         : t.type === "expense"
           ? t.trip ? "Déduit du compte et du budget voyage." : "Déduit du compte et de la catégorie concernée."
@@ -4336,6 +4424,25 @@ export default function App() {
           {isEditable && (
             <button className="secondary compact" onClick={() => operation(t.type, t.trip ? s.trips.find(v => v.id === t.trip) : undefined, t)}>
               <Pencil size={15}/> Modifier
+            </button>
+          )}
+          {isPersonalBudgetExpense(t) && (
+            <button className="secondary compact" onClick={() =>
+              openForm("Mois budgétaire du virement perso", [
+                field("budgetMonth", "Imputer ce virement au budget du mois",
+                  t.personalStartMonth || month(t.date), "month",
+                  "Ne change pas la date bancaire ni le solde actuel du compte."),
+              ], async v => {
+                if (!/^\d{4}-\d{2}$/.test(v.budgetMonth))
+                  throw Error("Mois budgétaire invalide.");
+                await change(d => {
+                  const transaction = d.transactions.find(x => x.id === t.id);
+                  if (!transaction) throw Error("Virement introuvable.");
+                  transaction.personalStartMonth = v.budgetMonth;
+                }, "Mois budgétaire du virement personnel modifié");
+              }, "Changer le mois")
+            }>
+              <CalendarDays size={15}/> Changer le mois budgétaire
             </button>
           )}
           {isEditable && !t.trip && !t.fixed && (
@@ -4657,7 +4764,7 @@ export default function App() {
           icon={
             t.type === "transfer" ? (
               <ArrowLeftRight />
-            ) : ["income", "repay"].includes(t.type) ? (
+            ) : ["income", "repay", "interest"].includes(t.type) ? (
               <ArrowDownLeft className="transaction-income-arrow" />
             ) : t.type === "expense" ? (
               <ArrowUpRight className="transaction-expense-arrow" />
@@ -4672,14 +4779,15 @@ export default function App() {
             incomeBudgetMonth(t) !== month(t.date)
               ? ` · budget ${monthLabel(incomeBudgetMonth(t))}`
               : ""
-          }`}
+          }${isPersonalBudgetExpense(t) && expenseBudgetMonth(t) !== month(t.date)
+            ? ` · budget ${monthLabel(expenseBudgetMonth(t))}` : ""}`}
           value={
             <span
-              className={["income", "repay"].includes(t.type) ? "positive" : t.type === "expense" || t.amount < 0 ? "negative-money" : ""}
+              className={["income", "repay", "interest"].includes(t.type) ? "positive" : t.type === "expense" || isPersonalBudgetExpense(t) || t.amount < 0 ? "negative-money" : ""}
             >
               {t.type === "transfer"
                 ? ""
-                : ["income", "repay", "adjust"].includes(t.type)
+                : ["income", "repay", "adjust", "interest"].includes(t.type)
                   ? "+"
                   : "−"}
               {money(t.amount)}
@@ -5807,9 +5915,14 @@ export default function App() {
 
               {savingsPanel("home")}
 
-              {(salaryAlert || alerts.length > 0 || (!savingMonthMarkedDone && (totals.forecast?.savings ?? savingsTarget) > totals.saved)) && (
+              {(salaryAlert || interestDue.length > 0 || alerts.length > 0 || (!savingMonthMarkedDone && (totals.forecast?.savings ?? savingsTarget) > totals.saved)) && (
                 <section className="card home-actions">
                   <div className="section-head"><h2>À faire</h2></div>
+                  {interestDue.map(a => <button key={a.id} type="button" className="home-action-row"
+                    onClick={() => reviewAccountInterest(a, interestReviewYear)}>
+                    <Coins size={19}/><span><strong>Vérifier les intérêts · {a.name}</strong>
+                    <small>Année {interestReviewYear} · estimation {money(estimatedAnnualInterest(s, a, interestReviewYear))} · à confirmer depuis le 2 janvier</small></span><ChevronRight size={18}/>
+                  </button>)}
                   {salaryAlert && <button type="button" className="home-action-row" onClick={confirmSalary}>
                     <CalendarDays size={19}/><span><strong>Confirmer votre salaire</strong><small>Prévu le {dateLabel(salaryPlannedDate)}</small></span><ChevronRight size={18}/>
                   </button>}
@@ -5822,13 +5935,19 @@ export default function App() {
                 </section>
               )}
 
-              {(exceededBudgets.length > 0 || (selectedMonth === month() && current && availableThisMonth.available < 0)) && (
+              {(repeatedBudgetAlerts.length > 0 || exceededBudgets.length > 0 || (selectedMonth === month() && current && availableThisMonth.available < 0)) && (
                 <section className="card home-alerts" aria-label="Alertes financières">
                   <div className="section-head"><h2><Bell size={18}/> Alertes</h2></div>
                   {selectedMonth === month() && current && availableThisMonth.available < 0 &&
                     <button className="home-action-row" type="button" onClick={() => navigate("budget")}>
                       <Bell size={18}/><span><strong>Solde prévisionnel insuffisant</strong><small>{money(-availableThisMonth.available)} manquants pour les réserves du mois</small></span><ChevronRight size={17}/>
                     </button>}
+                  {repeatedBudgetAlerts.map(b => <div className="home-action-row" key={"repeat-" + b.id}>
+                    <Bell size={18}/><span><strong>{b.name} : dépassé deux mois de suite</strong>
+                    <small>Dépenses : {money(b.previousSpent)} puis {money(b.spent)}. Augmenter le budget ?</small></span>
+                    <button type="button" className="secondary compact" onClick={() => declineRepeatedBudget(b.id)}>Non</button>
+                    <button type="button" className="primary compact" onClick={() => raiseRepeatedBudget(b)}>Oui</button>
+                  </div>)}
                   {exceededBudgets.map(b => <button className="home-action-row" type="button" key={b.id} onClick={() => navigate("budget")}>
                     <Bell size={18}/><span><strong>{b.name} : budget dépassé</strong><small>{money(b.spent)} sur {money(b.limit)} · +{money(b.excess)}</small></span><ChevronRight size={17}/>
                   </button>)}
@@ -5853,7 +5972,8 @@ export default function App() {
                           <strong>{tx.description || "Dépense"}</strong>
                           <small>{dateLabel(tx.date)} · {tx.trip
                             ? s.trips.find((trip) => trip.id === tx.trip)?.name || "Projet"
-                            : s.categories.find((category) => category.id === tx.category)?.name || "Autre"}</small>
+                            : s.categories.find((category) => category.id === tx.category)?.name || "Autre"}
+                            {isPersonalBudgetExpense(tx) && expenseBudgetMonth(tx) !== month(tx.date) ? " · budget " + monthLabel(expenseBudgetMonth(tx)) : ""}</small>
                         </span>
                         <strong className="home-recent-expense-amount negative-money">−{money(Math.abs(tx.amount))}</strong>
                       </button>
@@ -7186,6 +7306,10 @@ export default function App() {
                           </button>
                           {a.group !== "current" && <button type="button" className="primary compact" onClick={() => transfer(a)}>Épargner</button>}
                           <button type="button" className="secondary compact" onClick={() => transfer(undefined, undefined, a)}>Virement</button>
+                          {a.group !== "current" && a.rate > 0 && a.date <= String(interestReviewYear) + "-12-31" && availableDate.slice(5) >= "01-02" &&
+                            <button type="button" className="secondary compact" onClick={() => reviewAccountInterest(a, interestReviewYear)}>
+                              {a.interestReviews?.[String(interestReviewYear)] ? "Réviser" : "Vérifier"} les intérêts {interestReviewYear}
+                            </button>}
 
                           <button type="button" className="text" onClick={() =>
                             explain(a.name + " · Historique", txRows(sortedTx.filter(t => t.account === a.id || t.to === a.id)))
@@ -7620,7 +7744,16 @@ export default function App() {
                               const paid = expenses.filter(x => x.tripCategory === c.id)
                                 .reduce((n, x) => n + x.amount, 0);
                               return (
-                                <div className="trip-category" key={c.id}>
+                                <div className="trip-category trip-category-clickable" key={c.id} role="button" tabIndex={0}
+                                  style={{ cursor: "pointer" }} aria-label={"Voir toutes les dépenses de " + c.name}
+                                  onClick={event => {
+                                    if (!(event.target as HTMLElement).closest("button"))
+                                      explain("Dépenses · " + c.name, txRows([...expenses].filter(x => x.tripCategory === c.id).sort((a,b) => b.date.localeCompare(a.date))));
+                                  }}
+                                  onKeyDown={event => { if (event.target === event.currentTarget && (event.key === "Enter" || event.key === " ")) {
+                                    event.preventDefault();
+                                    explain("Dépenses · " + c.name, txRows([...expenses].filter(x => x.tripCategory === c.id).sort((a,b) => b.date.localeCompare(a.date))));
+                                  } }}>
                                   <div className="trips-category-top">
                                     <strong className="trips-category-name">{c.name}{c.archived ? " (archivée)" : ""}</strong>
                                     <span className="trips-category-amount">
@@ -7662,26 +7795,30 @@ export default function App() {
                           </div>
                         </section>
 
-                        <details className="trips-disclosure" aria-label="Historique du voyage">
-                          <summary>
-                            <span className="trips-disclosure-icon"><CalendarDays size={20}/></span>
-                            <span className="trips-disclosure-copy">
-                              <strong>Historique du voyage</strong>
-                              <small>{expenses.length} dépense(s) · {transfers.length} virement(s)</small>
-                            </span>
-                            <ChevronRight size={18}/>
-                          </summary>
-                          <div className="trips-disclosure-content">
-                            <section className="trips-disclosure-section">
-                              <h3>Dépenses</h3>
-                              {txRows([...expenses].sort((a,b) => b.date.localeCompare(a.date)))}
-                            </section>
-                            <section className="trips-disclosure-section">
-                              <h3>Virements</h3>
-                              {txRows(transfers)}
-                            </section>
+
+                        <section className="card home-recent-expenses" aria-label="Cinq dernières dépenses du voyage">
+                          <div className="section-head home-recent-expenses-heading">
+                            <h2>Dernières dépenses</h2>
+                            <button type="button" className="text home-recent-expenses-all"
+                              onClick={() => explain("Toutes les dépenses · " + t.name,
+                                txRows([...expenses].sort((a,b) => b.date.localeCompare(a.date))))}>
+                              Tout voir <ChevronRight size={16}/>
+                            </button>
                           </div>
-                        </details>
+                          {expenses.length ? <div className="home-recent-expenses-list">
+                            {[...expenses].reverse().sort((a,b) => b.date.localeCompare(a.date)).slice(0,5).map(tx => (
+                              <button type="button" className="home-recent-expense" key={tx.id}
+                                onClick={() => txDetails(tx)}>
+                                <span className="home-recent-expense-icon"><ArrowUpRight size={18}/></span>
+                                <span className="home-recent-expense-details">
+                                  <strong>{tx.description}</strong>
+                                  <small>{dateLabel(tx.date)} · {t.categories.find(c => c.id === tx.tripCategory)?.name || "Sans enveloppe"}</small>
+                                </span>
+                                <strong className="home-recent-expense-amount negative-money">−{money(tx.amount)}</strong>
+                              </button>
+                            ))}
+                          </div> : <p className="home-recent-expenses-empty">Aucune dépense pour ce voyage.</p>}
+                        </section>
 
                         <div className="trips-management-actions trips-management-inline" aria-label="Actions du voyage">
                           {t.closedAt ? (

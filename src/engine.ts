@@ -30,6 +30,8 @@ export type Account = {
   taxRate?: number;
 
   taxMode?: "none" | "yield" | "exit";
+  /** Confirmations bancaires annuelles, indépendantes des projections. */
+  interestReviews?: Record<string, { expected: number; actual: number; confirmedAt: string; postedTransactionId?: string }>;
 
   personalCategory?: string;
 
@@ -90,6 +92,7 @@ export type Tx = {
     | "income"
     | "transfer"
     | "personal_transfer"
+    | "interest"
     | "loan"
     | "repay"
     | "adjust";
@@ -226,6 +229,8 @@ export type State = {
   }[];
 
   monthlyForecasts?: Record<string, MonthlyForecast>;
+  /** Réponses annuelles aux alertes de deux budgets dépassés. */
+  budgetIncreaseDecisions?: Record<string, "accepted" | "declined">;
 
   accounts: Account[];
 
@@ -858,7 +863,7 @@ export function balance(s: State, id: string, until = today()) {
 
           (t.account === id
 
-            ? ["income", "repay", "adjust"].includes(t.type)
+            ? ["income", "repay", "adjust", "interest"].includes(t.type)
 
               ? t.amount
 
@@ -1078,6 +1083,42 @@ export function monthlySavings(s: State, m: string) {
     .reduce((sum, t) => sum + t.amount, 0);
 }
 
+/** Un virement personnel finance une enveloppe, sans être une consommation bancaire. */
+export function isPersonalBudgetExpense(t: Tx) {
+  return t.type === "personal_transfer" && (t.personalKind || "budget") === "budget";
+}
+export function expenseBudgetMonth(t: Tx) {
+  return isPersonalBudgetExpense(t) ? (t.personalStartMonth || month(t.date)) : month(t.date);
+}
+
+/** Estimation indicative au prorata des soldes quotidiens et de la fiscalité déclarée. */
+export function estimatedAnnualInterest(s: State, a: Account, year: number) {
+  if (a.group === "current" || a.group === "personal" || a.archived || a.rate <= 0 || a.date > `${year}-12-31`) return 0;
+  const start = Date.UTC(year, 0, 1);
+  const days = (Date.UTC(year + 1, 0, 1) - start) / 86400000;
+  let accumulated = 0;
+  for (let day = 0; day < days; day++) {
+    const date = new Date(start + day * 86400000).toISOString().slice(0, 10);
+    if (date >= a.date) accumulated += balance(s, a.id, date);
+  }
+  const gross = Math.round(accumulated * (a.rate / 100) / days);
+  return a.taxMode === "yield"
+    ? Math.round(gross * (1 - Math.max(0, Math.min(100, a.taxRate ?? 0)) / 100))
+    : gross;
+}
+
+/** Ne propose une hausse qu'après deux mois entièrement clos et dépassés. */
+export function consecutiveBudgetOverruns(s: State, currentMonth: string) {
+  const previousMonth = shiftMonth(currentMonth, -1);
+  const earlier = new Map(budgetOverruns(s, shiftMonth(currentMonth, -2))
+    .filter(item => item.limit > 0).map(item => [item.id, item]));
+  return budgetOverruns(s, previousMonth)
+    .filter(item => item.limit > 0 && earlier.has(item.id) &&
+      !s.budgetIncreaseDecisions?.[`${currentMonth}:${item.id}`])
+    .map(item => ({ ...item, previousSpent: earlier.get(item.id)!.spent,
+      suggested: Math.ceil(Math.max(item.spent, earlier.get(item.id)!.spent, budget(s.categories.find(c => c.id === item.id)!, currentMonth)) / 100) * 100 }));
+}
+
 export function stats(
   s: State,
   m: string,
@@ -1088,7 +1129,7 @@ export function stats(
   // mais ne sont pas mélangées aux dépenses du foyer.
   const tx = s.transactions.filter(
     (t) =>
-      month(t.date) === m &&
+      (isPersonalBudgetExpense(t) ? expenseBudgetMonth(t) : month(t.date)) === m &&
       t.date <= today() &&
       s.accounts.find((a) => a.id === t.account)?.group !== "personal",
   );
@@ -1166,7 +1207,7 @@ export function stats(
     .reduce((n, t) => n + t.amount, 0);
 
   const spending = tx
-    .filter((t) => t.type === "expense" && !t.trip)
+    .filter((t) => (t.type === "expense" && !t.trip) || isPersonalBudgetExpense(t))
     .reduce((n, t) => n + t.amount, 0);
 
   const saved = monthlySavings(s, m);
@@ -2169,6 +2210,9 @@ export function validate(s: State) {
 
     throw Error("Opération déjà enregistrée.");
 
+  if(s.budgetIncreaseDecisions && Object.entries(s.budgetIncreaseDecisions).some(([key, choice]) =>
+    !/^\d{4}-\d{2}:.+$/.test(key) || !["accepted", "declined"].includes(choice)))
+    throw Error("Décisions budgétaires invalides.");
   if(s.quickFavorites!==undefined){
     if(!Array.isArray(s.quickFavorites)||s.quickFavorites.length>30)throw Error("Liste de favoris invalide.");
     if(new Set(s.quickFavorites.map(f=>f.id)).size!==s.quickFavorites.length)
@@ -2191,6 +2235,11 @@ export function validate(s: State) {
 
   for (const a of s.accounts) {
 
+    for (const [year, review] of Object.entries(a.interestReviews || {})) {
+      if (!/^\d{4}$/.test(year) || !Number.isSafeInteger(review.expected) || review.expected < 0 ||
+          !Number.isSafeInteger(review.actual) || review.actual < 0 || !/^\d{4}-\d{2}-\d{2}$/.test(review.confirmedAt))
+        throw Error("Confirmation d’intérêts invalide.");
+    }
     if (
 
       a.rate <= -100 ||
