@@ -5952,7 +5952,8 @@ export default function App() {
                           <strong>{tx.description || "Dépense"}</strong>
                           <small>{dateLabel(tx.date)} · {tx.trip
                             ? s.trips.find((trip) => trip.id === tx.trip)?.name || "Projet"
-                            : s.categories.find((category) => category.id === tx.category)?.name || "Autre"}</small>
+                            : s.categories.find((category) => category.id === tx.category)?.name || "Autre"}
+                            {isPersonalBudgetExpense(tx) && expenseBudgetMonth(tx) !== month(tx.date) ? " · budget " + monthLabel(expenseBudgetMonth(tx)) : ""}</small>
                         </span>
                         <strong className="home-recent-expense-amount negative-money">−{money(Math.abs(tx.amount))}</strong>
                       </button>
@@ -7285,6 +7286,10 @@ export default function App() {
                           </button>
                           {a.group !== "current" && <button type="button" className="primary compact" onClick={() => transfer(a)}>Épargner</button>}
                           <button type="button" className="secondary compact" onClick={() => transfer(undefined, undefined, a)}>Virement</button>
+                          {a.group !== "current" && a.rate > 0 && a.date <= String(interestReviewYear) + "-12-31" && availableDate.slice(5) >= "01-02" &&
+                            <button type="button" className="secondary compact" onClick={() => reviewAccountInterest(a, interestReviewYear)}>
+                              {a.interestReviews?.[String(interestReviewYear)] ? "Réviser" : "Vérifier"} les intérêts {interestReviewYear}
+                            </button>}
 
                           <button type="button" className="text" onClick={() =>
                             explain(a.name + " · Historique", txRows(sortedTx.filter(t => t.account === a.id || t.to === a.id)))
