@@ -5895,9 +5895,14 @@ export default function App() {
 
               {savingsPanel("home")}
 
-              {(salaryAlert || alerts.length > 0 || (!savingMonthMarkedDone && (totals.forecast?.savings ?? savingsTarget) > totals.saved)) && (
+              {(salaryAlert || interestDue.length > 0 || alerts.length > 0 || (!savingMonthMarkedDone && (totals.forecast?.savings ?? savingsTarget) > totals.saved)) && (
                 <section className="card home-actions">
                   <div className="section-head"><h2>À faire</h2></div>
+                  {interestDue.map(a => <button key={a.id} type="button" className="home-action-row"
+                    onClick={() => reviewAccountInterest(a, interestReviewYear)}>
+                    <Coins size={19}/><span><strong>Vérifier les intérêts · {a.name}</strong>
+                    <small>Année {interestReviewYear} · estimation {money(estimatedAnnualInterest(s, a, interestReviewYear))} · à confirmer depuis le 2 janvier</small></span><ChevronRight size={18}/>
+                  </button>)}
                   {salaryAlert && <button type="button" className="home-action-row" onClick={confirmSalary}>
                     <CalendarDays size={19}/><span><strong>Confirmer votre salaire</strong><small>Prévu le {dateLabel(salaryPlannedDate)}</small></span><ChevronRight size={18}/>
                   </button>}
@@ -5910,13 +5915,19 @@ export default function App() {
                 </section>
               )}
 
-              {(exceededBudgets.length > 0 || (selectedMonth === month() && current && availableThisMonth.available < 0)) && (
+              {(repeatedBudgetAlerts.length > 0 || exceededBudgets.length > 0 || (selectedMonth === month() && current && availableThisMonth.available < 0)) && (
                 <section className="card home-alerts" aria-label="Alertes financières">
                   <div className="section-head"><h2><Bell size={18}/> Alertes</h2></div>
                   {selectedMonth === month() && current && availableThisMonth.available < 0 &&
                     <button className="home-action-row" type="button" onClick={() => navigate("budget")}>
                       <Bell size={18}/><span><strong>Solde prévisionnel insuffisant</strong><small>{money(-availableThisMonth.available)} manquants pour les réserves du mois</small></span><ChevronRight size={17}/>
                     </button>}
+                  {repeatedBudgetAlerts.map(b => <div className="home-action-row" key={"repeat-" + b.id}>
+                    <Bell size={18}/><span><strong>{b.name} : dépassé deux mois de suite</strong>
+                    <small>Dépenses : {money(b.previousSpent)} puis {money(b.spent)}. Augmenter le budget ?</small></span>
+                    <button type="button" className="secondary compact" onClick={() => declineRepeatedBudget(b.id)}>Non</button>
+                    <button type="button" className="primary compact" onClick={() => raiseRepeatedBudget(b)}>Oui</button>
+                  </div>)}
                   {exceededBudgets.map(b => <button className="home-action-row" type="button" key={b.id} onClick={() => navigate("budget")}>
                     <Bell size={18}/><span><strong>{b.name} : budget dépassé</strong><small>{money(b.spent)} sur {money(b.limit)} · +{money(b.excess)}</small></span><ChevronRight size={17}/>
                   </button>)}
