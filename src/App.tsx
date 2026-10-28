@@ -2960,10 +2960,6 @@ export default function App() {
       ? personalBudgetEnvelope(s, owner, target.id, selectedMonth,
           own ? month(ps.account!.date) : target.personalSince)
       : personalEnvelope(s, legacy!.id, selectedMonth);
-    if (envelope.remaining <= 0) {
-      setNotice("Aucun montant ne reste à virer sur ce budget ce mois-ci.");
-      return;
-    }
     openForm(
       "Virement vers " + target.name,
       [
@@ -2971,14 +2967,21 @@ export default function App() {
           "Depuis " + current.name + " · Disponible sur ce budget : " +
           money(envelope.remaining) + ". Ce suivi ne déclenche pas de virement bancaire."),
         field("date", "Date du virement bancaire", today(), "date"),
+        field("budgetMonth", "Mois du budget concerné", selectedMonth, "month",
+          "La date bancaire reste réelle : un virement en octobre peut financer novembre."),
         choice("overdraft", "Autoriser un découvert sur le compte commun",
           [["no", "Non"], ["yes", "Oui, je confirme"]], "no"),
       ],
       async v => {
         const amount = euro(v.amount);
         if (amount <= 0) throw Error("Le montant doit être supérieur à zéro.");
-        if (amount > envelope.remaining) {
-          throw Error("Le budget ne dispose que de " + money(envelope.remaining) + " à virer.");
+        if (!/^\d{4}-\d{2}$/.test(v.budgetMonth)) throw Error("Mois budgétaire invalide.");
+        const targetEnvelope = owner
+          ? personalBudgetEnvelope(s, owner, target.id, v.budgetMonth,
+              own ? month(ps.account!.date) : target.personalSince)
+          : personalEnvelope(s, legacy!.id, v.budgetMonth);
+        if (amount > targetEnvelope.remaining) {
+          throw Error("Il reste " + money(targetEnvelope.remaining) + " à virer pour " + monthLabel(v.budgetMonth) + ".");
         }
         if (v.date > today()) throw Error("Enregistrez le virement à sa date réelle.");
         const firstDate = own ? ps.account!.date : legacy?.date ||
@@ -2995,7 +2998,7 @@ export default function App() {
               id: uid(), type: "personal_transfer", account: current.id,
               amount, date: v.date, description: "Budget perso · " + target.name,
               category: target.id, personalOwner: owner, personalKind: "budget",
-              personalMonths: 1, personalStartMonth: selectedMonth,
+              personalMonths: 1, personalStartMonth: v.budgetMonth,
             });
           } else if (legacy) {
             d.transactions.push({
@@ -4390,6 +4393,11 @@ export default function App() {
           d.rules = d.rules.filter(r => r.loanId !== t.loanId);
         }
         d.transactions = d.transactions.filter(x => x.id !== t.id);
+        if (t.type === "interest") for (const account of d.accounts) {
+          for (const [year, review] of Object.entries(account.interestReviews || {})) {
+            if (review.postedTransactionId === t.id) delete account.interestReviews![year];
+          }
+        }
       }, "Transaction supprimée"),
     );
   }
@@ -4399,7 +4407,10 @@ export default function App() {
     explain(t.description, <>
       <div className="big-number">{money(t.amount)}</div>
       <p>{dateLabel(t.date)} · {a?.name}</p>
-      <p>{t.type === "transfer"
+      <p>{t.type === "personal_transfer"
+        ? "Virement de budget personnel · imputé à " + monthLabel(t.personalStartMonth || month(t.date)) + ". Le débit bancaire reste daté du " + dateLabel(t.date) + ". Annulation disponible ci-dessous."
+        : t.type === "interest" ? "Intérêts réellement reçus et crédités sur ce compte, sans être comptés comme salaire."
+        : t.type === "transfer"
         ? `Virement vers ${s.accounts.find(v => v.id === t.to)?.name}. Aucun revenu ni dépense de consommation.`
         : t.type === "expense"
           ? t.trip ? "Déduit du compte et du budget voyage." : "Déduit du compte et de la catégorie concernée."
@@ -4733,7 +4744,7 @@ export default function App() {
           icon={
             t.type === "transfer" ? (
               <ArrowLeftRight />
-            ) : ["income", "repay"].includes(t.type) ? (
+            ) : ["income", "repay", "interest"].includes(t.type) ? (
               <ArrowDownLeft className="transaction-income-arrow" />
             ) : t.type === "expense" ? (
               <ArrowUpRight className="transaction-expense-arrow" />
@@ -4748,14 +4759,15 @@ export default function App() {
             incomeBudgetMonth(t) !== month(t.date)
               ? ` · budget ${monthLabel(incomeBudgetMonth(t))}`
               : ""
-          }`}
+          }${isPersonalBudgetExpense(t) && expenseBudgetMonth(t) !== month(t.date)
+            ? ` · budget ${monthLabel(expenseBudgetMonth(t))}` : ""}`}
           value={
             <span
-              className={["income", "repay"].includes(t.type) ? "positive" : t.type === "expense" || t.amount < 0 ? "negative-money" : ""}
+              className={["income", "repay", "interest"].includes(t.type) ? "positive" : t.type === "expense" || isPersonalBudgetExpense(t) || t.amount < 0 ? "negative-money" : ""}
             >
               {t.type === "transfer"
                 ? ""
-                : ["income", "repay", "adjust"].includes(t.type)
+                : ["income", "repay", "adjust", "interest"].includes(t.type)
                   ? "+"
                   : "−"}
               {money(t.amount)}
