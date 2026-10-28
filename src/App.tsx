@@ -2913,7 +2913,8 @@ export default function App() {
       { ...field("date", "Date bancaire de réception", today(), "date"),
         showWhen: { field: "received", values: ["yes"] } },
       { ...choice("included", "Ce montant figure-t-il déjà dans le solde Wimm ?",
-          [["no", "Non, l'ajouter au solde"], ["yes", "Oui, ne pas l'ajouter deux fois"]], "no"),
+          [["no", "Non, l'ajouter au solde"], ["yes", "Oui, ne pas l'ajouter deux fois"]],
+          previous && !previous.postedTransactionId ? "yes" : "no"),
         showWhen: { field: "received", values: ["yes"] } },
     ], async v => {
       const amount = v.received === "no" ? 0 : euro(v.amount);
@@ -4423,6 +4424,25 @@ export default function App() {
           {isEditable && (
             <button className="secondary compact" onClick={() => operation(t.type, t.trip ? s.trips.find(v => v.id === t.trip) : undefined, t)}>
               <Pencil size={15}/> Modifier
+            </button>
+          )}
+          {isPersonalBudgetExpense(t) && (
+            <button className="secondary compact" onClick={() =>
+              openForm("Mois budgétaire du virement perso", [
+                field("budgetMonth", "Imputer ce virement au budget du mois",
+                  t.personalStartMonth || month(t.date), "month",
+                  "Ne change pas la date bancaire ni le solde actuel du compte."),
+              ], async v => {
+                if (!/^\d{4}-\d{2}$/.test(v.budgetMonth))
+                  throw Error("Mois budgétaire invalide.");
+                await change(d => {
+                  const transaction = d.transactions.find(x => x.id === t.id);
+                  if (!transaction) throw Error("Virement introuvable.");
+                  transaction.personalStartMonth = v.budgetMonth;
+                }, "Mois budgétaire du virement personnel modifié");
+              }, "Changer le mois")
+            }>
+              <CalendarDays size={15}/> Changer le mois budgétaire
             </button>
           )}
           {isEditable && !t.trip && !t.fixed && (
