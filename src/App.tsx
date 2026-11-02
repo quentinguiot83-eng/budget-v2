@@ -6575,7 +6575,7 @@ export default function App() {
                                       : <p>Aucune dépense ce mois.</p>}</div>
                                   )}>Voir les dépenses</button>
                                 </div>
-                              )
+                              )}
 
                               <small>
                                 Dès{" "}
