@@ -2093,7 +2093,7 @@ export default function App() {
       if(v.origin==="bank" && delta>personalBalance(ps,s,personalOwnerId)-personalCashBalance(ps))
         throw Error("Le compte bancaire personnel ne contient pas assez d'argent pour ce retrait.");
       await changePersonal(d=>{
-        d.transactions.push({id:uid(),type:v.origin==="bank"?"cash_transfer":"adjust",amount:delta,
+        d.transactions.push({id:uid(),type:"adjust",cashTransfer:v.origin==="bank",amount:delta,
           paymentMethod:"cash",date:today(),
           description:v.origin==="bank"?"Transfert banque / espèces":"Ajustement des espèces"});
       },"Espèces personnelles mises à jour");
@@ -6450,7 +6450,7 @@ export default function App() {
                     }));
 
                 const privateHistory =
-                  ps.transactions.filter(t=>t.type!=="cash_transfer").map(
+                  ps.transactions.filter(t=>!t.cashTransfer).map(
                     (t) => ({
                       id: t.id,
                       date: t.date,
