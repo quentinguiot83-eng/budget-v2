@@ -1,7 +1,20 @@
 /* Wimm — ajustements novembre 2026. Feuille chargée après les thèmes. */
-.app .page-heading > .month-picker {position:relative}
-.app .page-heading .month-picker > .month-reset-right {
-  grid-column:3;grid-row:1;justify-self:end;
+/* Les deux raccourcis de retour au présent gardent leurs emplacements, sans créer une seconde ligne. */
+.app .page-heading > .month-picker {
+  position:relative;
+  display:grid!important;
+  grid-template-columns:30px 36px minmax(0,1fr) 36px 30px!important;
+  align-items:center;
+  gap:clamp(3px,1.5vw,8px)!important;
+  min-width:0;
+  width:100%;
+}
+.app .page-heading .month-picker > .month-reset-slot {
+  display:grid;place-items:center;min-width:0;min-height:40px;
+}
+.app .page-heading .month-picker > .month-reset-slot .month-reset {
+  display:grid;place-items:center;grid-column:auto;grid-row:auto;
+  width:30px;height:40px;min-height:40px;padding:0;margin:0;
 }
 .app .page-heading .month-picker .icon:disabled {
   opacity:.28;cursor:not-allowed;
@@ -76,4 +89,28 @@
   .app .wimm-review-metrics > div {padding:10px}
   .app .prosuite-native .pro-v4-cash-flow {gap:7px}
   .app .prosuite-native .pro-v4-cash-flow > div {padding:10px 8px}
+}
+
+.app .wimm-cash-quick-actions {display:flex;gap:4px;align-items:center;flex-wrap:wrap}
+.app .wimm-cash-quick-actions .wimm-cash-invite {flex:1 1 150px;width:auto}
+.app .personal-v2-history-icon.neutral {color:var(--muted);background:var(--surface-secondary)}
+/* Les panneaux Pro partagent la même grille et les mêmes marges sur iPhone. */
+.app .prosuite-native .pro-v4-cash-flow > button,
+.app .prosuite-native .pro-v4-month-metrics > div,
+.app .prosuite-native .pro-v4-quick-actions button {min-width:0;max-width:100%;overflow-wrap:anywhere}
+@media(max-width:800px) {
+  .app .prosuite-native .pro-month-navigator,
+  .app .prosuite-native .pro-v4-dashboard,
+  .app .prosuite-native .prosuite-card,
+  .app .prosuite-native .pro-v4-cash-hero,
+  .app .prosuite-native .pro-v4-finances {width:100%!important;max-width:100%!important;box-sizing:border-box!important}
+  .app .prosuite-native .prosuite-topbar {margin:0 0 12px!important}
+  .app .prosuite-native .prosuite-main {padding:10px 0 150px!important}
+  .app .prosuite-native .pro-month-navigator {margin:0 0 16px!important}
+  .app .prosuite-native .pro-v4-quick-actions > div {grid-template-columns:repeat(3,minmax(0,1fr))}
+}
+@media(max-width:390px) {
+  .app .page-heading > .month-picker {grid-template-columns:26px 34px minmax(0,1fr) 34px 26px!important}
+  .app .page-heading .month-picker .month-reset-slot .month-reset {width:26px}
+  .app .prosuite-native .pro-v4-cash-flow > button {padding:11px 9px}
 }
