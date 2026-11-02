@@ -5781,7 +5781,9 @@ export default function App() {
             "fixed",
           ].includes(route) && (
             <div className="month-picker">
-              {selectedMonth > month() && <button className="month-reset icon" type="button" aria-label="Revenir au mois actuel" title="Revenir au mois actuel" onClick={() => setMonth(month())}><ChevronsLeft size={19} strokeWidth={2.25}/></button>}
+              <span className="month-reset-slot">
+                {selectedMonth > month() && <button className="month-reset icon" type="button" aria-label="Revenir au mois actuel" title="Revenir au mois actuel" onClick={() => setMonth(month())}><ChevronsLeft size={19} strokeWidth={2.25}/></button>}
+              </span>
 
               <button
                 className="icon"
@@ -5810,7 +5812,9 @@ export default function App() {
               >
                 <ChevronRight size={18} />
               </button>
-              {selectedMonth < month() && <button className="month-reset month-reset-right icon" type="button" aria-label="Revenir au mois actuel" title="Revenir au mois actuel" onClick={() => setMonth(month())}><ChevronsRight size={19} strokeWidth={2.25}/></button>}
+              <span className="month-reset-slot">
+                {selectedMonth < month() && <button className="month-reset month-reset-right icon" type="button" aria-label="Revenir au mois actuel" title="Revenir au mois actuel" onClick={() => setMonth(month())}><ChevronsRight size={19} strokeWidth={2.25}/></button>}
+              </span>
             </div>
           )}
         </div>
@@ -6421,7 +6425,10 @@ export default function App() {
                 const uncoveredPersonalDues = personalDues(ps, selectedMonth)
                   .filter(d => !d.paid && !activePrivateBudgets.some(b => b.id === d.rule.budgetId))
                   .reduce((n, d) => n + d.rule.amount, 0);
-                const personalEndMonthEstimate = privateBalance - privateBudgetRemaining - uncoveredPersonalDues;
+                const personalEndMonthEstimate = selectedMonth < month()
+                  ? personalBalance(ps, s, personalOwnerId, dateAt(selectedMonth, 31))
+                  : privateBalance + (selectedMonth === month() ? Math.max(0, envelope.remaining) : 0)
+                    - privateBudgetRemaining - uncoveredPersonalDues;
                 const activeAdvances = s.transactions.filter(t =>
                   t.type === "personal_transfer" &&
                   t.personalOwner === personalOwnerId &&
@@ -6460,9 +6467,9 @@ export default function App() {
                           <button type="button" className="wimm-cash-invite" onClick={transferPersonalCash}>Retrait / dépôt d'espèces</button>
                         </div>
                         <div className="wimm-personal-month-estimate">
-                          <span>Disponible estimé fin {monthLabel(selectedMonth)}</span>
+                          <span>{selectedMonth < month() ? "Solde constaté fin " : "Disponible estimé fin "}{monthLabel(selectedMonth)}</span>
                           <strong className={personalEndMonthEstimate < 0 ? "negative-money" : "positive-money"}>{money(personalEndMonthEstimate)}</strong>
-                          <small>Solde total moins budgets personnels restants et mensualités non couvertes.</small>
+                          <small>{selectedMonth < month() ? "Historique calculé à partir des mouvements enregistrés." : "Solde, virements budgétaires attendus, dépenses prévues et mensualités non couvertes."}</small>
                         </div>
                         <div className="personal-v2-totals">
                           <div>
@@ -6573,7 +6580,7 @@ export default function App() {
                               {selectedMonth >= b.start && (!b.end || selectedMonth <= b.end) && (
                                 <div className="wimm-personal-budget-progress">
                                   <Progress value={spentInPersonalBudget(b.id)} max={Math.max(1, b.amount)}/>
-                                  <small>Dépensé : {money(spentInPersonalBudget(b.id))} · Reste : {money(Math.max(0, b.amount - spentInPersonalBudget(b.id)))}</small>
+                                  <small>Dépensé : {money(spentInPersonalBudget(b.id))} · Reste : {money(b.amount - spentInPersonalBudget(b.id))}</small>
                                   <button type="button" className="text" onClick={() => explain(
                                     b.name + " · " + monthLabel(selectedMonth),
                                     <div>{ps.transactions.filter(t => t.type === "expense" && t.budgetId === b.id && month(t.date) === selectedMonth).length
@@ -7679,7 +7686,9 @@ export default function App() {
                     </section>
                   )}
                   {s.trips.some(t => !!t.closedAt) && (
-                    <details className="trips-archive-picker">
+                    <details className="trips-archive-picker" onToggle={event => {
+                       if (!event.currentTarget.open && s.trips.some(t => t.id === activeTrip && !!t.closedAt)) setActiveTrip("");
+                     }}>
                       <summary>
                         <CalendarDays size={17}/>
                         Voyages terminés ({s.trips.filter(t => !!t.closedAt).length})
