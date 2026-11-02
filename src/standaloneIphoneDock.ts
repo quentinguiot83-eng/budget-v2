@@ -1,5 +1,5 @@
-/** iOS home-screen PWAs may retain a keyboard-sized layout viewport after resuming.
- * Keep the floating dock anchored to the physical screen until WebKit recovers. */
+/** WebKit may keep a stale compositing layer for position:fixed after scrolling
+ * or resuming a standalone PWA. Repaint, but NEVER modify the dock's position. */
 export function stableIphoneScreenHeight(
   screenWidth: number,
   screenHeight: number,
@@ -35,19 +35,17 @@ export function installStandaloneIphoneDock(): () => void {
   let pendingFrame = 0;
   const delayed = new Set<ReturnType<typeof setTimeout>>();
 
-  // Correct any residual WebKit fixed-element compositor drift, without
-  // changing the dock's X centering transform or the floating + button.
-  function anchor(selector: string, offsetVariable: string) {
-    const element = document.querySelector<HTMLElement>(selector);
-    if (!element || !element.getClientRects().length) return;
-    const expected = Number.parseFloat(getComputedStyle(element).top);
-    if (!Number.isFinite(expected)) return;
-    const actual = element.getBoundingClientRect().top;
-    const difference = expected - actual;
-    if (Math.abs(difference) < 2) return;
-    const previous = Number.parseFloat(element.style.getPropertyValue(offsetVariable)) || 0;
-    const correction = Math.max(-1600, Math.min(1600, previous + difference));
-    element.style.setProperty(offsetVariable, correction.toFixed(2) + "px");
+  /** Recreate the WebKit compositor layer without moving the dock.
+   * display:none is removed synchronously before the browser paints. */
+  function repaintDock() {
+    if (document.visibilityState !== "visible") return;
+    for (const selector of [".app .bottom-nav", ".app .floating-add-button"]) {
+      const element = document.querySelector<HTMLElement>(selector);
+      if (!element) continue;
+      element.style.setProperty("display", "none", "important");
+      void element.offsetHeight;
+      element.style.removeProperty("display");
+    }
   }
 
   function refresh() {
@@ -58,15 +56,13 @@ export function installStandaloneIphoneDock(): () => void {
       window.matchMedia("(orientation: portrait)").matches,
       window.innerHeight,
     );
-    root.style.setProperty("--wimm-standalone-screen-height", height + "px");
 
     const element = document.activeElement;
     const editing = element instanceof HTMLElement && element.matches(FIELD_SELECTOR);
     const visible = window.visualViewport?.height ?? window.innerHeight;
     root.toggleAttribute("data-wimm-keyboard-open", keyboardIsVisible(editing, visible, height));
 
-    anchor(".app .bottom-nav", "--wimm-nav-recovery-y");
-    anchor(".app .floating-add-button", "--wimm-add-recovery-y");
+
   }
 
   function schedule() {
@@ -75,8 +71,12 @@ export function installStandaloneIphoneDock(): () => void {
 
   function scheduleAfterTransition() {
     schedule();
-    for (const ms of [100, 350]) {
-      const timer = setTimeout(() => { delayed.delete(timer); schedule(); }, ms);
+    for (const ms of [120, 380]) {
+      const timer = setTimeout(() => {
+        delayed.delete(timer);
+        schedule();
+        if (!document.documentElement.hasAttribute("data-wimm-keyboard-open")) repaintDock();
+      }, ms);
       delayed.add(timer);
     }
   }
@@ -89,6 +89,16 @@ export function installStandaloneIphoneDock(): () => void {
     window.addEventListener(event, scheduleAfterTransition);
   }
   window.addEventListener("scroll", schedule, { passive: true });
+  // Rebuild the dock layer only when scrolling ends, not on every scroll frame.
+  let scrollTimer: ReturnType<typeof setTimeout> | undefined;
+  function onScrollEnd() {
+    if (scrollTimer) clearTimeout(scrollTimer);
+    scrollTimer = setTimeout(() => {
+      scrollTimer = undefined;
+      if (!root.hasAttribute("data-wimm-keyboard-open")) repaintDock();
+    }, 240);
+  }
+  window.addEventListener("scroll", onScrollEnd, { passive: true });
   document.addEventListener("visibilitychange", onVisibilityChange);
   document.addEventListener("focusin", scheduleAfterTransition);
   document.addEventListener("focusout", scheduleAfterTransition);
@@ -103,6 +113,8 @@ export function installStandaloneIphoneDock(): () => void {
       window.removeEventListener(event, scheduleAfterTransition);
     }
     window.removeEventListener("scroll", schedule);
+    window.removeEventListener("scroll", onScrollEnd);
+    if (scrollTimer) clearTimeout(scrollTimer);
     document.removeEventListener("visibilitychange", onVisibilityChange);
     document.removeEventListener("focusin", scheduleAfterTransition);
     document.removeEventListener("focusout", scheduleAfterTransition);
@@ -110,6 +122,6 @@ export function installStandaloneIphoneDock(): () => void {
     window.visualViewport?.removeEventListener("scroll", schedule);
     root.removeAttribute("data-wimm-standalone-dock");
     root.removeAttribute("data-wimm-keyboard-open");
-    root.style.removeProperty("--wimm-standalone-screen-height");
+
   };
 }
