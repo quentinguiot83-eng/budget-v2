@@ -6536,7 +6536,7 @@ export default function App() {
                                     <Row key={t.id} title={t.description||"Dépense"} sub={dateLabel(t.date)} value={money(t.amount)}/>)}
                                   {!personalSpentForBudget(b.id)&&<small className="muted">Aucune dépense pour ce mois.</small>}
                                 </div>}
-                              </>
+                              </>}
 
                               <small>
                                 Dès{" "}
