@@ -35,6 +35,9 @@ export type Account = {
 
   archived?: boolean;
 
+  /** Portefeuille physique de billets et pièces, distinct des comptes bancaires. */
+  isCash?: boolean;
+
 };
 
 export type Category = {
