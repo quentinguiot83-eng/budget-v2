@@ -1,4 +1,5 @@
 import { WimmWordmark } from "./WimmWordmark";
+import { monthlyLedger } from "./monthlyLedger";
 import { validateAccountName } from "./accountNames";
 import { accountLinks, accountRemovalBlockers, canArchiveAccount, canDeleteAccount, removeAccountSafely } from "./accountRemoval";
 import { revisePaymentPlan, removeCreditPlan } from "./creditSchedules";
@@ -5688,14 +5689,12 @@ export default function App() {
     else if(dir<0){if(previousRecordedMonth)setMonth(previousRecordedMonth);}
     else setMonth(nextRecordedMonth||shiftMonth(selectedMonth,1));
   };
-  const historicalTransactions=s.transactions.filter(t=>month(t.date)===selectedMonth&&t.date<=today()&&
-    s.accounts.find(a=>a.id===t.account)?.group!=="personal");
-  const historicalIncome=historicalTransactions.filter(t=>t.type==="income").reduce((v,t)=>v+t.amount,0);
-  const historicalExpenses=historicalTransactions.filter(t=>t.type==="expense").reduce((v,t)=>v+t.amount,0);
-  const historicalSavings=monthlySavings(s,selectedMonth);
-  const historicalCategories=s.categories.map(c=>({id:c.id,name:c.name,amount:historicalTransactions.filter(t=>t.type==="expense"&&t.category===c.id).reduce((v,t)=>v+t.amount,0)}))
-    .filter(c=>c.amount>0).sort((a,b)=>b.amount-a.amount);
-  const historicalTripExpense=historicalTransactions.filter(t=>t.type==="expense"&&!!t.trip).reduce((v,t)=>v+t.amount,0);
+  const historical = monthlyLedger(s, selectedMonth);
+  const historicalIncome = historical.income;
+  const historicalExpenses = historical.spending;
+  const historicalSavings = historical.savings;
+  const historicalCategories = historical.categories;
+  const historicalTripExpense = historical.travelSpending;
   const wealth = activeHouseholdAccounts
     .filter((a) => a.group === "wealth")
     .reduce((sum, a) => sum + balance(s, a.id), 0);
@@ -5982,17 +5981,34 @@ export default function App() {
 
 
                {selectedMonth<month()&&<section className="card home-monthly-report" aria-label={"Bilan financier de "+monthLabel(selectedMonth)}>
-                 <div className="section-head"><h2>Bilan de {monthLabel(selectedMonth)}</h2><span className="muted">Opérations réelles</span></div>
+                 <div className="section-head"><h2>Bilan de {monthLabel(selectedMonth)}</h2><span className="muted">Transactions vérifiables</span></div>
                  <div className="home-remaining-grid home-income-expenses">
-                   <div className="home-remaining-card home-income"><span className="muted">Revenus totaux</span><strong>{money(historicalIncome)}</strong></div>
-                   <div className="home-remaining-card home-expenses"><span className="muted">Dépenses totales</span><strong>{money(historicalExpenses)}</strong></div>
+                   <div className="home-remaining-card home-income">
+                     <span className="muted">Revenus du mois</span><strong>{money(historicalIncome)}</strong>
+                     <button type="button" className="text" onClick={() => explain(
+                       "Revenus · "+monthLabel(selectedMonth),
+                       <div><p className="muted">Revenus réellement reçus et affectés à ce mois budgétaire ({historical.revenues.length} opération(s)).</p>
+                         {historical.revenues.length ? txRows(historical.revenues) : <p>Aucun revenu enregistré.</p>}</div>
+                     )}>Voir {historical.revenues.length} opération(s) <ChevronRight size={15}/></button>
+                   </div>
+                   <div className="home-remaining-card home-expenses">
+                     <span className="muted">Dépenses réelles</span><strong>{money(historicalExpenses)}</strong>
+                     <button type="button" className="text" onClick={() => explain(
+                       "Dépenses · "+monthLabel(selectedMonth),
+                       <div><p className="muted">Achats enregistrés du mois, voyages inclus, sans virements entre comptes ({historical.expenses.length} opération(s)).</p>
+                         {historical.expenses.length ? txRows(historical.expenses) : <p>Aucune dépense enregistrée.</p>}</div>
+                     )}>Voir {historical.expenses.length} opération(s) <ChevronRight size={15}/></button>
+                   </div>
                    <div className="home-remaining-card"><span className="muted">Balance du mois</span><strong className={historicalIncome-historicalExpenses<0?"negative-money":"positive-money"}>{money(historicalIncome-historicalExpenses)}</strong></div>
                    <div className="home-remaining-card"><span className="muted">Épargne transférée</span><strong>{money(historicalSavings)}</strong></div>
                  </div>
-                 <p className="muted">Les transferts internes ne sont ni des revenus ni des dépenses.</p>
+                 <div className="home-report-breakdown">
+                   <div><span>Dépenses du quotidien</span><strong>{money(historical.ordinarySpending)}</strong></div>
+                   <div><span>Dépenses de voyages</span><strong>{money(historicalTripExpense)}</strong></div>
+                 </div>
+                 <p className="muted">Les revenus suivent le mois budgétaire (un salaire versé en fin de mois peut financer le mois suivant). Les dépenses suivent leur date bancaire. Les virements internes ne sont pas des dépenses.</p>
                  {!!historicalCategories.length&&<div className="home-monthly-categories"><h3>Répartition des dépenses</h3>
                    {historicalCategories.map(c=><div className="home-monthly-category" key={c.id}><span>{c.name}</span><strong>{money(c.amount)}</strong><Progress value={c.amount} max={Math.max(1,historicalExpenses)}/></div>)}
-                   {historicalTripExpense>0&&<small className="muted">Dont voyages : {money(historicalTripExpense)}</small>}
                  </div>}
                </section>}
                <div className="home-remaining-grid home-income-expenses">
