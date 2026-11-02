@@ -57,6 +57,7 @@ import {
   ArrowLeftRight,
   ChevronLeft,
   ChevronsLeft,
+  ChevronsRight,
   ChevronRight,
   Minus,
   Bell,
@@ -160,6 +161,7 @@ import {
   type PersonalBudget,
   emptyPersonalState,
   personalBalance,
+  personalCashBalance,
   personalDues,
   personalProjection,
   validatePersonal,
@@ -510,6 +512,28 @@ export default function App() {
     || (demoEnabled ? previewName : session?.user.email?.split("@")[0] || "");
   const tutorialSeen = session?.user.user_metadata?.wimm_tutorial_seen === true;
   const tutorialStarted = session?.user.user_metadata?.wimm_tutorial_started === true;
+  // Navigation historique : aucun saut vers une période antérieure sans saisie.
+  const recordedPastMonths = useMemo(() => {
+    const months = new Set<string>();
+    const mark = (date?: string) => { if (date && date.slice(0, 7) < month()) months.add(date.slice(0, 7)); };
+    s.accounts.forEach(a => mark(a.date));
+    s.transactions.forEach(t => mark(t.date));
+    s.rules.forEach(r => mark(r.start));
+    s.trips.forEach(t => { mark(t.start); mark(t.end); });
+    s.categories.forEach(c => Object.keys(c.budgets || {}).forEach(mark));
+    if (ps.account) mark(ps.account.date);
+    ps.transactions.forEach(t => mark(t.date));
+    ps.rules.forEach(r => mark(r.start));
+    (ps.budgets || []).forEach(b => mark(b.start));
+    return [...months].sort();
+  }, [s, ps]);
+  const previousRecordedMonth = recordedPastMonths.filter(m => m < selectedMonth).at(-1);
+  const nextRecordedMonth = recordedPastMonths.find(m => m > selectedMonth) || month();
+  const priorMonthAvailable = selectedMonth > month() || !!previousRecordedMonth;
+  const navigatePreviousMonth = () => setMonth(selectedMonth > month()
+    ? shiftMonth(selectedMonth, -1) : previousRecordedMonth || selectedMonth);
+  const navigateNextMonth = () => setMonth(selectedMonth < month()
+    ? nextRecordedMonth : shiftMonth(selectedMonth, 1));
   const totals = stats(s, selectedMonth);
   // Les cinq dépenses réelles les plus récentes du mois affiché, et non les échéances à venir.
   // reverse() conserve la dernière opération enregistrée en tête à date égale.
@@ -5662,12 +5686,13 @@ export default function App() {
             "fixed",
           ].includes(route) && (
             <div className="month-picker">
-              <button className="month-reset icon" type="button" aria-label="Revenir au mois actuel" title="Revenir au mois actuel" disabled={selectedMonth === month()} onClick={() => setMonth(month())}><ChevronsLeft size={19} strokeWidth={2.25} /></button>
+              {selectedMonth > month() && <button className="month-reset icon" type="button" aria-label="Revenir au mois actuel" title="Revenir au mois actuel" onClick={() => setMonth(month())}><ChevronsLeft size={19} strokeWidth={2.25}/></button>}
 
               <button
                 className="icon"
                 aria-label="Mois précédent"
-                onClick={() => setMonth(shiftMonth(selectedMonth, -1))}
+                disabled={!priorMonthAvailable}
+                onClick={navigatePreviousMonth}
               >
                 <ChevronLeft size={18} />
               </button>
@@ -5678,17 +5703,19 @@ export default function App() {
                   type="month"
                   aria-label="Choisir le mois affiché"
                   value={selectedMonth}
-                  onChange={(e) => e.target.value && setMonth(e.target.value)}
+                  min={recordedPastMonths[0] || month()}
+                  onChange={(e) => { const m = e.target.value; if (m && (m >= month() || recordedPastMonths.includes(m))) setMonth(m); }}
                 />
               </label>
 
               <button
                 className="icon"
                 aria-label="Mois suivant"
-                onClick={() => setMonth(shiftMonth(selectedMonth, 1))}
+                onClick={navigateNextMonth}
               >
                 <ChevronRight size={18} />
               </button>
+              {selectedMonth < month() && <button className="month-reset month-reset-right icon" type="button" aria-label="Revenir au mois actuel" title="Revenir au mois actuel" onClick={() => setMonth(month())}><ChevronsRight size={19} strokeWidth={2.25}/></button>}
             </div>
           )}
         </div>
@@ -5734,6 +5761,20 @@ export default function App() {
                   onNavigate={navigate}
                   onHelp={() => { setTutorialPage("home"); setTutorialMode("page"); setTutorialOpen(true); }}
                 />
+              )}
+              {selectedMonth < month() && (
+                <section className="card wimm-past-month-review" aria-label={"Bilan financier de " + monthLabel(selectedMonth)}>
+                  <div className="section-head"><div><small className="muted">MOIS TERMINÉ</small><h2>Bilan · {monthLabel(selectedMonth)}</h2></div></div>
+                  <div className="wimm-review-metrics">
+                    <div><span>Revenus reçus</span><strong className="positive-money">{money(s.transactions.filter(t => t.type === "income" && month(t.date) === selectedMonth && !t.personalOwner && s.accounts.find(a => a.id === t.account)?.group !== "personal").reduce((n,t)=>n+t.amount,0))}</strong></div>
+                    <div><span>Dépenses réglées</span><strong className="negative-money">{money(totals.spending)}</strong></div>
+                    <div><span>Balance du mois</span><strong className={totals.income-totals.spending < 0 ? "negative-money" : "positive-money"}>{money(totals.income-totals.spending)}</strong></div>
+                    <div><span>Épargne versée</span><strong>{money(totals.saved)}</strong></div>
+                  </div>
+                  <Row title="Budget prévu" value={money(totals.fixed + totals.variable)}/>
+                  <Row title="Écart avec les dépenses" value={money(totals.fixed + totals.variable - totals.spending)}/>
+                  <button type="button" className="text" onClick={() => navigate("analysis")}>Voir l'analyse du mois <ChevronRight size={15}/></button>
+                </section>
               )}
               <section className="balance-card home-balance-main" data-tour="home-overview">
                 <div className="split">
@@ -7530,7 +7571,8 @@ export default function App() {
                   )}
                   {(() => {
                     const t = s.trips.find(t => t.id === activeTrip) ||
-                      s.trips.find(t => !t.closedAt) || s.trips[0];
+                      s.trips.find(t => !t.closedAt);
+                    if (!t) return <p className="muted trips-archive-placeholder">Vos voyages clôturés sont disponibles uniquement dans « Voyages terminés ». Sélectionnez-en un pour revoir son bilan.</p>;
                     const tx = s.transactions.filter(x => x.trip === t.id);
                     const expenses = tx.filter(x => x.type === "expense");
                     const spent = expenses.reduce((n, x) => n + x.amount, 0);
@@ -7698,6 +7740,7 @@ export default function App() {
                               "Il sera déplacé dans Voyages terminés. Son historique et son coût total resteront accessibles.",
                               async () => change(d => {
                                 d.trips.find(x => x.id === t.id)!.closedAt = today();
+                                setActiveTrip("");
                               }, "Voyage clôturé")
                             )}>Clôturer le voyage</button>
                           )}
