@@ -934,7 +934,7 @@ export default function App() {
       amountField("amount","Montant (€)",t.amount),
       field("date","Date",today(),"date"),
       field("description","Libellé",t.description),
-      choice("account","Compte",accountOptions(),t.account),
+      choice("account","Compte",isExpense ? expenseAccountOptions(t.account) : accountOptions(),t.account),
       ...(isExpense?[choice("category","Catégorie",categories,t.category||categories[0]?.[0])]:[
         choice("incomeType","Type de revenu",[
           ["Salaire","Salaire"],["Prime","Prime"],["Remboursement","Remboursement"],
@@ -944,6 +944,7 @@ export default function App() {
     ],async v=>{
       const amount=euro(v.amount);
       if(amount<=0)throw Error("Montant invalide.");
+      if (isExpense) checkCashExpense(v.account, amount);
       await change(d=>{
         const duplicate:Tx={
           id:uid(),type:t.type,date:v.date,description:v.description.trim(),
@@ -3533,7 +3534,7 @@ export default function App() {
         choice(
           "account",
           "Compte",
-          accountOptions(),
+          expenseAccountOptions(existing?.account),
           existing?.account ||
             current.id,
         ),
@@ -3577,7 +3578,7 @@ export default function App() {
           : "Ajouter une dépense de voyage",
         fields,
         async (v) => {
-
+          checkCashExpense(v.account, euro(v.amount), existing);
           await change(
             (d) => {
 
@@ -3711,7 +3712,7 @@ export default function App() {
       choice(
         "account",
         "Compte débité",
-        accountOptions(),
+        expenseAccountOptions(),
         current.id,
       ),
 
@@ -3844,6 +3845,7 @@ export default function App() {
             throw Error(
               "Le montant doit être supérieur à zéro.",
             );
+          checkCashExpense(v.account, amount);
 
           await change(
             (d) =>
@@ -5850,6 +5852,11 @@ export default function App() {
                           <strong className={balance(s, a.id) < 0 ? "negative-money" : undefined}>{money(balance(s, a.id))}</strong>
                         </button>
                       ))}
+                      {!currentAccounts.some(a => a.isCash) ? (
+                        <button type="button" className="wimm-cash-invite" onClick={editHouseholdCash}>Vous avez du liquide ? Saisir des espèces</button>
+                      ) : (
+                        <button type="button" className="wimm-cash-invite" onClick={editHouseholdCash}>Modifier mon solde d'espèces</button>
+                      )}
                     </div>
                   </div>
                 )}
