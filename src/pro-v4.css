@@ -294,3 +294,34 @@
 :root[data-mode="dark"] .pro-v4-finances-payments{background:#17212b;border-color:#2a3744}
 :root[data-mode="dark"] .pro-v4-payment-item button{background:#17212b;border-color:#334250}
 @media(max-width:540px){.pro-v4-payment-item{flex-wrap:wrap}.pro-v4-payment-item>span{flex:1 1 60%}.pro-v4-payment-item button{margin-left:auto}}
+
+/* Layout consistency across the whole Pro workspace on small screens. */
+.prosuite-native .prosuite-shell,
+.prosuite-native .prosuite-main,
+.prosuite-native .pro-v4-dashboard,
+.prosuite-native .pro-v4-cash-hero,
+.prosuite-native .pro-v4-finances,
+.prosuite-native .pro-v4-subpage,
+.prosuite-native .pro-v4-month-metrics,
+.prosuite-native .pro-v4-follow-grid {
+  min-width:0;width:100%;max-width:100%;box-sizing:border-box;
+}
+.prosuite-native .prosuite-main > * {min-width:0;max-width:100%;box-sizing:border-box}
+.prosuite-native .pro-v4-cash-flow > *,
+.prosuite-native .pro-v4-finances-summary > * {min-width:0;max-width:100%;box-sizing:border-box}
+.prosuite-native .pro-month-navigator {width:100%;max-width:100%;min-width:0;box-sizing:border-box}
+.prosuite-native .pro-month-navigator > strong {min-width:0;flex:1;text-align:center}
+@media(max-width:800px) {
+  .prosuite-native .prosuite-main {padding-left:14px!important;padding-right:14px!important}
+  .prosuite-native .pro-v4-nav {max-width:100%;box-sizing:border-box}
+  .prosuite-native .pro-v4-cash-hero,
+  .prosuite-native .pro-v4-finances-fiscal,
+  .prosuite-native .pro-v4-finances-actions {margin-left:0;margin-right:0}
+}
+@media(max-width:420px){
+  .prosuite-native .prosuite-main {padding-left:10px!important;padding-right:10px!important}
+  .prosuite-native .pro-v4-cash-flow {gap:8px}
+  .prosuite-native .pro-v4-cash-flow > * {padding:12px 9px!important}
+  .prosuite-native .pro-v4-cash-flow strong {font-size:1.03rem!important}
+  .prosuite-native .pro-v4-cash-flow small {white-space:normal;overflow-wrap:anywhere}
+}
