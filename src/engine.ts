@@ -32,6 +32,8 @@ export type Account = {
   taxMode?: "none" | "yield" | "exit";
 
   personalCategory?: string;
+  /** The optional household cash wallet, counted within current accounts. */
+  isCash?: boolean;
 
   archived?: boolean;
 
