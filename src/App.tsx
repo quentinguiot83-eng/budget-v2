@@ -1865,6 +1865,46 @@ export default function App() {
   }
 
 
+  function editPersonalCash() {
+    if (!ps.account) return;
+    openForm("Espèces personnelles", [
+      amountField("amount", "Espèces en votre possession (€)", personalCashBalance(ps)),
+    ], async v => {
+      const target = euro(v.amount);
+      if (target < 0) throw Error("Le solde d'espèces ne peut pas être négatif.");
+      await changePersonal(d => {
+        const delta = target - personalCashBalance(d);
+        if (delta !== 0) d.transactions.push({
+          id: uid(), type: "cash_adjust", amount: delta, date: today(),
+          description: "Inventaire des espèces personnelles",
+        });
+      }, "Espèces personnelles actualisées");
+    }, "Enregistrer");
+  }
+
+  function transferPersonalCash() {
+    if (!ps.account) return;
+    openForm("Transfert banque et espèces", [
+      choice("direction", "Sens du transfert", [
+        ["toCash", "Retirer de la banque vers les espèces"],
+        ["toBank", "Déposer les espèces sur le compte bancaire"],
+      ], "toCash"),
+      amountField("amount", "Montant (€)", 0),
+    ], async v => {
+      const amount = euro(v.amount);
+      if (amount <= 0) throw Error("Le montant doit être positif.");
+      const currentCash = personalCashBalance(ps);
+      const bank = personalBalance(ps, s, personalOwnerId) - currentCash;
+      if (v.direction === "toCash" && amount > bank) throw Error("Solde bancaire insuffisant.");
+      if (v.direction === "toBank" && amount > currentCash) throw Error("Solde espèces insuffisant.");
+      await changePersonal(d => d.transactions.push({
+        id: uid(), type: "cash_transfer",
+        amount: v.direction === "toCash" ? amount : -amount,
+        date: today(), description: v.direction === "toCash" ? "Retrait en espèces" : "Dépôt d'espèces",
+      }), "Transfert espèces enregistré");
+    });
+  }
+
   function personalExpense(
     existing?: PersonalTransaction,
   ) {
@@ -1890,6 +1930,11 @@ export default function App() {
           existing?.budgetId ||
             "none",
         ),
+        ...((personalCashBalance(ps) > 0 || existing?.paymentMethod === "cash") ? [
+          choice("paymentMethod", "Moyen de paiement", [
+            ["bank", "Compte bancaire"], ["cash", "Espèces"],
+          ], existing?.paymentMethod || "bank"),
+        ] : []),
 
         field(
           "date",
@@ -1906,6 +1951,11 @@ export default function App() {
       ],
       async (v) => {
 
+        if (v.paymentMethod === "cash") {
+          const restored = existing?.paymentMethod === "cash" ? existing.amount : 0;
+          if (euro(v.amount) > personalCashBalance(ps) + restored)
+            throw Error("Solde espèces insuffisant.");
+        }
         const tx:
           PersonalTransaction = {
             ...existing,
@@ -1922,6 +1972,7 @@ export default function App() {
               v.budgetId === "none"
                 ? undefined
                 : v.budgetId,
+            paymentMethod: v.paymentMethod === "cash" ? "cash" : "bank",
           };
 
         await changePersonal(
@@ -2045,8 +2096,8 @@ export default function App() {
       [
         amountField(
           "balance",
-          "Solde réel constaté (€)",
-          currentBalance,
+          "Solde bancaire constaté (€)",
+          currentBalance - personalCashBalance(ps),
         ),
         field(
           "reason",
@@ -2058,11 +2109,7 @@ export default function App() {
 
         const difference =
           euro(v.balance) -
-          personalBalance(
-            ps,
-            s,
-            personalOwnerId,
-          );
+          (personalBalance(ps, s, personalOwnerId) - personalCashBalance(ps));
 
         if (!difference)
           return;
@@ -6300,6 +6347,8 @@ export default function App() {
                     personalOwnerId,
                   );
 
+                const privateCash = personalCashBalance(ps);
+                const privateBank = privateBalance - privateCash;
                 const sharedIncoming =
                   s.transactions
                     .filter(
@@ -6384,6 +6433,13 @@ export default function App() {
                         <div className="personal-v2-amount">
                           <span>Solde privé actuel</span>
                           <strong className={privateBalance < 0 ? "negative-money" : undefined}>{money(privateBalance)}</strong>
+                        </div>
+                        <div className="wimm-personal-cash-lines">
+                          <div><Wallet size={16}/> Banque <strong>{money(privateBank)}</strong></div>
+                          {privateCash > 0
+                            ? <button type="button" onClick={editPersonalCash}><Coins size={16}/> Espèces <strong>{money(privateCash)}</strong></button>
+                            : <button type="button" className="wimm-cash-invite" onClick={editPersonalCash}>Vous avez du liquide ? Saisir des espèces</button>}
+                          <button type="button" className="wimm-cash-invite" onClick={transferPersonalCash}>Retrait / dépôt d'espèces</button>
                         </div>
                         <div className="personal-v2-totals">
                           <div>
