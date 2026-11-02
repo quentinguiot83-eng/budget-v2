@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { balance, emptyState, today, type Account } from "./engine";
+import { balance, emptyState, today, validate, type Account } from "./engine";
 import { emptyPersonalState, personalBalance, personalCashBalance, validatePersonal } from "./personal";
 
 const current = (id:string, opening:number, isCash=false):Account=>({
@@ -39,4 +39,11 @@ test("a personal cash payment exceeding cash funds is rejected",()=>{
   p.account={id:"p",name:"Compte privé",opening:10000,date:today(),category:"my-budget"};
   p.transactions=[{id:"over",type:"expense",paymentMethod:"cash",amount:100,date:today(),description:"Too much"}];
   assert.throws(()=>validatePersonal(p),/espèces personnelles/i);
+});
+
+test("all cash expenses are blocked when their ledger would turn negative",()=>{
+  const s=emptyState();
+  s.accounts=[current("bank",10000),current("cash",300,true)];
+  s.transactions=[{id:"too-much",type:"expense",account:"cash",amount:301,date:today(),description:"Espèces insuffisantes"}];
+  assert.throws(()=>validate(s),/espèces insuffisantes/i);
 });
