@@ -6014,7 +6014,33 @@ export default function App() {
                  </div>
                  <p className="muted">Les revenus suivent le mois budgétaire (un salaire versé en fin de mois peut financer le mois suivant). Les dépenses suivent leur date bancaire. Les virements internes ne sont pas des dépenses.</p>
                  {!!historicalCategories.length&&<div className="home-monthly-categories"><h3>Répartition des dépenses</h3>
-                   {historicalCategories.map(c=><div className="home-monthly-category" key={c.id}><span>{c.name}</span><strong>{money(c.amount)}</strong><Progress value={c.amount} max={Math.max(1,historicalExpenses)}/></div>)}
+                   {historicalCategories.map(c => (
+                     <div className="home-monthly-category" key={c.id}>
+                       {c.tripId ? (
+                         <button
+                           type="button"
+                           className="home-monthly-trip-link"
+                           aria-label={`Voir les dépenses du voyage ${c.name} : ${money(c.amount)}`}
+                           onClick={() => {
+                             const tripExpenses = historical.expenses.filter(t => t.trip === c.tripId);
+                             explain(
+                               `Dépenses du voyage · ${c.name}`,
+                               <div>
+                                 <p className="muted">{tripExpenses.length} dépense(s) enregistrée(s) pour {monthLabel(selectedMonth)} · {money(c.amount)}</p>
+                                 {txRows(tripExpenses)}
+                               </div>,
+                             );
+                           }}
+                         >
+                           <span>{c.name}</span>
+                           <span className="home-monthly-trip-amount"><strong>{money(c.amount)}</strong><ChevronRight size={16} aria-hidden="true"/></span>
+                         </button>
+                       ) : (
+                         <><span>{c.name}</span><strong>{money(c.amount)}</strong></>
+                       )}
+                       <Progress value={c.amount} max={Math.max(1,historicalExpenses)}/>
+                     </div>
+                   ))}
                  </div>}
                </section>}
                {homeMonthSections.showInteractiveDashboard && (<>
