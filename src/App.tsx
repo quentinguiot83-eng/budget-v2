@@ -6404,6 +6404,15 @@ export default function App() {
                   b => selectedMonth >= b.start && (!b.end || selectedMonth <= b.end)
                 );
                 const privateBudgetsTotal = activePrivateBudgets.reduce((n, b) => n + b.amount, 0);
+                const spentInPersonalBudget = (budgetId: string) => ps.transactions
+                  .filter(t => t.type === "expense" && t.budgetId === budgetId && month(t.date) === selectedMonth)
+                  .reduce((n, t) => n + t.amount, 0);
+                const privateBudgetRemaining = activePrivateBudgets.reduce((sum, b) =>
+                  sum + Math.max(0, b.amount - spentInPersonalBudget(b.id)), 0);
+                const uncoveredPersonalDues = personalDues(ps, selectedMonth)
+                  .filter(d => !d.paid && !activePrivateBudgets.some(b => b.id === d.rule.budgetId))
+                  .reduce((n, d) => n + d.rule.amount, 0);
+                const personalEndMonthEstimate = privateBalance - privateBudgetRemaining - uncoveredPersonalDues;
                 const activeAdvances = s.transactions.filter(t =>
                   t.type === "personal_transfer" &&
                   t.personalOwner === personalOwnerId &&
@@ -6440,6 +6449,11 @@ export default function App() {
                             ? <button type="button" onClick={editPersonalCash}><Coins size={16}/> Espèces <strong>{money(privateCash)}</strong></button>
                             : <button type="button" className="wimm-cash-invite" onClick={editPersonalCash}>Vous avez du liquide ? Saisir des espèces</button>}
                           <button type="button" className="wimm-cash-invite" onClick={transferPersonalCash}>Retrait / dépôt d'espèces</button>
+                        </div>
+                        <div className="wimm-personal-month-estimate">
+                          <span>Disponible estimé fin {monthLabel(selectedMonth)}</span>
+                          <strong className={personalEndMonthEstimate < 0 ? "negative-money" : "positive-money"}>{money(personalEndMonthEstimate)}</strong>
+                          <small>Solde total moins budgets personnels restants et mensualités non couvertes.</small>
                         </div>
                         <div className="personal-v2-totals">
                           <div>
@@ -6496,7 +6510,7 @@ export default function App() {
                           <span className="personal-v2-panel-icon"><Coins size={20}/></span>
                           <span className="personal-v2-panel-copy">
                             <strong>Mes budgets personnels</strong>
-                            <small>Prévisions uniquement · sans débit immédiat</small>
+                            <small>Prévu, dépensé et restant ce mois</small>
                           </span>
                           <span className="personal-v2-panel-side">
                             <strong>{money(privateBudgetsTotal)}</strong>
@@ -6513,10 +6527,8 @@ export default function App() {
                           </h2>
 
                           <p className="muted">
-                            Ces montants servent uniquement à prévoir vos futures
-                            dépenses personnelles. Ils n’affectent pas le budget
-                            commun et ne modifient pas votre solde réel tant que
-                            vous n’avez pas réellement dépensé l’argent.
+                            Suivez le budget, les dépenses et le reste disponible par catégorie.
+                            Les montants prévus ne débitent pas le compte avant un achat.
                           </p>
                         </div>
 
@@ -6537,7 +6549,7 @@ export default function App() {
                             { label: "Modifier", icon: <Pencil size={17}/>, onClick: () => editPersonalBudget(b) },
                             { label: "Supprimer", icon: <Trash2 size={17}/>, tone: "danger" as const, onClick: () => confirmAction(
                               "Supprimer " + b.name + " ?",
-                              "Ce budget n'entrera plus dans les projections. Aucune dépense déjà enregistrée ne sera supprimée.",
+                              "Ce budget n'entrera plus dans le suivi ni les projections. Aucune dépense déjà enregistrée ne sera supprimée.",
                               async () => changePersonal(d => {
                                 d.budgets = (d.budgets ?? []).filter(x => x.id !== b.id);
                               }, "Budget perso supprimé")) },
@@ -6548,12 +6560,20 @@ export default function App() {
                                 {b.name}
                               </strong>
 
-                              <small>
-                                {money(
-                                  b.amount,
-                                )}{" "}
-                                / mois
-                              </small>
+                              <small>{money(b.amount)} / mois</small>
+                              {selectedMonth >= b.start && (!b.end || selectedMonth <= b.end) && (
+                                <div className="wimm-personal-budget-progress">
+                                  <Progress value={spentInPersonalBudget(b.id)} max={Math.max(1, b.amount)}/>
+                                  <small>Dépensé : {money(spentInPersonalBudget(b.id))} · Reste : {money(Math.max(0, b.amount - spentInPersonalBudget(b.id)))}</small>
+                                  <button type="button" className="text" onClick={() => explain(
+                                    b.name + " · " + monthLabel(selectedMonth),
+                                    <div>{ps.transactions.filter(t => t.type === "expense" && t.budgetId === b.id && month(t.date) === selectedMonth).length
+                                      ? ps.transactions.filter(t => t.type === "expense" && t.budgetId === b.id && month(t.date) === selectedMonth)
+                                          .map(t => <Row key={t.id} title={t.description || "Dépense"} sub={dateLabel(t.date)} value={money(t.amount)}/>)
+                                      : <p>Aucune dépense ce mois.</p>}</div>
+                                  )}>Voir les dépenses</button>
+                                </div>
+                              )
 
                               <small>
                                 Dès{" "}
