@@ -2,11 +2,11 @@ import { type State, type Tx, today } from "./engine";
 
 /** Un portefeuille liquide est un compte courant distinct : un retrait est un virement interne. */
 export function householdCashAccount(s: State) {
-  return s.accounts.find(a => a.group === "current" && a.cash === true && !a.archived);
+  return s.accounts.find(a => a.group === "current" && a.isCash === true && !a.archived);
 }
 
 export function cashLedgerBalance(s: State, accountId: string, until = today()): number {
-  const account = s.accounts.find(a => a.id === accountId && a.cash && !a.archived);
+  const account = s.accounts.find(a => a.id === accountId && a.isCash && !a.archived);
   if (!account || until < account.date) return 0;
   return account.opening + s.transactions
     .filter(t => t.date >= account.date && t.date <= until)
@@ -20,7 +20,7 @@ export function cashEffect(t: Tx, id: string) {
 
 /** Vérifie le solde chronologique : pas de découvert liquide, même après correction rétroactive. */
 export function validateCashLedger(s: State) {
-  for (const a of s.accounts.filter(a => a.cash && !a.archived)) {
+  for (const a of s.accounts.filter(a => a.isCash && !a.archived)) {
     if (a.group !== "current" || a.opening < 0) throw Error("Le portefeuille d’espèces doit être positif.");
     let running = a.opening;
     const events = s.transactions.filter(t => t.date >= a.date && (t.account === a.id || t.to === a.id))
