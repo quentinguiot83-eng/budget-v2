@@ -713,6 +713,10 @@ export default function App() {
 
     }
 
+    if (r !== route && (r === "trips" || route === "trips")) {
+      setActiveTrip("");
+      setShowArchivedTrip(false);
+    }
     setRoute(r);
     setMobileQuickAddOpen(false);
     window.scrollTo(0, 0);
@@ -7774,7 +7778,12 @@ export default function App() {
                     </section>
                   )}
                   {s.trips.some(t => !!t.closedAt) && (
-                    <details className="trips-archive-picker">
+                    <details className="trips-archive-picker" onToggle={event => {
+                       if (!event.currentTarget.open) {
+                         setShowArchivedTrip(false);
+                         setActiveTrip(id => s.trips.some(trip => trip.id === id && !!trip.closedAt) ? "" : id);
+                       }
+                     }}>
                       <summary>
                         <CalendarDays size={17}/>
                         Voyages terminés ({s.trips.filter(t => !!t.closedAt).length})
@@ -7812,6 +7821,12 @@ export default function App() {
                     const leftover = t.budget - spent;
                     return (
                       <>
+                        {t.closedAt && <div className="trips-archive-back">
+                          <button type="button" className="secondary" onClick={() => {
+                            setActiveTrip("");
+                            setShowArchivedTrip(false);
+                          }}><ChevronLeft size={17}/> Retour aux voyages terminés</button>
+                        </div>}
                         <section className={"trips-v2-hero trips-cover-hero" + (t.coverPath && tripCoverUrls[t.coverPath] ? " has-cover" : "")}
                           aria-label="Voyage sélectionné">
                           {t.coverPath && tripCoverUrls[t.coverPath] && (
