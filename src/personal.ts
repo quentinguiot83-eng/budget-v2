@@ -434,6 +434,21 @@ export function validatePersonal(
 
   }
 
+  // La monnaie physique ne peut pas devenir négative, y compris après édition
+  // d'une dépense ancienne : validation chronologique de tous les mouvements.
+  let liquid = 0;
+  const cashEvents = p.transactions
+    .filter(t => !p.account || t.date >= p.account.date)
+    .map(t => ({ date: t.date, delta:
+      t.type === "cash_adjust" || t.type === "cash_transfer" ? t.amount :
+      t.type === "expense" && t.paymentMethod === "cash" ? -t.amount : 0,
+    }))
+    .sort((a, b) => a.date.localeCompare(b.date) || b.delta - a.delta);
+  for (const event of cashEvents) {
+    liquid += event.delta;
+    if (liquid < 0) throw Error("Solde espèces personnelles insuffisant.");
+  }
+
   for (const r of p.rules) {
 
     if (
