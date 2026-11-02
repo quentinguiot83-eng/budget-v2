@@ -18,6 +18,9 @@ export type PersonalAccount = {
 export type PersonalTransaction = {
   id: string;
   type: "expense" | "adjust";
+  /** Bank/cash transfer is an existing adjustment type; it is neutral to total balance. */
+  cashTransfer?: boolean;
+  paymentMethod?: "bank" | "cash";
   amount: number;
   date: string;
   description: string;
@@ -184,9 +187,7 @@ export function personalBalance(
       .reduce(
         (sum, t) =>
           sum +
-          (t.type === "adjust"
-            ? t.amount
-            : -t.amount),
+          (t.cashTransfer ? 0 : t.type === "adjust" ? t.amount : -t.amount),
         0,
       );
 
@@ -196,6 +197,15 @@ export function personalBalance(
     privateMovements
   );
 
+}
+
+/** Cash ledger kept distinct from the private bank account. */
+export function personalCashBalance(p:PersonalState, until=today()){
+  return p.transactions.filter(t=>t.date<=until).reduce((sum,t)=>{
+    if(t.cashTransfer)return sum+t.amount;
+    if(t.paymentMethod!=="cash")return sum;
+    return sum+(t.type==="adjust"?t.amount:t.type==="expense"?-t.amount:0);
+  },0);
 }
 
 export function personalProjection(
@@ -420,6 +430,13 @@ export function validatePersonal(
         "Une dépense personnelle ne peut pas être future.",
       );
 
+  }
+
+  let cash = 0;
+  for(const t of [...p.transactions].sort((a,b)=>a.date.localeCompare(b.date))){
+    if(t.cashTransfer)cash+=t.amount;
+    else if(t.paymentMethod==="cash")cash+=t.type==="adjust"?t.amount:t.type==="expense"?-t.amount:0;
+    if(cash<0)throw Error("Le solde des espèces personnelles ne peut pas être négatif.");
   }
 
   for (const r of p.rules) {

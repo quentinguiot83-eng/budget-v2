@@ -47,7 +47,7 @@ export default function TransactionSearch({ state, month, setMonth, add, rows, i
         }}>Effacer les filtres</button>}
       </div>
       {expanded && <div id="transaction-filters" className="transaction-search-filters">
-        <label className="field"><span>Type</span><select value={filters.type} onChange={e => update("type", e.target.value)}><option value="">Tous les types</option><option value="expense">Dépenses</option><option value="income">Revenus</option><option value="transfer">Virements</option><option value="personal_transfer">Virements perso</option><option value="loan">Prêts accordés</option><option value="repay">Remboursements de prêts</option><option value="adjust">Ajustements</option></select></label>
+        <label className="field"><span>Type</span><select value={filters.type} onChange={e => update("type", e.target.value)}><option value="">Tous les types</option><option value="expense">Dépenses</option><option value="income">Revenus</option><option value="transfer">Virements</option><option value="personal_transfer">Virements perso</option><option value="interest">Intérêts reçus</option><option value="loan">Prêts accordés</option><option value="repay">Remboursements de prêts</option><option value="adjust">Ajustements</option></select></label>
         <label className="field"><span>Catégorie</span><select value={filters.category} onChange={e => update("category", e.target.value)}><option value="">Toutes les catégories</option>{state.categories.map(c => <option key={c.id} value={c.id}>{c.name}{c.archived ? " (archivée)" : ""}</option>)}</select></label>
         <label className="field"><span>Compte</span><select value={filters.account} onChange={e => update("account", e.target.value)}><option value="">Tous les comptes</option>{state.accounts.map(a => <option key={a.id} value={a.id}>{a.name}{a.archived ? " (archivé)" : ""}</option>)}</select></label>
         <label className="field"><span>Montant minimum (€)</span><input type="text" inputMode="decimal" value={filters.min} placeholder="0,00" onChange={e => update("min", e.target.value)}/></label>
@@ -56,6 +56,7 @@ export default function TransactionSearch({ state, month, setMonth, add, rows, i
       {error && <p className="error" role="alert">{error}</p>}
       {current.period === "custom" && <p className="muted">La période suit la date de l’opération.</p>}
       {current.period === "month" && current.type === "income" && <p className="muted">Les revenus suivent leur mois budgétaire.</p>}
+       {current.period === "month" && current.type === "expense" && <p className="muted">Les virements de budget personnel apparaissent au mois budgétaire choisi, même si leur date bancaire est antérieure.</p>}
     </section>
     <div className="transaction-reconcile-entry">
       <button type="button" className="secondary" aria-expanded={reconciliationOpen} onClick={toggleReconciliation}>
