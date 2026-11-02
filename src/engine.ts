@@ -2362,6 +2362,23 @@ export function validate(s: State) {
 
   }
 
+  // Guard every write path (including imports, edits and scheduled payments):
+  // cash wallets must never become negative at any recorded transaction date.
+  for(const wallet of s.accounts.filter(a=>a.isCash)){
+    if(wallet.group!=="current"||wallet.opening<0)
+      throw Error("Le portefeuille d’espèces est invalide.");
+    let available=wallet.opening;
+    const movements=s.transactions
+      .filter(t=>t.date>=wallet.date&&(t.account===wallet.id||t.to===wallet.id))
+      .sort((a,b)=>a.date.localeCompare(b.date));
+    for(const t of movements){
+      if(t.to===wallet.id)available+=t.amount;
+      if(t.account===wallet.id)
+        available+=["income","repay","adjust"].includes(t.type)?t.amount:-t.amount;
+      if(available<0)throw Error("Espèces insuffisantes : le portefeuille ne peut pas être à découvert.");
+    }
+  }
+
   for (const l of s.loans)
 
     if (loanRemaining(s, l.id) < 0)
