@@ -505,7 +505,7 @@ export default function App() {
     session?.user.id || (demoEnabled ? "demo" : "");
 
   const current = s.accounts.find(
-    (a) => a.group === "current" && !a.archived,
+    (a) => a.group === "current" && !a.archived && !a.isCash,
   );
   const [previewName, setPreviewName] = useState("Alex");
   const displayName = [session?.user.user_metadata?.display_name, session?.user.user_metadata?.full_name, session?.user.user_metadata?.name]
@@ -519,6 +519,7 @@ export default function App() {
     const mark = (date?: string) => { if (date && date.slice(0, 7) < month()) months.add(date.slice(0, 7)); };
     s.accounts.forEach(a => mark(a.date));
     s.transactions.forEach(t => mark(t.date));
+    Object.keys(s.monthlyForecasts || {}).forEach(mark);
     s.rules.forEach(r => mark(r.start));
     s.trips.forEach(t => { mark(t.start); mark(t.end); });
     s.categories.forEach(c => Object.keys(c.budgets || {}).forEach(mark));
@@ -3102,7 +3103,7 @@ export default function App() {
             ["none", "Aucun"],
             [selectedMonth, monthLabel(selectedMonth)],
           ],
-          to ? selectedMonth : "none",
+          to && to.group !== "current" ? selectedMonth : "none",
         ),
         choice(
           "trip",
@@ -5611,6 +5612,8 @@ export default function App() {
     .reduce((sum, account) => sum + balance(s, account.id), 0);
   const currentAccounts = activeHouseholdAccounts.filter(a => a.group === "current");
   const currentBalance = currentAccounts.reduce((sum, a) => sum + balance(s, a.id), 0);
+  const householdBankAccounts = currentAccounts.filter(a => !a.isCash);
+  const householdCash = currentAccounts.find(a => a.isCash);
   const wealth = activeHouseholdAccounts
     .filter((a) => a.group === "wealth")
     .reduce((sum, a) => sum + balance(s, a.id), 0);
@@ -5860,7 +5863,7 @@ export default function App() {
                   <div className="wimm-review-metrics">
                     <div><span>Revenus reçus</span><strong className="positive-money">{money(s.transactions.filter(t => t.type === "income" && month(t.date) === selectedMonth && !t.personalOwner && s.accounts.find(a => a.id === t.account)?.group !== "personal").reduce((n,t)=>n+t.amount,0))}</strong></div>
                     <div><span>Dépenses réglées</span><strong className="negative-money">{money(totals.spending)}</strong></div>
-                    <div><span>Balance du mois</span><strong className={totals.income-totals.spending < 0 ? "negative-money" : "positive-money"}>{money(totals.income-totals.spending)}</strong></div>
+                    <div><span>Balance du mois</span><strong className={s.transactions.filter(t => t.type === "income" && month(t.date) === selectedMonth && !t.personalOwner && s.accounts.find(a => a.id === t.account)?.group !== "personal").reduce((n,t)=>n+t.amount,0)-totals.spending < 0 ? "negative-money" : "positive-money"}>{money(s.transactions.filter(t => t.type === "income" && month(t.date) === selectedMonth && !t.personalOwner && s.accounts.find(a => a.id === t.account)?.group !== "personal").reduce((n,t)=>n+t.amount,0)-totals.spending)}</strong></div>
                     <div><span>Épargne versée</span><strong>{money(totals.saved)}</strong></div>
                   </div>
                   <Row title="Budget prévu" value={money(totals.fixed + totals.variable)}/>
@@ -5871,7 +5874,7 @@ export default function App() {
               <section className="balance-card home-balance-main" data-tour="home-overview">
                 <div className="split">
                   <div className="block-title">
-                    <span>{currentAccounts.length > 1 ? "Solde des comptes courants" : "Solde du compte commun"}</span>
+                    <span>{householdBankAccounts.length > 1 ? "Solde des comptes courants" : "Solde du compte commun"}</span>
                     <button type="button" className="block-info" aria-label="Détail du solde"
                       onClick={() => explain("Calcul du solde réel",
                         <><p>Solde des comptes courants, calculé depuis leur solde de départ et les mouvements validés.</p>
@@ -5894,17 +5897,21 @@ export default function App() {
                       </button>
                     </div>
                     <div className="home-current-accounts-list">
-                      {currentAccounts.map(a => (
+                      {currentAccounts.filter(a => !a.isCash || balance(s, a.id) > 0).map(a => (
                         <button type="button" className="home-current-account-row" key={a.id}
-                          onClick={() => navigate("wealth")} aria-label={a.name + " : " + money(balance(s, a.id)) + ". Voir dans Patrimoine"}>
-                          <span className="home-current-account-name"><Wallet size={16} aria-hidden="true"/><span>{a.name}</span></span>
+                          onClick={() => a.isCash ? editHouseholdCash() : navigate("wealth")}
+                          aria-label={a.name + " : " + money(balance(s, a.id))}>
+                          <span className="home-current-account-name">{a.isCash ? <Coins size={16} aria-hidden="true"/> : <Wallet size={16} aria-hidden="true"/>}<span>{a.name}</span></span>
                           <strong className={balance(s, a.id) < 0 ? "negative-money" : undefined}>{money(balance(s, a.id))}</strong>
                         </button>
                       ))}
-                      {!currentAccounts.some(a => a.isCash) ? (
+                      {(!householdCash || balance(s, householdCash.id) <= 0) ? (
                         <button type="button" className="wimm-cash-invite" onClick={editHouseholdCash}>Vous avez du liquide ? Saisir des espèces</button>
                       ) : (
-                        <button type="button" className="wimm-cash-invite" onClick={editHouseholdCash}>Modifier mon solde d'espèces</button>
+                        <div className="wimm-cash-quick-actions">
+                          <button type="button" className="wimm-cash-invite" onClick={editHouseholdCash}>Corriger mes espèces</button>
+                          <button type="button" className="wimm-cash-invite" onClick={() => transfer(householdCash)}>Retirer depuis la banque</button>
+                        </div>
                       )}
                     </div>
                   </div>
