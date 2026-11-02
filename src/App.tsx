@@ -1,4 +1,5 @@
 import { WimmWordmark } from "./WimmWordmark";
+import { validateCashLedger } from "./cash";
 import { validateAccountName } from "./accountNames";
 import { accountLinks, accountRemovalBlockers, canArchiveAccount, canDeleteAccount, removeAccountSafely } from "./accountRemoval";
 import { revisePaymentPlan, removeCreditPlan } from "./creditSchedules";
@@ -752,6 +753,7 @@ export default function App() {
   async function commit(next: State, action: string) {
     if (busy.current) throw Error("Un enregistrement est déjà en cours.");
     validate(next);
+    validateCashLedger(next);
     busy.current = true;
     setSaving(true);
     try {
