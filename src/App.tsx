@@ -1,4 +1,5 @@
 import { WimmWordmark } from "./WimmWordmark";
+import { monthlyLedger } from "./monthlyLedger";
 import { validateAccountName } from "./accountNames";
 import { accountLinks, accountRemovalBlockers, canArchiveAccount, canDeleteAccount, removeAccountSafely } from "./accountRemoval";
 import { revisePaymentPlan, removeCreditPlan } from "./creditSchedules";
@@ -712,6 +713,10 @@ export default function App() {
 
     }
 
+    if (r !== route && (r === "trips" || route === "trips")) {
+      setActiveTrip("");
+      setShowArchivedTrip(false);
+    }
     setRoute(r);
     setMobileQuickAddOpen(false);
     window.scrollTo(0, 0);
@@ -5688,14 +5693,12 @@ export default function App() {
     else if(dir<0){if(previousRecordedMonth)setMonth(previousRecordedMonth);}
     else setMonth(nextRecordedMonth||shiftMonth(selectedMonth,1));
   };
-  const historicalTransactions=s.transactions.filter(t=>month(t.date)===selectedMonth&&t.date<=today()&&
-    s.accounts.find(a=>a.id===t.account)?.group!=="personal");
-  const historicalIncome=historicalTransactions.filter(t=>t.type==="income").reduce((v,t)=>v+t.amount,0);
-  const historicalExpenses=historicalTransactions.filter(t=>t.type==="expense").reduce((v,t)=>v+t.amount,0);
-  const historicalSavings=monthlySavings(s,selectedMonth);
-  const historicalCategories=s.categories.map(c=>({id:c.id,name:c.name,amount:historicalTransactions.filter(t=>t.type==="expense"&&t.category===c.id).reduce((v,t)=>v+t.amount,0)}))
-    .filter(c=>c.amount>0).sort((a,b)=>b.amount-a.amount);
-  const historicalTripExpense=historicalTransactions.filter(t=>t.type==="expense"&&!!t.trip).reduce((v,t)=>v+t.amount,0);
+  const historical = monthlyLedger(s, selectedMonth);
+  const historicalIncome = historical.income;
+  const historicalExpenses = historical.spending;
+  const historicalSavings = historical.savings;
+  const historicalCategories = historical.categories;
+  const historicalTripExpense = historical.travelSpending;
   const wealth = activeHouseholdAccounts
     .filter((a) => a.group === "wealth")
     .reduce((sum, a) => sum + balance(s, a.id), 0);
@@ -5982,17 +5985,34 @@ export default function App() {
 
 
                {selectedMonth<month()&&<section className="card home-monthly-report" aria-label={"Bilan financier de "+monthLabel(selectedMonth)}>
-                 <div className="section-head"><h2>Bilan de {monthLabel(selectedMonth)}</h2><span className="muted">Opérations réelles</span></div>
+                 <div className="section-head"><h2>Bilan de {monthLabel(selectedMonth)}</h2><span className="muted">Transactions vérifiables</span></div>
                  <div className="home-remaining-grid home-income-expenses">
-                   <div className="home-remaining-card home-income"><span className="muted">Revenus totaux</span><strong>{money(historicalIncome)}</strong></div>
-                   <div className="home-remaining-card home-expenses"><span className="muted">Dépenses totales</span><strong>{money(historicalExpenses)}</strong></div>
+                   <div className="home-remaining-card home-income">
+                     <span className="muted">Revenus du mois</span><strong>{money(historicalIncome)}</strong>
+                     <button type="button" className="text" onClick={() => explain(
+                       "Revenus · "+monthLabel(selectedMonth),
+                       <div><p className="muted">Revenus réellement reçus et affectés à ce mois budgétaire ({historical.revenues.length} opération(s)).</p>
+                         {historical.revenues.length ? txRows(historical.revenues) : <p>Aucun revenu enregistré.</p>}</div>
+                     )}>Voir {historical.revenues.length} opération(s) <ChevronRight size={15}/></button>
+                   </div>
+                   <div className="home-remaining-card home-expenses">
+                     <span className="muted">Dépenses réelles</span><strong>{money(historicalExpenses)}</strong>
+                     <button type="button" className="text" onClick={() => explain(
+                       "Dépenses · "+monthLabel(selectedMonth),
+                       <div><p className="muted">Achats enregistrés du mois, voyages inclus, sans virements entre comptes ({historical.expenses.length} opération(s)).</p>
+                         {historical.expenses.length ? txRows(historical.expenses) : <p>Aucune dépense enregistrée.</p>}</div>
+                     )}>Voir {historical.expenses.length} opération(s) <ChevronRight size={15}/></button>
+                   </div>
                    <div className="home-remaining-card"><span className="muted">Balance du mois</span><strong className={historicalIncome-historicalExpenses<0?"negative-money":"positive-money"}>{money(historicalIncome-historicalExpenses)}</strong></div>
                    <div className="home-remaining-card"><span className="muted">Épargne transférée</span><strong>{money(historicalSavings)}</strong></div>
                  </div>
-                 <p className="muted">Les transferts internes ne sont ni des revenus ni des dépenses.</p>
+                 <div className="home-report-breakdown">
+                   <div><span>Dépenses du quotidien</span><strong>{money(historical.ordinarySpending)}</strong></div>
+                   <div><span>Dépenses de voyages</span><strong>{money(historicalTripExpense)}</strong></div>
+                 </div>
+                 <p className="muted">Les revenus suivent le mois budgétaire (un salaire versé en fin de mois peut financer le mois suivant). Les dépenses suivent leur date bancaire. Les virements internes ne sont pas des dépenses.</p>
                  {!!historicalCategories.length&&<div className="home-monthly-categories"><h3>Répartition des dépenses</h3>
                    {historicalCategories.map(c=><div className="home-monthly-category" key={c.id}><span>{c.name}</span><strong>{money(c.amount)}</strong><Progress value={c.amount} max={Math.max(1,historicalExpenses)}/></div>)}
-                   {historicalTripExpense>0&&<small className="muted">Dont voyages : {money(historicalTripExpense)}</small>}
                  </div>}
                </section>}
                <div className="home-remaining-grid home-income-expenses">
@@ -6485,6 +6505,8 @@ export default function App() {
                 const personalSpentForBudget=(budgetId:string)=>ps.transactions
                   .filter(t=>t.type==="expense"&&t.budgetId===budgetId&&month(t.date)===selectedMonth)
                   .reduce((sum,t)=>sum+t.amount,0);
+                const privateBudgetSpent = activePrivateBudgets.reduce((sum,b)=>sum+personalSpentForBudget(b.id),0);
+                const privateBudgetLeft = privateBudgetsTotal - privateBudgetSpent;
                 const unspentPersonalBudgets=activePrivateBudgets.reduce((sum,b)=>
                   sum+Math.max(0,b.amount-personalSpentForBudget(b.id)),0);
                 const unpaidOutsideBudgets=personalDues(ps,selectedMonth).filter(d=>
@@ -6623,62 +6645,60 @@ export default function App() {
                         </button>
                       </div>
 
-                      {(ps.budgets ?? []).map(
-                        (b) => (
+                      <div className="personal-budget-overview" aria-label="Résumé des budgets personnels du mois">
+                        <div><span>Prévu</span><strong>{money(privateBudgetsTotal)}</strong></div>
+                        <div><span>Dépensé</span><strong>{money(privateBudgetSpent)}</strong></div>
+                        <div><span>Restant</span><strong className={privateBudgetLeft < 0 ? "negative-money" : "positive-money"}>{money(privateBudgetLeft)}</strong></div>
+                      </div>
+                      <div className="personal-budget-grid">
+                      {(ps.budgets ?? []).map(b => {
+                        const active = selectedMonth >= b.start && (!b.end || selectedMonth <= b.end);
+                        const spent = personalSpentForBudget(b.id);
+                        const remaining = b.amount - spent;
+                        const expanded = selectedPersonalBudget === b.id;
+                        const txs = ps.transactions.filter(t => t.type === "expense" && t.budgetId === b.id && month(t.date) === selectedMonth)
+                          .sort((a, c) => c.date.localeCompare(a.date));
+                        return (
                           <SwipeActions key={b.id} label={b.name} className="personal-budget-swipe-row" actions={[
-                            { label: "Modifier", icon: <Pencil size={17}/>, onClick: () => editPersonalBudget(b) },
-                            { label: "Supprimer", icon: <Trash2 size={17}/>, tone: "danger" as const, onClick: () => confirmAction(
+                            {label:"Modifier",icon:<Pencil size={17}/>,onClick:()=>editPersonalBudget(b)},
+                            {label:"Supprimer",icon:<Trash2 size={17}/>,tone:"danger" as const,onClick:()=>confirmAction(
                               "Supprimer " + b.name + " ?",
-                              "Ce budget n'entrera plus dans les projections. Aucune dépense déjà enregistrée ne sera supprimée.",
-                              async () => changePersonal(d => {
-                                d.budgets = (d.budgets ?? []).filter(x => x.id !== b.id);
-                              }, "Budget perso supprimé")) },
+                              "Le budget disparaîtra des prévisions, mais les dépenses enregistrées seront conservées.",
+                              async () => changePersonal(d => {d.budgets = (d.budgets ?? []).filter(x => x.id !== b.id);},"Budget perso supprimé")
+                            )},
                           ]}>
-                          <div className="rule-row">
-                            <div className="grow">
-                              <strong>
-                                {b.name}
-                              </strong>
-
-                              <small>
-                                {money(
-                                  b.amount,
-                                )}{" "}
-                                / mois
-                              </small>
-                              {selectedMonth>=b.start&&(!b.end||selectedMonth<=b.end)&&<>
-                                <small>Dépensé : {money(personalSpentForBudget(b.id))} · Reste : {money(b.amount-personalSpentForBudget(b.id))}</small>
-                                <Progress value={personalSpentForBudget(b.id)} max={Math.max(1,b.amount)}/>
-                                <button type="button" className="text" onClick={()=>setSelectedPersonalBudget(id=>id===b.id?null:b.id)}>
-                                  {selectedPersonalBudget===b.id?"Masquer les dépenses":"Voir les dépenses"}
-                                </button>
-                                {selectedPersonalBudget===b.id&&<div className="personal-budget-expenses">
-                                  {ps.transactions.filter(t=>t.type==="expense"&&t.budgetId===b.id&&month(t.date)===selectedMonth).map(t=>
-                                    <Row key={t.id} title={t.description||"Dépense"} sub={dateLabel(t.date)} value={money(t.amount)}/>)}
-                                  {!personalSpentForBudget(b.id)&&<small className="muted">Aucune dépense pour ce mois.</small>}
-                                </div>}
-                              </>}
-
-                              <small>
-                                Dès{" "}
-                                {monthLabel(
-                                  b.start,
-                                )}
-                                {b.end
-                                  ? " · jusqu’à " +
-                                    monthLabel(
-                                      b.end,
-                                    )
-                                  : " · sans date de fin"}
-                              </small>
+                            <div className={"personal-budget-item"+(active?"":" is-inactive")}>
+                              <button type="button" className="personal-budget-item-main"
+                                aria-expanded={expanded} aria-label={"Voir les dépenses du budget " + b.name}
+                                onClick={() => setSelectedPersonalBudget(id => id===b.id ? null : b.id)}>
+                                <span className="personal-budget-item-head">
+                                  <span className="personal-budget-item-glyph"><Coins size={17}/></span>
+                                  <strong>{b.name}</strong>
+                                  <ChevronRight className={"personal-budget-chevron"+(expanded?" expanded":"")} size={16}/>
+                                </span>
+                                <span className="personal-budget-item-amounts">
+                                  <span><strong className={remaining < 0 ? "negative-money" : "positive-money"}>{money(remaining)}</strong><small>{active?"restants":"hors période"}</small></span>
+                                  <span><strong>{money(spent)}</strong><small>sur {money(b.amount)}</small></span>
+                                </span>
+                                {active && <span className="personal-budget-bar"><Progress value={spent} max={Math.max(1,b.amount)}/></span>}
+                                <span className="personal-budget-item-foot">{active ? txs.length+" dépense(s) · Voir le détail" : "Actif dès "+monthLabel(b.start)+(b.end?" · fin "+monthLabel(b.end):"")}</span>
+                              </button>
+                              {expanded && <div className="personal-budget-details">
+                                <div className="personal-budget-detail-heading">
+                                  <strong>Dépenses · {monthLabel(selectedMonth)}</strong>
+                                  <button type="button" className="text" onClick={()=>editPersonalBudget(b)}><Pencil size={14}/> Modifier</button>
+                                </div>
+                                {txs.length ? txs.map(t => <div className="personal-budget-transaction" key={t.id}>
+                                  <span><strong>{t.description||"Dépense"}</strong><small>{dateLabel(t.date)}</small></span>
+                                  <strong>{money(t.amount)}</strong>
+                                  <button type="button" className="icon" title="Modifier cette dépense" aria-label={"Modifier "+(t.description||"la dépense")} onClick={()=>personalExpense(t)}><Pencil size={15}/></button>
+                                </div>) : <p className="muted">Aucune dépense pour ce mois.</p>}
+                              </div>}
                             </div>
-
-
-                          </div>
                           </SwipeActions>
-                        ),
-                      )}
-
+                        );
+                      })}
+                      </div>
                       {!(ps.budgets ?? [])
                         .length && (
                         <p className="muted">
@@ -6686,37 +6706,6 @@ export default function App() {
                         </p>
                       )}
 
-                      {(ps.budgets ?? [])
-                        .length > 0 && (
-                        <Row
-                          title="Budgets actifs ce mois"
-                          value={money(
-                            (
-                              ps.budgets ??
-                              []
-                            )
-                              .filter(
-                                (b) =>
-                                  selectedMonth >=
-                                    b.start &&
-                                  (
-                                    !b.end ||
-                                    selectedMonth <=
-                                      b.end
-                                  ),
-                              )
-                              .reduce(
-                                (
-                                  n,
-                                  b,
-                                ) =>
-                                  n +
-                                  b.amount,
-                                0,
-                              ),
-                          )}
-                        />
-                      )}
                     </section>
                         </div>
                       </details>
@@ -7758,7 +7747,12 @@ export default function App() {
                     </section>
                   )}
                   {s.trips.some(t => !!t.closedAt) && (
-                    <details className="trips-archive-picker">
+                    <details className="trips-archive-picker" onToggle={event => {
+                       if (!event.currentTarget.open) {
+                         setShowArchivedTrip(false);
+                         setActiveTrip(id => s.trips.some(trip => trip.id === id && !!trip.closedAt) ? "" : id);
+                       }
+                     }}>
                       <summary>
                         <CalendarDays size={17}/>
                         Voyages terminés ({s.trips.filter(t => !!t.closedAt).length})
@@ -7796,6 +7790,12 @@ export default function App() {
                     const leftover = t.budget - spent;
                     return (
                       <>
+                        {t.closedAt && <div className="trips-archive-back">
+                          <button type="button" className="secondary" onClick={() => {
+                            setActiveTrip("");
+                            setShowArchivedTrip(false);
+                          }}><ChevronLeft size={17}/> Retour aux voyages terminés</button>
+                        </div>}
                         <section className={"trips-v2-hero trips-cover-hero" + (t.coverPath && tripCoverUrls[t.coverPath] ? " has-cover" : "")}
                           aria-label="Voyage sélectionné">
                           {t.coverPath && tripCoverUrls[t.coverPath] && (
