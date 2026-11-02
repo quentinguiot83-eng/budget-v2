@@ -1011,6 +1011,47 @@ export default function App() {
           (!group || a.group === group),
       )
       .map((a) => [a.id, a.name]);
+  // Les espèces ne deviennent un moyen de paiement que lorsque le solde est positif.
+  const expenseAccountOptions = (existingAccount?: string): [string, string][] =>
+    accountOptions().filter(([id]) => {
+      const a = s.accounts.find(x => x.id === id);
+      return !a?.isCash || balance(s, id) > 0 || existingAccount === id;
+    });
+  function checkCashExpense(accountId: string, amount: number, existing?: Tx) {
+    const cashAccount = s.accounts.find(a => a.id === accountId && a.isCash);
+    if (!cashAccount) return;
+    const remaining = balance(s, accountId) +
+      (existing?.account === accountId && existing.type === "expense" ? existing.amount : 0);
+    if (amount <= 0 || amount > remaining)
+      throw Error("Solde espèces insuffisant pour cette dépense.");
+  }
+  function editHouseholdCash() {
+    const wallet = s.accounts.find(a => a.group === "current" && a.isCash && !a.archived);
+    openForm("Mes espèces du foyer", [
+      amountField("amount", "Espèces réellement disponibles (€)", wallet ? balance(s, wallet.id) : 0),
+    ], async v => {
+      const actual = euro(v.amount);
+      if (actual < 0) throw Error("Le solde d'espèces ne peut pas être négatif.");
+      await change(d => {
+        const existing = d.accounts.find(a => a.group === "current" && a.isCash && !a.archived);
+        if (!existing) {
+          if (actual === 0) return;
+          d.accounts.push({
+            id: uid(), name: "Espèces", group: "current", isCash: true,
+            opening: actual, date: today(), rate: 0, cap: 0,
+            capType: "balance", contributed: 0, relay: "", allocation: 0,
+            taxMode: "none", taxRate: 0,
+          });
+        } else {
+          const delta = actual - balance(d, existing.id);
+          if (delta !== 0) d.transactions.push({
+            id: uid(), type: "adjust", account: existing.id, amount: delta,
+            date: today(), description: "Inventaire des espèces",
+          });
+        }
+      }, "Espèces du foyer actualisées");
+    }, "Enregistrer", <p className="muted">Pour un retrait au distributeur, utilisez « Virement » du compte bancaire vers « Espèces » : cela ne crée pas de dépense.</p>);
+  }
   const categoryOptions: [string, string][] = s.categories
     .filter((c) => !c.archived || c.archived > selectedMonth)
     .map((c) => [c.id, c.name]);
