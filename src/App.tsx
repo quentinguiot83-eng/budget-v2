@@ -1861,6 +1861,10 @@ export default function App() {
             "none",
         ),
 
+        choice("paymentMethod","Moyen de paiement",[
+          ["bank","Compte bancaire"],
+          ...(personalCashBalance(ps)>0||existing?.paymentMethod==="cash" ? [["cash","Espèces"] as [string,string]] : []),
+        ],existing?.paymentMethod||"bank"),
         field(
           "date",
           "Date",
@@ -1892,8 +1896,11 @@ export default function App() {
               v.budgetId === "none"
                 ? undefined
                 : v.budgetId,
+            paymentMethod:v.paymentMethod==="cash"?"cash":"bank",
           };
 
+        if(tx.paymentMethod==="cash" && tx.amount>personalCashBalance(ps)+(existing?.paymentMethod==="cash"?existing.amount:0))
+          throw Error("Espèces insuffisantes pour cette dépense.");
         await changePersonal(
           (d) => {
 
@@ -2057,6 +2064,29 @@ export default function App() {
 
   }
 
+
+  function editPersonalCash() {
+    if(!ps.account)return;
+    openForm("Espèces personnelles",[
+      amountField("cash","Montant disponible en espèces (€)",personalCashBalance(ps)),
+      choice("origin","Origine de la variation",[
+        ["external","Espèces déjà détenues / ajustement"],
+        ["bank","Retrait ou dépôt depuis le compte personnel"],
+      ],"external"),
+    ],async v=>{
+      const target=euro(v.cash);
+      if(target<0)throw Error("Le solde des espèces ne peut pas être négatif.");
+      const delta=target-personalCashBalance(ps);
+      if(!delta)return;
+      if(v.origin==="bank" && delta>personalBalance(ps,s,personalOwnerId)-personalCashBalance(ps))
+        throw Error("Le compte bancaire personnel ne contient pas assez d'argent pour ce retrait.");
+      await changePersonal(d=>{
+        d.transactions.push({id:uid(),type:v.origin==="bank"?"cash_transfer":"adjust",amount:delta,
+          paymentMethod:"cash",date:today(),
+          description:v.origin==="bank"?"Transfert banque / espèces":"Ajustement des espèces"});
+      },"Espèces personnelles mises à jour");
+    });
+  }
 
   function editPersonalRule(
     rule?: PersonalRule,
@@ -6273,6 +6303,9 @@ export default function App() {
                     personalOwnerId,
                   );
 
+                const privateCash=personalCashBalance(ps);
+                const privateBank=privateBalance-privateCash;
+
                 const sharedIncoming =
                   s.transactions
                     .filter(
@@ -6296,7 +6329,7 @@ export default function App() {
                     }));
 
                 const privateHistory =
-                  ps.transactions.map(
+                  ps.transactions.filter(t=>t.type!=="cash_transfer").map(
                     (t) => ({
                       id: t.id,
                       date: t.date,
@@ -6357,6 +6390,14 @@ export default function App() {
                         <div className="personal-v2-amount">
                           <span>Solde privé actuel</span>
                           <strong className={privateBalance < 0 ? "negative-money" : undefined}>{money(privateBalance)}</strong>
+                        </div>
+
+                        <div className="personal-v2-cash-accounts">
+                          <Row title={account.name} value={money(privateBank)}/>
+                          {privateCash>0&&<Row title="Espèces" value={money(privateCash)}/>}
+                          <button type="button" className="text" onClick={editPersonalCash}>
+                            <Coins size={15}/> {privateCash>0?"Modifier mes espèces":"Vous avez des espèces ? Saisir un montant"}
+                          </button>
                         </div>
                         <div className="personal-v2-totals">
                           <div>
