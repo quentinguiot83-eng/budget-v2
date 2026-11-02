@@ -145,5 +145,59 @@ const styles = String.raw`
 .personal-budget-expenses .row{min-height:0;padding:7px 0}
 .personal-budget-swipe-row .progress{margin:7px 0}
 .personal-budget-swipe-row .text{justify-self:start}
+
+/* Budgets personnels : cartes compactes, même logique que les enveloppes du foyer. */
+.personal-v2-budget-panel .personal-budgets-card {display:grid;gap:12px;min-width:0}
+.personal-v2-budget-panel .personal-budgets-card .section-head p {margin:3px 0 0}
+.personal-budget-overview {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;min-width:0}
+.personal-budget-overview > div {display:grid;gap:5px;min-width:0;padding:12px 10px;border:1px solid var(--border);border-radius:13px;background:var(--surface)}
+.personal-budget-overview > div > span {font-size:.7rem;color:var(--muted)}
+.personal-budget-overview > div > strong {font-size:clamp(.86rem,3.3vw,1.13rem);font-weight:820;font-variant-numeric:tabular-nums;overflow-wrap:anywhere;color:var(--ink)}
+.personal-budget-overview .positive-money {color:var(--wimm-green)}
+.personal-budget-overview .negative-money {color:var(--wimm-coral)}
+.personal-budget-grid {display:grid;gap:10px;min-width:0}
+.personal-v2-budget-panel .personal-budget-swipe-row {min-width:0}
+.personal-v2-budget-panel .personal-budget-swipe-row .swipe-actions-content {padding-right:34px}
+.personal-budget-item {min-width:0;border:1px solid var(--border);border-radius:16px;background:var(--surface);overflow:hidden}
+.personal-budget-item-main {display:grid;gap:9px;width:100%;min-width:0;padding:12px 9px 12px 13px;background:transparent;border:0;text-align:left;cursor:pointer;color:var(--ink);font:inherit}
+.personal-budget-item-main:hover {background:color-mix(in srgb,var(--wimm-blue-wash) 28%,var(--surface))}
+.personal-budget-item-main:focus-visible {outline:2px solid var(--action);outline-offset:-3px}
+.personal-budget-item-head {display:flex;align-items:center;gap:9px;min-width:0;padding-right:12px}
+.personal-budget-item-head > strong {font-size:.85rem;flex:1;min-width:0;overflow-wrap:anywhere}
+.personal-budget-item-glyph {display:grid;place-items:center;width:33px;height:33px;flex:0 0 33px;border-radius:11px;color:var(--wimm-blue);background:var(--wimm-blue-wash)}
+.personal-budget-chevron {color:var(--muted);flex-shrink:0;transition:transform .17s ease}
+.personal-budget-chevron.expanded {transform:rotate(90deg)}
+.personal-budget-item-amounts {display:flex;justify-content:space-between;gap:10px;align-items:flex-end}
+.personal-budget-item-amounts > span {display:grid;gap:2px;min-width:0}
+.personal-budget-item-amounts > span:last-child {text-align:right}
+.personal-budget-item-amounts strong {font-size:clamp(.96rem,3.4vw,1.13rem);font-variant-numeric:tabular-nums;color:var(--ink)}
+.personal-budget-item-amounts strong.positive-money {color:var(--wimm-green)}
+.personal-budget-item-amounts strong.negative-money {color:var(--wimm-coral)}
+.personal-budget-item-amounts small {font-size:.68rem;color:var(--muted)}
+.personal-budget-bar {display:block;min-width:0}
+.personal-budget-bar .progress {margin:0}
+.personal-budget-item-foot {font-size:.69rem;color:var(--muted);padding-top:2px}
+.personal-budget-item.is-inactive {opacity:.75}
+.personal-budget-details {display:grid;gap:6px;padding:11px 12px 13px;border-top:1px solid var(--border);min-width:0}
+.personal-budget-detail-heading {display:flex;justify-content:space-between;align-items:center;gap:8px}
+.personal-budget-detail-heading > strong {font-size:.75rem;color:var(--ink)}
+.personal-v2-panel-content .personal-budget-detail-heading > button {font-size:.68rem;min-height:30px;display:inline-flex;align-items:center;gap:4px}
+.personal-budget-transaction {display:flex;align-items:center;gap:9px;padding:8px 0;border-top:1px solid var(--border);min-width:0}
+.personal-budget-transaction > span {min-width:0;flex:1;display:grid;gap:3px}
+.personal-budget-transaction > span > strong {font-size:.73rem;overflow-wrap:anywhere}
+.personal-budget-transaction > span > small {font-size:.67rem;color:var(--muted)}
+.personal-budget-transaction > strong {font-size:.74rem;font-variant-numeric:tabular-nums;white-space:nowrap}
+.personal-v2-budget-panel .personal-budget-transaction > .icon {padding:7px;min-width:32px;min-height:32px}
+@media(max-width:850px) and (pointer:coarse) {
+ .personal-v2-budget-panel .personal-budget-swipe-row .swipe-actions-content {padding-right:0}
+ .personal-v2-budget-panel .personal-budget-item-main {padding-right:13px}
+ .personal-v2-budget-panel .personal-budget-item-head {padding-right:0}
+}
+@media(max-width:390px){
+ .personal-budget-overview {gap:5px}
+ .personal-budget-overview > div {padding:10px 6px}
+ .personal-budget-item-main {padding:10px}
+}
+
 `;
 export default function PersonalPageStyles(){return <style data-wimm-personal="v2">{styles}</style>;}
