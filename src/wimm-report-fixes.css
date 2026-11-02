@@ -1,0 +1,15 @@
+/* Bilan historique vérifiable, retours d'archives */
+.app .home-monthly-report .home-remaining-card {min-width:0;display:grid;align-content:start;gap:7px}
+.app .home-monthly-report .home-remaining-card > strong {overflow-wrap:anywhere}
+.app .home-monthly-report .home-remaining-card > button.text {justify-self:start;display:inline-flex;align-items:center;gap:4px;text-align:left;font-size:.72rem;min-height:31px;max-width:100%}
+.app .home-monthly-report .home-remaining-card > button.text:hover {text-decoration:underline}
+.app .home-monthly-report .home-report-breakdown {display:grid;gap:8px;padding:11px 14px;background:var(--surface);border:1px solid var(--border);border-radius:13px}
+.app .home-report-breakdown > div {display:flex;align-items:center;justify-content:space-between;gap:10px}
+.app .home-report-breakdown span {font-size:.74rem;color:var(--muted)}
+.app .home-report-breakdown strong {font-size:.82rem;font-variant-numeric:tabular-nums;color:var(--ink)}
+.app .trips-archive-back {display:flex;align-items:center;margin:10px 0 13px}
+.app .trips-archive-back > button {display:flex;align-items:center;gap:6px;min-height:40px;font-size:.8rem}
+@media(max-width:390px) {
+ .app .home-monthly-report .home-remaining-card {padding:12px 9px}
+ .app .home-monthly-report .home-remaining-card > button.text {font-size:.68rem}
+}
