@@ -24,7 +24,7 @@ test("private bank-to-cash transfer does not change total cash plus bank balance
   const p=emptyPersonalState(), shared=emptyState();
   p.account={id:"p",name:"Compte privé",opening:10000,date:today(),category:"my-budget"};
   p.transactions=[
-    {id:"cash-withdrawal",type:"cash_transfer",paymentMethod:"cash",amount:3000,date:today(),description:"Retrait"},
+    {id:"cash-withdrawal",type:"adjust",cashTransfer:true,paymentMethod:"cash",amount:3000,date:today(),description:"Retrait"},
     {id:"cash-spent",type:"expense",paymentMethod:"cash",amount:1200,date:today(),description:"Espèces"},
     {id:"card-spent",type:"expense",paymentMethod:"bank",amount:900,date:today(),description:"CB"},
   ];
