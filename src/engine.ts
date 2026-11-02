@@ -34,6 +34,8 @@ export type Account = {
   interestReviews?: Record<string, { expected: number; actual: number; confirmedAt: string; postedTransactionId?: string }>;
 
   personalCategory?: string;
+  /** An optional household cash wallet treated like a current account. */
+  isCash?: boolean;
 
   archived?: boolean;
 
