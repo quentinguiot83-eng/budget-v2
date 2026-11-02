@@ -1,5 +1,6 @@
 import { WimmWordmark } from "./WimmWordmark";
 import { monthlyLedger } from "./monthlyLedger";
+import { getHomeMonthSections } from "./homeMonthSections";
 import { validateAccountName } from "./accountNames";
 import { accountLinks, accountRemovalBlockers, canArchiveAccount, canDeleteAccount, removeAccountSafely } from "./accountRemoval";
 import { revisePaymentPlan, removeCreditPlan } from "./creditSchedules";
@@ -5699,6 +5700,7 @@ export default function App() {
   const historicalSavings = historical.savings;
   const historicalCategories = historical.categories;
   const historicalTripExpense = historical.travelSpending;
+  const homeMonthSections = getHomeMonthSections(selectedMonth, month());
   const wealth = activeHouseholdAccounts
     .filter((a) => a.group === "wealth")
     .reduce((sum, a) => sum + balance(s, a.id), 0);
@@ -5912,7 +5914,7 @@ export default function App() {
           {route === "pro" && <ProWorkspace native onOpenQuickAdd={()=>setMobileQuickAddOpen(true)} householdCurrentAccounts={currentAccounts.map(a=>({id:a.id,name:a.name,archived:a.archived}))} onHouseholdRefresh={load} />}
           {route === "home" && (
             <div className="wimm-home-clean">
-              {onboardingChecklistPreviewEnabled && (
+              {homeMonthSections.showInteractiveDashboard && onboardingChecklistPreviewEnabled && (
                 <GettingStartedChecklist
                   state={s}
                   storageKey={`wimm-onboarding-checklist-${session?.user.id || "demo"}`}
@@ -5921,7 +5923,7 @@ export default function App() {
                   onHelp={() => { setTutorialPage("home"); setTutorialMode("page"); setTutorialOpen(true); }}
                 />
               )}
-              <section className="balance-card home-balance-main" data-tour="home-overview">
+              {homeMonthSections.showAccountBalances && <section className="balance-card home-balance-main" data-tour="home-overview">
                 <div className="split">
                   <div className="block-title">
                     <span>{currentAccounts.length > 1 ? "Solde des comptes courants" : "Solde du compte commun"}</span>
@@ -5968,9 +5970,9 @@ export default function App() {
                     {!availableThisMonth.hasRealIncome && <small>Les revenus du mois restent à renseigner pour calculer l'épargne réservée.</small>}
                   </div>
                 )}
-              </section>
+              </section>}
 
-              {ps.account && !s.hidden.includes("personal") && (
+              {homeMonthSections.showPersonalAccount && ps.account && !s.hidden.includes("personal") && (
                  <button type="button" className="home-personal-shortcut" onClick={()=>navigate("personal")}
                    aria-label="Ouvrir mon compte perso">
                    <span className="home-personal-icon"><UserRound size={22}/></span>
@@ -5984,7 +5986,7 @@ export default function App() {
                )}
 
 
-               {selectedMonth<month()&&<section className="card home-monthly-report" aria-label={"Bilan financier de "+monthLabel(selectedMonth)}>
+               {homeMonthSections.showMonthlyReview && <section className="card home-monthly-report" aria-label={"Bilan financier de "+monthLabel(selectedMonth)}>
                  <div className="section-head"><h2>Bilan de {monthLabel(selectedMonth)}</h2><span className="muted">Transactions vérifiables</span></div>
                  <div className="home-remaining-grid home-income-expenses">
                    <div className="home-remaining-card home-income">
@@ -6015,6 +6017,7 @@ export default function App() {
                    {historicalCategories.map(c=><div className="home-monthly-category" key={c.id}><span>{c.name}</span><strong>{money(c.amount)}</strong><Progress value={c.amount} max={Math.max(1,historicalExpenses)}/></div>)}
                  </div>}
                </section>}
+               {homeMonthSections.showInteractiveDashboard && (<>
                <div className="home-remaining-grid home-income-expenses">
                 <section className="home-remaining-card home-income">
                   <span className="muted">Revenus du mois</span><strong>{money(totals.income)}</strong>
@@ -6096,6 +6099,7 @@ export default function App() {
                   <p className="home-recent-expenses-empty">Aucune dépense enregistrée pour ce mois.</p>
                 )}
               </section>
+               </>)}
             </div>
           )}
           {route === "budget" && (
