@@ -132,5 +132,18 @@ const styles = String.raw`
 .personal-projection-readout strong{font-size:1.14rem;color:var(--ink);font-weight:850;font-variant-numeric:tabular-nums;text-align:right}
 .personal-projection-help{margin:0;font-size:.7rem;line-height:1.45;color:var(--muted)}
 @media(max-width:560px){.personal-projection-chart{height:226px}.personal-projection-readout strong{font-size:1rem}}
+
+/* Cash and real spending are separate from future budget projections. */
+.personal-v2-cash-accounts,
+.personal-v2-month-estimate {display:grid;gap:8px;padding:13px 17px;margin:12px 0;border-radius:16px;background:var(--surface);border:1px solid var(--border);min-width:0}
+.personal-v2-cash-accounts .row{min-height:0;margin:0}
+.personal-v2-cash-accounts .text{justify-self:start;display:inline-flex;align-items:center;gap:7px;min-height:32px;font-size:.73rem}
+.personal-v2-month-estimate>span{font-size:.8rem;color:var(--muted)}
+.personal-v2-month-estimate>strong{font-size:clamp(1.35rem,5vw,1.75rem);font-weight:850;font-variant-numeric:tabular-nums}
+.personal-v2-month-estimate>small{font-size:.71rem;color:var(--muted);line-height:1.5}
+.personal-budget-expenses{display:grid;gap:4px;padding:9px;margin:7px 0 2px;border-radius:12px;background:var(--surface);border:1px solid var(--border)}
+.personal-budget-expenses .row{min-height:0;padding:7px 0}
+.personal-budget-swipe-row .progress{margin:7px 0}
+.personal-budget-swipe-row .text{justify-self:start}
 `;
 export default function PersonalPageStyles(){return <style data-wimm-personal="v2">{styles}</style>;}
