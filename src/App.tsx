@@ -57,6 +57,7 @@ import {
   ArrowLeftRight,
   ChevronLeft,
   ChevronsLeft,
+  ChevronsRight,
   ChevronRight,
   Minus,
   Bell,
@@ -146,6 +147,7 @@ import {
   overdue,
   validate,
   monthlyPlan,
+  monthlySavings,
   project,
   loanRemaining,
   previousDate,
@@ -435,6 +437,7 @@ export default function App() {
     [years, setYears] = useState(10),
     [personalProjectionMonths, setPersonalProjectionMonths] = useState(24),
     [activeTrip, setActiveTrip] = useState(""),
+    [showArchivedTrip, setShowArchivedTrip] = useState(false),
     [coverUploading, setCoverUploading] = useState<string | null>(null),
     [txFilter, setTxFilter] = useState(""),
     [txCategoryFilter, setTxCategoryFilter] = useState(""),
@@ -5494,7 +5497,27 @@ export default function App() {
     .filter((a) => a.group !== "travel")
     .reduce((sum, account) => sum + balance(s, account.id), 0);
   const currentAccounts = activeHouseholdAccounts.filter(a => a.group === "current");
+
   const currentBalance = currentAccounts.reduce((sum, a) => sum + balance(s, a.id), 0);
+  const recordedMonths = [...new Set([month(), ...s.accounts.map(a=>month(a.date)),
+    ...s.transactions.map(t=>month(t.date)), ...(ps.account?[month(ps.account.date)]:[]),
+    ...ps.transactions.map(t=>month(t.date)), ...s.trips.map(t=>month(t.start))])]
+    .filter(m=>m<=month()).sort();
+  const previousRecordedMonth = [...recordedMonths].reverse().find(m=>m<selectedMonth);
+  const nextRecordedMonth = recordedMonths.find(m=>m>selectedMonth);
+  const moveViewingMonth = (dir:-1|1) => {
+    if(selectedMonth>month())setMonth(shiftMonth(selectedMonth,dir));
+    else if(dir<0){if(previousRecordedMonth)setMonth(previousRecordedMonth);}
+    else setMonth(nextRecordedMonth||shiftMonth(selectedMonth,1));
+  };
+  const historicalTransactions=s.transactions.filter(t=>month(t.date)===selectedMonth&&t.date<=today()&&
+    s.accounts.find(a=>a.id===t.account)?.group!=="personal");
+  const historicalIncome=historicalTransactions.filter(t=>t.type==="income").reduce((v,t)=>v+t.amount,0);
+  const historicalExpenses=historicalTransactions.filter(t=>t.type==="expense").reduce((v,t)=>v+t.amount,0);
+  const historicalSavings=monthlySavings(s,selectedMonth);
+  const historicalCategories=s.categories.map(c=>({id:c.id,name:c.name,amount:historicalTransactions.filter(t=>t.type==="expense"&&t.category===c.id).reduce((v,t)=>v+t.amount,0)}))
+    .filter(c=>c.amount>0).sort((a,b)=>b.amount-a.amount);
+  const historicalTripExpense=historicalTransactions.filter(t=>t.type==="expense"&&!!t.trip).reduce((v,t)=>v+t.amount,0);
   const wealth = activeHouseholdAccounts
     .filter((a) => a.group === "wealth")
     .reduce((sum, a) => sum + balance(s, a.id), 0);
@@ -5662,33 +5685,15 @@ export default function App() {
             "fixed",
           ].includes(route) && (
             <div className="month-picker">
-              <button className="month-reset icon" type="button" aria-label="Revenir au mois actuel" title="Revenir au mois actuel" disabled={selectedMonth === month()} onClick={() => setMonth(month())}><ChevronsLeft size={19} strokeWidth={2.25} /></button>
 
-              <button
-                className="icon"
-                aria-label="Mois précédent"
-                onClick={() => setMonth(shiftMonth(selectedMonth, -1))}
-              >
-                <ChevronLeft size={18} />
-              </button>
-
-              <label className="month-picker-current">
-                <span aria-hidden="true">{monthLabel(selectedMonth)}</span>
-                <input
-                  type="month"
-                  aria-label="Choisir le mois affiché"
-                  value={selectedMonth}
-                  onChange={(e) => e.target.value && setMonth(e.target.value)}
-                />
+              {selectedMonth>month()&&<button className="month-reset icon" type="button" aria-label="Revenir au mois actuel" title="Mois actuel" onClick={()=>setMonth(month())}><ChevronsLeft size={19}/></button>}
+              <button className="icon" aria-label="Mois précédent" disabled={selectedMonth<=month()&&!previousRecordedMonth} onClick={()=>moveViewingMonth(-1)}><ChevronLeft size={18}/></button>
+              <label className="month-picker-current"><span aria-hidden="true">{monthLabel(selectedMonth)}</span>
+                <input type="month" aria-label="Choisir le mois affiché" min={recordedMonths[0]||month()} value={selectedMonth}
+                  onChange={e=>{const m=e.target.value;if(m&&(m>=month()||recordedMonths.includes(m)))setMonth(m);}}/>
               </label>
-
-              <button
-                className="icon"
-                aria-label="Mois suivant"
-                onClick={() => setMonth(shiftMonth(selectedMonth, 1))}
-              >
-                <ChevronRight size={18} />
-              </button>
+              <button className="icon" aria-label="Mois suivant" onClick={()=>moveViewingMonth(1)}><ChevronRight size={18}/></button>
+              {selectedMonth<month()&&<button className="month-reset icon" type="button" aria-label="Revenir au mois actuel" title="Mois actuel" onClick={()=>setMonth(month())}><ChevronsRight size={19}/></button>}
             </div>
           )}
         </div>
@@ -5794,6 +5799,21 @@ export default function App() {
                  </button>
                )}
 
+
+               {selectedMonth<month()&&<section className="card home-monthly-report" aria-label={"Bilan financier de "+monthLabel(selectedMonth)}>
+                 <div className="section-head"><h2>Bilan de {monthLabel(selectedMonth)}</h2><span className="muted">Opérations réelles</span></div>
+                 <div className="home-remaining-grid home-income-expenses">
+                   <div className="home-remaining-card home-income"><span className="muted">Revenus totaux</span><strong>{money(historicalIncome)}</strong></div>
+                   <div className="home-remaining-card home-expenses"><span className="muted">Dépenses totales</span><strong>{money(historicalExpenses)}</strong></div>
+                   <div className="home-remaining-card"><span className="muted">Balance du mois</span><strong className={historicalIncome-historicalExpenses<0?"negative-money":"positive-money"}>{money(historicalIncome-historicalExpenses)}</strong></div>
+                   <div className="home-remaining-card"><span className="muted">Épargne transférée</span><strong>{money(historicalSavings)}</strong></div>
+                 </div>
+                 <p className="muted">Les transferts internes ne sont ni des revenus ni des dépenses.</p>
+                 {!!historicalCategories.length&&<div className="home-monthly-categories"><h3>Répartition des dépenses</h3>
+                   {historicalCategories.map(c=><div className="home-monthly-category" key={c.id}><span>{c.name}</span><strong>{money(c.amount)}</strong><Progress value={c.amount} max={Math.max(1,historicalExpenses)}/></div>)}
+                   {historicalTripExpense>0&&<small className="muted">Dont voyages : {money(historicalTripExpense)}</small>}
+                 </div>}
+               </section>}
                <div className="home-remaining-grid home-income-expenses">
                 <section className="home-remaining-card home-income">
                   <span className="muted">Revenus du mois</span><strong>{money(totals.income)}</strong>
@@ -7493,7 +7513,7 @@ export default function App() {
                           const selected = (activeTrip || s.trips.find(x => !x.closedAt)?.id || s.trips[0]?.id) === t.id;
                           return (
                             <button type="button" key={t.id} className={selected ? "selected" : ""}
-                              aria-pressed={selected} onClick={() => setActiveTrip(t.id)}>
+                              aria-pressed={selected} onClick={() => { setActiveTrip(t.id); setShowArchivedTrip(false); }}>
                               {t.coverPath && tripCoverUrls[t.coverPath]
                                 ? <img className="trips-tab-image" src={tripCoverUrls[t.coverPath]} alt="" loading="lazy" onError={() => t.coverPath && retryFailedImage(t.coverPath)}/>
                                 : <Plane size={16}/>}
@@ -7517,7 +7537,7 @@ export default function App() {
                             .reduce((n, x) => n + x.amount, 0);
                           return (
                             <button type="button" className={activeTrip === t.id ? "selected" : ""}
-                              aria-pressed={activeTrip === t.id} key={t.id} onClick={() => setActiveTrip(t.id)}>
+                              aria-pressed={activeTrip === t.id} key={t.id} onClick={() => { setActiveTrip(t.id); setShowArchivedTrip(true); }}>
                               {t.coverPath && tripCoverUrls[t.coverPath]
                                 ? <img className="trips-tab-image" src={tripCoverUrls[t.coverPath]} alt="" loading="lazy" onError={() => t.coverPath && retryFailedImage(t.coverPath)}/>
                                 : <Plane size={16}/>}
@@ -7529,8 +7549,9 @@ export default function App() {
                     </details>
                   )}
                   {(() => {
-                    const t = s.trips.find(t => t.id === activeTrip) ||
-                      s.trips.find(t => !t.closedAt) || s.trips[0];
+                    const t = s.trips.find(t => t.id === activeTrip && (!t.closedAt || showArchivedTrip)) ||
+                       s.trips.find(t => !t.closedAt);
+                     if (!t) return <p className="muted trips-no-active">Aucun voyage actif. Ouvrez « Voyages terminés » pour consulter vos anciens séjours.</p>;
                     const tx = s.transactions.filter(x => x.trip === t.id);
                     const expenses = tx.filter(x => x.type === "expense");
                     const spent = expenses.reduce((n, x) => n + x.amount, 0);
@@ -7690,6 +7711,7 @@ export default function App() {
                               "Vous pourrez de nouveau ajouter des dépenses et modifier ses enveloppes.",
                               async () => change(d => {
                                 d.trips.find(x => x.id === t.id)!.closedAt = undefined;
+                                 setShowArchivedTrip(false);
                               }, "Voyage réouvert")
                             )}>Réouvrir le voyage</button>
                           ) : (
@@ -7698,6 +7720,8 @@ export default function App() {
                               "Il sera déplacé dans Voyages terminés. Son historique et son coût total resteront accessibles.",
                               async () => change(d => {
                                 d.trips.find(x => x.id === t.id)!.closedAt = today();
+                                 setActiveTrip("");
+                                 setShowArchivedTrip(false);
                               }, "Voyage clôturé")
                             )}>Clôturer le voyage</button>
                           )}
