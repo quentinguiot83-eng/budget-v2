@@ -162,6 +162,7 @@ import {
   type PersonalBudget,
   emptyPersonalState,
   personalBalance,
+  personalCashBalance,
   personalDues,
   personalProjection,
   validatePersonal,
@@ -449,6 +450,7 @@ export default function App() {
     [tutorialPage, setTutorialPage] = useState<string | null>(null),
     [tutorialMode, setTutorialMode] = useState<"quick" | "library" | "page">("quick"),
     [expandedPersonalBudgets, setExpandedPersonalBudgets] = useState<Record<string, boolean>>({}),
+    [selectedPersonalBudget, setSelectedPersonalBudget] = useState<string | null>(null),
     [settingsCategory, setSettingsCategory] = useState<string | null>(null),
     [settingsDetail, setSettingsDetail] = useState<string | null>(null);
   // The full guided tour must start from predictable sections, even if the
@@ -990,6 +992,37 @@ export default function App() {
           (!group || a.group === group),
       )
       .map((a) => [a.id, a.name]);
+
+  const expenseAccountOptions = (existing?:Tx):[string,string][] => accountOptions().filter(([id])=>{
+    const a=s.accounts.find(a=>a.id===id);
+    return !a?.isCash || balance(s,id)>0 || existing?.account===id;
+  });
+  function ensureCashPayment(accountId:string,amount:number,existing?:Tx){
+    const a=s.accounts.find(a=>a.id===accountId);
+    if(a?.isCash && amount>balance(s,a.id)+(existing?.account===a.id?existing.amount:0))
+      throw Error("Espèces insuffisantes. Choisissez un compte bancaire ou saisissez des espèces.");
+  }
+  function editSharedCash(){
+    const cash=s.accounts.find(a=>a.isCash&&!a.archived);
+    openForm("Espèces du foyer",[
+      amountField("cash","Montant d’espèces disponible (€)",cash?balance(s,cash.id):0),
+    ],async v=>{
+      const target=euro(v.cash);
+      if(target<0)throw Error("Le solde des espèces ne peut pas être négatif.");
+      await change(d=>{
+        const wallet=d.accounts.find(a=>a.isCash&&!a.archived);
+        if(!wallet){
+          if(!target)return;
+          d.accounts.push({id:uid(),name:"Espèces",group:"current",isCash:true,opening:target,
+            date:today(),rate:0,cap:0,capType:"balance",contributed:0,relay:"",allocation:0});
+        } else {
+          const delta=target-balance(d,wallet.id);
+          if(delta)d.transactions.push({id:uid(),type:"adjust",account:wallet.id,amount:delta,
+            date:today(),description:"Ajustement des espèces"});
+        }
+      },"Espèces mises à jour");
+    });
+  }
   const categoryOptions: [string, string][] = s.categories
     .filter((c) => !c.archived || c.archived > selectedMonth)
     .map((c) => [c.id, c.name]);
@@ -3045,6 +3078,8 @@ export default function App() {
               `Il ne reste que ${money(remainingCapacity)} à épargner pour ${monthLabel(tx.savingMonth)}.`,
             );
         }
+        if(s.accounts.find(a=>a.id===tx.account)?.isCash && balance(s,tx.account,tx.date)<tx.amount)
+          throw Error("Les espèces ne peuvent pas être à découvert.");
         if (
           balance(s, tx.account, tx.date) < tx.amount &&
           v.overdraft !== "yes"
@@ -3334,7 +3369,7 @@ export default function App() {
         choice(
           "account",
           "Compte",
-          accountOptions(),
+          expenseAccountOptions(existing),
           existing?.account ||
             current.id,
         ),
@@ -3544,6 +3579,7 @@ export default function App() {
                   undefined,
               };
 
+              ensureCashPayment(v.account,euro(v.amount),existing);
               if (existing)
                 d.transactions =
                   d.transactions.map(
@@ -3649,7 +3685,7 @@ export default function App() {
       choice(
         "account",
         "Compte débité",
-        accountOptions(),
+        expenseAccountOptions(),
         current.id,
       ),
 
@@ -3783,6 +3819,7 @@ export default function App() {
               "Le montant doit être supérieur à zéro.",
             );
 
+          ensureCashPayment(v.account,amount);
           await change(
             (d) =>
               d.transactions.push({
@@ -5499,6 +5536,8 @@ export default function App() {
   const currentAccounts = activeHouseholdAccounts.filter(a => a.group === "current");
 
   const currentBalance = currentAccounts.reduce((sum, a) => sum + balance(s, a.id), 0);
+  const householdCashAccount=currentAccounts.find(a=>a.isCash);
+  const householdCashBalance=householdCashAccount?balance(s,householdCashAccount.id):0;
   const recordedMonths = [...new Set([month(), ...s.accounts.map(a=>month(a.date)),
     ...s.transactions.map(t=>month(t.date)), ...(ps.account?[month(ps.account.date)]:[]),
     ...ps.transactions.map(t=>month(t.date)), ...s.trips.map(t=>month(t.start))])]
@@ -5766,13 +5805,16 @@ export default function App() {
                       </button>
                     </div>
                     <div className="home-current-accounts-list">
-                      {currentAccounts.map(a => (
+                      {currentAccounts.filter(a=>!a.isCash||balance(s,a.id)>0).map(a => (
                         <button type="button" className="home-current-account-row" key={a.id}
                           onClick={() => navigate("wealth")} aria-label={a.name + " : " + money(balance(s, a.id)) + ". Voir dans Patrimoine"}>
-                          <span className="home-current-account-name"><Wallet size={16} aria-hidden="true"/><span>{a.name}</span></span>
+                          <span className="home-current-account-name">{a.isCash?<Coins size={16} aria-hidden="true"/>:<Wallet size={16} aria-hidden="true"/>}<span>{a.name}</span></span>
                           <strong className={balance(s, a.id) < 0 ? "negative-money" : undefined}>{money(balance(s, a.id))}</strong>
                         </button>
                       ))}
+                      {householdCashBalance<=0
+                        ? <button type="button" className="text home-cash-invitation" onClick={editSharedCash}><Coins size={15}/> Vous avez des espèces ? Saisir un montant</button>
+                        : <button type="button" className="text home-cash-invitation" onClick={editSharedCash}>Modifier les espèces</button>}
                     </div>
                   </div>
                 )}
