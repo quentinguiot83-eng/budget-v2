@@ -11,40 +11,38 @@
 }
 
 
-/* iOS PWA may leave fixed elements attached to a temporary keyboard-sized viewport.
-   Anchor the dock and quick actions to the actual screen, not to 100dvh or a stale
-   WebKit layout viewport; the JS guard also corrects intermittent compositing drift. */
-@media (max-width: 850px) {
-  html[data-wimm-standalone-dock="1"] .app .bottom-nav {
-    position: fixed !important;
-    top: calc(var(--wimm-standalone-screen-height, 100dvh) - 80px - env(safe-area-inset-bottom, 0px)) !important;
-    bottom: auto !important;
-    translate: 0 var(--wimm-nav-recovery-y, 0px);
-  }
-  html[data-wimm-standalone-dock="1"] .app .floating-add-button {
-    position: fixed !important;
-    top: calc(var(--wimm-standalone-screen-height, 100dvh) - 150px - env(safe-area-inset-bottom, 0px)) !important;
-    bottom: auto !important;
-    translate: 0 var(--wimm-add-recovery-y, 0px);
-  }
-  html[data-wimm-standalone-dock="1"] .app .quick-add-layer {
-    bottom: auto !important;
-    height: var(--wimm-standalone-screen-height, 100dvh) !important;
-  }
-  html[data-wimm-standalone-dock="1"] .app .quick-add-layer:not(.pro-context-add-layer) .quick-add-menu {
-    top: calc(var(--wimm-standalone-screen-height, 100dvh) - 157px - env(safe-area-inset-bottom, 0px)) !important;
-    bottom: auto !important;
-    transform: translateY(-100%);
-  }
-  /* Hide navigation only while the iOS keyboard actually occupies the screen. */
-  html[data-wimm-standalone-dock="1"][data-wimm-keyboard-open] .app .bottom-nav,
-  html[data-wimm-standalone-dock="1"][data-wimm-keyboard-open] .app .floating-add-button {
-    opacity: 0 !important;
-    pointer-events: none !important;
-  }
-}
-@media (max-width: 370px) {
-  html[data-wimm-standalone-dock="1"] .app .floating-add-button {
-    top: calc(var(--wimm-standalone-screen-height, 100dvh) - 140px - env(safe-area-inset-bottom, 0px)) !important;
+/* iPhone standalone PWA: use the native viewport's fixed bottom edge.
+   Never derive a top coordinate from screen.height: that can overshoot the
+   visible viewport after WebKit reuses a keyboard/suspended layout. */
+@supports (-webkit-touch-callout: none) {
+  @media (display-mode: standalone) and (max-width: 850px) {
+    html .app .bottom-nav {
+      position: fixed !important;
+      top: auto !important;
+      bottom: calc(10px + env(safe-area-inset-bottom, 0px)) !important;
+      translate: none !important;
+      height: 70px;
+      min-height: 70px;
+    }
+    html .app .floating-add-button {
+      position: fixed !important;
+      top: auto !important;
+      bottom: calc(92px + env(safe-area-inset-bottom, 0px)) !important;
+      translate: none !important;
+    }
+    html .app .quick-add-layer {
+      inset: 0 !important;
+      height: auto !important;
+    }
+    html .app .quick-add-layer:not(.pro-context-add-layer) .quick-add-menu {
+      top: auto !important;
+      bottom: calc(157px + env(safe-area-inset-bottom, 0px)) !important;
+      transform: none !important;
+    }
+    html[data-wimm-keyboard-open] .app .bottom-nav,
+    html[data-wimm-keyboard-open] .app .floating-add-button {
+      opacity: 0 !important;
+      pointer-events: none !important;
+    }
   }
 }
