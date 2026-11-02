@@ -6361,6 +6361,16 @@ export default function App() {
                   b => selectedMonth >= b.start && (!b.end || selectedMonth <= b.end)
                 );
                 const privateBudgetsTotal = activePrivateBudgets.reduce((n, b) => n + b.amount, 0);
+                const personalSpentForBudget=(budgetId:string)=>ps.transactions
+                  .filter(t=>t.type==="expense"&&t.budgetId===budgetId&&month(t.date)===selectedMonth)
+                  .reduce((sum,t)=>sum+t.amount,0);
+                const unspentPersonalBudgets=activePrivateBudgets.reduce((sum,b)=>
+                  sum+Math.max(0,b.amount-personalSpentForBudget(b.id)),0);
+                const unpaidOutsideBudgets=personalDues(ps,selectedMonth).filter(d=>
+                  !d.paid && d.date>=today() && !activePrivateBudgets.some(b=>b.id===d.rule.budgetId))
+                  .reduce((sum,d)=>sum+d.rule.amount,0);
+                const personalEndOfMonth=privateBalance+Math.max(0,envelope.remaining)-
+                  unspentPersonalBudgets-unpaidOutsideBudgets;
                 const activeAdvances = s.transactions.filter(t =>
                   t.type === "personal_transfer" &&
                   t.personalOwner === personalOwnerId &&
@@ -6399,6 +6409,11 @@ export default function App() {
                             <Coins size={15}/> {privateCash>0?"Modifier mes espèces":"Vous avez des espèces ? Saisir un montant"}
                           </button>
                         </div>
+                        {selectedMonth===month()&&<div className="personal-v2-month-estimate">
+                          <span>Disponible estimé fin de mois</span>
+                          <strong className={personalEndOfMonth<0?"negative-money":"positive-money"}>{money(personalEndOfMonth)}</strong>
+                          <small>Solde actuel + virements prévus − budgets restants et échéances à payer</small>
+                        </div>}
                         <div className="personal-v2-totals">
                           <div>
                             <small>Budget lié au foyer</small>
@@ -6454,7 +6469,7 @@ export default function App() {
                           <span className="personal-v2-panel-icon"><Coins size={20}/></span>
                           <span className="personal-v2-panel-copy">
                             <strong>Mes budgets personnels</strong>
-                            <small>Prévisions uniquement · sans débit immédiat</small>
+                            <small>Dépensé et restant · sans débit anticipé</small>
                           </span>
                           <span className="personal-v2-panel-side">
                             <strong>{money(privateBudgetsTotal)}</strong>
@@ -6471,10 +6486,8 @@ export default function App() {
                           </h2>
 
                           <p className="muted">
-                            Ces montants servent uniquement à prévoir vos futures
-                            dépenses personnelles. Ils n’affectent pas le budget
-                            commun et ne modifient pas votre solde réel tant que
-                            vous n’avez pas réellement dépensé l’argent.
+                            Chaque budget suit les dépenses réelles et affiche le montant encore disponible.
+                            Les prévisions n’affectent pas le budget commun et ne débitent pas votre compte.
                           </p>
                         </div>
 
@@ -6512,6 +6525,18 @@ export default function App() {
                                 )}{" "}
                                 / mois
                               </small>
+                              {selectedMonth>=b.start&&(!b.end||selectedMonth<=b.end)&&<>
+                                <small>Dépensé : {money(personalSpentForBudget(b.id))} · Reste : {money(b.amount-personalSpentForBudget(b.id))}</small>
+                                <Progress value={personalSpentForBudget(b.id)} max={Math.max(1,b.amount)}/>
+                                <button type="button" className="text" onClick={()=>setSelectedPersonalBudget(id=>id===b.id?null:b.id)}>
+                                  {selectedPersonalBudget===b.id?"Masquer les dépenses":"Voir les dépenses"}
+                                </button>
+                                {selectedPersonalBudget===b.id&&<div className="personal-budget-expenses">
+                                  {ps.transactions.filter(t=>t.type==="expense"&&t.budgetId===b.id&&month(t.date)===selectedMonth).map(t=>
+                                    <Row key={t.id} title={t.description||"Dépense"} sub={dateLabel(t.date)} value={money(t.amount)}/>)}
+                                  {!personalSpentForBudget(b.id)&&<small className="muted">Aucune dépense pour ce mois.</small>}
+                                </div>}
+                              </>
 
                               <small>
                                 Dès{" "}
@@ -7174,7 +7199,7 @@ export default function App() {
                       </section>
                       <p className="personal-v2-privacy-note">
                         Les dépenses de ce compte ne sont pas incluses dans le patrimoine commun.
-                        Les budgets mensuels personnels sont des prévisions, pas des prélèvements.
+                        Les budgets suivent les dépenses réelles et anticipent celles à venir, sans débit automatique.
                       </p>
                     </div>
                   </>
