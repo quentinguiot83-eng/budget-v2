@@ -1,0 +1,79 @@
+/* Wimm — ajustements novembre 2026. Feuille chargée après les thèmes. */
+.app .page-heading > .month-picker {position:relative}
+.app .page-heading .month-picker > .month-reset-right {
+  grid-column:3;grid-row:1;justify-self:end;
+}
+.app .page-heading .month-picker .icon:disabled {
+  opacity:.28;cursor:not-allowed;
+}
+.app .wimm-cash-invite {
+  display:block;width:100%;margin-top:5px;padding:9px 7px;border:0;
+  background:transparent;color:var(--muted);font:inherit;font-size:.72rem;
+  text-align:left;cursor:pointer;
+}
+.app .wimm-cash-invite:hover,.app .wimm-cash-invite:focus-visible {color:var(--accent-deep);text-decoration:underline}
+.app .home-current-account-row > strong {font-variant-numeric:tabular-nums}
+.app .wimm-past-month-review {display:grid;gap:14px}
+.app .wimm-past-month-review .section-head {margin-bottom:0}
+.app .wimm-past-month-review .section-head h2 {font-size:1.14rem;margin:4px 0}
+.app .wimm-review-metrics {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.app .wimm-review-metrics > div {
+  display:grid;gap:7px;min-width:0;padding:13px;border:1px solid var(--border);
+  border-radius:15px;background:color-mix(in srgb,var(--surface) 92%,var(--wimm-blue-wash))
+}
+.app .wimm-review-metrics span {font-size:.73rem;color:var(--muted)}
+.app .wimm-review-metrics strong {font-size:clamp(1.04rem,3.4vw,1.35rem);font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.app .wimm-personal-cash-lines {display:grid;gap:5px;padding:10px 0;border-top:1px solid var(--border)}
+.app .wimm-personal-cash-lines > div,.app .wimm-personal-cash-lines > button:not(.wimm-cash-invite) {
+  display:flex;align-items:center;gap:9px;min-width:0;width:100%;
+  background:transparent;border:0;text-align:left;padding:8px 0;color:var(--muted);
+  font:inherit;font-size:.79rem;
+}
+.app .wimm-personal-cash-lines strong {margin-left:auto;color:var(--ink);font-variant-numeric:tabular-nums}
+.app .wimm-personal-month-estimate {
+  display:grid;gap:5px;border-radius:15px;padding:12px 14px;
+  background:color-mix(in srgb,var(--wimm-mint-wash) 55%,var(--surface));border:1px solid var(--border)
+}
+.app .wimm-personal-month-estimate > span {font-size:.74rem;color:var(--muted)}
+.app .wimm-personal-month-estimate > strong {font-size:1.42rem;font-weight:800;font-variant-numeric:tabular-nums}
+.app .wimm-personal-month-estimate > small {font-size:.67rem;line-height:1.4;color:var(--muted)}
+.app .wimm-personal-budget-progress {display:grid;gap:5px;margin-top:9px}
+.app .wimm-personal-budget-progress > small {color:var(--muted);font-size:.71rem}
+.app .wimm-personal-budget-progress > button {justify-self:start;font-size:.73rem;padding:4px 0}
+.app .trips-archive-placeholder {padding:16px;margin:6px 0;border:1px dashed var(--border);border-radius:13px}
+.app .prosuite-native,.app .prosuite-native * {min-width:0}
+.app .prosuite-native .prosuite-main,
+.app .prosuite-native .prosuite-shell,
+.app .prosuite-native .pro-v4-dashboard,
+.app .prosuite-native .pro-v4-cash-hero,
+.app .prosuite-native .pro-month-navigator {box-sizing:border-box;max-width:100%}
+.app .prosuite-native .pro-v4-cash-flow > div {min-width:0}
+.app .prosuite-native .pro-v4-cash-top {flex-wrap:wrap}
+.app .prosuite-native .pro-v4-cash-top > div {flex:1 1 170px}
+@media(max-width:800px) {
+  .app .prosuite-native.prosuite-layer,
+  .app .prosuite-native .prosuite-shell,
+  .app .prosuite-native .prosuite-main {width:100%!important;max-width:100%!important;box-sizing:border-box!important}
+  .app .prosuite-native .prosuite-main {padding-inline:0!important;padding-bottom:150px!important}
+  .app .prosuite-native .prosuite-topbar,
+  .app .prosuite-native .pro-month-navigator,
+  .app .prosuite-native .pro-v4-cash-hero {width:100%!important;margin-inline:0!important}
+  .app .prosuite-native .prosuite-v3-nav.pro-v4-nav {width:100%!important;box-sizing:border-box!important;margin-inline:0!important}
+  .app .prosuite-native .prosuite-v3-nav.pro-v4-nav button,
+  .app .prosuite-native .prosuite-v3-nav.pro-v4-nav button.active {
+    flex:0 0 calc((100% - 21px)/4)!important;
+    width:calc((100% - 21px)/4)!important;
+    max-width:calc((100% - 21px)/4)!important;
+    min-width:0!important;
+    white-space:normal!important;
+    overflow-wrap:anywhere!important;
+  }
+  .app .prosuite-native .prosuite-v3-nav.pro-v4-nav button span {overflow-wrap:anywhere!important;white-space:normal!important}
+  .app .prosuite-native :is(.pro-v4-cash-flow,.pro-v4-month-metrics,.pro-v4-treasury-summary) > div {min-width:0;overflow-wrap:anywhere}
+}
+@media(max-width:390px) {
+  .app .wimm-review-metrics {gap:7px}
+  .app .wimm-review-metrics > div {padding:10px}
+  .app .prosuite-native .pro-v4-cash-flow {gap:7px}
+  .app .prosuite-native .pro-v4-cash-flow > div {padding:10px 8px}
+}
