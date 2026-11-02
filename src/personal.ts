@@ -17,7 +17,7 @@ export type PersonalAccount = {
 
 export type PersonalTransaction = {
   id: string;
-  type: "expense" | "adjust";
+  type: "expense" | "adjust" | "cash_transfer" | "cash_adjust";
   amount: number;
   date: string;
   description: string;
@@ -25,6 +25,8 @@ export type PersonalTransaction = {
 
   // Catégorie / budget mensuel perso.
   budgetId?: string;
+  /** Moyen de paiement : bancaire par défaut pour les anciennes opérations. */
+  paymentMethod?: "bank" | "cash";
 };
 
 export type PersonalRule = {
@@ -184,9 +186,9 @@ export function personalBalance(
       .reduce(
         (sum, t) =>
           sum +
-          (t.type === "adjust"
+          (t.type === "adjust" || t.type === "cash_adjust"
             ? t.amount
-            : -t.amount),
+            : t.type === "cash_transfer" ? 0 : -t.amount),
         0,
       );
 
@@ -196,6 +198,16 @@ export function personalBalance(
     privateMovements
   );
 
+}
+
+/** Espèces privées : les mouvements banque ↔ espèces ne modifient pas le total. */
+export function personalCashBalance(p: PersonalState, until = today()): number {
+  if (!p.account) return 0;
+  return p.transactions
+    .filter(t => t.date >= p.account!.date && t.date <= until)
+    .reduce((sum, t) => sum +
+      (t.type === "cash_adjust" || t.type === "cash_transfer" ? t.amount : 0) -
+      (t.type === "expense" && t.paymentMethod === "cash" ? t.amount : 0), 0);
 }
 
 export function personalProjection(
