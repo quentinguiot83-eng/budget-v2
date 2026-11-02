@@ -13,6 +13,7 @@ import {
   LayoutDashboard,
   ChartNoAxesCombined,
   ChevronsLeft,
+  ChevronsRight,
   Link2,
   Package,
   Pencil,
@@ -359,7 +360,8 @@ export default function ProWorkspace({
         <main className="prosuite-main">
           {error&&<div className="prosuite-error">{error}</div>}{notice&&<div className="prosuite-notice">{notice}</div>}
           {["dashboard","analysis","agenda","treasury"].includes(section)&&
-            <ProMonthNavigator month={selectedProMonth} onChange={setSelectedProMonth} allowFuture={section==="agenda"}/>}
+            <ProMonthNavigator month={selectedProMonth} onChange={setSelectedProMonth} allowFuture={section==="agenda"}
+               recordedMonths={[...(suite?.transactions.map(t=>t.date.slice(0,7))??[]),currentProMonth()]}/>}
           
           {busy&&!suite?<div className="prosuite-loading">Chargement…</div>:suite&&<>
             {section==="dashboard"&&<ProDashboard
@@ -464,13 +466,18 @@ export default function ProWorkspace({
   async function removeTx(id:string){if(!confirm("Supprimer cette opération ?"))return;await call("budget_pro_transaction_delete",{p_id:id},"Opération supprimée");}
 }
 
-function ProMonthNavigator({month,onChange,allowFuture=false}:{month:string;onChange:(month:string)=>void;allowFuture?:boolean}){
+function ProMonthNavigator({month,onChange,allowFuture=false,recordedMonths=[]}:{month:string;onChange:(month:string)=>void;allowFuture?:boolean;recordedMonths?:string[]}){
   const current=currentProMonth();
+  const known=[...new Set([...recordedMonths,current])].filter(m=>m<=current).sort();
+  const previous=[...known].reverse().find(m=>m<month);
+  const next=known.find(m=>m>month);
   return <div className="pro-month-navigator" role="group" aria-label="Sélection du mois professionnel">
-    <button type="button" onClick={()=>onChange(moveProMonth(month,-1))} aria-label="Mois précédent"><ChevronLeft size={18}/></button>
+    {month>current&&<button className="pro-month-reset" type="button" onClick={()=>onChange(current)} aria-label="Revenir au mois en cours"><ChevronsLeft size={19}/></button>}
+    <button type="button" disabled={month<=current&&!previous} onClick={()=>onChange(month>current?moveProMonth(month,-1):previous||month)} aria-label="Mois précédent"><ChevronLeft size={18}/></button>
     <strong>{formatProMonth(month)}</strong>
-    <button type="button" disabled={!allowFuture&&month>=current} onClick={()=>onChange(moveProMonth(month,1))} aria-label="Mois suivant"><ChevronRight size={18}/></button>
-    <button className="pro-month-reset" type="button" disabled={month===current} onClick={()=>onChange(current)} aria-label="Revenir au mois en cours" title="Mois en cours"><ChevronsLeft size={19}/></button>
+    <button type="button" disabled={!allowFuture&&month>=current}
+      onClick={()=>onChange(month<current?next||current:moveProMonth(month,1))} aria-label="Mois suivant"><ChevronRight size={18}/></button>
+    {month<current&&<button className="pro-month-reset" type="button" onClick={()=>onChange(current)} aria-label="Revenir au mois en cours"><ChevronsRight size={19}/></button>}
   </div>;
 }
 
