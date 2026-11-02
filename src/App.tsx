@@ -926,7 +926,7 @@ export default function App() {
       amountField("amount","Montant (€)",t.amount),
       field("date","Date",today(),"date"),
       field("description","Libellé",t.description),
-      choice("account","Compte",accountOptions(),t.account),
+      choice("account","Compte",isExpense?expenseAccountOptions(t):accountOptions(),t.account),
       ...(isExpense?[choice("category","Catégorie",categories,t.category||categories[0]?.[0])]:[
         choice("incomeType","Type de revenu",[
           ["Salaire","Salaire"],["Prime","Prime"],["Remboursement","Remboursement"],
@@ -936,6 +936,7 @@ export default function App() {
     ],async v=>{
       const amount=euro(v.amount);
       if(amount<=0)throw Error("Montant invalide.");
+      if(isExpense)ensureCashPayment(v.account,amount);
       await change(d=>{
         const duplicate:Tx={
           id:uid(),type:t.type,date:v.date,description:v.description.trim(),
