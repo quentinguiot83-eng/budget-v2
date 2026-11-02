@@ -11,6 +11,7 @@ import "./aurora-preview.css";
 import "./aurora-theme.css";
 import "./liquid-charts-preview.css";
 import "./ios-pwa-layout.css";
+import "./wimm-november.css";
 
 createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
