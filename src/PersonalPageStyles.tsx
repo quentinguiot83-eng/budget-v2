@@ -21,7 +21,7 @@ const styles = String.raw`
 .personal-v2-totals strong {font-size:1.05rem;line-height:1.3;color:var(--ink);font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
 .personal-v2-totals span {font-size:.7rem;color:var(--muted);overflow-wrap:anywhere}
 .personal-v2-totals .personal-v2-due strong {color:var(--accent-deep)}
-.personal-v2-quick-actions {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.personal-v2-quick-actions {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
 .personal-v2-quick-actions button {
   display:flex;align-items:center;justify-content:center;gap:8px;min-height:52px;min-width:0;
   text-align:center;border-radius:15px;font-size:.82rem;font-weight:780;line-height:1.25;padding:11px 12px
@@ -108,7 +108,8 @@ const styles = String.raw`
  .personal-v2-amount>strong {font-size:2.35rem}
  .personal-v2-totals {gap:9px}
  .personal-v2-totals strong{font-size:.94rem}
- .personal-v2-quick-actions{gap:9px}
+ .personal-v2-quick-actions{gap:9px;grid-template-columns:repeat(2,minmax(0,1fr))}
+ .personal-v2-quick-actions button:last-child{grid-column:1/-1}
  .personal-v2-quick-actions button{font-size:.74rem;padding:11px 8px;min-height:53px;gap:5px}
  .personal-v2-quick-actions button svg{width:17px;height:17px}
  .personal-v2-panel>summary{padding:15px 12px;gap:9px}

@@ -132,7 +132,7 @@ export type Tx = {
 
   personalOwner?: string;
 
-  personalKind?: "budget" | "advance";
+  personalKind?: "budget" | "advance" | "extra";
 
   personalMonths?: number;
 
@@ -471,7 +471,7 @@ export function personalTransferBudgetAmount(
   m: string,
 ) {
 
-  if (t.type !== "personal_transfer")
+  if (t.type !== "personal_transfer" || t.personalKind === "extra")
     return 0;
 
   const start = t.personalStartMonth || month(t.date);

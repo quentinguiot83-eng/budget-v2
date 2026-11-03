@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { balance, emptyState, today, validate, type Account } from "./engine";
+import { balance, emptyState, month, personalBudgetEnvelope, personalTransferBudgetAmount, today, validate, type Account } from "./engine";
 import { emptyPersonalState, personalBalance, personalCashBalance, validatePersonal } from "./personal";
 
 const current = (id:string, opening:number, isCash=false):Account=>({
@@ -46,4 +46,37 @@ test("all cash expenses are blocked when their ledger would turn negative",()=>{
   s.accounts=[current("bank",10000),current("cash",300,true)];
   s.transactions=[{id:"too-much",type:"expense",account:"cash",amount:301,date:today(),description:"Espèces insuffisantes"}];
   assert.throws(()=>validate(s),/espèces insuffisantes/i);
+});
+
+
+test("one-off personal deposits and out-of-budget household transfers preserve the monthly envelope",()=>{
+  const shared=emptyState(),p=emptyPersonalState(),date=today(),m=month(date);
+  shared.accounts=[current("common",100000)];
+  shared.categories=[{
+    id:"my-budget",name:"Perso",icon:"wallet",personalOwner:"user",
+    personalSince:m,budgets:{[m]:10000},
+  }];
+  p.account={id:"p",name:"Compte privé",opening:20000,date,category:"my-budget"};
+  const extra={
+    id:"extra",type:"personal_transfer" as const,account:"common",amount:5000,
+    date,description:"Virement hors budget",category:"my-budget",
+    personalOwner:"user",personalKind:"extra" as const,
+  };
+  shared.transactions.push(extra);
+  assert.equal(personalTransferBudgetAmount(extra,m),0);
+  assert.equal(balance(shared,"common"),95000);
+  assert.equal(personalBalance(p,shared,"user"),25000);
+  assert.equal(personalBudgetEnvelope(shared,"user","my-budget",m).remaining,10000);
+
+  p.transactions.push({id:"sale",type:"adjust",amount:7000,date,
+    description:"Vente personnelle",paymentMethod:"bank"});
+  assert.equal(personalBalance(p,shared,"user"),32000);
+  assert.doesNotThrow(()=>validatePersonal(p));
+
+  const budgetTransfer={...extra,id:"monthly",amount:3000,personalKind:"budget" as const};
+  shared.transactions.push(budgetTransfer);
+  assert.equal(personalTransferBudgetAmount(budgetTransfer,m),3000);
+  assert.equal(personalBudgetEnvelope(shared,"user","my-budget",m).remaining,7000);
+  assert.equal(personalBalance(p,shared,"user"),35000);
+  assert.equal(balance(shared,"common"),92000);
 });
