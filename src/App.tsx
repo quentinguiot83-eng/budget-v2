@@ -2083,6 +2083,79 @@ export default function App() {
   }
 
 
+
+  function addPersonalMoney() {
+    if (!ps.account) return;
+
+    const sources = s.accounts.filter(a => a.group === "current" && !a.archived);
+    openForm(
+      "Ajouter de l'argent à mon compte perso",
+      [
+        choice("origin", "Origine de l'argent", [
+          ["external", "Revenu ou versement personnel"],
+          ...(sources.length ? [["shared", "Virement supplémentaire depuis le foyer"] as [string, string]] : []),
+        ], "external",
+          "Un versement personnel n'affecte pas le budget du foyer. Un virement du foyer débite le compte commun mais ne consomme pas votre enveloppe mensuelle."),
+        {
+          ...choice("sourceAccount", "Compte commun à débiter",
+            sources.map(a => [a.id, a.name] as [string, string]),
+            current?.id || sources[0]?.id || ""),
+          showWhen: { field: "origin", values: ["shared"] },
+        },
+        amountField("amount", "Montant à ajouter (€)", 0),
+        field("date", "Date de réception", today(), "date"),
+        field("description", "Motif", "Versement ponctuel"),
+        {
+          ...choice("overdraft", "Autoriser un découvert du compte commun",
+            [["no", "Non"], ["yes", "Oui, je confirme"]], "no"),
+          showWhen: { field: "origin", values: ["shared"] },
+        },
+      ],
+      async v => {
+        if (!personalOwnerId || !ps.account) throw Error("Compte personnel indisponible.");
+        const amount = euro(v.amount);
+        if (amount <= 0 || !Number.isSafeInteger(amount))
+          throw Error("Saisissez un montant strictement positif.");
+        if (!v.date || v.date > today() || v.date < ps.account.date)
+          throw Error("La date doit être réelle et postérieure à la création du compte perso.");
+
+        if (v.origin === "shared") {
+          const source = s.accounts.find(a => a.id === v.sourceAccount && a.group === "current" && !a.archived);
+          if (!source) throw Error("Compte courant commun introuvable.");
+          if (v.date < source.date) throw Error("Cette date précède l'ouverture du compte courant.");
+          if (balance(s, source.id, v.date) < amount && v.overdraft !== "yes")
+            throw Error("Le compte commun serait négatif après ce virement.");
+          const targetName = s.categories.find(cat => cat.id === ps.account!.category)?.name || "Compte perso";
+          await change(d => {
+            d.transactions.push({
+              id: uid(),
+              type: "personal_transfer",
+              account: source.id,
+              amount,
+              date: v.date,
+              description: "Virement hors budget · " + targetName,
+              category: ps.account!.category,
+              personalOwner: personalOwnerId,
+              personalKind: "extra",
+            });
+          }, "Virement supplémentaire enregistré");
+        } else {
+          await changePersonal(d => {
+            d.transactions.push({
+              id: uid(),
+              type: "adjust",
+              amount,
+              date: v.date,
+              description: v.description.trim() || "Versement personnel ponctuel",
+              paymentMethod: "bank",
+            });
+          }, "Argent ajouté au compte perso");
+        }
+      },
+      "Ajouter l'argent",
+    );
+  }
+
   function editPersonalCash() {
     if(!ps.account)return;
     openForm("Espèces personnelles",[
@@ -6604,6 +6677,9 @@ export default function App() {
                       <div className="personal-v2-quick-actions">
                         <button type="button" className="primary" onClick={() => personalExpense()}>
                           <Plus size={18}/> Ajouter une dépense
+                        </button>
+                        <button type="button" className="secondary" onClick={() => addPersonalMoney()}>
+                          <ArrowDownLeft size={18}/> Ajouter de l'argent
                         </button>
                         <button type="button" className="secondary" onClick={() => transferPersonal()}>
                           <ArrowLeftRight size={18}/> Virer mon budget
