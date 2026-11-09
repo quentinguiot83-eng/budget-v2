@@ -227,7 +227,7 @@ const amountField = (
   label: string,
   cents = 0,
   hint = "",
-): Field => ({ ...field(name, label, cents / 100, "number", hint), min: 0 });
+): Field => ({ ...field(name, label, cents === 0 ? "" : cents / 100, "number", hint), min: 0 });
 const demoEnabled = new URLSearchParams(location.search).get("demo") === "1";
 const onboardingPreviewEnabled = new URLSearchParams(location.search).get("onboarding_preview") === "1";
 const onboardingChecklistPreviewEnabled = new URLSearchParams(location.search).get("onboarding_checklist") === "1";
@@ -5371,7 +5371,7 @@ export default function App() {
     return (
       <section className="card savings-wealth-panel" data-tour="wealth-savings">
         <details key={selectedMonth + (done ? "-done" : "-pending")}
-          className="savings-wealth-details" open={!done}>
+          className="savings-wealth-details">
           <summary className="savings-wealth-summary">
             <span className="savings-wealth-heading">
               <strong>Votre épargne du mois</strong>
@@ -8767,7 +8767,7 @@ export default function App() {
                 <span className="quick-add-item-icon"><Plus size={17}/></span><span>{label}</span>
               </button>)}
             </> : <>
-              <button type="button" className="quick-add-primary-action" autoFocus
+              <button type="button" className="quick-add-primary-action"
                 onClick={()=>{setMobileQuickAddOpen(false);operation();}}>
                 <span className="quick-add-item-icon expense"><ArrowUpRight size={19}/></span><span>Dépense</span>
               </button>

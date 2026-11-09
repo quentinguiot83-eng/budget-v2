@@ -14,6 +14,10 @@ test("suggests repeated merchants from actual history and excludes fixed/travel/
   ];
   assert.equal(quickSuggestions(s,"expense","carr")[0].count,2);
   assert.equal(quickSuggestions(s,"expense","carr")[0].category,"food");
+  assert.equal(quickSuggestions(s,"expense","pharm").length,0);
+  s.accounts.push({...s.accounts[0],id:"another"});
+  s.transactions.push({id:"5",type:"expense",date:today(),account:"another",category:"food",amount:900,description:"PHARMACIE"});
+  assert.equal(quickSuggestions(s,"expense","pharm")[0].count,2);
   const f=favoriteFromTransaction(s.transactions[0]);checkFavorite(f,s.accounts,s.categories);
   s.quickFavorites=[f];assert.doesNotThrow(()=>validate(s));
   s.quickFavorites=[f,{...f}];assert.throws(()=>validate(s),/Favori en double/);

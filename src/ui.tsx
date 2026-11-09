@@ -95,7 +95,9 @@ export function Form({
       Object.fromEntries(
         fields.map((f) => [
           f.name,
-          String(f.value ?? ""),
+          f.type === "number" && (f.value === 0 || f.value === "0" || f.value === "0.00" || f.value === "0,00")
+            ? ""
+            : String(f.value ?? ""),
         ]),
       ),
   );

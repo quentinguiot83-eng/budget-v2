@@ -77,10 +77,9 @@ export default function TransactionQuickAssist({ state, type, values, apply, rem
       <div className="wimm-quick-pills">
         {suggestions.map(s => <button type="button" key={s.account + ":" + s.description}
           onClick={() => pick(s)} title="Reprendre le libellé, le compte et la catégorie">
-          {s.description}{s.count > 1 && <small> ×{s.count}</small>}
+          {s.description}
         </button>)}
       </div>
-      <small>Le montant reste à saisir : il n’est jamais estimé à partir des anciens achats.</small>
     </div>}
     {error && <p className="error" role="alert">{error}</p>}
   </div>;

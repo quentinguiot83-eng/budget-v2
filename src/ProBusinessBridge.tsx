@@ -160,7 +160,7 @@ function BusinessForm({value,busy,cancel,submit}:{value:Business|Omit<Business,"
   const update=<K extends keyof typeof v>(key:K,value:(typeof v)[K])=>setV({...v,[key]:value});
   const cents=(n:string)=>Math.round((Number(n.replace(",","."))||0)*100);
   const euros=(n:number)=>(n/100).toFixed(2);
-  const [opening,setOpening]=useState(euros(v.openingBalance));
+  const [opening,setOpening]=useState(v.openingBalance ? euros(v.openingBalance) : "");
   return <form className="pro-business-form" onSubmit={e=>{e.preventDefault();void submit({...v,openingBalance:cents(opening)})}}>
     <div className="pro-business-formgrid">
       <label className="wide">Nom de l’entreprise<input required value={v.name} onChange={e=>update("name",e.target.value)}/></label>

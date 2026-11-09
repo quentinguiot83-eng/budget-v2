@@ -22,14 +22,14 @@ export function quickSuggestions(state:State,type:"expense"|"income",search="",l
     const canonical=normalizeBankLabel(t.description);
     if(query&&!canonical.includes(query))continue;
     if(!canonical)continue;
-    const key=canonical+":"+t.account;
+    const key=canonical;
     const previous=collected.get(key);
     if(previous){previous.count++;continue;}
     collected.set(key,{description:t.description,account:t.account,
       category:t.category&&categories.has(t.category)?t.category:undefined,
       amount:t.amount,count:1});
   }
-  return [...collected.values()].sort((a,b)=>b.count-a.count).slice(0,limit);
+  return [...collected.values()].filter(s=>s.count>=2).sort((a,b)=>b.count-a.count).slice(0,limit);
 }
 export function checkFavorite(f:QuickFavorite,accounts:Account[],categories:Category[]){
   if(!f.id||!["expense","income"].includes(f.type)||!f.description.trim()||f.description.length>180)

@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { CalendarDays, Check, Pencil, Plus, Save, Trash2, X } from "lucide-react";
 import { month, uid, type State } from "./engine";
+import MoneyInput from "./MoneyInput";
 import "./recurring-income-manager.css";
 
 type Source=NonNullable<State["incomeSources"]>[number];
@@ -48,8 +49,7 @@ export default function RecurringIncomeManager({sources,legacyIncome,onSave}:Pro
      {!entries.length&&<p className="muted">Ajoutez au moins un revenu, ou enregistrez une liste vide.</p>}
      {entries.map(x=><div className="recurring-incomes-edit" key={x.id}>
        <label>Nom<input value={x.name} onChange={e=>patch(x.id,{name:e.target.value})}/></label>
-       <label>Montant par versement (€)<input type="number" min="0" step=".01" value={x.amount/100}
-         onChange={e=>patch(x.id,{amount:Math.round(Number(e.target.value)*100)})}/></label>
+       <label>Montant par versement (€)<MoneyInput min={0} step=".01" value={x.amount} onChange={amount=>patch(x.id,{amount})}/></label>
        <label>Fréquence<select value={x.frequency} onChange={e=>patch(x.id,{frequency:e.target.value as Source["frequency"]})}>
          <option value="monthly">Mensuelle</option><option value="quarterly">Trimestrielle</option><option value="annual">Annuelle</option>
        </select></label>
