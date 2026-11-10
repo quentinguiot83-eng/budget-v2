@@ -171,6 +171,7 @@ import {
   personalCashBalance,
   personalDues,
   personalProjection,
+  personalMonthOutgoings,
   validatePersonal,
 } from "./personal";
 
@@ -1917,8 +1918,6 @@ export default function App() {
             paymentMethod:v.paymentMethod==="cash"?"cash":"bank",
           };
 
-        if(tx.paymentMethod==="cash" && tx.amount>personalCashBalance(ps)+(existing?.paymentMethod==="cash"?existing.amount:0))
-          throw Error("Espèces insuffisantes pour cette dépense.");
         await changePersonal(
           (d) => {
 
@@ -6606,17 +6605,17 @@ export default function App() {
                 );
                 const privateBudgetsTotal = activePrivateBudgets.reduce((n, b) => n + b.amount, 0);
                 const personalSpentForBudget=(budgetId:string)=>ps.transactions
-                  .filter(t=>t.type==="expense"&&t.budgetId===budgetId&&month(t.date)===selectedMonth)
+                  .filter(t=>t.type==="expense"&&t.budgetId===budgetId&&month(t.date)===selectedMonth&&t.date<=today())
+                  .reduce((sum,t)=>sum+t.amount,0);
+                const personalPlannedForBudget=(budgetId:string)=>ps.transactions
+                  .filter(t=>t.type==="expense"&&t.budgetId===budgetId&&month(t.date)===selectedMonth&&t.date>today())
                   .reduce((sum,t)=>sum+t.amount,0);
                 const privateBudgetSpent = activePrivateBudgets.reduce((sum,b)=>sum+personalSpentForBudget(b.id),0);
-                const privateBudgetLeft = privateBudgetsTotal - privateBudgetSpent;
-                const unspentPersonalBudgets=activePrivateBudgets.reduce((sum,b)=>
-                  sum+Math.max(0,b.amount-personalSpentForBudget(b.id)),0);
-                const unpaidOutsideBudgets=personalDues(ps,selectedMonth).filter(d=>
-                  !d.paid && d.date>=today() && !activePrivateBudgets.some(b=>b.id===d.rule.budgetId))
-                  .reduce((sum,d)=>sum+d.rule.amount,0);
+                const privateBudgetPlanned = activePrivateBudgets.reduce((sum,b)=>sum+personalPlannedForBudget(b.id),0);
+                const privateBudgetLeft = privateBudgetsTotal - privateBudgetSpent - privateBudgetPlanned;
+                const personalOutgoings = personalMonthOutgoings(ps, selectedMonth);
                 const personalEndOfMonth=privateBalance+Math.max(0,envelope.remaining)-
-                  unspentPersonalBudgets-unpaidOutsideBudgets;
+                  personalOutgoings.budgetRemaining-personalOutgoings.uncovered;
                 const activeAdvances = s.transactions.filter(t =>
                   t.type === "personal_transfer" &&
                   t.personalOwner === personalOwnerId &&
@@ -6658,7 +6657,7 @@ export default function App() {
                         {selectedMonth===month()&&<div className="personal-v2-month-estimate">
                           <span>Disponible estimé fin de mois</span>
                           <strong className={personalEndOfMonth<0?"negative-money":"positive-money"}>{money(personalEndOfMonth)}</strong>
-                          <small>Solde actuel + virements prévus − budgets restants et échéances à payer</small>
+                          <small>Solde actuel + virements prévus − budgets restants, dépenses futures et échéances à payer</small>
                         </div>}
                         <div className="personal-v2-totals">
                           <div>
@@ -6754,13 +6753,14 @@ export default function App() {
                       <div className="personal-budget-overview" aria-label="Résumé des budgets personnels du mois">
                         <div><span>Prévu</span><strong>{money(privateBudgetsTotal)}</strong></div>
                         <div><span>Dépensé</span><strong>{money(privateBudgetSpent)}</strong></div>
-                        <div><span>Restant</span><strong className={privateBudgetLeft < 0 ? "negative-money" : "positive-money"}>{money(privateBudgetLeft)}</strong></div>
+                        <div><span>Restant</span><strong className={privateBudgetLeft < 0 ? "negative-money" : "positive-money"}>{money(privateBudgetLeft)}</strong>{privateBudgetPlanned>0&&<small>{money(privateBudgetPlanned)} prévus</small>}</div>
                       </div>
                       <div className="personal-budget-grid">
                       {(ps.budgets ?? []).map(b => {
                         const active = selectedMonth >= b.start && (!b.end || selectedMonth <= b.end);
                         const spent = personalSpentForBudget(b.id);
-                        const remaining = b.amount - spent;
+                        const planned = personalPlannedForBudget(b.id);
+                        const remaining = b.amount - spent - planned;
                         const expanded = selectedPersonalBudget === b.id;
                         const txs = ps.transactions.filter(t => t.type === "expense" && t.budgetId === b.id && month(t.date) === selectedMonth)
                           .sort((a, c) => c.date.localeCompare(a.date));
@@ -6784,9 +6784,9 @@ export default function App() {
                                 </span>
                                 <span className="personal-budget-item-amounts">
                                   <span><strong className={remaining < 0 ? "negative-money" : "positive-money"}>{money(remaining)}</strong><small>{active?"restants":"hors période"}</small></span>
-                                  <span><strong>{money(spent)}</strong><small>sur {money(b.amount)}</small></span>
+                                  <span><strong>{money(spent)}</strong><small>{planned>0 ? money(planned)+" à venir · " : ""}sur {money(b.amount)}</small></span>
                                 </span>
-                                {active && <span className="personal-budget-bar"><Progress value={spent} max={Math.max(1,b.amount)}/></span>}
+                                {active && <span className="personal-budget-bar"><Progress value={spent+planned} max={Math.max(1,b.amount)}/></span>}
                                 <span className="personal-budget-item-foot">{active ? txs.length+" dépense(s) · Voir le détail" : "Actif dès "+monthLabel(b.start)+(b.end?" · fin "+monthLabel(b.end):"")}</span>
                               </button>
                               {expanded && <div className="personal-budget-details">
@@ -6795,7 +6795,7 @@ export default function App() {
                                   <button type="button" className="text" onClick={()=>editPersonalBudget(b)}><Pencil size={14}/> Modifier</button>
                                 </div>
                                 {txs.length ? txs.map(t => <div className="personal-budget-transaction" key={t.id}>
-                                  <span><strong>{t.description||"Dépense"}</strong><small>{dateLabel(t.date)}</small></span>
+                                  <span><strong>{t.description||"Dépense"}</strong><small>{dateLabel(t.date)}{t.date>today()?" · À venir":""}</small></span>
                                   <strong>{money(t.amount)}</strong>
                                   <button type="button" className="icon" title="Modifier cette dépense" aria-label={"Modifier "+(t.description||"la dépense")} onClick={()=>personalExpense(t)}><Pencil size={15}/></button>
                                 </div>) : <p className="muted">Aucune dépense pour ce mois.</p>}
@@ -6881,7 +6881,7 @@ export default function App() {
                       </Suspense>
                       <p className="footnote">
                         Les budgets mensuels personnels sont des dépenses futures prévues.
-                        Les achats ponctuels imprévisibles ne sont pas inclus dans ce calcul.
+                        Les dépenses futures enregistrées sont prises en compte sans être déduites deux fois des budgets.
                       </p>
                     </section>
                         </div>
@@ -7271,7 +7271,7 @@ export default function App() {
                                 </span>
                                 <span className="personal-v2-history-name">
                                   <strong>{h.title || "Mouvement personnel"}</strong>
-                                  <small>{dateLabel(h.date)}</small>
+                                  <small>{dateLabel(h.date)}{h.date>today()?" · À venir":""}</small>
                                 </span>
                                 <strong className={"personal-v2-history-value" + (h.positive ? " positive" : "")}>
                                   {h.positive ? "+" : "−"}{money(h.amount)}
@@ -7335,7 +7335,7 @@ export default function App() {
                                 title={h.title}
                                 sub={
                                   privateTx
-                                    ? `${dateLabel(h.date)} · ${privateCategory || "Sans catégorie"} · Mouvement privé`
+                                    ? `${dateLabel(h.date)}${h.date>today()?" · À venir":""} · ${privateCategory || "Sans catégorie"} · Mouvement privé`
                                     : `${dateLabel(h.date)} · Virement du foyer`
                                 }
                                 value={

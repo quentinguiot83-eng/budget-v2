@@ -208,147 +208,81 @@ export function personalCashBalance(p:PersonalState, until=today()){
   },0);
 }
 
+/**
+ * Remaining private expenses for a month. An already planned expense is
+ * covered by its monthly budget; only overages and off-budget expenses
+ * need extra reservation, to avoid deducting the same purchase twice.
+ */
+export function personalMonthOutgoings(p: PersonalState, m: string, asOf = today()) {
+  const activeBudgets = (p.budgets ?? []).filter(
+    b => m >= b.start && (!b.end || m <= b.end),
+  );
+  const expenses = p.transactions.filter(t => t.type === "expense" && month(t.date) === m);
+  const paid = expenses.filter(t => t.date <= asOf);
+  const planned = expenses.filter(t => t.date > asOf);
+  const unpaidDues = personalDues(p, m).filter(d => !d.paid && d.date >= asOf);
+  const covered = (id?: string) => activeBudgets.some(b => b.id === id);
+  const total = <T,>(rows: T[], amount: (row: T) => number) =>
+    rows.reduce((sum, row) => sum + amount(row), 0);
+
+  let budgetRemaining = 0;
+  let uncovered = total(planned.filter(t => !covered(t.budgetId)), t => t.amount)
+    + total(unpaidDues.filter(d => !covered(d.rule.budgetId)), d => d.rule.amount);
+
+  for (const b of activeBudgets) {
+    const alreadySpent = total(paid.filter(t => t.budgetId === b.id), t => t.amount);
+    const remaining = Math.max(0, b.amount - alreadySpent);
+    const committed = total(planned.filter(t => t.budgetId === b.id), t => t.amount)
+      + total(unpaidDues.filter(d => d.rule.budgetId === b.id), d => d.rule.amount);
+    budgetRemaining += remaining;
+    uncovered += Math.max(0, committed - remaining);
+  }
+
+  return {
+    budgetRemaining,
+    uncovered,
+    scheduled: total(unpaidDues, d => d.rule.amount),
+    budgeted: total(activeBudgets, b => b.amount),
+  };
+}
+
 export function personalProjection(
   p: PersonalState,
   shared: State,
   ownerId: string,
   months: number,
 ) {
+  if (!p.account) return [];
 
-  if (!p.account)
-    return [];
+  let projected = personalBalance(p, shared, ownerId);
+  const currentMonth = month();
+  const points = [{ date: currentMonth, balance: projected, incoming: 0, scheduled: 0, budgeted: 0 }];
 
-  let projected = personalBalance(
-    p,
-    shared,
-    ownerId,
+  // Start the first future month from this month's estimated closing balance,
+  // while retaining today's real balance as the first chart point.
+  const currentEnvelope = personalBudgetEnvelope(
+    shared, ownerId, p.account.category, currentMonth, month(p.account.date),
   );
-
-  const points = [
-    {
-      date: month(),
-      balance: projected,
-      incoming: 0,
-      scheduled: 0,
-      budgeted: 0,
-    },
-  ];
+  const currentOutgoings = personalMonthOutgoings(p, currentMonth);
+  projected += currentEnvelope.remaining - currentOutgoings.budgetRemaining - currentOutgoings.uncovered;
 
   for (let i = 1; i <= months; i++) {
-
-    const m = shiftMonth(
-      month(),
-      i,
+    const m = shiftMonth(currentMonth, i);
+    const envelope = personalBudgetEnvelope(
+      shared, ownerId, p.account.category, m, month(p.account.date),
     );
-
-    const envelope =
-      personalBudgetEnvelope(
-        shared,
-        ownerId,
-        p.account.category,
-        m,
-        month(p.account.date),
-      );
-
-    // Ce qui devrait être viré depuis le compte commun
-    // si le budget mensuel est suivi.
-    const incoming =
-      envelope.remaining;
-
-    const unpaidDues = personalDues(
-      p,
-      m,
-    ).filter((d) => !d.paid);
-
-    const scheduled = unpaidDues.reduce(
-      (sum, d) =>
-        sum + d.rule.amount,
-      0,
-    );
-
-    const activeBudgets =
-      (p.budgets ?? []).filter(
-        (b) =>
-          m >= b.start &&
-          (!b.end || m <= b.end),
-      );
-
-    const budgeted =
-      activeBudgets.reduce(
-        (sum, b) =>
-          sum + b.amount,
-        0,
-      );
-
-    /*
-     * Les échéances classées dans un budget perso
-     * consomment ce budget au lieu de s'y ajouter.
-     *
-     * Exemple :
-     * Sorties 50 €
-     * + mensualité classée Sorties 20 €
-     * = 50 € projetés, pas 70 €.
-     *
-     * Si les mensualités Sorties atteignent 65 €,
-     * les 15 € dépassant le budget sont ajoutés.
-     */
-    let uncoveredScheduled =
-      unpaidDues
-        .filter(
-          (d) =>
-            !d.rule.budgetId ||
-            !activeBudgets.some(
-              (b) =>
-                b.id ===
-                d.rule.budgetId,
-            ),
-        )
-        .reduce(
-          (sum, d) =>
-            sum + d.rule.amount,
-          0,
-        );
-
-    for (const b of activeBudgets) {
-
-      const linked =
-        unpaidDues
-          .filter(
-            (d) =>
-              d.rule.budgetId ===
-              b.id,
-          )
-          .reduce(
-            (sum, d) =>
-              sum + d.rule.amount,
-            0,
-          );
-
-      uncoveredScheduled +=
-        Math.max(
-          0,
-          linked - b.amount,
-        );
-
-    }
-
-    projected +=
-      incoming -
-      budgeted -
-      uncoveredScheduled;
-
+    const incoming = envelope.remaining;
+    const outgoings = personalMonthOutgoings(p, m);
+    projected += incoming - outgoings.budgetRemaining - outgoings.uncovered;
     points.push({
       date: m,
       balance: projected,
       incoming,
-      scheduled,
-      budgeted,
+      scheduled: outgoings.scheduled,
+      budgeted: outgoings.budgeted,
     });
-
   }
-
   return points;
-
 }
 
 export function validatePersonal(
@@ -425,10 +359,8 @@ export function validatePersonal(
         "Montant personnel invalide.",
       );
 
-    if (t.date > today())
-      throw Error(
-        "Une dépense personnelle ne peut pas être future.",
-      );
+    if (t.date > today() && t.type !== "expense")
+      throw Error("Un ajustement personnel ne peut pas être futur.");
 
   }
 
