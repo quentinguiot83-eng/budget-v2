@@ -5808,13 +5808,13 @@ export default function App() {
           type="button"
           ref={desktopQuickAddButtonRef}
           className="desktop-quick-add"
-          data-tour-route={route==="pro"?undefined:"add"}
-          aria-haspopup={route==="pro"?"dialog":undefined}
-          aria-controls={route==="pro"?"wimm-quick-add-actions":undefined}
-          aria-expanded={route==="pro"?mobileQuickAddOpen:undefined}
-          onClick={()=>route==="pro"?setMobileQuickAddOpen(v=>!v):navigate("add")}
+          data-tour-route={route==="pro"||route==="personal"?undefined:"add"}
+          aria-haspopup={route==="pro"||route==="personal"?"dialog":undefined}
+          aria-controls={route==="pro"||route==="personal"?"wimm-quick-add-actions":undefined}
+          aria-expanded={route==="pro"||route==="personal"?mobileQuickAddOpen:undefined}
+          onClick={()=>route==="pro"||route==="personal"?setMobileQuickAddOpen(v=>!v):navigate("add")}
         >
-          <Plus size={19}/> {route==="pro"?"Ajouter dans Wimm Pro":"Ajouter une opération"}
+          <Plus size={19}/> {route==="pro"?"Ajouter dans Wimm Pro":route==="personal"?"Ajouter au compte perso":"Ajouter une opération"}
         </button>
         <nav data-tour="desktop-nav" className="desktop-sidebar-nav" aria-label="Navigation ordinateur">
           {desktopNavGroups.map(group=>(
@@ -8743,7 +8743,7 @@ export default function App() {
         ))}
       </nav>
       {mobileQuickAddOpen && (
-        <div className={route==="pro"?"quick-add-layer pro-context-add-layer":"quick-add-layer"}>
+        <div className={route==="pro"||route==="personal"?"quick-add-layer pro-context-add-layer":"quick-add-layer"}>
           <button
             type="button"
             className="quick-add-backdrop"
@@ -8754,7 +8754,7 @@ export default function App() {
             id="wimm-quick-add-actions"
             className="quick-add-menu"
             role="dialog"
-            aria-label={route==="pro"?"Ajouter dans Wimm Pro":"Ajouter une opération"}
+            aria-label={route==="pro"?"Ajouter dans Wimm Pro":route==="personal"?"Ajouter au compte perso":"Ajouter une opération"}
           >
             {route==="pro" ? <>
               <strong className="pro-v3-add-title">Ajouter dans Wimm Pro</strong>
@@ -8766,7 +8766,26 @@ export default function App() {
                 onClick={()=>{setMobileQuickAddOpen(false);window.dispatchEvent(new CustomEvent("wimm:pro-action",{detail:id}));}}>
                 <span className="quick-add-item-icon"><Plus size={17}/></span><span>{label}</span>
               </button>)}
+            </> : route==="personal" ? (ps.account ? <>
+              <strong className="pro-v3-add-title">Ajouter au compte perso</strong>
+              <button type="button" className="quick-add-primary-action"
+                onClick={()=>{setMobileQuickAddOpen(false);personalExpense();}}>
+                <span className="quick-add-item-icon expense"><ArrowUpRight size={19}/></span><span>Dépense perso</span>
+              </button>
+              <button type="button" className="quick-add-primary-action"
+                onClick={()=>{setMobileQuickAddOpen(false);addPersonalMoney();}}>
+                <span className="quick-add-item-icon income"><ArrowDownLeft size={19}/></span><span>Ajouter de l'argent</span>
+              </button>
+              <button type="button" className="quick-add-primary-action"
+                onClick={()=>{setMobileQuickAddOpen(false);transferPersonal();}}>
+                <span className="quick-add-item-icon transfer"><ArrowLeftRight size={19}/></span><span>Virer mon budget</span>
+              </button>
             </> : <>
+              <button type="button" className="quick-add-primary-action"
+                onClick={()=>{setMobileQuickAddOpen(false);editPersonalAccount();}}>
+                <span className="quick-add-item-icon"><Plus size={19}/></span><span>Créer mon compte perso</span>
+              </button>
+            </>) : <>
               <button type="button" className="quick-add-primary-action"
                 onClick={()=>{setMobileQuickAddOpen(false);operation();}}>
                 <span className="quick-add-item-icon expense"><ArrowUpRight size={19}/></span><span>Dépense</span>
@@ -8787,8 +8806,8 @@ export default function App() {
         ref={quickAddButtonRef}
         type="button"
         className={mobileQuickAddOpen ? "floating-add-button open" : "floating-add-button"}
-        data-tour="add-button" data-tour-route="add"
-        aria-label={mobileQuickAddOpen ? "Fermer l’ajout rapide" : route==="pro"?"Ajouter dans le mode Pro":"Ajouter une opération"}
+        data-tour="add-button" data-tour-route={route==="personal"?undefined:"add"}
+        aria-label={mobileQuickAddOpen ? "Fermer l’ajout rapide" : route==="pro"?"Ajouter dans le mode Pro":route==="personal"?"Ajouter au compte perso":"Ajouter une opération"}
         aria-haspopup="dialog"
         aria-controls="wimm-quick-add-actions"
         aria-expanded={mobileQuickAddOpen}
