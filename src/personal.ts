@@ -395,7 +395,7 @@ export function validatePersonal(
       !b.id ||
       !b.name ||
       !Number.isSafeInteger(b.amount) ||
-      b.amount <= 0
+      b.amount < 0
     )
       throw Error(
         "Budget personnel invalide.",

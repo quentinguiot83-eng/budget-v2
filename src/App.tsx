@@ -2513,7 +2513,7 @@ export default function App() {
 
         amountField(
           "amount",
-          "Budget mensuel (€)",
+          "Budget mensuel (€) — facultatif",
           item?.amount || 0,
         ),
 
@@ -2541,9 +2541,9 @@ export default function App() {
         const amount =
           euro(v.amount);
 
-        if (amount <= 0)
+        if (amount < 0)
           throw Error(
-            "Le budget mensuel doit être supérieur à zéro.",
+            "Le budget mensuel ne peut pas être négatif.",
           );
 
         if (

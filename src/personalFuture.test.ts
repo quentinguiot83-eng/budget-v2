@@ -62,3 +62,25 @@ test("future purchases within a budget are reserved once, and off-budget expense
   out = personalMonthOutgoings(p, nextMonth);
   assert.equal(out.uncovered, 5195); // 26,95 € over budget + 25 € without a budget
 });
+
+test("personal categories can be created without allocating a monthly budget", () => {
+  const p = emptyPersonalState();
+  p.account = account;
+  p.budgets = [{ id: "photo", name: "Photo", amount: 0, start: nextMonth }];
+  p.transactions.push({ ...plannedExpense, budgetId: "photo" });
+
+  assert.doesNotThrow(() => validatePersonal(p));
+  const outgoings = personalMonthOutgoings(p, nextMonth);
+  assert.equal(outgoings.budgeted, 0);
+  assert.equal(outgoings.budgetRemaining, 0);
+  assert.equal(outgoings.uncovered, plannedExpense.amount);
+});
+
+test("negative or non-integer personal budgets remain invalid", () => {
+  const p = emptyPersonalState();
+  p.account = account;
+  p.budgets = [{ id: "photo", name: "Photo", amount: -1, start: nextMonth }];
+  assert.throws(() => validatePersonal(p), /Budget personnel invalide/);
+  p.budgets[0].amount = 0.5;
+  assert.throws(() => validatePersonal(p), /Budget personnel invalide/);
+});
