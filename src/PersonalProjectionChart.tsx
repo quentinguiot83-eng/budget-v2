@@ -76,7 +76,6 @@ export default function PersonalProjectionChart({ points }: { points: Point[] })
         <span>{monthLabel(active.date)}</span>
         <strong>{money(active.balance)}</strong>
       </div>
-      <p className="personal-projection-help">Touchez ou faites glisser votre doigt sur la courbe pour consulter un autre mois.</p>
     </div>
   );
 }
