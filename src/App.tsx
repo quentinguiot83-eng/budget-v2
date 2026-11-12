@@ -8770,7 +8770,7 @@ Tout voir et trier <ChevronRight size={17}/></button>
               {personalTab==="projection"&&<button type="button" className="quick-add-primary-action"
                 onClick={()=>{setMobileQuickAddOpen(false);editPersonalRule();}}>
                 <span className="quick-add-item-icon"><CalendarDays size={19}/></span><span>Paiement en plusieurs fois</span>
-              </button>
+              </button>}
               <button type="button" className="quick-add-primary-action"
                 onClick={()=>{setMobileQuickAddOpen(false);personalExpense();}}>
                 <span className="quick-add-item-icon expense"><ArrowUpRight size={19}/></span><span>Dépense perso</span>
