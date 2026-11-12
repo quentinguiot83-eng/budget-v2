@@ -436,6 +436,7 @@ export default function App() {
     }),
     [backRoute, setBackRoute] = useState<string | null>(null),
     [selectedMonth, setMonth] = useState(month()),
+    [personalHistoryExpanded, setPersonalHistoryExpanded] = useState(false),
     [sheet, setSheet] = useState<Sheet>(null),
     [theme, setTheme] = useState("blue"),
     [appearanceMode, setAppearanceMode] = useState<AppearanceMode>(readAppearanceMode),
@@ -681,6 +682,10 @@ export default function App() {
 
   function navigate(r: string) {
     if (r === "transactions") { setTxFilter(""); setTxCategoryFilter(""); }
+    if (r === "personal" && route !== "personal") {
+      setMonth(month());
+      setPersonalHistoryExpanded(false);
+    }
     setSettingsCategory(null);
     setSettingsDetail(null);
 
@@ -6638,6 +6643,42 @@ export default function App() {
                       a.date,
                     ),
                 );
+                // The account's month picker controls private history as well.
+                // Hide older/future months until the user deliberately navigates there.
+                const monthlyHistory = history.filter(h => month(h.date) === selectedMonth);
+                const renderPersonalHistoryRows = (items: typeof history) => items.map(h => {
+                  const privateTx = ps.transactions.find(t => t.id === h.id);
+                  const privateCategory = privateTx?.budgetId
+                    ? (ps.budgets ?? []).find(b => b.id === privateTx.budgetId)?.name
+                    : undefined;
+                  return (
+                    <SwipeActions key={h.id} label={h.title || "Mouvement personnel"} className="transaction-swipe-row"
+                      actions={privateTx ? [
+                        { label: "Modifier", icon: <Pencil size={17}/>, onClick: () => editPersonalHistoryTransaction(privateTx) },
+                        { label: "Supprimer", icon: <Trash2 size={17}/>, tone: "danger" as const,
+                          onClick: () => deletePersonalTransaction(privateTx) },
+                      ] : []}>
+                      <Row
+                        icon={h.positive ? <ArrowDownLeft className="transaction-income-arrow"/> : <ArrowUpRight className="transaction-expense-arrow"/>}
+                        title={h.title || "Mouvement personnel"}
+                        sub={privateTx
+                          ? `${dateLabel(h.date)}${h.date > today() ? " · À venir" : ""} · ${privateCategory || "Sans catégorie"}`
+                          : `${dateLabel(h.date)} · Virement du foyer`}
+                        value={<span className={h.positive ? "positive" : "negative-money"}>
+                          {h.positive ? "+" : "−"}{money(h.amount)}
+                        </span>}
+                        onClick={() => {
+                          if (privateTx) personalTransactionDetails(privateTx);
+                          else explain(h.title || "Virement perso", <>
+                            <div className="big-number">+{money(h.amount)}</div>
+                            <p>{dateLabel(h.date)} · Virement du foyer</p>
+                            <p>Virement du compte commun vers votre budget personnel.</p>
+                          </>);
+                        }}
+                      />
+                    </SwipeActions>
+                  );
+                });
 
                 const activePrivateBudgets = (ps.budgets ?? []).filter(
                   b => selectedMonth >= b.start && (!b.end || selectedMonth <= b.end)
@@ -7297,45 +7338,31 @@ export default function App() {
                       </details>
 
                       <section className="card transaction-search-results personal-v2-history personal-v2-transactions" aria-label="Historique des opérations personnelles">
-                        <p className="muted" role="status">
-                          {history.length} opération{history.length !== 1 ? "s" : ""}
-                        </p>
-                        {history.length ? (
-                          <SortableList items={history}>{ordered => ordered.map(h => {
-                            const privateTx = ps.transactions.find(t => t.id === h.id);
-                            const privateCategory = privateTx?.budgetId
-                              ? (ps.budgets ?? []).find(b => b.id === privateTx.budgetId)?.name
-                              : undefined;
-                            return (
-                              <SwipeActions key={h.id} label={h.title || "Mouvement personnel"} className="transaction-swipe-row"
-                                actions={privateTx ? [
-                                  { label: "Modifier", icon: <Pencil size={17}/>, onClick: () => editPersonalHistoryTransaction(privateTx) },
-                                  { label: "Supprimer", icon: <Trash2 size={17}/>, tone: "danger" as const,
-                                    onClick: () => deletePersonalTransaction(privateTx) },
-                                ] : []}>
-                                <Row
-                                  icon={h.positive ? <ArrowDownLeft className="transaction-income-arrow"/> : <ArrowUpRight className="transaction-expense-arrow"/>}
-                                  title={h.title || "Mouvement personnel"}
-                                  sub={privateTx
-                                    ? `${dateLabel(h.date)}${h.date > today() ? " · À venir" : ""} · ${privateCategory || "Sans catégorie"}`
-                                    : `${dateLabel(h.date)} · Virement du foyer`}
-                                  value={<span className={h.positive ? "positive" : "negative-money"}>
-                                    {h.positive ? "+" : "−"}{money(h.amount)}
-                                  </span>}
-                                  onClick={() => {
-                                    if (privateTx) personalTransactionDetails(privateTx);
-                                    else explain(h.title || "Virement perso", <>
-                                      <div className="big-number">+{money(h.amount)}</div>
-                                      <p>{dateLabel(h.date)} · Virement du foyer</p>
-                                      <p>Virement du compte commun vers votre budget personnel.</p>
-                                    </>);
-                                  }}
-                                />
-                              </SwipeActions>
-                            );
-                          })}</SortableList>
+                        <div className="personal-v2-history-header">
+                          <h2>Dernières transactions</h2>
+                          <span>{monthLabel(selectedMonth)} · {monthlyHistory.length} opération{monthlyHistory.length !== 1 ? "s" : ""}</span>
+                        </div>
+                        {monthlyHistory.length ? (
+                          personalHistoryExpanded ? (
+                            <SortableList items={monthlyHistory}>{renderPersonalHistoryRows}</SortableList>
+                          ) : (
+                            <div className="personal-v2-history-rows">
+                              {renderPersonalHistoryRows(monthlyHistory.slice(0, 3))}
+                            </div>
+                          )
                         ) : (
-                          <p className="muted padded">Aucune opération pour le moment.</p>
+                          <p className="muted padded">Aucune opération sur ce mois. Choisissez un autre mois en haut de l’écran pour consulter son historique.</p>
+                        )}
+                        {monthlyHistory.length > 0 && (
+                          <button
+                            type="button"
+                            className="text personal-v2-history-toggle"
+                            aria-expanded={personalHistoryExpanded}
+                            onClick={() => setPersonalHistoryExpanded(value => !value)}
+                          >
+                            {personalHistoryExpanded ? "Afficher les 3 dernières" : "Tout voir et trier"}
+                            <ChevronRight size={17} className={personalHistoryExpanded ? "is-expanded" : ""}/>
+                          </button>
                         )}
                       </section>
                       <p className="personal-v2-privacy-note">
