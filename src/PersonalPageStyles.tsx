@@ -107,6 +107,42 @@ const styles = String.raw`
   border-top:1px solid var(--border)!important;padding:13px 6px 2px!important;font-weight:750}
 .personal-v2-history-toggle svg {transition:transform .18s ease}
 .personal-v2-history-toggle svg.is-expanded {transform:rotate(-90deg)}
+
+/* Personal v3: account tabs, modelled after Wimm Pro's compact menu. */
+.personal-v3-nav{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px;
+ padding:6px;border-radius:22px;border:1px solid color-mix(in srgb,var(--border) 65%,transparent);
+ background:color-mix(in srgb,var(--surface) 92%,transparent);box-shadow:var(--wimm-card-shadow);
+ -webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px);min-width:0}
+.personal-v3-nav button{display:flex;min-width:0;flex-direction:column;align-items:center;justify-content:center;
+ gap:9px;padding:14px 4px;border:1px solid transparent;border-radius:17px;background:transparent;
+ color:var(--muted);font-size:.76rem;font-weight:750;cursor:pointer}
+.personal-v3-nav button svg{flex:none}
+.personal-v3-nav button.active{background:var(--wimm-blue-wash);color:var(--accent-deep);
+ border-color:color-mix(in srgb,var(--action) 13%,transparent)}
+.personal-v3-nav button:focus-visible{outline:2px solid var(--action);outline-offset:2px}
+.personal-v3-month-picker{margin:0;width:100%;min-width:0}
+.personal-v3-page-heading{display:grid;gap:5px;padding:4px 2px}
+.personal-v3-page-heading>span{font-size:.7rem;font-weight:800;letter-spacing:.11em;color:var(--muted)}
+.personal-v3-page-heading>h2{margin:0;color:var(--ink);font-size:clamp(1.4rem,4vw,1.85rem);letter-spacing:-.03em}
+.personal-v3-page-heading>p{margin:0;color:var(--muted);font-size:.8rem;line-height:1.45}
+.personal-v3-panel-head{display:flex;align-items:center;gap:11px;min-height:78px;padding:17px 18px}
+.personal-v3-panel-head>.personal-v2-panel-copy{flex:1}
+.personal-v3-panel-head>.personal-v2-panel-side{margin-left:auto}
+.personal-v3-transaction-filters{display:grid;gap:11px;padding:6px 0 9px}
+.personal-v3-search input{width:100%;min-width:0;min-height:45px;padding:11px 14px;
+ background:var(--surface);border:1px solid var(--border);border-radius:13px;color:var(--ink);font:inherit;font-size:.85rem}
+.personal-v3-selects{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.personal-v3-selects .field{min-width:0}
+.personal-v3-selects select{width:100%;min-width:0}
+@media(max-width:560px){
+ .personal-v3-nav{gap:2px;padding:4px;border-radius:19px}
+ .personal-v3-nav button{gap:7px;padding:13px 1px;font-size:.65rem;border-radius:15px}
+ .personal-v3-nav button svg{width:19px;height:19px}
+ .personal-v3-panel-head{padding:14px 12px}
+ .personal-v3-selects{grid-template-columns:1fr}
+}
+@media(prefers-reduced-motion:reduce){.personal-v3-nav button{transition:none}}
+
 .personal-v2-privacy-note {color:var(--muted);font-size:.73rem;line-height:1.45;margin:0}
 @media(max-width:560px){
  .personal-page-v2{gap:14px}
