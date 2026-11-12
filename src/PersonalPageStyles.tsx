@@ -101,6 +101,12 @@ const styles = String.raw`
 .personal-v2-history-full .personal-history-card .section-head{display:none}
 .personal-v2-history-full .row{min-width:0}
 .personal-v2-history-full .row-value .flex{flex-wrap:wrap;gap:8px}
+.personal-v2-transactions .personal-v2-history-header {flex-wrap:wrap}
+.personal-v2-history-rows {min-width:0}
+.personal-v2-history-toggle {display:inline-flex;align-items:center;justify-content:center;gap:8px;width:100%;
+  border-top:1px solid var(--border)!important;padding:13px 6px 2px!important;font-weight:750}
+.personal-v2-history-toggle svg {transition:transform .18s ease}
+.personal-v2-history-toggle svg.is-expanded {transform:rotate(-90deg)}
 .personal-v2-privacy-note {color:var(--muted);font-size:.73rem;line-height:1.45;margin:0}
 @media(max-width:560px){
  .personal-page-v2{gap:14px}
