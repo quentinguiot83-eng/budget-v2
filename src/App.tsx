@@ -72,6 +72,7 @@ import {
   CalendarDays,
   List,
   SlidersHorizontal,
+  Search,
   Check,
   RefreshCw,
   LogOut,
@@ -440,6 +441,7 @@ export default function App() {
     [personalTransactionQuery, setPersonalTransactionQuery] = useState(""),
     [personalTransactionType, setPersonalTransactionType] = useState("all"),
     [personalTransactionCategory, setPersonalTransactionCategory] = useState("all"),
+    [personalFiltersExpanded, setPersonalFiltersExpanded] = useState(false),
     [sheet, setSheet] = useState<Sheet>(null),
     [theme, setTheme] = useState("blue"),
     [appearanceMode, setAppearanceMode] = useState<AppearanceMode>(readAppearanceMode),
@@ -691,6 +693,7 @@ export default function App() {
       setPersonalTransactionQuery("");
       setPersonalTransactionType("all");
       setPersonalTransactionCategory("all");
+      setPersonalFiltersExpanded(false);
     }
     setSettingsCategory(null);
     setSettingsDetail(null);
@@ -6744,7 +6747,7 @@ onChange={e=>{const m=e.target.value;if(m&&(m>=month()||recordedMonths.includes(
 {selectedMonth<month()&&<button className="month-reset icon" type="button" aria-label="Revenir au mois actuel" title="Mois actuel" onClick={()=>setMonth(month())}><ChevronsRight size={19}/></button>}
 </div>
 {personalTab==="home"&&<>
-<div className="personal-v3-page-heading"><span>MON COMPTE</span><h2>Vue d’ensemble</h2><p>Solde actuel, argent disponible et derniers mouvements.</p></div>
+<div className="personal-v3-page-heading"><span>MON COMPTE</span><h2>Vue d’ensemble</h2></div>
 <section className="personal-v2-hero" aria-label="Solde de votre compte personnel">
                         <div className="personal-v2-hero-header">
                           <span className="personal-v2-account"><Wallet size={19}/>{account.name}</span>
@@ -6765,13 +6768,17 @@ onChange={e=>{const m=e.target.value;if(m&&(m>=month()||recordedMonths.includes(
                           <Row title={account.name} value={money(privateBank)}/>
                           {privateCash>0&&<Row title="Espèces" value={money(privateCash)}/>}
                           <button type="button" className="text" onClick={editPersonalCash}>
-                            <Coins size={15}/> {privateCash>0?"Modifier mes espèces":"Vous avez des espèces ? Saisir un montant"}
+                            <Coins size={15}/> {privateCash>0?"Modifier les espèces":"Ajouter des espèces"}
                           </button>
                         </div>
                         {selectedMonth===month()&&<div className="personal-v2-month-estimate">
-                          <span>Disponible estimé fin de mois</span>
+                          <div className="personal-v4-estimate-label">
+                            <span>Disponible estimé fin de mois</span>
+                            <BlockInfo title="Calcul du disponible estimé">
+                              <p>Solde actuel + virements prévus − budgets restants, dépenses futures et échéances à payer.</p>
+                            </BlockInfo>
+                          </div>
                           <strong className={personalEndOfMonth<0?"negative-money":"positive-money"}>{money(personalEndOfMonth)}</strong>
-                          <small>Solde actuel + virements prévus − budgets restants, dépenses futures et échéances à payer</small>
                         </div>}
                         <div className="personal-v2-totals">
                           <div>
@@ -6809,25 +6816,57 @@ Tout voir et trier <ChevronRight size={17}/></button>
 </section>
 </>}
 {personalTab==="transactions"&&<>
-<div className="personal-v3-page-heading"><span>MON HISTORIQUE</span><h2>Mes opérations</h2><p>Consultez, recherchez et gérez vos mouvements privés.</p></div>
-<section className="card transaction-search-results personal-v2-history personal-v2-transactions" aria-label="Toutes les opérations personnelles">
-<div className="personal-v2-history-header"><h2>Historique privé</h2><span>{filteredPersonalHistory.length} / {monthlyHistory.length} opérations</span></div>
-<div className="personal-v3-transaction-filters">
-<label className="personal-v3-search"><span className="sr-only">Rechercher une transaction</span>
-<input type="search" placeholder="Rechercher une opération…" value={personalTransactionQuery} onChange={e=>setPersonalTransactionQuery(e.target.value)}/></label>
-<div className="personal-v3-selects">
-<label className="field"><span>Type</span><select value={personalTransactionType} onChange={e=>setPersonalTransactionType(e.target.value)}>
-<option value="all">Toutes les opérations</option><option value="expense">Dépenses</option>
-<option value="transfer">Virements du foyer</option><option value="adjust">Ajustements privés</option></select></label>
-<label className="field"><span>Catégorie</span><select value={personalTransactionCategory} onChange={e=>setPersonalTransactionCategory(e.target.value)}>
-<option value="all">Toutes les catégories</option><option value="none">Sans catégorie</option>
-{(ps.budgets??[]).map(b=><option key={b.id} value={b.id}>{b.name}</option>)}</select></label>
-</div><button type="button" className="text" onClick={()=>{setPersonalTransactionQuery("");setPersonalTransactionType("all");setPersonalTransactionCategory("all");}}>Effacer les filtres</button></div>
-{filteredPersonalHistory.length?<SortableList items={filteredPersonalHistory}>{renderPersonalHistoryRows}</SortableList>
-:<p className="muted padded">Aucune opération correspondant aux filtres sur {monthLabel(selectedMonth)}.</p>}</section>
+<div className="personal-v3-page-heading"><span>MON HISTORIQUE</span><h2>Mes opérations</h2></div>
+<section className="card personal-v4-search-panel" aria-label="Rechercher des opérations privées">
+  <div className="transaction-search-top personal-v4-search-top">
+    <label className="transaction-search-input">
+      <Search size={18} aria-hidden="true"/>
+      <span className="sr-only">Rechercher une transaction</span>
+      <input type="search" placeholder="Nom, catégorie ou montant…" value={personalTransactionQuery}
+        onChange={e=>setPersonalTransactionQuery(e.target.value)}/>
+    </label>
+    <button type="button" className="secondary" onClick={()=>setPersonalFiltersExpanded(v=>!v)}
+      aria-expanded={personalFiltersExpanded} aria-controls="personal-v4-filters">
+      <SlidersHorizontal size={17}/> Filtres
+      {(personalTransactionType!=="all"||personalTransactionCategory!=="all")
+        ? ` (${Number(personalTransactionType!=="all")+Number(personalTransactionCategory!=="all")})` : ""}
+    </button>
+    <button type="button" className="primary" onClick={()=>personalExpense()}>
+      <Plus size={17}/> Opération
+    </button>
+  </div>
+  {personalFiltersExpanded&&<div className="personal-v4-filter-grid" id="personal-v4-filters">
+    <label className="field"><span>Type</span>
+      <select value={personalTransactionType} onChange={e=>setPersonalTransactionType(e.target.value)}>
+        <option value="all">Toutes les opérations</option>
+        <option value="expense">Dépenses</option>
+        <option value="transfer">Virements du foyer</option>
+        <option value="adjust">Ajustements privés</option>
+      </select>
+    </label>
+    <label className="field"><span>Catégorie</span>
+      <select value={personalTransactionCategory} onChange={e=>setPersonalTransactionCategory(e.target.value)}>
+        <option value="all">Toutes les catégories</option>
+        <option value="none">Sans catégorie</option>
+        {(ps.budgets??[]).map(b=><option key={b.id} value={b.id}>{b.name}</option>)}
+      </select>
+    </label>
+    <button type="button" className="text personal-v4-clear-filters" onClick={()=>{
+      setPersonalTransactionQuery("");
+      setPersonalTransactionType("all");
+      setPersonalTransactionCategory("all");
+    }}>Effacer les filtres</button>
+  </div>}
+</section>
+<section className="card transaction-search-results personal-v2-history personal-v2-transactions personal-v4-full-history" aria-label="Toutes les opérations personnelles">
+  <p className="muted" role="status">{filteredPersonalHistory.length} opération{filteredPersonalHistory.length!==1?"s":""}</p>
+  {filteredPersonalHistory.length
+    ? <SortableList items={filteredPersonalHistory}>{renderPersonalHistoryRows}</SortableList>
+    : <p className="muted padded">Aucune opération correspondant à votre recherche sur {monthLabel(selectedMonth)}.</p>}
+</section>
 </>}
 {personalTab==="budgets"&&<>
-<div className="personal-v3-page-heading"><span>MON BUDGET</span><h2>Mes budgets personnels</h2><p>Votre enveloppe du foyer et vos budgets par catégorie.</p></div>
+<div className="personal-v3-page-heading"><span>MON BUDGET</span><h2>Mes budgets personnels</h2></div>
 <section className="personal-v2-panel personal-v2-envelope">
                         <div className="personal-v3-panel-head">
                           <span className="personal-v2-panel-icon"><Wallet size={21}/></span>
@@ -6877,10 +6916,9 @@ Tout voir et trier <ChevronRight size={17}/></button>
                             Budgets mensuels perso
                           </h2>
 
-                          <p className="muted">
-                            Chaque budget suit les dépenses réelles et affiche le montant encore disponible.
-                            Les prévisions n’affectent pas le budget commun et ne débitent pas votre compte.
-                          </p>
+                          <BlockInfo title="Fonctionnement des budgets personnels">
+                            <p>Chaque budget suit les dépenses réelles et affiche le montant encore disponible. Les prévisions n’affectent pas le budget commun et ne débitent pas votre compte.</p>
+                          </BlockInfo>
                         </div>
 
                         <button
@@ -6963,7 +7001,7 @@ Tout voir et trier <ChevronRight size={17}/></button>
                       
 </>}
 {personalTab==="projection"&&<>
-<div className="personal-v3-page-heading"><span>MES PRÉVISIONS</span><h2>Mon argent à venir</h2><p>Projections, avances et paiements en plusieurs fois.</p></div>
+<div className="personal-v3-page-heading"><span>MES PRÉVISIONS</span><h2>Mon argent à venir</h2></div>
 <section className="personal-v2-panel personal-v2-projection-panel">
                         <div className="personal-v3-panel-head">
                           <span className="personal-v2-panel-icon"><ChartNoAxesCombined size={20}/></span>
@@ -6983,11 +7021,11 @@ Tout voir et trier <ChevronRight size={17}/></button>
                           <h2>
                             Projection du compte perso
                           </h2>
-                          <p className="muted">
-                            Projection basée sur votre solde actuel,
-                            les futurs virements de budget, vos avances,
-                            vos mensualités connues et vos budgets mensuels perso.
-                          </p>
+                          <BlockInfo title="Comment fonctionne la projection ?">
+                            <p>La projection est basée sur votre solde actuel, les futurs virements de budget, vos avances, vos mensualités connues et vos budgets mensuels personnels.</p>
+                            <p>Les budgets mensuels personnels sont des dépenses futures prévues. Les dépenses futures enregistrées sont prises en compte sans être déduites deux fois des budgets.</p>
+                            <p>Touchez ou faites glisser votre doigt sur la courbe pour consulter un autre mois.</p>
+                          </BlockInfo>
                         </div>
 
                         <div className="pills">
@@ -7027,10 +7065,7 @@ Tout voir et trier <ChevronRight size={17}/></button>
                           ps, s, personalOwnerId, personalProjectionMonths
                         )}/>
                       </Suspense>
-                      <p className="footnote">
-                        Les budgets mensuels personnels sont des dépenses futures prévues.
-                        Les dépenses futures enregistrées sont prises en compte sans être déduites deux fois des budgets.
-                      </p>
+
                     </section>
                         </div>
                       </section>
@@ -7056,10 +7091,9 @@ Tout voir et trier <ChevronRight size={17}/></button>
                           <h2>
                             Avances en cours
                           </h2>
-                          <p className="muted">
-                            Le montant a déjà quitté le compte courant.
-                            Seule sa part mensuelle réduit maintenant votre budget perso.
-                          </p>
+                          <BlockInfo title="Fonctionnement des avances personnelles">
+                            <p>Le montant a déjà quitté le compte courant. Seule sa part mensuelle réduit maintenant votre budget perso.</p>
+                          </BlockInfo>
                         </div>
 
                         <button
@@ -7216,9 +7250,9 @@ Tout voir et trier <ChevronRight size={17}/></button>
                           <h2>
                             Paiements en plusieurs fois
                           </h2>
-                          <p className="muted">
-                            Ces échéances débitent uniquement votre compte perso.
-                          </p>
+                          <BlockInfo title="Paiements en plusieurs fois">
+                            <p>Ces échéances débitent uniquement votre compte perso.</p>
+                          </BlockInfo>
                         </div>
 
                         <button
@@ -7408,10 +7442,13 @@ Tout voir et trier <ChevronRight size={17}/></button>
 
                       
 </>}
-<p className="personal-v2-privacy-note">
-                        Les dépenses de ce compte ne sont pas incluses dans le patrimoine commun.
-                        Les budgets suivent les dépenses réelles et anticipent celles à venir, sans débit automatique.
-                      </p>
+<div className="personal-v2-privacy-note">
+  <span>Compte privé · fonctionnement</span>
+  <BlockInfo title="Confidentialité et prévisions personnelles">
+    <p>Les dépenses de ce compte ne sont pas incluses dans le patrimoine commun.</p>
+    <p>Les budgets suivent les dépenses réelles et anticipent celles à venir, sans débit automatique.</p>
+  </BlockInfo>
+</div>
                     </div>
                   </>
                 );
