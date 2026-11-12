@@ -1590,14 +1590,49 @@ html:root body #root {
 .capacity-detail-content .row { padding-block:11px; }
 .capacity-detail-content > p { font-size:.8rem; line-height:1.55; margin:13px 0 0; }
 
-/* The return-to-current shortcut follows the direction of the selected month. */
-.app .page-heading > .month-picker > .month-reset:last-child {
-  grid-column:1 / -1;
-  justify-self:end;
+/* Keep the return-to-current double arrow BESIDE its single arrow.
+   Equal flexible side columns keep the month label centered, even when only
+   one side displays the extra shortcut. Applies to shared and personal views. */
+.app .month-picker.month-picker-inline-arrows {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, auto) minmax(0, 1fr);
+  align-items: center;
+  column-gap: 6px;
+  row-gap: 0;
+  min-width: 0;
+  padding: 0;
 }
-.app .page-heading > .month-picker > .month-reset:first-child {
-  grid-column:1 / -1;
-  justify-self:start;
+.app .month-picker-inline-arrows .month-picker-arrow-group {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+.app .month-picker-inline-arrows .month-picker-arrow-group-prev { justify-content: flex-start; }
+.app .month-picker-inline-arrows .month-picker-arrow-group-next { justify-content: flex-end; }
+.app .month-picker-inline-arrows .month-picker-arrow-group > .icon {
+  flex: 0 0 auto;
+  width: 38px;
+  height: 42px;
+  min-width: 0;
+}
+.app .month-picker-inline-arrows .month-picker-arrow-group > .month-reset {
+  width: 30px;
+  height: 40px;
+  min-height: 40px;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  color: var(--accent-deep);
+}
+.app .month-picker-inline-arrows .month-picker-current { min-width: 0; }
+@media (max-width: 360px) {
+  .app .month-picker-inline-arrows .month-picker-arrow-group { gap: 2px; }
+  .app .month-picker-inline-arrows .month-picker-arrow-group > .icon { width: 34px; height: 40px; }
+  .app .month-picker-inline-arrows .month-picker-arrow-group > .month-reset { width: 27px; }
+  .app .month-picker-inline-arrows .month-picker-current > span { font-size: .89rem; }
 }
 .app .home-monthly-report{display:grid;gap:15px;min-width:0}
 .app .home-monthly-report .home-remaining-grid{min-width:0}
