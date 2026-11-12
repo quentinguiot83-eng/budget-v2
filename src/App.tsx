@@ -5991,16 +5991,19 @@ export default function App() {
             "calendar",
             "fixed",
           ].includes(route) && (
-            <div className="month-picker">
-
-              {selectedMonth>month()&&<button className="month-reset icon" type="button" aria-label="Revenir au mois actuel" title="Mois actuel" onClick={()=>setMonth(month())}><ChevronsLeft size={19}/></button>}
-              <button className="icon" aria-label="Mois précédent" disabled={selectedMonth<=month()&&!previousRecordedMonth} onClick={()=>moveViewingMonth(-1)}><ChevronLeft size={18}/></button>
+            <div className="month-picker month-picker-inline-arrows">
+              <div className="month-picker-arrow-group month-picker-arrow-group-prev">
+                {selectedMonth>month()&&<button className="month-reset icon" type="button" aria-label="Revenir au mois actuel" title="Mois actuel" onClick={()=>setMonth(month())}><ChevronsLeft size={19}/></button>}
+                <button className="icon" type="button" aria-label="Mois précédent" disabled={selectedMonth<=month()&&!previousRecordedMonth} onClick={()=>moveViewingMonth(-1)}><ChevronLeft size={18}/></button>
+              </div>
               <label className="month-picker-current"><span aria-hidden="true">{monthLabel(selectedMonth)}</span>
                 <input type="month" aria-label="Choisir le mois affiché" min={recordedMonths[0]||month()} value={selectedMonth}
                   onChange={e=>{const m=e.target.value;if(m&&(m>=month()||recordedMonths.includes(m)))setMonth(m);}}/>
               </label>
-              <button className="icon" aria-label="Mois suivant" onClick={()=>moveViewingMonth(1)}><ChevronRight size={18}/></button>
-              {selectedMonth<month()&&<button className="month-reset icon" type="button" aria-label="Revenir au mois actuel" title="Mois actuel" onClick={()=>setMonth(month())}><ChevronsRight size={19}/></button>}
+              <div className="month-picker-arrow-group month-picker-arrow-group-next">
+                <button className="icon" type="button" aria-label="Mois suivant" onClick={()=>moveViewingMonth(1)}><ChevronRight size={18}/></button>
+                {selectedMonth<month()&&<button className="month-reset icon" type="button" aria-label="Revenir au mois actuel" title="Mois actuel" onClick={()=>setMonth(month())}><ChevronsRight size={19}/></button>}
+              </div>
             </div>
           )}
         </div>
@@ -6737,14 +6740,19 @@ export default function App() {
 <button key={id} type="button" className={personalTab===id?"active":""} aria-current={personalTab===id?"page":undefined}
   onClick={()=>{setPersonalTab(id);setMobileQuickAddOpen(false);}}><Icon size={21}/><span>{label}</span></button>)}
 </nav>
-<div className="month-picker personal-v3-month-picker">
-{selectedMonth>month()&&<button className="month-reset icon" type="button" aria-label="Revenir au mois actuel" title="Mois actuel" onClick={()=>setMonth(month())}><ChevronsLeft size={19}/></button>}
-<button className="icon" aria-label="Mois précédent" disabled={selectedMonth<=month()&&!previousRecordedMonth} onClick={()=>moveViewingMonth(-1)}><ChevronLeft size={18}/></button>
-<label className="month-picker-current"><span aria-hidden="true">{monthLabel(selectedMonth)}</span>
-<input type="month" aria-label="Choisir le mois affiché" min={recordedMonths[0]||month()} value={selectedMonth}
-onChange={e=>{const m=e.target.value;if(m&&(m>=month()||recordedMonths.includes(m)))setMonth(m);}}/></label>
-<button className="icon" aria-label="Mois suivant" onClick={()=>moveViewingMonth(1)}><ChevronRight size={18}/></button>
-{selectedMonth<month()&&<button className="month-reset icon" type="button" aria-label="Revenir au mois actuel" title="Mois actuel" onClick={()=>setMonth(month())}><ChevronsRight size={19}/></button>}
+<div className="month-picker month-picker-inline-arrows personal-v3-month-picker">
+  <div className="month-picker-arrow-group month-picker-arrow-group-prev">
+    {selectedMonth>month()&&<button className="month-reset icon" type="button" aria-label="Revenir au mois actuel" title="Mois actuel" onClick={()=>setMonth(month())}><ChevronsLeft size={19}/></button>}
+    <button className="icon" type="button" aria-label="Mois précédent" disabled={selectedMonth<=month()&&!previousRecordedMonth} onClick={()=>moveViewingMonth(-1)}><ChevronLeft size={18}/></button>
+  </div>
+  <label className="month-picker-current"><span aria-hidden="true">{monthLabel(selectedMonth)}</span>
+    <input type="month" aria-label="Choisir le mois affiché" min={recordedMonths[0]||month()} value={selectedMonth}
+      onChange={e=>{const m=e.target.value;if(m&&(m>=month()||recordedMonths.includes(m)))setMonth(m);}}/>
+  </label>
+  <div className="month-picker-arrow-group month-picker-arrow-group-next">
+    <button className="icon" type="button" aria-label="Mois suivant" onClick={()=>moveViewingMonth(1)}><ChevronRight size={18}/></button>
+    {selectedMonth<month()&&<button className="month-reset icon" type="button" aria-label="Revenir au mois actuel" title="Mois actuel" onClick={()=>setMonth(month())}><ChevronsRight size={19}/></button>}
+  </div>
 </div>
 {personalTab==="home"&&<>
 <div className="personal-v3-page-heading"><span>MON COMPTE</span><h2>Vue d’ensemble</h2></div>
