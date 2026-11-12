@@ -436,7 +436,10 @@ export default function App() {
     }),
     [backRoute, setBackRoute] = useState<string | null>(null),
     [selectedMonth, setMonth] = useState(month()),
-    [personalHistoryExpanded, setPersonalHistoryExpanded] = useState(false),
+    [personalTab, setPersonalTab] = useState<"home" | "transactions" | "budgets" | "projection">("home"),
+    [personalTransactionQuery, setPersonalTransactionQuery] = useState(""),
+    [personalTransactionType, setPersonalTransactionType] = useState("all"),
+    [personalTransactionCategory, setPersonalTransactionCategory] = useState("all"),
     [sheet, setSheet] = useState<Sheet>(null),
     [theme, setTheme] = useState("blue"),
     [appearanceMode, setAppearanceMode] = useState<AppearanceMode>(readAppearanceMode),
@@ -684,7 +687,10 @@ export default function App() {
     if (r === "transactions") { setTxFilter(""); setTxCategoryFilter(""); }
     if (r === "personal" && route !== "personal") {
       setMonth(month());
-      setPersonalHistoryExpanded(false);
+      setPersonalTab("home");
+      setPersonalTransactionQuery("");
+      setPersonalTransactionType("all");
+      setPersonalTransactionCategory("all");
     }
     setSettingsCategory(null);
     setSettingsDetail(null);
@@ -5979,7 +5985,6 @@ export default function App() {
             "home",
             "budget",
             "wealth",
-            "personal",
             "calendar",
             "fixed",
           ].includes(route) && (
@@ -6646,6 +6651,18 @@ export default function App() {
                 // The account's month picker controls private history as well.
                 // Hide older/future months until the user deliberately navigates there.
                 const monthlyHistory = history.filter(h => month(h.date) === selectedMonth);
+                const filteredPersonalHistory = monthlyHistory.filter(h => {
+                  const tx = ps.transactions.find(t => t.id === h.id);
+                  const cat = tx?.budgetId ? (ps.budgets??[]).find(b=>b.id===tx.budgetId)?.name || "Sans catégorie" : tx?"Sans catégorie":"Virement du foyer";
+                  const query=personalTransactionQuery.trim().toLocaleLowerCase("fr");
+                  if(query&&![h.title,cat,dateLabel(h.date),money(h.amount)]
+                    .some(v=>(v||"").toLocaleLowerCase("fr").includes(query)))return false;
+                  if(personalTransactionType==="expense"&&tx?.type!=="expense")return false;
+                  if(personalTransactionType==="transfer"&&tx)return false;
+                  if(personalTransactionType==="adjust"&&tx?.type!=="adjust")return false;
+                  if(personalTransactionCategory!=="all"&&(tx?.budgetId||"none")!==personalTransactionCategory)return false;
+                  return true;
+                });
                 const renderPersonalHistoryRows = (items: typeof history) => items.map(h => {
                   const privateTx = ps.transactions.find(t => t.id === h.id);
                   const privateCategory = privateTx?.budgetId
@@ -6711,7 +6728,24 @@ export default function App() {
                   <>
                     <PersonalPageStyles/>
                     <div className="personal-page-v2">
-                      <section className="personal-v2-hero" aria-label="Solde de votre compte personnel">
+<nav className="personal-v3-nav" aria-label="Navigation du compte personnel">
+{([{id:"home",label:"Accueil",Icon:Home},{id:"transactions",label:"Opérations",Icon:ArrowLeftRight},
+{id:"budgets",label:"Budgets",Icon:Wallet},{id:"projection",label:"Prévisions",Icon:TrendingUp}] as const).map(({id,label,Icon})=>
+<button key={id} type="button" className={personalTab===id?"active":""} aria-current={personalTab===id?"page":undefined}
+  onClick={()=>{setPersonalTab(id);setMobileQuickAddOpen(false);}}><Icon size={21}/><span>{label}</span></button>)}
+</nav>
+<div className="month-picker personal-v3-month-picker">
+{selectedMonth>month()&&<button className="month-reset icon" type="button" aria-label="Revenir au mois actuel" title="Mois actuel" onClick={()=>setMonth(month())}><ChevronsLeft size={19}/></button>}
+<button className="icon" aria-label="Mois précédent" disabled={selectedMonth<=month()&&!previousRecordedMonth} onClick={()=>moveViewingMonth(-1)}><ChevronLeft size={18}/></button>
+<label className="month-picker-current"><span aria-hidden="true">{monthLabel(selectedMonth)}</span>
+<input type="month" aria-label="Choisir le mois affiché" min={recordedMonths[0]||month()} value={selectedMonth}
+onChange={e=>{const m=e.target.value;if(m&&(m>=month()||recordedMonths.includes(m)))setMonth(m);}}/></label>
+<button className="icon" aria-label="Mois suivant" onClick={()=>moveViewingMonth(1)}><ChevronRight size={18}/></button>
+{selectedMonth<month()&&<button className="month-reset icon" type="button" aria-label="Revenir au mois actuel" title="Mois actuel" onClick={()=>setMonth(month())}><ChevronsRight size={19}/></button>}
+</div>
+{personalTab==="home"&&<>
+<div className="personal-v3-page-heading"><span>MON COMPTE</span><h2>Vue d’ensemble</h2><p>Solde actuel, argent disponible et derniers mouvements.</p></div>
+<section className="personal-v2-hero" aria-label="Solde de votre compte personnel">
                         <div className="personal-v2-hero-header">
                           <span className="personal-v2-account"><Wallet size={19}/>{account.name}</span>
                           <button type="button" className="personal-v2-private"
@@ -6765,15 +6799,44 @@ export default function App() {
                         </button>
                       </div>
 
-                      <details className="personal-v2-panel personal-v2-envelope">
-                        <summary>
+                      
+<section className="card transaction-search-results personal-v2-history personal-v2-transactions" aria-label="Aperçu des transactions">
+<div className="personal-v2-history-header"><h2>Dernières transactions</h2><span>{monthLabel(selectedMonth)} · 3 max.</span></div>
+{monthlyHistory.length?<div className="personal-v2-history-rows">{renderPersonalHistoryRows(monthlyHistory.slice(0,3))}</div>
+:<p className="muted padded">Aucune opération ce mois-ci.</p>}
+<button type="button" className="text personal-v2-history-toggle" onClick={()=>setPersonalTab("transactions")}>
+Tout voir et trier <ChevronRight size={17}/></button>
+</section>
+</>}
+{personalTab==="transactions"&&<>
+<div className="personal-v3-page-heading"><span>MON HISTORIQUE</span><h2>Mes opérations</h2><p>Consultez, recherchez et gérez vos mouvements privés.</p></div>
+<section className="card transaction-search-results personal-v2-history personal-v2-transactions" aria-label="Toutes les opérations personnelles">
+<div className="personal-v2-history-header"><h2>Historique privé</h2><span>{filteredPersonalHistory.length} / {monthlyHistory.length} opérations</span></div>
+<div className="personal-v3-transaction-filters">
+<label className="personal-v3-search"><span className="sr-only">Rechercher une transaction</span>
+<input type="search" placeholder="Rechercher une opération…" value={personalTransactionQuery} onChange={e=>setPersonalTransactionQuery(e.target.value)}/></label>
+<div className="personal-v3-selects">
+<label className="field"><span>Type</span><select value={personalTransactionType} onChange={e=>setPersonalTransactionType(e.target.value)}>
+<option value="all">Toutes les opérations</option><option value="expense">Dépenses</option>
+<option value="transfer">Virements du foyer</option><option value="adjust">Ajustements privés</option></select></label>
+<label className="field"><span>Catégorie</span><select value={personalTransactionCategory} onChange={e=>setPersonalTransactionCategory(e.target.value)}>
+<option value="all">Toutes les catégories</option><option value="none">Sans catégorie</option>
+{(ps.budgets??[]).map(b=><option key={b.id} value={b.id}>{b.name}</option>)}</select></label>
+</div><button type="button" className="text" onClick={()=>{setPersonalTransactionQuery("");setPersonalTransactionType("all");setPersonalTransactionCategory("all");}}>Effacer les filtres</button></div>
+{filteredPersonalHistory.length?<SortableList items={filteredPersonalHistory}>{renderPersonalHistoryRows}</SortableList>
+:<p className="muted padded">Aucune opération correspondant aux filtres sur {monthLabel(selectedMonth)}.</p>}</section>
+</>}
+{personalTab==="budgets"&&<>
+<div className="personal-v3-page-heading"><span>MON BUDGET</span><h2>Mes budgets personnels</h2><p>Votre enveloppe du foyer et vos budgets par catégorie.</p></div>
+<section className="personal-v2-panel personal-v2-envelope">
+                        <div className="personal-v3-panel-head">
                           <span className="personal-v2-panel-icon"><Wallet size={21}/></span>
                           <span className="personal-v2-panel-copy">
                             <strong>Enveloppe du foyer · {monthLabel(selectedMonth)}</strong>
                             <small>Budget, versements et reports</small>
                           </span>
-                          <ChevronRight className="personal-v2-chevron"/>
-                        </summary>
+                          
+                        </div>
                         <div className="personal-v2-panel-content">
                           <div className="personal-v2-month-overview">
                             <Row title="Budget mensuel lié" value={money(envelope.base)}/>
@@ -6790,10 +6853,11 @@ export default function App() {
                             <Pencil size={15}/> Modifier le budget lié
                           </button>}
                         </div>
-                      </details>
+                      </section>
 
-                      <details className="personal-v2-panel personal-v2-budget-panel">
-                        <summary>
+                      
+<section className="personal-v2-panel personal-v2-budget-panel">
+                        <div className="personal-v3-panel-head">
                           <span className="personal-v2-panel-icon"><Coins size={20}/></span>
                           <span className="personal-v2-panel-copy">
                             <strong>Mes budgets personnels</strong>
@@ -6803,8 +6867,8 @@ export default function App() {
                             <strong>{money(privateBudgetsTotal)}</strong>
                             <small>par mois</small>
                           </span>
-                          <ChevronRight className="personal-v2-chevron"/>
-                        </summary>
+                          
+                        </div>
                         <div className="personal-v2-panel-content">
                           <section className="card personal-budgets-card">
                       <div className="section-head">
@@ -6894,10 +6958,14 @@ export default function App() {
 
                     </section>
                         </div>
-                      </details>
+                      </section>
 
-                      <details className="personal-v2-panel personal-v2-projection-panel">
-                        <summary>
+                      
+</>}
+{personalTab==="projection"&&<>
+<div className="personal-v3-page-heading"><span>MES PRÉVISIONS</span><h2>Mon argent à venir</h2><p>Projections, avances et paiements en plusieurs fois.</p></div>
+<section className="personal-v2-panel personal-v2-projection-panel">
+                        <div className="personal-v3-panel-head">
                           <span className="personal-v2-panel-icon"><ChartNoAxesCombined size={20}/></span>
                           <span className="personal-v2-panel-copy">
                             <strong>Mon argent à venir</strong>
@@ -6906,8 +6974,8 @@ export default function App() {
                           <span className="personal-v2-panel-side">
                             <strong>{projectionPreview ? money(projectionPreview.balance) : "—"}</strong>
                           </span>
-                          <ChevronRight className="personal-v2-chevron"/>
-                        </summary>
+                          
+                        </div>
                         <div className="personal-v2-panel-content">
                           <section className="card">
                       <div className="section-head">
@@ -6965,10 +7033,11 @@ export default function App() {
                       </p>
                     </section>
                         </div>
-                      </details>
+                      </section>
 
-                      <details className="personal-v2-panel personal-v2-commitments-panel">
-                        <summary>
+                      
+<section className="personal-v2-panel personal-v2-commitments-panel">
+                        <div className="personal-v3-panel-head">
                           <span className="personal-v2-panel-icon"><CalendarDays size={20}/></span>
                           <span className="personal-v2-panel-copy">
                             <strong>Mes engagements</strong>
@@ -6978,8 +7047,8 @@ export default function App() {
                             <strong>{activeAdvances.length + activePrivateRules.length}</strong>
                             <small>enregistré(s)</small>
                           </span>
-                          <ChevronRight className="personal-v2-chevron"/>
-                        </summary>
+                          
+                        </div>
                         <div className="personal-v2-panel-content">
                           <section className="card personal-advances-card">
                       <div className="section-head">
@@ -7335,37 +7404,11 @@ export default function App() {
                       )}
                     </section>
                         </div>
-                      </details>
-
-                      <section className="card transaction-search-results personal-v2-history personal-v2-transactions" aria-label="Historique des opérations personnelles">
-                        <div className="personal-v2-history-header">
-                          <h2>Dernières transactions</h2>
-                          <span>{monthLabel(selectedMonth)} · {monthlyHistory.length} opération{monthlyHistory.length !== 1 ? "s" : ""}</span>
-                        </div>
-                        {monthlyHistory.length ? (
-                          personalHistoryExpanded ? (
-                            <SortableList items={monthlyHistory}>{renderPersonalHistoryRows}</SortableList>
-                          ) : (
-                            <div className="personal-v2-history-rows">
-                              {renderPersonalHistoryRows(monthlyHistory.slice(0, 3))}
-                            </div>
-                          )
-                        ) : (
-                          <p className="muted padded">Aucune opération sur ce mois. Choisissez un autre mois en haut de l’écran pour consulter son historique.</p>
-                        )}
-                        {monthlyHistory.length > 0 && (
-                          <button
-                            type="button"
-                            className="text personal-v2-history-toggle"
-                            aria-expanded={personalHistoryExpanded}
-                            onClick={() => setPersonalHistoryExpanded(value => !value)}
-                          >
-                            {personalHistoryExpanded ? "Afficher les 3 dernières" : "Tout voir et trier"}
-                            <ChevronRight size={17} className={personalHistoryExpanded ? "is-expanded" : ""}/>
-                          </button>
-                        )}
                       </section>
-                      <p className="personal-v2-privacy-note">
+
+                      
+</>}
+<p className="personal-v2-privacy-note">
                         Les dépenses de ce compte ne sont pas incluses dans le patrimoine commun.
                         Les budgets suivent les dépenses réelles et anticipent celles à venir, sans débit automatique.
                       </p>
@@ -8720,6 +8763,14 @@ export default function App() {
               </button>)}
             </> : route==="personal" ? (ps.account ? <>
               <strong className="pro-v3-add-title">Ajouter au compte perso</strong>
+              {personalTab==="budgets"&&<button type="button" className="quick-add-primary-action"
+                onClick={()=>{setMobileQuickAddOpen(false);editPersonalBudget();}}>
+                <span className="quick-add-item-icon"><Wallet size={19}/></span><span>Budget personnel</span>
+              </button>}
+              {personalTab==="projection"&&<button type="button" className="quick-add-primary-action"
+                onClick={()=>{setMobileQuickAddOpen(false);editPersonalRule();}}>
+                <span className="quick-add-item-icon"><CalendarDays size={19}/></span><span>Paiement en plusieurs fois</span>
+              </button>}
               <button type="button" className="quick-add-primary-action"
                 onClick={()=>{setMobileQuickAddOpen(false);personalExpense();}}>
                 <span className="quick-add-item-icon expense"><ArrowUpRight size={19}/></span><span>Dépense perso</span>
