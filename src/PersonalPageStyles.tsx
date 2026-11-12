@@ -242,5 +242,99 @@ const styles = String.raw`
  .personal-budget-item-main {padding:10px}
 }
 
+
+/* Personal v4: compact overview with the same hierarchy as the shared account. */
+.personal-page-v2 .personal-v2-hero{gap:12px;padding:18px 20px;border-radius:20px}
+.personal-v2-hero-header{gap:7px}
+.personal-v2-account{font-size:.84rem}
+.personal-v2-private{padding:5px 8px}
+.personal-v2-amount{gap:2px}
+.personal-v2-amount>strong{font-size:clamp(2.15rem,6.3vw,2.65rem);line-height:1.05}
+.personal-page-v2 .personal-v2-cash-accounts{
+  gap:0;padding:0;margin:0;background:transparent;border:0;border-radius:0
+}
+.personal-page-v2 .personal-v2-cash-accounts .row{min-height:0;padding:6px 0}
+.personal-page-v2 .personal-v2-cash-accounts .text{
+  justify-self:start;min-height:0;padding:4px 0;font-size:.73rem
+}
+.personal-page-v2 .personal-v2-month-estimate{
+  display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;
+  gap:7px;padding:10px 12px;margin:0;border-radius:12px
+}
+.personal-v4-estimate-label{display:inline-flex;align-items:center;min-width:0;gap:5px}
+.personal-v4-estimate-label>span{font-size:.76rem;color:var(--muted)}
+.personal-page-v2 .personal-v2-month-estimate>strong{font-size:1.21rem;line-height:1.2;white-space:nowrap}
+.personal-page-v2 .personal-v2-totals{gap:10px;padding-top:10px}
+.personal-page-v2 .personal-v2-totals>div{gap:2px}
+.personal-page-v2 .personal-v2-totals strong{font-size:.95rem}
+.personal-page-v2 .personal-v2-totals span{font-size:.66rem}
+.personal-v4-estimate-label .block-info,.personal-v2-privacy-note .block-info{
+  width:27px;height:27px;min-width:27px;padding:4px;display:inline-grid;place-items:center;flex:none
+}
+
+/* Same crisp white transaction cards as the common account; dark mode retains its themed surface. */
+:root:not([data-mode="dark"]) .personal-page-v2 .personal-v2-transactions{
+  background:#fff!important;border-color:var(--border)!important
+}
+:root:not([data-mode="dark"]) .personal-v2-transactions .transaction-swipe-row .swipe-actions-content{
+  background:#fff!important
+}
+:root[data-mode="dark"] .personal-page-v2 .personal-v2-transactions{
+  background:var(--surface)!important;border-color:var(--border)!important
+}
+.personal-page-v2 .personal-v2-history{padding:15px 17px;gap:9px}
+.personal-page-v2 .personal-v2-history-header{gap:5px}
+.personal-page-v2 .personal-v2-history-header>h2{font-size:.9rem}
+.personal-page-v2 .personal-v2-history-header>span{font-size:.7rem}
+.personal-page-v2 .personal-v2-history-toggle{margin-top:2px}
+
+/* Transactions: one search bar + two actions; filters stay tucked away until requested. */
+.personal-page-v2 .personal-v4-search-panel{
+  padding:15px!important;background:var(--surface);border-radius:19px;
+  box-shadow:var(--wimm-card-shadow);min-width:0
+}
+.personal-v4-search-top{gap:9px}
+.personal-v4-search-top .transaction-search-input{min-height:43px;min-width:0}
+.personal-v4-search-top .transaction-search-input input{font-size:.82rem;padding:10px 0}
+.personal-v4-search-top>button{min-height:42px;font-size:.8rem;padding:9px 12px}
+.personal-v4-filter-grid{
+  display:grid;grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:11px;margin-top:13px;padding-top:12px;border-top:1px solid var(--border)
+}
+.personal-v4-filter-grid .field{margin:0;min-width:0}
+.personal-v4-filter-grid .field select{width:100%;min-width:0;font-size:.8rem;padding:10px}
+.personal-v4-clear-filters{grid-column:1/-1;justify-self:start;min-height:30px;font-size:.76rem}
+.personal-page-v2 .personal-v4-full-history{gap:6px}
+.personal-page-v2 .personal-v4-full-history>p:first-child{padding:0}
+.personal-page-v2 .personal-v4-full-history .list-sort{margin:0 0 5px}
+
+/* Explanatory paragraphs now live inside the standard accessible information modal. */
+.personal-v2-panel-content .section-head>div:first-child:has(>.block-info){
+  display:flex;flex-wrap:wrap;align-items:center;gap:4px 7px
+}
+.personal-v2-panel-content .section-head>div:first-child:has(>.block-info)>h2{
+  margin:0;min-width:0
+}
+.personal-v2-panel-content .section-head .block-info{
+  display:inline-grid;place-items:center;min-width:28px;width:28px;height:28px;
+  padding:5px;flex:none
+}
+.personal-v2-privacy-note{display:flex;align-items:center;justify-content:center;gap:5px;font-size:.72rem}
+.personal-v2-privacy-note .block-info{vertical-align:middle}
+
+@media(max-width:640px){
+  .personal-v4-search-top{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+  .personal-v4-search-top .transaction-search-input{grid-column:1/-1;min-height:43px}
+  .personal-v4-search-top>button{min-width:0;width:100%;font-size:.79rem}
+}
+@media(max-width:560px){
+  .personal-page-v2 .personal-v2-hero{padding:16px 17px;gap:10px}
+  .personal-v2-amount>strong{font-size:2.2rem}
+  .personal-page-v2 .personal-v2-totals{gap:9px}
+  .personal-page-v2 .personal-v2-history{padding:14px 14px}
+  .personal-v4-filter-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+}
+@media(max-width:360px){.personal-v4-filter-grid{grid-template-columns:1fr}}
+
 `;
 export default function PersonalPageStyles(){return <style data-wimm-personal="v2">{styles}</style>;}
