@@ -4551,6 +4551,45 @@ export default function App() {
       }, "Transaction supprimée"),
     );
   }
+  function deletePersonalTransaction(t: PersonalTransaction) {
+    confirmAction(
+      "Supprimer ce mouvement ?",
+      t.dueKey
+        ? "Cette mensualité sera retirée du compte perso et redeviendra à valider."
+        : "Cette opération sera retirée de l’historique et son effet sur le solde sera annulé.",
+      async () =>
+        changePersonal(
+          d => {
+            d.transactions = d.transactions.filter(x => x.id !== t.id);
+          },
+          "Mouvement privé supprimé",
+        ),
+    );
+  }
+
+  function personalTransactionDetails(t: PersonalTransaction) {
+    const budget = (ps.budgets ?? []).find(b => b.id === t.budgetId);
+    const positive = t.type === "adjust" && t.amount > 0;
+    explain(t.description || "Mouvement personnel", <>
+      <div className="big-number">{positive ? "+" : "−"}{money(Math.abs(t.amount))}</div>
+      <p>{dateLabel(t.date)}{t.date > today() ? " · À venir" : ""} · {budget?.name || "Sans catégorie"}</p>
+      <p>{t.type === "expense"
+        ? "Dépense enregistrée sur votre compte personnel uniquement."
+        : "Ajustement de votre solde personnel."}</p>
+      <details className="transaction-detail-options">
+        <summary>Actions sur l'opération</summary>
+        <div className="transaction-detail-options-body">
+          <button className="secondary compact" onClick={() => editPersonalHistoryTransaction(t)}>
+            <Pencil size={15}/> Modifier
+          </button>
+          <button className="secondary compact danger-text" onClick={() => deletePersonalTransaction(t)}>
+            <Trash2 size={15}/> Supprimer
+          </button>
+        </div>
+      </details>
+    </>);
+  }
+
   function txDetails(t: Tx) {
     const a = s.accounts.find(a => a.id === t.account);
     const isEditable = ["expense", "income"].includes(t.type) && !t.dueKey;
@@ -7257,161 +7296,47 @@ export default function App() {
                         </div>
                       </details>
 
-                      <section className="personal-v2-history" aria-label="Historique des opérations personnelles">
-                        <div className="personal-v2-history-header">
-                          <h2>Dernières opérations</h2>
-                          <span>{history.length} mouvement{history.length > 1 ? "s" : ""}</span>
-                        </div>
-                        {history.length ? (
-                          <div className="personal-v2-history-preview">
-                            {history.slice(0, 3).map(h => (
-                              <div key={h.id}>
-                                <span className={"personal-v2-history-icon" + (h.positive ? "" : " negative")}>
-                                  {h.positive ? <ArrowDownLeft size={17}/> : <ArrowUpRight size={17}/>}
-                                </span>
-                                <span className="personal-v2-history-name">
-                                  <strong>{h.title || "Mouvement personnel"}</strong>
-                                  <small>{dateLabel(h.date)}{h.date>today()?" · À venir":""}</small>
-                                </span>
-                                <strong className={"personal-v2-history-value" + (h.positive ? " positive" : "")}>
-                                  {h.positive ? "+" : "−"}{money(h.amount)}
-                                </strong>
-                              </div>
-                            ))}
-                          </div>
-                        ) : <p className="personal-v2-history-empty">Aucun mouvement pour le moment.</p>}
-                        <details>
-                          <summary>
-                            <span>{history.length > 3 ? "Tout voir et trier" : "Afficher l’historique et les filtres"}</span>
-                            <ChevronRight size={17}/>
-                          </summary>
-                          <div className="personal-v2-history-full">
-                            <section className="card personal-history-card">
-                      <div className="section-head">
-                        <h2>
-                          Historique privé
-                        </h2>
-                        <span className="muted">
-                          {history.length}{" "}
-                          mouvement
-                          {history.length >
-                          1
-                            ? "s"
-                            : ""}
-                        </span>
-                      </div>
-
-                      {history.length ? (
-                        <SortableList items={history}>{ordered => ordered.map((h) => {
-
-                            const privateTx =
-                              ps.transactions.find(
-                                (t) =>
-                                  t.id === h.id,
-                              );
-
-                            const privateCategory =
-                              privateTx?.budgetId
-                                ? (
-                                    ps.budgets ??
-                                    []
-                                  ).find(
-                                    (b) =>
-                                      b.id ===
-                                      privateTx.budgetId,
-                                  )?.name
-                                : undefined;
-
-                            return (
-                              <Row
-                                key={h.id}
-                                icon={
-                                  h.positive ? (
-                                    <ArrowDownLeft />
-                                  ) : (
-                                    <ArrowUpRight />
-                                  )
-                                }
-                                title={h.title}
-                                sub={
-                                  privateTx
-                                    ? `${dateLabel(h.date)}${h.date>today()?" · À venir":""} · ${privateCategory || "Sans catégorie"} · Mouvement privé`
-                                    : `${dateLabel(h.date)} · Virement du foyer`
-                                }
-                                value={
-                                  <span className="flex">
-                                    <span
-                                      className={
-                                        h.positive
-                                          ? "positive"
-                                          : ""
-                                      }
-                                    >
-                                      {h.positive
-                                        ? "+"
-                                        : "−"}
-                                      {money(
-                                        h.amount,
-                                      )}
-                                    </span>
-
-                                    {privateTx && (
-                                      <>
-                                        <button
-                                          type="button"
-                                          className="text"
-                                          onClick={() =>
-                                            editPersonalHistoryTransaction(
-                                              privateTx,
-                                            )
-                                          }
-                                        >
-                                          Modifier
-                                        </button>
-
-                                        <button
-                                          type="button"
-                                          className="text danger-text"
-                                          onClick={() =>
-                                            confirmAction(
-                                              "Supprimer ce mouvement ?",
-                                              privateTx.dueKey
-                                                ? "Cette mensualité sera retirée du compte perso et redeviendra à valider."
-                                                : "Cette opération sera retirée de l’historique et son effet sur le solde sera annulé.",
-                                              async () =>
-                                                changePersonal(
-                                                  (d) => {
-                                                    d.transactions =
-                                                      d.transactions.filter(
-                                                        (t) =>
-                                                          t.id !==
-                                                          privateTx.id,
-                                                      );
-                                                  },
-                                                  "Mouvement privé supprimé",
-                                                ),
-                                            )
-                                          }
-                                        >
-                                          Supprimer
-                                        </button>
-                                      </>
-                                    )}
-                                  </span>
-                                }
-                              />
-                            );
-
-                          })}</SortableList>
-                      ) : (
-                        <p className="muted padded">
-                          Aucun mouvement pour
-                          le moment.
+                      <section className="card transaction-search-results personal-v2-history personal-v2-transactions" aria-label="Historique des opérations personnelles">
+                        <p className="muted" role="status">
+                          {history.length} opération{history.length !== 1 ? "s" : ""}
                         </p>
-                      )}
-                    </section>
-                          </div>
-                        </details>
+                        {history.length ? (
+                          <SortableList items={history}>{ordered => ordered.map(h => {
+                            const privateTx = ps.transactions.find(t => t.id === h.id);
+                            const privateCategory = privateTx?.budgetId
+                              ? (ps.budgets ?? []).find(b => b.id === privateTx.budgetId)?.name
+                              : undefined;
+                            return (
+                              <SwipeActions key={h.id} label={h.title || "Mouvement personnel"} className="transaction-swipe-row"
+                                actions={privateTx ? [
+                                  { label: "Modifier", icon: <Pencil size={17}/>, onClick: () => editPersonalHistoryTransaction(privateTx) },
+                                  { label: "Supprimer", icon: <Trash2 size={17}/>, tone: "danger" as const,
+                                    onClick: () => deletePersonalTransaction(privateTx) },
+                                ] : []}>
+                                <Row
+                                  icon={h.positive ? <ArrowDownLeft className="transaction-income-arrow"/> : <ArrowUpRight className="transaction-expense-arrow"/>}
+                                  title={h.title || "Mouvement personnel"}
+                                  sub={privateTx
+                                    ? `${dateLabel(h.date)}${h.date > today() ? " · À venir" : ""} · ${privateCategory || "Sans catégorie"}`
+                                    : `${dateLabel(h.date)} · Virement du foyer`}
+                                  value={<span className={h.positive ? "positive" : "negative-money"}>
+                                    {h.positive ? "+" : "−"}{money(h.amount)}
+                                  </span>}
+                                  onClick={() => {
+                                    if (privateTx) personalTransactionDetails(privateTx);
+                                    else explain(h.title || "Virement perso", <>
+                                      <div className="big-number">+{money(h.amount)}</div>
+                                      <p>{dateLabel(h.date)} · Virement du foyer</p>
+                                      <p>Virement du compte commun vers votre budget personnel.</p>
+                                    </>);
+                                  }}
+                                />
+                              </SwipeActions>
+                            );
+                          })}</SortableList>
+                        ) : (
+                          <p className="muted padded">Aucune opération pour le moment.</p>
+                        )}
                       </section>
                       <p className="personal-v2-privacy-note">
                         Les dépenses de ce compte ne sont pas incluses dans le patrimoine commun.
