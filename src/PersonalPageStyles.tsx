@@ -289,6 +289,9 @@ const styles = String.raw`
 .personal-page-v2 .personal-v2-history-toggle{margin-top:2px}
 
 /* Transactions: one search bar + two actions; filters stay tucked away until requested. */
+:root:not([data-mode="dark"]) .personal-page-v2 .personal-v4-search-panel{
+  background:#fff!important;border-color:var(--border)!important
+}
 .personal-page-v2 .personal-v4-search-panel{
   padding:15px!important;background:var(--surface);border-radius:19px;
   box-shadow:var(--wimm-card-shadow);min-width:0
@@ -323,6 +326,8 @@ const styles = String.raw`
 .personal-v2-privacy-note .block-info{vertical-align:middle}
 
 @media(max-width:640px){
+  .personal-v4-search-top .transaction-search-input input,
+  .personal-v4-filter-grid select{font-size:16px}
   .personal-v4-search-top{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
   .personal-v4-search-top .transaction-search-input{grid-column:1/-1;min-height:43px}
   .personal-v4-search-top>button{min-width:0;width:100%;font-size:.79rem}
