@@ -4,3 +4,4 @@ dist/
 *.log
 server-dist/
 *.tsbuildinfo
+__pycache__/

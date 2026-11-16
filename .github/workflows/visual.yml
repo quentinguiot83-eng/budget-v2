@@ -1,0 +1,91 @@
+name: Wimm visuel
+
+# Sur chaque PR vers main :
+#   - « Parcours » : l'app de démonstration est utilisée (navigation, menu
+#     Ajouter, création d'une catégorie…) ; échoue en cas d'erreur JavaScript
+#     ou de résultat manquant.
+#   - « Écrans » : chaque écran de la PR est comparé à celui de main ;
+#     échoue si un écran change, avec les images avant/après en pièce jointe
+#     (artefact « differences-visuelles ») pour valider le changement.
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: visual-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  visual:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Récupérer la PR
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Installer les outils de capture
+        # Playwright pilote le Google Chrome déjà installé sur le runner.
+        run: pip install playwright numpy pillow
+
+      - name: Installer les dépendances (PR)
+        run: npm ci
+
+      - name: Parcours et captures de la PR
+        id: after
+        run: tools/visual/run.sh "$RUNNER_TEMP/apres"
+
+      - name: Préparer main
+        run: |
+          git worktree add "$RUNNER_TEMP/main" "origin/${{ github.base_ref }}"
+          # Mêmes outils de capture des deux côtés, pour comparer à l'identique.
+          rm -rf "$RUNNER_TEMP/main/tools/visual"
+          mkdir -p "$RUNNER_TEMP/main/tools"
+          cp -r tools/visual "$RUNNER_TEMP/main/tools/visual"
+          cd "$RUNNER_TEMP/main" && npm ci
+
+      - name: Captures de main
+        # Un parcours qui échouait déjà sur main ne bloque pas la PR.
+        run: cd "$RUNNER_TEMP/main" && (tools/visual/run.sh "$RUNNER_TEMP/avant" || true)
+
+      - name: Comparer les écrans
+        id: compare
+        run: |
+          set +e
+          python3 tools/visual/compare.py "$RUNNER_TEMP/avant" "$RUNNER_TEMP/apres" "$RUNNER_TEMP/differences" | tee "$RUNNER_TEMP/rapport.txt"
+          status=${PIPESTATUS[0]}
+          {
+            echo "## Comparaison visuelle avec main"
+            echo
+            echo '```'
+            cat "$RUNNER_TEMP/rapport.txt"
+            echo '```'
+            if [ "$status" -ne 0 ]; then
+              echo
+              echo "Images avant / après / différences : artefact **differences-visuelles** ci-dessous."
+              echo "Si le changement est voulu, la PR peut être fusionnée malgré ce contrôle."
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+          exit $status
+
+      - name: Joindre les différences
+        if: failure() && steps.compare.outcome == 'failure'
+        uses: actions/upload-artifact@v4
+        with:
+          name: differences-visuelles
+          path: ${{ runner.temp }}/differences
+          retention-days: 14

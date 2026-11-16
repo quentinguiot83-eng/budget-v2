@@ -1,5 +1,10 @@
 # Filet de sécurité visuel
 
+Tourne automatiquement sur chaque PR vers `main` (workflow « Wimm visuel ») :
+les parcours doivent réussir, et tout écran modifié par rapport à `main`
+est signalé avec ses images avant/après dans l'artefact
+`differences-visuelles`. Un changement voulu se fusionne malgré ce signal.
+
 Capture chaque écran de Wimm (mode `?demo=1`, données fictives) et compare
 deux séries de captures pixel par pixel. À utiliser avant de fusionner tout
 changement de style : une modification de CSS ne doit changer que les
@@ -15,6 +20,13 @@ changement de style : une modification de CSS ne doit changer que les
 Les captures sont déterministes : date figée au 16 novembre 2026, aucun
 appel réseau (polices système à la place de Google Fonts), animations
 coupées, et chaque capture est refaite jusqu'à ce que la page soit stable.
+
+## Parcours
+
+`smoke.py` (lancé par `run.sh`) utilise l'app : création d'une catégorie,
+clic sur une catégorie du Budget, menu « Ajouter », réglages, calendrier,
+revenus. Il échoue si un résultat attendu manque ou si la page lève une
+erreur JavaScript, et ajoute une capture `parcours-*.png` par parcours.
 
 ## Utilisation
 
