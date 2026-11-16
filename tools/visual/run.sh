@@ -27,11 +27,14 @@ fi
 # Lancé directement (sans npx) pour pouvoir l'arrêter proprement à la fin.
 node_modules/.bin/vite preview --outDir "$dist" --port "$port" --strictPort </dev/null >/dev/null 2>&1 &
 server=$!
-trap 'kill "$server" 2>/dev/null; wait "$server" 2>/dev/null; rm -rf "$dist"' EXIT
+trap 'kill "$server" 2>/dev/null; wait "$server" 2>/dev/null || true; rm -rf "$dist"' EXIT
 until curl -fs "http://localhost:$port" >/dev/null; do
   kill -0 "$server" 2>/dev/null || { echo "Le serveur de prévisualisation n'a pas démarré." >&2; exit 1; }
   sleep 0.3
 done
 
 rm -rf "$out"
-python3 "$root/tools/visual/capture.py" "$out" "http://localhost:$port"
+status=0
+python3 "$root/tools/visual/capture.py" "$out" "http://localhost:$port" || status=1
+python3 "$root/tools/visual/smoke.py" "$out" "http://localhost:$port" || status=1
+exit $status
