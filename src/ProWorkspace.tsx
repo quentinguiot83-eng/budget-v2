@@ -38,6 +38,7 @@ import ProDashboard from "./ProDashboard";
 import ProMicroStatus from "./ProMicroStatus";
 import {microEffectiveRates,microSummary,type MicroSettings} from "./proMicro";
 import ProAnalysis from "./ProAnalysis";
+import ProRecurringExpenses from "./ProRecurringExpenses";
 import {currentProMonth,formatProMonth,moveProMonth,proCashAtMonth} from "./proFinance";
 import {calculateProReserve,previewReceiptReserves,type ReserveEstimate,type ProReserveProfile} from "./proReserve";
 import {createReceiptInvoicePayload,type ProReceiptInvoiceInput} from "./proReceiptInvoice";
@@ -420,6 +421,7 @@ export default function ProWorkspace({
               removeTx={id=>void removeTx(id)}
               editPayment={t=>setModal({type:"payment",paymentType:t.kind==="contribution_payment"?"contribution":"tax",payment:t})}
             />}
+            {section==="treasury"&&<ProRecurringExpenses businessId={suite.activeBusinessId??""} month={selectedProMonth} onPaid={()=>void load()}/>}
           </>}
         </main>
       </div>

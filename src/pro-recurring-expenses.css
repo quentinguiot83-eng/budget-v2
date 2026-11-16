@@ -1,0 +1,27 @@
+.pro-recurring-expenses{margin-top:18px}
+.pro-rexp-header{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:18px}
+.pro-rexp-header h2{font-size:19px;margin:6px 0}
+.pro-rexp-header p{color:var(--text-secondary,#667085);line-height:1.55;margin:0;max-width:670px;font-size:13px}
+.pro-rexp-eyebrow{display:inline-flex;align-items:center;gap:6px;letter-spacing:.1em;font-size:10px;font-weight:800;opacity:.75}
+.pro-rexp-header .prosuite-btn{white-space:nowrap}
+.pro-rexp-month{display:flex;align-items:center;gap:10px;border-block:1px solid var(--border-color,#e9ebef);padding:12px 0;font-size:13px}
+.pro-rexp-month>strong{margin-left:auto;font-size:12px}
+.pro-rexp-month>button,.pro-rexp-actions>button:not(.pro-rexp-pay),.pro-rexp-formhead>button{background:transparent;border:0;color:inherit;cursor:pointer;padding:7px;border-radius:9px}
+.pro-rexp-list{display:flex;flex-direction:column}
+.pro-rexp-item{display:flex;gap:14px;align-items:center;padding:14px 0;border-bottom:1px solid var(--border-color,#e9ebef)}
+.pro-rexp-main{flex:1;min-width:140px;display:flex;flex-direction:column;gap:4px}
+.pro-rexp-main>strong{font-size:14px}
+.pro-rexp-main>span,.pro-rexp-main>small,.pro-rexp-amount>small{font-size:11px;opacity:.7}
+.pro-rexp-amount{display:flex;flex-direction:column;align-items:flex-end;gap:4px}
+.pro-rexp-amount>strong{color:#bb4242;white-space:nowrap}
+.pro-rexp-actions{display:flex;align-items:center;justify-content:flex-end;flex-wrap:wrap;gap:5px;max-width:340px}
+.pro-rexp-pay{border:0;border-radius:10px;background:var(--accent,#447f67);color:#fff;padding:9px 11px;font-size:12px;font-weight:750;cursor:pointer}
+.pro-rexp-paid{display:inline-flex;align-items:center;gap:5px;color:#36815a;font-size:12px}
+.pro-rexp-pending{font-size:12px;opacity:.7}
+.pro-rexp-help,.pro-rexp-empty{font-size:12px;opacity:.75;line-height:1.55;margin:15px 0 0}
+.pro-rexp-form{border-top:1px solid var(--border-color,#e9ebef);margin-top:22px;padding-top:18px}
+.pro-rexp-formhead{display:flex;justify-content:space-between;align-items:center}
+.pro-rexp-formhead h3{font-size:17px;margin:0 0 14px}
+.pro-rexp-form>p{font-size:12px;opacity:.75}
+.pro-rexp-formbuttons{display:flex;justify-content:flex-end;flex-wrap:wrap;gap:9px;margin-top:14px}
+@media(max-width:850px){.pro-rexp-header{flex-direction:column}.pro-rexp-item{align-items:flex-start;flex-wrap:wrap}.pro-rexp-main{flex:1 1 55%}.pro-rexp-actions{flex:1 0 100%;justify-content:flex-start;max-width:100%}.pro-rexp-header .prosuite-btn{white-space:normal}}
