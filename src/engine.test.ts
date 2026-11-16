@@ -790,10 +790,12 @@ test("mensualité perso catégorisée incluse dans le budget perso sans double c
 
   // Le foyer verse 150 €.
   // Sorties prévoit 50 €, dont la mensualité de 20 €.
-  // On obtient donc +100 €, pas +80 €.
+  // On obtient donc +100 € par mois, pas +80 €.
+  // La projection part de la clôture estimée du mois en cours (+100 €)
+  // puis ajoute le mois suivant (+100 €).
   assert.equal(
     projection.at(-1)?.balance,
-    10000,
+    20000,
   );
 
 });
