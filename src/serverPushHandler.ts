@@ -70,7 +70,7 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
     for (let start = 0; start < queue.length; start += 5) {
       await Promise.all(queue.slice(start, start + 5).map(async d => {
         if (!validPushEndpoint(d.subscription.endpoint)) return;
-        let alerts = action === "test" ? [{ key: `test:${Math.floor(Date.now() / 60000)}`, kind: "test", title: "Notifications Wimm activées", body: "Ton téléphone est prêt à recevoir les alertes Wimm.", url: "/" }]
+        const alerts = action === "test" ? [{ key: `test:${Math.floor(Date.now() / 60000)}`, kind: "test", title: "Notifications Wimm activées", body: "Ton téléphone est prêt à recevoir les alertes Wimm.", url: "/" }]
           : [
               ...pushAlerts(d.state, d.invoices).filter(a => a.kind === "budgets" ? d.budgets : d.dues),
               ...(() => { const reminder = dailyTransactionReminder(d); return reminder ? [reminder] : []; })(),

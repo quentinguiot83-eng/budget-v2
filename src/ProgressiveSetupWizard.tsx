@@ -24,7 +24,6 @@ const getCents = (value:string,label:string,negative=false) => {
   if(!Number.isSafeInteger(cents)||(!negative&&cents<0))throw Error("Montant incorrect : "+label);
   return cents;
 };
-const euro=(value:string)=>{try{return (getCents(value||"0","montant",true)/100).toLocaleString("fr-FR",{style:"currency",currency:"EUR"});}catch{return "—";}};
 const pages=[
   {title:"Quel est votre profil ?",subtitle:"Wimm s'adapte à votre activité. Ce choix reste modifiable.",icon:UserRound},
   {title:"Votre compte courant",subtitle:"Indiquez le solde réellement affiché par votre banque.",icon:Wallet},

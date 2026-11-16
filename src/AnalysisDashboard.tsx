@@ -1,7 +1,7 @@
 import { lazy, Suspense, useMemo, useState } from "react";
 import { ChevronDown, ChevronRight, CalendarDays, TrendingUp } from "lucide-react";
 import { BlockInfo } from "./ui";
-import { dateAt, money, month, monthLabel, shiftMonth, today, type State } from "./engine";
+import { dateAt, money, month, shiftMonth, today, type State } from "./engine";
 import { monthlyComparison } from "./monthlyComparison";
 import {
   categoryAmount, financialAnalysis, resolveAnalysisRange,
@@ -222,7 +222,7 @@ export default function AnalysisDashboard({ state, selectedMonth }: { state: Sta
             {expandedCategories ? "Masquer les catégories" : "Voir toutes les catégories"} <ChevronDown size={16} />
           </button>}
           {expandedCategories && <div className="analysis-more-categories">
-            {selectedCategories.slice(5).map((c, index) => <InfoLine key={c.id} label={c.name}
+            {selectedCategories.slice(5).map((c) => <InfoLine key={c.id} label={c.name}
               value={money(categoryAmount(c, breakdown)) + " · " + Math.round(categoryAmount(c, breakdown) / breakdownTotal * 100) + " %"} />)}
           </div>}
         </> : <p className="muted">Aucune dépense de ce type sur la période.</p>}

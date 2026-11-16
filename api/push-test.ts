@@ -54,7 +54,7 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
     const device = devices.find(d => d.id === deviceId && d.userId === userId);
     if (!device) return respond(404, { error: "Appareil introuvable. Enregistre à nouveau tes choix.", code: "push_device_not_found" });
 
-    let webpush: any;
+    let webpush: Pick<typeof import("web-push"), "setVapidDetails" | "sendNotification">;
     try {
       const module = await import("web-push");
       webpush = module.default ?? module;

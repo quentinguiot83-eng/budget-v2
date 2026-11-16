@@ -1,4 +1,4 @@
-import { isSavingsTransfer, month, monthLabel, shiftMonth, today, type State, type Tx } from "./engine";
+import { isSavingsTransfer, month, monthLabel, shiftMonth, today, type State } from "./engine";
 
 export type DashboardMode = "1" | "3" | "6" | "12" | "year" | "custom";
 export type ExpenseKind = "all" | "fixed" | "variable";

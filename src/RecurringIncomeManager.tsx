@@ -1,6 +1,6 @@
 
 import { useEffect, useState } from "react";
-import { CalendarDays, Check, Pencil, Plus, Save, Trash2, X } from "lucide-react";
+import { Pencil, Plus, Save, Trash2, X } from "lucide-react";
 import { month, uid, type State } from "./engine";
 import MoneyInput from "./MoneyInput";
 import "./recurring-income-manager.css";
