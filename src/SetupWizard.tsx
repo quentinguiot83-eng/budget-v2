@@ -1,7 +1,6 @@
 import { useState, type FormEvent } from "react";
 import { ArrowLeft, ArrowRight, BadgeCheck, BriefcaseBusiness, CalendarDays, Check, CircleHelp, Landmark, Plus, Trash2, UserRound, Wallet } from "lucide-react";
 import { month, today, type State, uid } from "./engine";
-import { seedStarterCategories } from "./starterCategories";
 
 type Group = "wealth" | "travel";
 type ExtraAccount = { id: string; name: string; group: Group; opening: string; allocation: string };

@@ -19,7 +19,7 @@ test("signed amounts, separate debit-credit, ISO dates, quotes and numeric exact
   assert.equal(readBankAmount("1,234.56"),123456);
   assert.equal(readBankAmount("−1 234,56"),-123456);
   assert.equal(readBankAmount("(123,45)"),-12345);
-  const table=parseBankCsv('Date,Description,Debit,Credit\n2026-10-11,\"Pharmacie, rue A\",\"12,99\",\n2026-10-10,Revenu,,100.00');
+  const table=parseBankCsv('Date,Description,Debit,Credit\n2026-10-11,"Pharmacie, rue A","12,99",\n2026-10-10,Revenu,,100.00');
   const rows=convertBankRows(table,guessBankMapping(table.columns));
   assert.deepEqual(rows.map(r=>[r.type,r.amount]),[["expense",1299],["income",10000]]);
 });

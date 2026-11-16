@@ -22,7 +22,7 @@ const icons: [string,string][] = [
   ["sport","🏃 Sport"],["home","🏠 Maison"],["gift","🎁 Cadeau"],["work","💼 Travail"]
 ];
 export default function InlineCategoryCreator({
-  config, selected, onCreated,
+  config, onCreated,
 }:{
   config:InlineChoiceCreator;
   selected:string;

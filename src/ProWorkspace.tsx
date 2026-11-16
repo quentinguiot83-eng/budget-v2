@@ -8,7 +8,6 @@ import {
   CheckCircle2,
   ChevronLeft,
   ChevronRight,
-  CreditCard,
   Download,
   LayoutDashboard,
   ChartNoAxesCombined,
@@ -39,7 +38,7 @@ import ProMicroStatus from "./ProMicroStatus";
 import {microEffectiveRates,microSummary,type MicroSettings} from "./proMicro";
 import ProAnalysis from "./ProAnalysis";
 import ProRecurringExpenses from "./ProRecurringExpenses";
-import {currentProMonth,formatProMonth,moveProMonth,proCashAtMonth} from "./proFinance";
+import {currentProMonth,formatProMonth,moveProMonth} from "./proFinance";
 import {calculateProReserve,previewReceiptReserves,type ReserveEstimate,type ProReserveProfile} from "./proReserve";
 import {createReceiptInvoicePayload,type ProReceiptInvoiceInput} from "./proReceiptInvoice";
 import {proOpeningForTargetBalance,proPaymentsForPeriod} from "./proReconciliation";
@@ -83,7 +82,6 @@ const euro=(v:number)=>new Intl.NumberFormat("fr-FR",{style:"currency",currency:
 const cents=(v:string)=>Math.round((Number(v.replace(",","."))||0)*100);
 const euros=(v:number)=>(v/100).toFixed(2);
 const today=()=>new Date().toISOString().slice(0,10);
-const monthKey=()=>today().slice(0,7);
 const payLabel:Record<string,string>={card:"CB",check:"Chèque",cash:"Espèces",transfer:"Virement",other:"Autre"};
 function readMicroPreferences(businessId:string,existingTaxRate:number):MicroSettings {
   const fallback:MicroSettings={frequency:"monthly",taxMode:existingTaxRate>0?"estimate":"none"};
@@ -98,7 +96,6 @@ function readMicroPreferences(businessId:string,existingTaxRate:number):MicroSet
   }catch{return fallback;}
 }
 const eventLabel:Record<string,string>={appointment:"Rendez-vous",shooting:"Prestation",deadline:"Échéance",admin:"Administratif",other:"Autre"};
-const invoiceStatus:Record<string,string>={draft:"Brouillon",sent:"Envoyée",partially_paid:"Paiement partiel",paid:"Payée",cancelled:"Annulée"};
 
 export default function ProWorkspace({
   native = false, onOpenQuickAdd, householdCurrentAccounts = [], onHouseholdRefresh,
@@ -305,15 +302,10 @@ export default function ProWorkspace({
   const reserveProfile=suite?.profile.legalStatus==="micro"?microEffectiveRates(suite.profile,microSettings):suite?.profile??null;
   const micro=suite?.profile.legalStatus==="micro"?microSummary(suite.transactions,suite.profile,selectedProMonth,microSettings):null;
   const transactions=suite?.transactions??[];
-  const current=transactions.filter(t=>t.paid&&t.date.slice(0,7)===selectedProMonth);
-  const monthIncome=current.filter(t=>t.kind==="income").reduce((s,t)=>s+t.amount,0);
-  const monthExpense=current.filter(t=>t.kind==="expense").reduce((s,t)=>s+t.amount,0);
   const accountBalance=useMemo(()=>{
     if(!suite)return 0; let v=suite.account.openingBalance;
     for(const t of suite.transactions){if(!t.paid)continue;v+=t.kind==="income"?t.amount:-t.amount;} return v;
   },[suite]);
-  const nextEvents=(suite?.events??[]).filter(e=>new Date(e.endsAt)>=new Date()).slice(0,5);
-  const openInvoices=(suite?.invoices??[]).filter(i=>i.status==="draft"||i.status==="sent"||i.status==="partially_paid");
       const paidContrib=transactions.filter(t=>t.paid&&t.kind==="contribution_payment"&&(t.contributionPeriodKey??t.date.slice(0,7))===selectedProMonth).reduce((s,t)=>s+t.amount,0);
   const paidTax=transactions.filter(t=>t.paid&&t.kind==="tax_payment"&&(t.taxPeriodKey??t.date.slice(0,7))===selectedProMonth).reduce((s,t)=>s+t.amount,0);
   // Shared source of truth: Home and Finances must use exactly the same reserve snapshot.
@@ -465,7 +457,6 @@ export default function ProWorkspace({
   async function removeClient(c:Client){if(!confirm(`Supprimer ${c.name} ?`))return;await call("budget_pro_client_delete",{p_id:c.id},"Client supprimé");}
   async function removeProduct(p:Product){if(!confirm(`Supprimer ${p.name} ?`))return;await call("budget_pro_product_delete",{p_id:p.id},"Élément supprimé");}
   async function removeEvent(e:EventItem){if(!confirm(`Supprimer « ${e.title} » ?`))return;await call("budget_pro_event_delete",{p_id:e.id},"Événement supprimé");}
-  async function removeInvoice(i:Invoice){if(!confirm(`Supprimer la facture ${i.number} ?`))return;await call("budget_pro_invoice_delete",{p_id:i.id},"Facture supprimée");}
   async function removeTx(id:string){if(!confirm("Supprimer cette opération ?"))return;await call("budget_pro_transaction_delete",{p_id:id},"Opération supprimée");}
 }
 
@@ -487,14 +478,10 @@ function ProMonthNavigator({month,onChange,allowFuture=false,recordedMonths=[]}:
 function ProNav({active,icon,label,onClick}:{active:boolean;icon:ReactNode;label:string;onClick:()=>void}){return <button className={active?"active":""} onClick={onClick}>{icon}<span>{label}</span></button>}
 function PageHead({eyebrow,title,text,actions,compactActions=false}:{eyebrow:string;title:string;text:string;actions?:ReactNode;compactActions?:boolean}){return <div className="prosuite-pagehead"><div><span>{eyebrow}</span><h1>{title}</h1><p>{text}</p></div>{actions&&<div className={compactActions?"prosuite-actions prosuite-actions-compact":"prosuite-actions"}>{actions}</div>}</div>}
 function Btn({children,onClick,secondary=false}:{children:ReactNode;onClick:()=>void;secondary?:boolean}){return <button className={secondary?"prosuite-btn secondary":"prosuite-btn"} onClick={onClick}>{children}</button>}
-
-function Metric({label,value}:{label:string;value:string}){return <div className="prosuite-metric"><span>{label}</span><strong>{value}</strong></div>}
 function Card({title,action,children}:{title:string;action?:ReactNode;children:ReactNode}){return <section className="prosuite-card"><div className="prosuite-cardhead"><h2>{title}</h2>{action}</div>{children}</section>}
 function Empty({text}:{text:string}){return <p className="prosuite-empty">{text}</p>}
 
 function ClientsPage({clients,add,edit,remove}:{clients:Client[];add:()=>void;edit:(c:Client)=>void;remove:(c:Client)=>void}){const [q,setQ]=useState("");const rows=clients.filter(c=>(c.name+" "+c.companyName+" "+c.email).toLowerCase().includes(q.toLowerCase()));return <><PageHead eyebrow="CLIENTS" title="Fichier clients" text="Toutes les informations utiles à la facturation et aux rendez-vous." actions={<Btn onClick={add}><Plus size={16}/> Nouveau client</Btn>}/><input className="prosuite-search" placeholder="Rechercher un client…" value={q} onChange={e=>setQ(e.target.value)}/><div className="prosuite-clientgrid">{rows.map(c=><article className="prosuite-client" key={c.id}><div className="prosuite-avatar">{c.name.slice(0,1).toUpperCase()}</div><div><h3>{c.name}</h3>{c.companyName&&<p>{c.companyName}</p>}<small>{[c.email,c.phone].filter(Boolean).join(" · ")||"Aucune coordonnée"}</small><small>{[c.address,c.postalCode,c.city].filter(Boolean).join(" ")}</small></div><div className="prosuite-rowactions"><button onClick={()=>edit(c)}><Pencil size={15}/></button><button onClick={()=>remove(c)}><Trash2 size={15}/></button></div></article>)}</div>{!rows.length&&<Empty text="Aucun client correspondant."/>}</>}
-
-function BillingPage({invoices,billing,create,settings,edit,print,paid,remove}:{invoices:Invoice[];billing:BillingSettings;create:()=>void;settings:()=>void;edit:(i:Invoice)=>void;print:(i:Invoice)=>void;paid:(i:Invoice)=>void;remove:(i:Invoice)=>void}){return <><PageHead eyebrow="FACTURATION" title="Factures" text="Créez vos factures à partir du fichier client et de votre catalogue." actions={<><Btn secondary onClick={settings}><Settings2 size={16}/> Coordonnées</Btn><Btn onClick={create}><Plus size={16}/> Nouvelle facture</Btn></>}/>{(!billing.address||!billing.city)&&<div className="prosuite-info">Complétez vos coordonnées de facturation avant d’envoyer vos premières factures.</div>}<Card title="Historique des factures"><div className="prosuite-tablewrap"><table className="prosuite-table"><thead><tr><th>N°</th><th>Date</th><th>Client</th><th>Statut</th><th>Total TTC</th><th></th></tr></thead><tbody>{invoices.map(i=><tr key={i.id}><td><strong>{i.number}</strong></td><td>{new Date(i.issueDate+"T12:00:00").toLocaleDateString("fr-FR")}</td><td>{i.clientSnapshot?.companyName||i.clientSnapshot?.name||"Client"}</td><td><span className={`prosuite-status ${i.status}`}>{invoiceStatus[i.status]}</span></td><td>{euro(i.totalTtc)}</td><td><div className="prosuite-rowactions"><button title="Aperçu / PDF" onClick={()=>print(i)}><Printer size={15}/></button>{i.status!=="paid"&&<button title="Modifier" onClick={()=>edit(i)}><Pencil size={15}/></button>}{i.status!=="paid"&&<button title="Marquer payée" onClick={()=>paid(i)}><CheckCircle2 size={15}/></button>}{i.status!=="paid"&&<button title="Supprimer" onClick={()=>remove(i)}><Trash2 size={15}/></button>}</div></td></tr>)}</tbody></table></div>{!invoices.length&&<Empty text="Aucune facture créée."/>}</Card></>}
 
 function CatalogPage({products,add,edit,remove}:{products:Product[];add:()=>void;edit:(p:Product)=>void;remove:(p:Product)=>void}){return <><PageHead eyebrow="CATALOGUE" title="Produits & services" text="Enregistrez ce que vous vendez pour accélérer les encaissements et la facturation." actions={<Btn onClick={add}><Plus size={16}/> Ajouter</Btn>}/><div className="prosuite-productgrid">{products.map(p=><article className="prosuite-product" key={p.id}><span>{p.kind==="product"?"Produit":"Service"}</span><h3>{p.name}</h3><p>{p.description||"Aucune description"}</p><strong>{euro(p.unitPrice)} HT</strong><small>TVA {p.vatRate}% {p.active?"· Actif":"· Archivé"}</small><div className="prosuite-rowactions"><button onClick={()=>edit(p)}><Pencil size={15}/></button><button onClick={()=>remove(p)}><Trash2 size={15}/></button></div></article>)}</div>{!products.length&&<Empty text="Votre catalogue est vide."/>}</>}
 

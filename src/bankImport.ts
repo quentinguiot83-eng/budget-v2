@@ -74,7 +74,7 @@ function readDate(s:string):string{
   let m=v.match(/^(\d{4})-(\d{1,2})-(\d{1,2})(?:\s.*)?$/);
   if(m){year=+m[1];month=+m[2];day=+m[3];}
   else{
-    m=v.match(/^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{2}|\d{4})(?:\s.*)?$/);
+    m=v.match(/^(\d{1,2})[/.-](\d{1,2})[/.-](\d{2}|\d{4})(?:\s.*)?$/);
     if(!m)throw Error("Date bancaire non reconnue : "+v.slice(0,40));
     day=+m[1];month=+m[2];year=m[3].length===2?2000+Number(m[3]):Number(m[3]);
   }

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { Check, ChevronDown, Pencil, Plus, Trash2, X } from "lucide-react";
 import { rpc } from "./api";
@@ -62,7 +62,6 @@ export default function ProBusinessMenu({activeBusinessId,businesses,onChanged}:
   const [state,setState]=useState<BusinessState>({activeBusinessId:activeBusinessId??null,businesses:[]});
   const [busy,setBusy]=useState(false);
   const [error,setError]=useState("");
-  const active=useMemo(()=>businesses.find(b=>b.id===activeBusinessId)??businesses[0],[businesses,activeBusinessId]);
   const closeManager=()=>{setManage(false);setEditing(null);};
 
   useEffect(()=>{

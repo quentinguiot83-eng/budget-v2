@@ -4,6 +4,8 @@ export type CalendarFeed = {
 };
 
 function escapeText(value: string): string {
+  // Retire volontairement les caractères de contrôle, interdits dans un fichier iCalendar.
+  // eslint-disable-next-line no-control-regex
   return value.replace(/\\/g, "\\\\").replace(/\r\n|\r|\n/g, "\\n").replace(/;/g, "\\;").replace(/,/g, "\\,").replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/g, "");
 }
 function date(value: string): string {
