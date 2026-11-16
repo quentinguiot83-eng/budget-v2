@@ -106,7 +106,7 @@ export default function ProWorkspace({
   onOpenQuickAdd?: ()=>void;
   householdCurrentAccounts?: PersonalAccount[];
   onHouseholdRefresh?: ()=>Promise<void>;
-} = {}){
+}){
   const [enabled,setEnabled]=useState(native);
   const [open,setOpen]=useState(native);
   const [section,setSection]=useState<Section>("dashboard");

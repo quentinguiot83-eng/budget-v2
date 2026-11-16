@@ -16,10 +16,8 @@ import type { InlineChoiceCreator, QuickCategoryDraft } from "./InlineCategoryCr
 import { seedStarterCategories } from "./starterCategories";
 import PhoneNotifications, { dispatchPhoneAlerts } from "./PhoneNotifications";
 import { categoryUsage, categoryReplacements, deleteArchivedCategory } from "./categoryDeletion";
-import AnalysisDashboard from "./AnalysisDashboard";
 import { freezePastForecasts } from "./monthlyComparison";
 import TransactionSearch from "./TransactionSearch";
-import OnboardingTutorial from "./OnboardingTutorial";
 import WealthPageStyles from "./WealthPageStyles";
 import PersonalPageStyles from "./PersonalPageStyles";
 import ProjectionPageStyles from "./ProjectionPageStyles";
@@ -33,7 +31,6 @@ import { deleteTripCover, uploadTripCover, useTripCoverUrls, TRIP_COVERS_BUCKET 
 import { applyInitialSetup } from "./SetupWizard";
 import ProgressiveSetupWizard from "./ProgressiveSetupWizard";
 import GettingStartedChecklist from "./GettingStartedChecklist";
-import GuidedJourney from "./GuidedJourney";
 import RecurringIncomeManager from "./RecurringIncomeManager";
 import JoinedFoyerProfile from "./JoinedFoyerProfile";
 import {
@@ -111,11 +108,20 @@ import { api, rpc } from "./api";
 import { Modal, Form, Progress, Empty, Row, BlockInfo, type Field } from "./ui";
 import AddPage from "./pages/AddPage";
 import TransactionQuickAssist from "./TransactionQuickAssist";
-import BankReconciliation, { type BankDraft } from "./BankReconciliation";
+import type { BankDraft } from "./BankReconciliation";
 import { normalizeBankLabel, reconcileBankRows, type BankRow } from "./bankImport";
 import { checkFavorite, favoriteFromTransaction, quickSuggestions } from "./quickEntry";
 import LoansPage from "./pages/LoansPage";
-import ProWorkspace from "./ProWorkspace";
+import { deferred } from "./deferred";
+
+// Écrans lourds chargés à la demande pour alléger le démarrage de la PWA :
+// le module Pro embarque jsPDF et les graphiques, les autres ne servent
+// qu'à certains moments (import bancaire, analyse, tutoriels).
+const ProWorkspace = deferred(() => import("./ProWorkspace"), <div className="chart-loading" />);
+const BankReconciliation = deferred(() => import("./BankReconciliation"));
+const AnalysisDashboard = deferred(() => import("./AnalysisDashboard"), <div className="chart-loading" />);
+const OnboardingTutorial = deferred(() => import("./OnboardingTutorial"));
+const GuidedJourney = deferred(() => import("./GuidedJourney"));
 import {
   type State,
   type Account,

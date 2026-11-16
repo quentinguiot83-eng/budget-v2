@@ -347,8 +347,6 @@
 .prosuite-native .pro-db-salary>strong{font-size:23px}
 .prosuite-native .pro-db-treasury{padding:14px}
 .prosuite-native .pro-db-treasury strong{font-size:23px}
-.quick-add-menu:has(.pro-v3-add-title){max-height:min(70dvh,580px);overflow-y:auto;overscroll-behavior:contain;padding-bottom:15px}
-.pro-v3-add-title{display:block;font-size:14px;margin:8px 8px 13px}
 :root[data-mode="dark"] .prosuite-native .prosuite-topbar,:root[data-mode="dark"] .pro-v3-management-grid>button{background:rgba(24,32,43,.94)!important;color:#e5edf5;border-color:#2a3744!important}
 :root[data-mode="dark"] .pro-v3-management-grid strong{color:#e5edf5}
 @media(max-width:800px){

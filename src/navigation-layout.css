@@ -633,3 +633,8 @@
 @media(prefers-reduced-motion:reduce) {
   .app .home-current-account-row {transition:none;}
 }
+
+/* Titre du menu « Ajouter » (Pro et compte perso). Ces règles vivaient dans
+   pro-suite.css, désormais chargé seulement avec le module Pro. */
+.quick-add-menu:has(.pro-v3-add-title){max-height:min(70dvh,580px);overflow-y:auto;overscroll-behavior:contain;padding-bottom:15px}
+.pro-v3-add-title{display:block;font-size:14px;margin:8px 8px 13px}
