@@ -97,7 +97,6 @@ body:has(.app) #root {
 .app .account-card,
 .app .transaction-search,
 .app .transaction-search-results,
-.app .wealth-account-list,
 .app .analysis-dashboard .card,
 .app .wimm-settings-menu {
   background: var(--aurora-glass);
@@ -229,8 +228,7 @@ body:has(.app) #root {
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
 }
-.app .budget-category-list,
-.app .wealth-account-list { background: transparent; }
+.app .budget-category-list { background: transparent; }
 
 /* Patrimoine et Projections — hiérarchie claire et graphiques non voilés. */
 .app .wealth-total-card,
@@ -899,15 +897,11 @@ body:has(.app),body:has(.app) #root {background:#f0f0ef!important}
 :root:not([data-mode="dark"]) .app .projection-projects-card .row {
   border-bottom:1px solid rgba(100,110,120,.11);
 }
-:root:not([data-mode="dark"]) .app .fixed-expenses-list,
-:root:not([data-mode="dark"]) .app .recurring-list,
-:root:not([data-mode="dark"]) .app .fixed-expense-list {
+:root:not([data-mode="dark"]) .app .recurring-list {
   background:rgba(255,255,255,.43)!important;
   border-radius:18px;
 }
-:root:not([data-mode="dark"]) .app .fixed-expenses-list > *,
-:root:not([data-mode="dark"]) .app .recurring-list > *,
-:root:not([data-mode="dark"]) .app .fixed-expense-list > * {
+:root:not([data-mode="dark"]) .app .recurring-list > * {
   background:transparent!important;
   padding-block:12px!important;
   margin-block:0!important;

@@ -18,9 +18,8 @@
 .analysis-period-options button:focus-visible, .analysis-local-filters button:focus-visible {
   outline: 2px solid var(--accent-deep); outline-offset: 2px;
 }
-.analysis-anchor-label, .analysis-date-inputs label { color: var(--muted); font-size: .81rem; font-weight: 650; }
-.analysis-anchor-label { display: inline-flex; align-items: center; gap: 10px; }
-.analysis-anchor-label input, .analysis-date-inputs input {
+.analysis-date-inputs label { color: var(--muted); font-size: .81rem; font-weight: 650; }
+.analysis-date-inputs input {
   background: var(--soft-canvas); border: 1px solid var(--border);
   color: var(--ink); border-radius: 11px; padding: 9px 10px; min-height: 42px;
   font-size: .86rem; max-width: 100%; min-width: 0;
@@ -116,8 +115,6 @@
   .analysis-dashboard .card { padding: 19px; }
   .analysis-period-options { gap: 5px; margin: 12px 0; }
   .analysis-period-options button { font-size: .75rem; min-height: 38px; padding: 7px 3px; }
-  .analysis-anchor-label { justify-content: space-between; width: 100%; }
-  .analysis-anchor-label input { flex: 1 1 auto; max-width: 190px; }
   .analysis-date-inputs { gap: 9px; }
   .analysis-date-inputs input { padding: 8px 6px; font-size: .78rem; min-height: 40px; }
   .analysis-range-foot { align-items: flex-start; }

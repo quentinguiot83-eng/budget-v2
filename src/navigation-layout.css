@@ -113,15 +113,10 @@
   .app .bottom-nav button span {font-size:.53rem}
   .app .floating-add-button {width:49px;height:49px;bottom:calc(91px + env(safe-area-inset-bottom,0px))}
 }
-.credit-rule-actions {display:flex;align-items:center;justify-content:flex-end;flex-wrap:wrap;gap:7px}
-.credit-rule-actions .credit-rule-delete {display:inline-flex;align-items:center;justify-content:center;gap:5px;border:1px solid color-mix(in srgb,var(--wimm-coral) 18%,var(--border));color:var(--wimm-coral)}
-.credit-rule-actions .credit-rule-delete svg {flex-shrink:0}
 .loans-credits-card .rule-row {gap:12px;align-items:center}
 .loans-credits-card .rule-row .grow {min-width:0}
 @media (max-width:600px) {
   .loans-credits-card .rule-row {display:grid;grid-template-columns:minmax(0,1fr) auto}
-  .loans-credits-card .credit-rule-actions {flex-direction:column;align-items:stretch}
-  .loans-credits-card .credit-rule-actions button {min-width:92px;min-height:35px;padding:7px 9px;font-size:.73rem}
 }
 
 
@@ -331,8 +326,7 @@
 }
 
 /* Espacement principal : la hiérarchie vient du contenu, pas de marges énormes. */
-.app .content,
-.app .content > .page-stack { gap: 18px; }
+.app .content { gap: 18px; }
 .app .content > .card,
 .app .content > .two-col > .card,
 .app .wimm-home-clean > .card { border-radius: 19px; }
@@ -400,8 +394,7 @@
   }
   .app .page-heading { padding-block: 13px 13px; gap: 10px; }
   .app .page-heading > .month-picker { margin-top: 8px; }
-  .app .content,
-  .app .content > .page-stack { gap: 15px; }
+  .app .content { gap: 15px; }
   .app .wimm-home-clean { gap: 13px; }
   .app .wimm-home-clean .home-balance-main {
     padding: 18px;
