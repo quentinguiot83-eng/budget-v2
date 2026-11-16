@@ -17,9 +17,6 @@
   color: var(--ink);
   background: var(--soft-canvas);
 }
-:root[data-theme="sage"] { --accent-deep: #367360; --accent: #d2e9df; --accent-soft: #edf7f2; --chart: #5c9a84; }
-:root[data-theme="rose"] { --accent-deep: #a54478; --accent: #f4d8e9; --accent-soft: #fff0f7; --chart: #c2689b; }
-:root[data-theme="peach"] { --accent-deep: #a75a31; --accent: #f5dfcd; --accent-soft: #fff4ea; --chart: #cc885e; }
 :root[data-mode="dark"], :root[data-mode="dark"][data-theme] {
   --accent: #c8b8fa;
   --accent-soft: #302849;
@@ -35,7 +32,7 @@
   --soft-shadow: 0 6px 28px rgba(0, 0, 0, .12);
   --soft-gradient: linear-gradient(115deg, #27364c 0%, #342d50 75%, #3d3059 100%);
 }
-body { background: var(--soft-canvas); color: var(--ink); }
+body { color: var(--ink); }
 button, input, select, textarea { font-family: inherit; }
 h1, h2, h3, .hero-number, .large { letter-spacing: -.035em; }
 h1 { font-weight: 800; }
@@ -44,9 +41,6 @@ button { transition: background .16s ease, box-shadow .16s ease, transform .16s 
 button:focus-visible, a:focus-visible { outline: 3px solid var(--chart); outline-offset: 3px; }
 button:disabled { opacity: .55; }
 .main { padding-inline: 40px; }
-.content { gap: 22px; }
-.page-heading { padding-block: 30px 24px; }
-.page-heading h1 { font-size: clamp(1.65rem, 3vw, 2.2rem); }
 .eyebrow { color: var(--muted); }
 .sidebar { background: var(--surface); border-color: var(--border); padding: 28px 18px; }
 .sidebar .brand { color: var(--ink); font-size: 1.35rem; }
@@ -73,33 +67,26 @@ button:disabled { opacity: .55; }
   background: var(--surface); color: var(--ink); border: 1px solid var(--border);
   border-radius: 24px; box-shadow: var(--soft-shadow);
 }
-.card { padding: 24px; }
-.overview { gap: 18px; grid-template-columns: 1.6fr 1fr 1fr; }
-.balance-card { padding: 28px; border: 0; border-radius: 26px; color: var(--ink); background: var(--soft-gradient); box-shadow: var(--soft-shadow); min-height: 205px; }
-.balance-card .hero-number { font-size: clamp(2rem, 3.8vw, 3.2rem); font-weight: 800; margin: 24px 0; }
+.overview { grid-template-columns: 1.6fr 1fr 1fr; }
+.balance-card { border: 0; color: var(--ink); background: var(--soft-gradient); box-shadow: var(--soft-shadow); }
+.balance-card .hero-number { font-weight: 800; }
 .balance-card button { color: var(--accent-deep); font-weight: 700; }
 .balance-card .split { color: var(--muted); gap: 12px; }
-.metric { padding: 24px; gap: 18px; }
-.metric strong { color: var(--ink); font-size: 1.65rem; letter-spacing: -.04em; }
+.metric strong { color: var(--ink); }
 .row-icon,
 .add-card > span { background: var(--accent-soft); color: var(--accent-deep); border-radius: 15px; }
-.home-remaining-grid, .two-col, .category-grid, .add-grid { gap: 20px; }
-.home-remaining-card { padding: 22px; background: var(--soft-blue); }
+.home-remaining-card { background: var(--soft-blue); }
 .home-remaining-card:nth-child(2) { background: var(--soft-lilac); }
-.available-card { background: var(--soft-blue); }
-.available-card .large { font-size: 2.1rem; }
-.primary, .prosuite-btn { background: #7650df; color: #fff; border: 0; border-radius: 15px; box-shadow: 0 5px 15px rgba(110, 65, 213, .15); }
+.primary, .prosuite-btn { border: 0; border-radius: 15px; box-shadow: 0 5px 15px rgba(110, 65, 213, .15); }
 .primary:hover, .prosuite-btn:hover { background: #6540cc; }
 .secondary { background: var(--accent-soft); color: var(--accent-deep); border: 1px solid var(--border); border-radius: 15px; }
 .text { color: var(--accent-deep); }
-.row { padding: 16px 0; border-color: var(--border); }
-.row-icon { padding: 9px; width: 40px; height: 40px; display: grid; place-items: center; flex-shrink: 0; }
-.category { padding: 22px; }
+.row { border-color: var(--border); }
+.row-icon { display: grid; place-items: center; flex-shrink: 0; }
 .category .progress, .progress { height: 6px; border-radius: 20px; background: var(--border); }
 .progress span { background: var(--chart); border-radius: inherit; }
-.add-card { padding: 25px; text-align: left; }
+.add-card { text-align: left; }
 .add-card:hover { border-color: var(--chart); transform: translateY(-2px); }
-.add-card > span { width: 48px; height: 48px; }
 .add-card:nth-child(2) > span { background: var(--soft-blue); color: #4879bc; }
 .add-card:nth-child(4) > span { background: var(--soft-lilac); }
 .add-card p,
@@ -118,9 +105,7 @@ dialog::backdrop { background: rgba(25, 22, 46, .45); backdrop-filter: blur(6px)
 .prosuite-native .prosuite-topbar, .prosuite-native .prosuite-nav { background: var(--surface); border-color: var(--border); border-radius: 20px; }
 .prosuite-native .prosuite-topbar { margin-bottom: 18px; }
 .prosuite-native .prosuite-nav { padding: 12px; }
-.prosuite-native .prosuite-nav button.active { background: var(--accent-soft); color: var(--accent-deep); }
 .prosuite-native .prosuite-main { padding-top: 0; }
-.prosuite-card, .prosuite-metric { padding: 22px; }
 .prosuite-metric:nth-child(2n+1) { background: var(--soft-blue); }
 .prosuite-metric:nth-child(2n) { background: var(--soft-lilac); }
 .prosuite-pagehead p, .prosuite-metric span, .prosuite-empty, .prosuite-form label, .prosuite-client p { color: var(--muted); }
@@ -131,15 +116,15 @@ dialog::backdrop { background: rgba(25, 22, 46, .45); backdrop-filter: blur(6px)
 .prosuite-btn.secondary, .prosuite-icon, .prosuite-rowactions button { background: var(--accent-soft); color: var(--accent-deep); border-color: var(--border); }
 @media (max-width: 850px) {
   .main { padding-inline: 22px; --mobile-gutter: 22px; }
-  .soft-topbar { padding-inline: 22px; margin-inline: -22px; background: var(--surface); border-bottom: 0; min-height: 84px; }
+  .soft-topbar { padding-inline: 22px; margin-inline: -22px; background: var(--surface); border-bottom: 0; }
   .soft-topbar > div:first-child { display: grid; gap: 4px; min-width: 0; }
-  .soft-topbar > div:first-child > .eyebrow { font-size: .65rem; max-width: 190px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-left: 42px; }
+  .soft-topbar > div:first-child > .eyebrow { max-width: 190px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-left: 42px; }
   .mobile-brand-row { display: flex; align-items: center; gap: 9px; }
   .mobile-menu-trigger { width: 32px; height: 32px; border-radius: 11px; }
   .soft-topbar .icon { width: 34px; height: 34px; }
   .soft-topbar .flex { gap: 6px; }
-  .page-heading { padding-block: 25px 22px; gap: 14px; }
-  .bottom-nav { left: 14px; right: 14px; bottom: calc(12px + env(safe-area-inset-bottom)); border: 1px solid var(--border); border-radius: 25px; padding: 13px 9px 11px; background: var(--surface); box-shadow: 0 8px 35px rgba(39, 31, 75, .12); }
+  .page-heading { gap: 14px; }
+  .bottom-nav { left: 14px; right: 14px; bottom: calc(12px + env(safe-area-inset-bottom)); border: 1px solid var(--border); padding: 13px 9px 11px; background: var(--surface); box-shadow: 0 8px 35px rgba(39, 31, 75, .12); }
   .bottom-nav button { color: var(--muted); font-size: .61rem; gap: 6px; }
   .bottom-nav button.active { color: var(--accent-deep); }
   .page-footer { padding-bottom: calc(115px + env(safe-area-inset-bottom)); }
@@ -150,19 +135,11 @@ dialog::backdrop { background: rgba(25, 22, 46, .45); backdrop-filter: blur(6px)
 @media (max-width: 560px) {
   .main { padding-inline: 20px; --mobile-gutter: 20px; }
   .soft-topbar { margin-inline: -20px; padding-inline: 20px; }
-  .content { gap: 20px; }
-  .card, .category, .home-remaining-card { padding: 20px; border-radius: 22px; }
-  .balance-card { padding: 24px; min-height: 185px; border-radius: 24px; }
-  .balance-card .hero-number { font-size: 2.45rem; margin: 22px 0; }
   .balance-card .split { font-size: .74rem; flex-wrap: wrap; }
-  .metric { padding: 18px; gap: 12px; border-radius: 22px; }
-  .metric strong { font-size: 1.42rem; }
-  .home-remaining-grid { gap: 14px; }
-  .home-remaining-card strong { font-size: 1.35rem; }
   .sheet { padding: 22px; }
   .prosuite-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
-  .prosuite-metric { padding: 17px; border-radius: 20px; min-width: 0; }
-  .prosuite-metric strong { font-size: 1.35rem; overflow-wrap: anywhere; }
+  .prosuite-metric { min-width: 0; }
+  .prosuite-metric strong { overflow-wrap: anywhere; }
   .prosuite-native .prosuite-main { padding-inline: 0; }
 }
 /* Explicit night surfaces override legacy page-specific light colours. */
@@ -184,10 +161,8 @@ dialog::backdrop { background: rgba(25, 22, 46, .45); backdrop-filter: blur(6px)
 :root[data-mode="dark"] .prosuite-metric:nth-child(2n+1) { background: var(--soft-blue); }
 :root[data-mode="dark"] .home-remaining-card:nth-child(2),
 :root[data-mode="dark"] .prosuite-metric:nth-child(2n) { background: var(--soft-lilac); }
-:root[data-mode="dark"] .primary, :root[data-mode="dark"] .prosuite-btn { background: #7650df; color: #fff; }
 :root[data-mode="dark"] .secondary, :root[data-mode="dark"] .pills button,
 :root[data-mode="dark"] .prosuite-btn.secondary { background: var(--accent-soft); color: var(--ink); }
-:root[data-mode="dark"] .pills button.selected { background: #7650df; color: #fff; }
 :root[data-mode="dark"] .field input, :root[data-mode="dark"] .field select,
 :root[data-mode="dark"] .field textarea { background: var(--soft-canvas); color: var(--ink); border-color: var(--border); }
 :root[data-mode="dark"] .recharts-cartesian-axis-tick text { fill: var(--muted); }
@@ -195,12 +170,11 @@ dialog::backdrop { background: rgba(25, 22, 46, .45); backdrop-filter: blur(6px)
 :root[data-mode="dark"] .recharts-tooltip-label { color: var(--ink) !important; }
 @media (prefers-reduced-motion: reduce) { button { transition: none; } .add-card:hover { transform: none; } }
 .billing-v2-card, .billing-v2-modal, .pro-business-modal, .pro-business-dropdown { border-radius: 24px; background: var(--surface); color: var(--ink); border-color: var(--border); box-shadow: var(--soft-shadow); }
-.billing-v2-primary, .pro-business-primary { background: #7650df; color: #fff; border-radius: 15px; }
+.billing-v2-primary, .pro-business-primary { border-radius: 15px; }
 .billing-v2-secondary { border-radius: 15px; }
 .billing-v2-tabs span { background: var(--accent-soft); color: var(--accent-deep); }
 .billing-v2-form input, .billing-v2-form select, .billing-v2-form textarea { background: var(--soft-canvas); color: var(--ink); border-color: var(--border); border-radius: 14px; }
 .account-icon { border-radius: 14px; }
-.swatch.blue { background: #ddd6fe; color: #6d43dc; }
 .live-tour-popover { border-radius: 24px; box-shadow: 0 12px 45px #25243825; }
 @media (max-width: 800px) {
   .prosuite-native .prosuite-nav { gap: 7px; margin-bottom: 20px; border: 1px solid var(--border); }
@@ -259,7 +233,7 @@ dialog::backdrop { background: rgba(25, 22, 46, .45); backdrop-filter: blur(6px)
 .category .progress { margin: 11px 0 9px; }
 .card > .category { padding: 11px 0 0; box-shadow: none; }
 .category h3 { font-size: .92rem; }
-.category-icon { width: 36px; height: 36px; border-radius: 12px; }
+.category-icon { width: 36px; height: 36px; }
 .row { padding: 12px 0; }
 .row-label { font-size: .85rem; }
 .row-icon { width: 35px; height: 35px; padding: 8px; border-radius: 12px; }
@@ -312,7 +286,6 @@ dialog::backdrop { background: rgba(25, 22, 46, .45); backdrop-filter: blur(6px)
   .budget-summary strong { font-size: 1.2rem; }
   .budget-summary > div > span, .budget-summary p { font-size: .76rem; }
   .budget-summary p { margin-top: 7px; }
-  .available-card .large { font-size: 1.7rem; }
   .large { font-size: 1.4rem; }
   .category .flex { gap: 10px; }
   .category .progress { margin: 10px 0 8px; }
@@ -362,8 +335,7 @@ dialog::backdrop { background: rgba(25, 22, 46, .45); backdrop-filter: blur(6px)
 .home-greeting { margin: 0 0 8px; font-size: .9rem; color: var(--muted); font-weight: 500; }
 .profile-name-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding-block: 10px 18px; font-size: .82rem; }
 .emoji-picker { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 7px; margin: 6px 0; }
-.emoji-picker button { display: grid; place-items: center; min-height: 44px; font-size: 1.4rem; border: 1px solid var(--border); border-radius: 12px; background: var(--soft-canvas); }
-.emoji-picker button[aria-pressed="true"] { background: var(--accent-soft); border: 2px solid var(--accent-deep); }
+.emoji-picker button { display: grid; place-items: center; min-height: 44px; font-size: 1.4rem; }
 .category-icon { font-size: 1.25rem; }
 .account .account-icon { width: 36px; height: 36px; }
 .account .account-icon svg { width: 19px; height: 19px; }
@@ -395,7 +367,7 @@ button.block-info:focus-visible { outline: 2px solid currentColor; outline-offse
 .appearance-choices button:focus-visible { outline: 2px solid var(--accent-deep); outline-offset: 2px; }
 
 /* Keep app content and the visible top bar consistent with the saved theme. */
-#root { background: var(--soft-canvas); min-height: 100dvh; }
+#root { min-height: 100dvh; }
 .soft-topbar { background-color: var(--status-bar-background, var(--surface)) !important; }
 
 /* Shared month navigation: reset sits above, arrows stay aligned. */
@@ -543,9 +515,6 @@ button.block-info:focus-visible { outline: 2px solid currentColor; outline-offse
   box-shadow: var(--soft-shadow);
   min-width: 0;
 }
-.page-remaining-summary-fixed {
-  background: linear-gradient(115deg, var(--soft-blue), var(--surface) 78%);
-}
 .page-remaining-heading,
 .page-remaining-main,
 .page-remaining-foot {
@@ -656,11 +625,7 @@ button.block-info:focus-visible { outline: 2px solid currentColor; outline-offse
 /* Synthèse Budget : total mensuel et uniquement deux suivis lisibles. */
 .budget-month-tracker {
   padding: 24px;
-  background: linear-gradient(110deg, var(--accent-soft), var(--surface));
   color: var(--ink);
-  border: 1px solid color-mix(in srgb, var(--accent-deep) 15%, var(--border));
-  border-radius: 24px;
-  box-shadow: var(--soft-shadow);
   min-width: 0;
 }
 .budget-month-tracker-total {
@@ -692,9 +657,6 @@ button.block-info:focus-visible { outline: 2px solid currentColor; outline-offse
 .budget-month-tracker-amount .muted { font-weight: 500; }
 .budget-month-tracker-line .progress {
   height: 8px; margin: 0; background: var(--border);
-}
-.budget-month-tracker-line:first-child .progress span {
-  background: color-mix(in srgb, var(--accent-deep) 68%, var(--muted));
 }
 .budget-month-tracker-line:last-child .progress span {
   background: var(--accent-deep);
@@ -799,16 +761,6 @@ button.block-info:focus-visible { outline: 2px solid currentColor; outline-offse
 .home-remaining-card:nth-child(2) {
   background: linear-gradient(125deg,color-mix(in srgb, #ffb2c6 20%, var(--surface)),var(--surface));
 }
-.budget-month-tracker {
-  background: linear-gradient(115deg,
-    color-mix(in srgb, #84c9ee 13%, var(--surface)),
-    color-mix(in srgb, #b9a8fb 13%, var(--surface)));
-}
-.page-remaining-summary-fixed {
-  background: linear-gradient(115deg,
-    color-mix(in srgb, #88d6d0 16%, var(--surface)),
-    color-mix(in srgb, #9ec9f0 10%, var(--surface)));
-}
 :root[data-mode="dark"] .home-overview .balance-card,
 :root[data-mode="dark"] .wealth-overview .balance-card {
   border: 1px solid color-mix(in srgb,#ada1f4 24%,var(--border));
@@ -852,7 +804,7 @@ button.block-info:focus-visible { outline: 2px solid currentColor; outline-offse
 .savings-home-link { display: inline-flex; justify-content: flex-start; align-items: center; gap: 5px; width: fit-content; margin-top: 4px; }
 .savings-done-tag { display: inline-flex; align-items: center; gap: 5px; background: var(--accent-soft); color: var(--accent-deep); border-radius: 12px; padding: 6px 9px; font-weight: 750; font-size: .75rem; }
 .savings-wealth-panel { padding: 0 !important; overflow: hidden; border-color: color-mix(in srgb, var(--accent-deep) 17%, var(--border)); }
-.savings-wealth-summary { list-style: none; cursor: pointer; display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 21px 24px; background: linear-gradient(105deg, color-mix(in srgb, #b3a1f2 14%, var(--surface)), color-mix(in srgb, #9edbcf 13%, var(--surface))); }
+.savings-wealth-summary { list-style: none; cursor: pointer; display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 21px 24px; }
 .savings-wealth-summary::-webkit-details-marker { display: none; }
 .savings-wealth-summary:focus-visible { outline: 2px solid var(--accent-deep); outline-offset: -4px; }
 .savings-wealth-heading { display: grid; gap: 6px; min-width: 0; }
@@ -883,8 +835,6 @@ button.block-info:focus-visible { outline: 2px solid currentColor; outline-offse
 .home-balance-available small { color: var(--muted); font-size: .75rem; }
 .wimm-home-clean .home-income-expenses { margin: 0; }
 .wimm-home-clean .home-income-expenses .home-remaining-card { border-radius: 20px; padding: 20px; display: grid; align-content: start; gap: 12px; }
-.wimm-home-clean .home-income { background: color-mix(in srgb, #97d7c9 18%, var(--surface)); }
-.wimm-home-clean .home-expenses { background: color-mix(in srgb, #ecc2d0 21%, var(--surface)); }
 .wimm-home-clean .home-income-expenses .home-remaining-card strong { font-size: clamp(1.25rem, 2.8vw, 1.65rem); font-variant-numeric: tabular-nums; }
 .wimm-home-clean .home-income-expenses .text { display: inline-flex; align-items: center; gap: 3px; justify-self: start; padding: 0; font-size: .78rem; }
 .wimm-home-clean > .savings-home-summary { margin: 0; }
@@ -909,9 +859,7 @@ button.block-info:focus-visible { outline: 2px solid currentColor; outline-offse
 
 /* Budget simplifié : trois raccourcis et enveloppes en liste compacte. */
 .budget-quick-links { display: grid !important; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px !important; margin: 15px 0 24px !important; }
-.budget-quick-links button { min-width: 0 !important; min-height: 66px; display: flex !important; flex-direction: column; align-items: center; justify-content: center; gap: 7px; padding: 11px 6px !important; border-radius: 17px; background: color-mix(in srgb, #a8cfc0 19%, var(--surface)); color: var(--accent-deep); font-weight: 700; font-size: .77rem; }
-.budget-quick-links button:nth-child(2) { background: color-mix(in srgb, #a7b4ed 20%, var(--surface)); }
-.budget-quick-links button:nth-child(3) { background: color-mix(in srgb, #d8b4e6 19%, var(--surface)); }
+.budget-quick-links button { min-width: 0 !important; min-height: 66px; display: flex !important; flex-direction: column; align-items: center; justify-content: center; gap: 7px; padding: 11px 6px !important; border-radius: 17px; color: var(--accent-deep); font-weight: 700; font-size: .77rem; }
 .budget-category-heading { margin: 12px 0 13px; gap: 10px; }
 .budget-add-category { display: inline-flex; align-items: center; justify-content: center; gap: 5px; white-space: nowrap; }
 .budget-category-list { display: grid !important; grid-template-columns: 1fr !important; gap: 0 !important; border: 1px solid var(--border); background: var(--surface); border-radius: 21px; padding: 5px 17px; overflow: hidden; }

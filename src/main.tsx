@@ -8,9 +8,7 @@ import "./style.css";
 import "./soft-tech.css";
 import "./analysis-dashboard.css";
 import "./navigation-layout.css";
-import "./aurora-preview.css";
-import "./aurora-theme.css";
-import "./liquid-charts-preview.css";
+import "./aurora.css";
 import "./ios-pwa-layout.css";
 import "./wimm-report-fixes.css";
 
