@@ -114,7 +114,7 @@
   .analysis-dashboard { gap: 15px; }
   .analysis-dashboard .card { padding: 19px; }
   .analysis-period-options { gap: 5px; margin: 12px 0; }
-  .analysis-period-options button { font-size: .75rem; min-height: 38px; padding: 7px 3px; }
+  .analysis-period-options button { min-height: 38px; padding: 7px 3px; }
   .analysis-date-inputs { gap: 9px; }
   .analysis-date-inputs input { padding: 8px 6px; font-size: .78rem; min-height: 40px; }
   .analysis-range-foot { align-items: flex-start; }
