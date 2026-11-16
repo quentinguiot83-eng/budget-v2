@@ -337,7 +337,7 @@
 
 /* Aurora V2 — cross-page theme coverage and continuous iOS-to-header gradient. */
 /*
- * ProjectionPageStyles is a runtime <style>, so explicit scoped selectors and
+ * ProjectionPageStyles is a runtime \3c style>, so explicit scoped selectors and
  * !important are intentional. Data semantics of chart traces remain untouched.
  */
 
@@ -1392,11 +1392,6 @@ html:root body #root {
 }
 .app .prosuite-native .prosuite-shortcuts svg {
   color: var(--accent-deep) !important;
-}
-.app .prosuite-native .prosuite-client-avatar,
-.app .prosuite-native .prosuite-product-icon {
-  color: var(--accent-deep) !important;
-  background: color-mix(in srgb,var(--aurora-tone) 13%,var(--surface)) !important;
 }
 /* The first two professional metrics remain SEMANTIC financial indicators. */
 
