@@ -483,7 +483,7 @@ export default function App() {
             </div>
           )}
         </div>
-        <main className="content">
+        <main className={"content" + (["home", "budget", "wealth", "trips", "projection", "pro"].includes(route) ? "" : " ws-classic")} data-screen={route}>
           {(onboardingJourneyPreviewEnabled || (session?.user.user_metadata?.wimm_progressive_onboarding === true &&
             session?.user.user_metadata?.wimm_journey_done !== true && !demoEnabled)) && (
               <GuidedJourney

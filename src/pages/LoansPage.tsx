@@ -42,7 +42,7 @@ export default function LoansPage({
       <div className="toolbar loans-soft-actions">
 
         <button
-          className="primary"
+          className="secondary"
           onClick={() =>
             editRule(
               undefined,

@@ -270,3 +270,50 @@
   .app .ws-projection-more > .ws-disclosure .swipe-actions > .swipe-actions-content { background: var(--surface) !important; }
 }
 .app .ws-projection-chart .projection-legend-v2 { display: none; }
+
+/*
+ * Écrans secondaires (transactions, charges fixes, crédits, compte perso,
+ * calendrier, analyse, réglages…) : on garde leur structure et on leur
+ * applique le même système visuel que les écrans allégés.
+ */
+.app .content.ws-classic .card,
+.app .content.ws-classic .wimm-settings-menu,
+.app .content.ws-classic .empty {
+  background: var(--ws-card-bg);
+  border: 1px solid var(--ws-card-edge);
+  border-radius: var(--ws-radius-card);
+  box-shadow: var(--ws-shadow);
+  backdrop-filter: saturate(1.2) blur(14px);
+  -webkit-backdrop-filter: saturate(1.2) blur(14px);
+}
+.app .content.ws-classic .card h2,
+.app .content.ws-classic .section-head h2,
+.app .content.ws-classic .empty h3 {
+  font: 800 var(--ws-fs-card)/1.25 Manrope, -apple-system, sans-serif;
+  color: var(--ink); letter-spacing: 0;
+}
+.app .content.ws-classic .muted { font-size: var(--ws-fs-small); }
+.app .content.ws-classic button.primary,
+.app .content.ws-classic a.primary {
+  min-height: 44px; border-radius: var(--ws-radius-pill); border: 0;
+  background: var(--ink); color: var(--surface); box-shadow: none;
+  font-size: var(--ws-fs-small); font-weight: 600; padding: 0 16px;
+}
+.app .content.ws-classic button.secondary {
+  min-height: 44px; border-radius: var(--ws-radius-pill); border: 0;
+  background: var(--accent-soft); color: var(--action, var(--accent-deep)); box-shadow: none;
+  font-size: var(--ws-fs-small); font-weight: 600; padding: 0 16px;
+}
+.app .content.ws-classic button.secondary.compact,
+.app .content.ws-classic button.primary.compact { min-height: 36px; padding: 0 12px; }
+.app .content.ws-classic button.text {
+  color: var(--action, var(--accent-deep)); font-size: var(--ws-fs-small); font-weight: 600;
+}
+.app .content.ws-classic select,
+.app .content.ws-classic input:not([type="checkbox"]):not([type="radio"]):not([type="range"]) {
+  border-radius: var(--ws-radius-field);
+}
+.app .content.ws-classic .progress { border-radius: var(--ws-radius-pill); background: var(--accent-soft); }
+.app .content.ws-classic .progress > span { border-radius: inherit; }
+.app .content.ws-classic .loans-soft-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.app .content.ws-classic .loans-soft-actions > button { padding: 6px 10px; line-height: 1.2; }
