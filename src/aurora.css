@@ -97,18 +97,8 @@
 /* Les deux petites tuiles sont vitrées, mais les montants restent contrastés. */
 
 /* Budget — une carte majeure, raccourcis pastel et sous-cartes plus aérées. */
-.app .budget-quick-links button {
-  border: 1px solid var(--aurora-stroke);
-  background: rgba(224,248,240,.73);
-  box-shadow: 0 6px 19px rgba(55,90,109,.065);
-  backdrop-filter: blur(9px);
-  -webkit-backdrop-filter: blur(9px);
-}
-.app .budget-quick-links button:nth-child(2) { background: rgba(230,236,255,.78); }
-.app .budget-quick-links button:nth-child(3) { background: rgba(240,232,255,.77); }
 
 /* Patrimoine et Projections — hiérarchie claire et graphiques non voilés. */
-.app .wealth-total-card,
 .app .projection-main-card {
   background: linear-gradient(122deg, rgba(227,255,246,.79), rgba(252,251,255,.70) 58%, rgba(237,228,255,.78));
   border: 1px solid var(--aurora-stroke);
@@ -116,7 +106,6 @@
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
 }
-.app .wealth-breakdown-card,
 .app .projection-kpi,
 .app .projection-projects-card,
 .app .projection-annual-card,
@@ -127,9 +116,7 @@
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
 }
-.app .wealth-breakdown-card:first-child,
 .app .projection-kpi:first-child { background: linear-gradient(125deg, rgba(239,231,255,.75), var(--aurora-glass)); }
-.app .wealth-breakdown-card:nth-child(2),
 .app .projection-kpi:nth-child(2) { background: linear-gradient(125deg, rgba(229,240,255,.76), var(--aurora-glass)); }
 .app .projection-chart-card {
   /* Un fond neutre évite de brouiller les courbes, la légende et la fiscalité. */
@@ -225,12 +212,10 @@
   background-color: rgba(25,31,47,.86) !important;
   border-bottom-color: rgba(214,228,255,.10);
 }
-:root[data-mode="dark"] .app .wealth-total-card,
 :root[data-mode="dark"] .app .projection-main-card {
   border-color: var(--aurora-stroke);
 }
 :root[data-mode="dark"] .app .projection-chart-card,
-:root[data-mode="dark"] .app .wealth-breakdown-card,
 :root[data-mode="dark"] .app .projection-kpi,
 :root[data-mode="dark"] .app .trips-overview-card,
 :root[data-mode="dark"] .app .trips-financing-card,
@@ -239,18 +224,6 @@
 :root[data-mode="dark"] .app .trips-v2-hero {
   background: var(--aurora-glass);
   border-color: var(--aurora-stroke);
-}
-:root[data-mode="dark"] .app .budget-quick-links button {
-  background: rgba(36,83,73,.77);
-  color: var(--wimm-green);
-}
-:root[data-mode="dark"] .app .budget-quick-links button:nth-child(2) {
-  background: rgba(39,56,94,.80);
-  color: var(--wimm-blue);
-}
-:root[data-mode="dark"] .app .budget-quick-links button:nth-child(3) {
-  background: rgba(61,44,85,.82);
-  color: var(--wimm-lavender);
 }
 :root[data-mode="dark"] .app .wimm-settings-entry-icon {
   background: rgba(58,104,89,.23);
@@ -316,57 +289,12 @@
 .app .budget-category-list .category .meta { margin-top: 7px; }
 
 /* Patrimoine : une seule surface, des lignes de hauteur constante. */
-.app .wealth-accounts-list {
-  min-width: 0;
-  background: var(--aurora-glass-strong);
-  border: 1px solid var(--aurora-stroke);
-  border-radius: 21px;
-  box-shadow: var(--aurora-drop);
-  overflow: hidden;
-}
-.app .wealth-accounts-list > .account-swipe-row {
-  margin: 0 !important;
-  border-bottom: 1px solid var(--aurora-separator) !important;
-}
-.app .wealth-accounts-list > .account-swipe-row:last-child { border-bottom: 0 !important; }
-.app .wealth-accounts-list .account-swipe-row > .swipe-actions-content {
-  background: transparent !important;
-  padding-right: 0 !important;
-}
-.app .wealth-accounts-list .wealth-account-row {
-  margin: 0;
-  border: 0;
-  background: transparent !important;
-}
-.app .wealth-accounts-list .wealth-account-row:not([open]) > .wealth-account-expanded { display: none !important; }
-.app .wealth-accounts-list .wealth-account-summary {
-  box-sizing: border-box;
-  min-height: 73px;
-  padding: 12px 16px;
-  gap: 11px;
-}
-.app .wealth-accounts-list .wealth-account-expanded {
-  border-top: 1px solid var(--aurora-separator);
-  padding: 12px 16px 16px;
-}
-.app .wealth-accounts-list .wealth-account-icon {
-  width: 40px;
-  height: 40px;
-  flex-basis: 40px;
-}
-.app .wealth-accounts-list .wealth-account-row[open] > .wealth-account-summary {
-  background: color-mix(in srgb, var(--wimm-mint-wash) 42%, transparent);
-}
-@media (min-width: 851px), (pointer: fine) {
-  .app .wealth-accounts-list .wealth-account-summary { padding-right: 44px; }
-}
 
 /* Les rails des gestes sont masqués par une surface opaque lorsqu'une
    ligne est ouverte. Le fond ne doit pas apparaître par transparence. */
 @media (max-width: 850px) and (pointer: coarse) {
   .app .budget-category-list > .swipe-actions.is-open > .swipe-actions-content,
-  .app .wealth-accounts-list .account-swipe-row.is-open > .swipe-actions-content,
-  .app .transaction-search-results .transaction-swipe-row.is-open > .swipe-actions-content {
+.app .transaction-search-results .transaction-swipe-row.is-open > .swipe-actions-content {
     background: var(--surface) !important;
   }
   .app .budget-category-list > .swipe-actions.is-open > .swipe-actions-content > .category {
@@ -667,15 +595,11 @@ body:has(.app),body:has(.app) #root {background:#f0f0ef!important}
   background:rgba(101,151,138,.14)!important;
 }
 :root:not([data-mode="dark"]) .app .budget-category-list,
-:root:not([data-mode="dark"]) .app .wealth-accounts-list,
 :root:not([data-mode="dark"]) .app .transaction-search-results {
   background:rgba(255,255,255,.48)!important;
   border:1px solid rgba(255,255,255,.75)!important;
   box-shadow:var(--aurora-drop)!important;
   backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
-}
-:root:not([data-mode="dark"]) .app .wealth-accounts-list .wealth-account-summary {
-  min-height:62px;padding-block:9px;
 }
 :root:not([data-mode="dark"]) .app .budget-category-list .category {
   padding-block:10px!important;
@@ -957,7 +881,6 @@ body:has(.app),body:has(.app) #root {background:#f0f0ef!important}
     radial-gradient(ellipse 95% 50% at 0% 88%, rgba(61,119,109,.07), transparent 75%),
     linear-gradient(155deg,#192225 0%,#1b2528 48%,#171f22 100%) !important;
 }
-:root:not([data-mode="dark"]) .app .wealth-total-card,
 :root:not([data-mode="dark"]) .app .projection-main-card {
   background: linear-gradient(135deg,rgba(255,255,255,.61),rgba(229,243,236,.42)) !important;
   border: 1px solid var(--aurora-stroke) !important;
@@ -972,7 +895,6 @@ body:has(.app),body:has(.app) #root {background:#f0f0ef!important}
 }
 
 /* Night mode: charcoal glass, gentle sage accents, no saturated violet or neon. */
-:root[data-mode="dark"] .app .wealth-total-card,
 :root[data-mode="dark"] .app .projection-main-card {
   background: linear-gradient(137deg,rgba(49,68,65,.77),rgba(43,55,60,.79) 65%,rgba(45,56,59,.76)) !important;
   border: 1px solid rgba(205,241,224,.20) !important;
@@ -1388,15 +1310,10 @@ body:has(.app),body:has(.app) #root {background:#f0f0ef!important}
 .app .projection-card-heading .block-info,
 .app .projection-project-row .projection-project-icon,
 .app .projection-annual-card > summary svg:first-child,
-.app .projection-settings-card > summary svg:first-child,
-.app .wealth-total-header > svg,
-.app .wealth-breakdown-card > .text,
-.app .wealth-projection-link > svg,
-.app .wealth-projection-icon {
+.app .projection-settings-card > summary svg:first-child {
   color: var(--accent-deep) !important;
 }
-.app .projection-project-row .projection-project-icon,
-.app .wealth-projection-icon {
+.app .projection-project-row .projection-project-icon {
   background: color-mix(in srgb,var(--aurora-tone) 17%,var(--surface)) !important;
 }
 /* Keep the travel KPI and chart traces independently legible. */
@@ -1678,7 +1595,6 @@ body:has(.app),body:has(.app) #root {background:#f0f0ef!important}
 .app .content .section-head h2,
 .app .projection-card-heading h2,
 .app .projection-projects-card .section-head h2,
-.app .wealth-accounts-heading h2,
 .app .content .block-title h2 {
   font-size: clamp(.98rem,2.1vw,1.1rem) !important;
   line-height: 1.3;
@@ -1690,10 +1606,9 @@ body:has(.app),body:has(.app) #root {background:#f0f0ef!important}
   }
   .app .page-heading .home-greeting { font-size: .85rem; }
   .app .content .section-head h2,
-  .app .projection-card-heading h2,
-  .app .projection-projects-card .section-head h2,
-  .app .wealth-accounts-heading h2,
-  .app .content .block-title h2 {
+.app .projection-card-heading h2,
+.app .projection-projects-card .section-head h2,
+.app .content .block-title h2 {
     font-size: .99rem !important;
   }
   .app dialog .sheet > header h2 { font-size: 1.13rem !important; }
@@ -1755,33 +1670,6 @@ body:has(.app),body:has(.app) #root {background:#f0f0ef!important}
 }
 
 /* Accounts are one neutral glass panel, not tinted with the chosen wallpaper. */
-:root:not([data-mode="dark"]) .app .wealth-accounts-list {
-  background: rgba(255,255,255,.91) !important;
-  border: 1px solid rgba(255,255,255,.91) !important;
-  box-shadow: 0 12px 30px rgba(32,51,61,.075),inset 0 1px 0 rgba(255,255,255,.97) !important;
-  backdrop-filter: blur(25px) saturate(1.04) !important;
-  -webkit-backdrop-filter: blur(25px) saturate(1.04) !important;
-}
-:root[data-mode="dark"] .app .wealth-accounts-list {
-  background: rgba(44,52,57,.91) !important;
-  border: 1px solid rgba(235,241,238,.15) !important;
-  box-shadow: 0 12px 27px rgba(0,0,0,.15),inset 0 1px 0 rgba(255,255,255,.11) !important;
-  backdrop-filter: blur(24px) !important;
-  -webkit-backdrop-filter: blur(24px) !important;
-}
-.app .wealth-accounts-list .account-swipe-row:not(.is-open) > .swipe-actions-content,
-.app .wealth-accounts-list .account-swipe-row:not(.is-open) .wealth-account-row,
-.app .wealth-accounts-list .wealth-account-summary {
-  background: transparent !important;
-}
-:root:not([data-mode="dark"]) .app .wealth-accounts-list .wealth-account-row[open] > .wealth-account-summary,
-:root:not([data-mode="dark"]) .app .wealth-accounts-list .wealth-account-summary:hover {
-  background: rgba(238,242,243,.66) !important;
-}
-:root[data-mode="dark"] .app .wealth-accounts-list .wealth-account-row[open] > .wealth-account-summary,
-:root[data-mode="dark"] .app .wealth-accounts-list .wealth-account-summary:hover {
-  background: rgba(83,92,95,.27) !important;
-}
 
 /* Included means a project participates in the projection, not green income.
    Theme tint only for "Inclus" and "Financé", orange still signals exclusion. */

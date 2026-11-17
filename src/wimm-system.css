@@ -205,3 +205,36 @@
 @media (min-width: 851px), (pointer: fine) {
   .app .ws-budget-list .ws-budget-item { padding-right: 40px; }
 }
+
+/* Patrimoine : comptes regroupés, détail dépliable. */
+.app .ws-account-group { display: flex; flex-direction: column; padding-top: 12px; }
+.app .ws-account-group + .ws-account-group { border-top: 1px solid var(--border); }
+.app .ws-account-group > .ws-label { padding-bottom: 2px; }
+.app .ws-account-group > .swipe-actions { border-bottom: 1px solid var(--border); min-width: 0; }
+.app .ws-account-group > .swipe-actions:last-of-type { border-bottom: 0; }
+.app .ws-account-group > .swipe-actions > .swipe-actions-content { background: transparent; }
+.app .ws-account > summary { list-style: none; cursor: pointer; border-bottom: 0; }
+.app .ws-account > summary::-webkit-details-marker { display: none; }
+.app .ws-account-body { display: flex; flex-direction: column; gap: 12px; padding: 0 0 16px 52px; }
+.app .ws-account-cap { display: flex; flex-direction: column; gap: 6px; }
+.app .ws-account-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.app .ws-account-links { display: flex; flex-wrap: wrap; gap: 0 16px; }
+.app .ws-account-tools { display: flex; flex-wrap: wrap; gap: 0 20px; border-top: 1px solid var(--border); padding-top: 4px; }
+.app .ws-archived > summary { list-style: none; cursor: pointer; }
+.app .ws-archived > summary::-webkit-details-marker { display: none; }
+.app .ws-archived:not([open]) > summary { border-bottom: 0; }
+@media (min-width: 851px), (pointer: fine) {
+  .app .ws-account-group .ws-account > summary { padding-right: 40px; }
+}
+@media (max-width: 850px) and (pointer: coarse) {
+  .app .ws-account-group > .swipe-actions > .swipe-actions-content { background: var(--surface) !important; }
+}
+
+/* Carte repliable : l'en-tête reste visible, le détail s'ouvre au toucher. */
+.app details.ws-collapsible { display: block; }
+.app details.ws-collapsible > :not(summary) { margin-top: 12px; }
+.app details.ws-collapsible > summary { list-style: none; cursor: pointer; display: flex; flex-direction: column; gap: 12px; }
+.app details.ws-collapsible > summary::-webkit-details-marker { display: none; }
+.app details.ws-collapsible .ws-collapse-icon { color: var(--muted); transition: transform .2s; }
+.app details.ws-collapsible[open] .ws-collapse-icon { transform: rotate(180deg); }
+.app details.ws-collapsible[open] > summary { padding-bottom: 4px; border-bottom: 1px solid var(--border); }
