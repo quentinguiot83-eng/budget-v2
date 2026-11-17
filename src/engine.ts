@@ -83,6 +83,10 @@ export type Rule = {
 
   loanId?: string;
 
+  // Échéance du mois d'ouverture datée avant l'ouverture mais pas encore
+  // prélevée (banque en retard) : elle reste à valider.
+  openingUnpaid?: boolean;
+
 };
 
 export type Tx = {
@@ -1047,22 +1051,31 @@ export function dues(s: State, m: string): Due[] {
 // dans le solde de départ : elle n'est ni à valider ni à retirer du disponible.
 export function dueBeforeOpening(s: State, d: Due) {
   const a = s.accounts.find((a) => a.id === d.rule.account);
-  return !!a && d.date < a.date;
+  if (!a || d.date >= a.date) return false;
+  return !(d.rule.openingUnpaid && month(d.date) === month(a.date));
 }
 
 // Enregistre comme payées les échéances du mois d'ouverture déjà passées avant
 // l'ouverture du compte (« déjà prélevé avant Wimm »). Datées avant l'ouverture,
 // elles ne modifient pas le solde mais comptent dans les charges payées du mois.
-export function settleDuesBeforeOpening(s: State, ruleId?: string) {
+// « paid » précise ce que dit l'utilisateur pour l'échéance du mois d'ouverture :
+// true = déjà prélevée (même si sa date est après l'ouverture), false = pas
+// encore prélevée (même si sa date est avant). Sans réponse, la date décide.
+export function settleDuesBeforeOpening(s: State, ruleId?: string, paid?: boolean) {
   for (const rule of s.rules) {
     if (ruleId && rule.id !== ruleId) continue;
     if (rule.kind === "repay") continue;
     const a = s.accounts.find((a) => a.id === rule.account);
     if (!a) continue;
+    if (paid === false) { rule.openingUnpaid = true; continue; }
     for (const d of dues(s, month(a.date))) {
-      if (d.rule.id !== rule.id || d.date >= a.date || d.paid || d.cancelled) continue;
+      if (d.rule.id !== rule.id || d.paid || d.cancelled) continue;
+      if (d.date >= a.date && !paid) continue;
+      // Déjà prélevée avant l'ouverture : datée au plus tard la veille, elle
+      // est comprise dans le solde de départ.
+      const date = d.date < a.date ? d.date : previousDate(a.date);
       s.transactions.push({
-        id: uid(), type: "expense", amount: rule.amount, date: d.date,
+        id: uid(), type: "expense", amount: rule.amount, date,
         description: rule.name, account: rule.account,
         category: rule.category || undefined, fixed: true, dueKey: d.key,
       });

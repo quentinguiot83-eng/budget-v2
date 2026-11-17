@@ -105,6 +105,7 @@ export function createTransactionActions(ctx: WimmCore & BaseActions & AccountAc
   function editRule(rule?: Rule, kind: Rule["kind"] = "fixed") {
     const pending = rule ? Array.from({length: rule.count || 1200}, (_,i)=>addMonths(rule.start,i*rule.interval)).filter(date=>(!rule.end||date<=rule.end)&&!s.transactions.some(t=>t.dueKey===rule.id+':'+date)&&!s.cancelled.includes(rule.id+':'+date)) : [];
     const nextDate = pending[0] || today();
+    const openingThisMonth = s.accounts.some(a => !a.archived && a.group === "current" && month(a.date) === month());
     if (!current || !categoryOptions.length) {
       setNotice("Ajoutez d’abord un compte courant et une catégorie.");
       return;
@@ -152,6 +153,22 @@ export function createTransactionActions(ctx: WimmCore & BaseActions & AccountAc
           ],
           String(rule?.interval || 1),
         ),
+        // Première installation : la banque ne suit pas toujours la date prévue.
+        ...(!rule && kind !== "credit" && openingThisMonth
+  ? [
+      choice(
+        "openingPaid",
+        "Déjà prélevé en " + monthLabel(month()).split(" ")[0] + " ?",
+        [
+          ["auto", "Selon la date d’échéance"],
+          ["yes", "Oui, déjà passé sur le compte"],
+          ["no", "Pas encore"],
+        ],
+        "auto",
+        "Concerne l’échéance de ce mois : si elle est déjà passée, elle est comprise dans ton solde de départ.",
+      ),
+    ]
+  : []),
         ...(kind === "credit"
   ? [
       {
@@ -190,7 +207,7 @@ export function createTransactionActions(ctx: WimmCore & BaseActions & AccountAc
             d.rules.push({ id, ...changes });
             // Échéance de ce mois déjà passée avant l'ouverture du compte :
             // déjà prélevée, comprise dans le solde de départ.
-            settleDuesBeforeOpening(d, id);
+            settleDuesBeforeOpening(d, id, v.openingPaid === "yes" ? true : v.openingPaid === "no" ? false : undefined);
           }
         }, "Échéancier enregistré");
       },
