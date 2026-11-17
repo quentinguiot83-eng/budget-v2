@@ -13,7 +13,7 @@ from pathlib import Path
 
 from playwright.sync_api import sync_playwright
 
-from capture import FREEZE_MOTION, FROZEN_NOW, click_nav, stable_screenshot
+from capture import FREEZE_MOTION, FROZEN_NOW, click_nav, route_requests, stable_screenshot
 
 
 def click_button(page, text: str):
@@ -102,7 +102,7 @@ def main():
             ctx = browser.new_context(
                 viewport={"width": 390, "height": 844}, device_scale_factor=2,
                 is_mobile=True, has_touch=True, locale="fr-FR", timezone_id="Europe/Paris")
-            ctx.route("**/*", lambda r: r.continue_() if r.request.url.startswith(url) else r.abort())
+            ctx.route("**/*", route_requests(url))
             ctx.add_init_script("localStorage.setItem('wimm-appearance-mode', 'light');")
             page = ctx.new_page()
             page.clock.set_fixed_time(FROZEN_NOW)

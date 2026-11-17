@@ -6,10 +6,11 @@ Prérequis : `pip install playwright` et Google Chrome installé.
 L'application doit déjà tourner (voir tools/visual/run.sh, qui s'en charge).
 
 Les captures sont déterministes : date figée, aucun appel réseau sortant
-(les polices Google sont donc remplacées par les polices système),
-animations coupées. Deux captures du même code donnent les mêmes images.
+(les polices Google sont servies depuis tools/visual/fonts), animations
+coupées. Deux captures du même code donnent les mêmes images.
 """
 
+import base64
 import sys
 from pathlib import Path
 
@@ -37,6 +38,31 @@ VIEWPORTS = [
     ("ordinateur", 1280, 900, False, ["light"]),
 ]
 
+FONTS_DIR = Path(__file__).resolve().parent / "fonts"
+
+
+def _font_face(family: str, weights: str, file: str) -> str:
+    data = base64.b64encode((FONTS_DIR / file).read_bytes()).decode()
+    return (f'@font-face{{font-family:"{family}";font-style:normal;font-weight:{weights};'
+            f'font-display:block;src:url(data:font/woff2;base64,{data}) format("woff2")}}')
+
+
+# Remplace la feuille Google Fonts par les mêmes polices (versions variables,
+# licence OFL) embarquées dans tools/visual/fonts : rendu réel, sans réseau.
+FONTS_CSS = _font_face("DM Sans", "100 1000", "dm-sans.woff2") + _font_face("Manrope", "200 800", "manrope.woff2")
+
+
+def route_requests(base_url: str):
+    def handle(route):
+        u = route.request.url
+        if u.startswith(base_url):
+            return route.continue_()
+        if u.startswith("https://fonts.googleapis.com/"):
+            return route.fulfill(status=200, content_type="text/css", body=FONTS_CSS)
+        return route.abort()
+    return handle
+
+
 FREEZE_MOTION = """
 *, *::before, *::after {
   animation-duration: 0s !important; animation-delay: 0s !important;
@@ -63,6 +89,7 @@ def click_nav(page, label: str) -> bool:
 
 def settle(page):
     page.wait_for_load_state("networkidle")
+    page.evaluate("document.fonts.ready")
     page.wait_for_timeout(600)
 
 
@@ -100,8 +127,7 @@ def main():
                     locale="fr-FR", timezone_id="Europe/Paris",
                     color_scheme="dark" if mode == "dark" else "light",
                 )
-                ctx.route("**/*", lambda r: r.continue_()
-                          if r.request.url.startswith(url) else r.abort())
+                ctx.route("**/*", route_requests(url))
                 ctx.add_init_script(
                     f"localStorage.setItem('wimm-appearance-mode', '{mode}');")
                 page = ctx.new_page()
