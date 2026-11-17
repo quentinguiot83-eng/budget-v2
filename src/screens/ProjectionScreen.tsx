@@ -176,7 +176,7 @@ export default function ProjectionScreen({ view }: { view: WimmView }) {
             <div className="ws-row"><span className="ws-row-main"><span className="ws-row-title">Revenus mensuels estimés</span></span><span className="ws-amount">{projectionMoney(s.income)}</span></div>
             <div className="ws-row"><span className="ws-row-main"><span className="ws-row-title">Capacité d’épargne prévue</span></span><span className="ws-amount">{projectionMoney(totals.capacity)}</span></div>
             <p className="ws-muted">La projection tient compte des comptes, rendements, charges et projets enregistrés. Les résultats sont des estimations, sans garantie.</p>
-            <button type="button" className="ws-pill is-solid" style={{ alignSelf: "flex-start" }} onClick={allocations}>Modifier revenus et répartition</button>
+            <button type="button" className="ws-pill is-solid" style={{ alignSelf: "flex-start" }} onClick={allocations}>Modifier la répartition</button>
             <button type="button" className="ws-link" onClick={calc}><Info size={16} aria-hidden="true"/>Voir les calculs</button>
           </div>
         </details>

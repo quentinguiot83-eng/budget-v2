@@ -3,7 +3,7 @@
 import { type BankRow, reconcileBankRows, normalizeBankLabel } from "../../bankImport";
 import type { BankDraft } from "../../BankReconciliation";
 import { revisePaymentPlan, removeCreditPlan } from "../../creditSchedules";
-import { type Tx, today, uid, euro, shiftMonth, month, type Rule, addMonths, type Due, type Trip, dateAt, loanRemaining, money, dateLabel, monthLabel, isPersonalBudgetExpense, incomeBudgetMonth, expenseBudgetMonth, settleDuesBeforeOpening } from "../../engine";
+import { type Tx, type State, today, uid, euro, shiftMonth, month, type Rule, addMonths, type Due, type Trip, dateAt, loanRemaining, money, dateLabel, monthLabel, isPersonalBudgetExpense, incomeBudgetMonth, expenseBudgetMonth, settleDuesBeforeOpening } from "../../engine";
 import { favoriteFromTransaction, checkFavorite, quickSuggestions } from "../../quickEntry";
 import { SortableList } from "../../SortableList";
 import SwipeActions from "../../SwipeActions";
@@ -102,10 +102,30 @@ export function createTransactionActions(ctx: WimmCore & BaseActions & AccountAc
       },"Opération dupliquée");
     },"Enregistrer la copie");
   }
+  // Création d'un échéancier (dépense fixe ou paiement en plusieurs fois) :
+  // même logique depuis « Ajouter une dépense » et « Nouvelle dépense fixe ».
+  function createRule(d: State, rule: Omit<Rule, "id">, openingPaid?: string) {
+    const id = uid();
+    d.rules.push({ id, ...rule });
+    // Échéance du mois d'ouverture : déjà prélevée ou non, selon la réponse
+    // (sinon selon la date) ; si elle l'est, elle est comprise dans le solde de départ.
+    settleDuesBeforeOpening(d, id, openingPaid === "yes" ? true : openingPaid === "no" ? false : undefined);
+  }
+  const openingThisMonth = () => s.accounts.some(a => !a.archived && a.group === "current" && month(a.date) === month());
+  const openingPaidField = () => toggle(
+    "openingPaid",
+    "Déjà prélevé en " + monthLabel(month()).split(" ")[0] + " ?",
+    [
+      ["auto", "Selon la date"],
+      ["yes", "Oui"],
+      ["no", "Pas encore"],
+    ],
+    "auto",
+    "Pour l’échéance de ce mois. Si elle est déjà passée sur ton compte, elle est comprise dans ton solde de départ.",
+  );
   function editRule(rule?: Rule, kind: Rule["kind"] = "fixed") {
     const pending = rule ? Array.from({length: rule.count || 1200}, (_,i)=>addMonths(rule.start,i*rule.interval)).filter(date=>(!rule.end||date<=rule.end)&&!s.transactions.some(t=>t.dueKey===rule.id+':'+date)&&!s.cancelled.includes(rule.id+':'+date)) : [];
     const nextDate = pending[0] || today();
-    const openingThisMonth = s.accounts.some(a => !a.archived && a.group === "current" && month(a.date) === month());
     if (!current || !categoryOptions.length) {
       setNotice("Ajoute d’abord un compte courant et une catégorie.");
       return;
@@ -154,21 +174,7 @@ export function createTransactionActions(ctx: WimmCore & BaseActions & AccountAc
           String(rule?.interval || 1),
         ),
         // Première installation : la banque ne suit pas toujours la date prévue.
-        ...(!rule && kind !== "credit" && openingThisMonth
-  ? [
-      toggle(
-        "openingPaid",
-        "Déjà prélevé en " + monthLabel(month()).split(" ")[0] + " ?",
-        [
-          ["auto", "Selon la date"],
-          ["yes", "Oui"],
-          ["no", "Pas encore"],
-        ],
-        "auto",
-        "Pour l’échéance de ce mois. Si elle est déjà passée sur ton compte, elle est comprise dans ton solde de départ.",
-      ),
-    ]
-  : []),
+        ...(!rule && kind !== "credit" && openingThisMonth() ? [openingPaidField()] : []),
         ...(kind === "credit"
   ? [
       {
@@ -203,11 +209,7 @@ export function createTransactionActions(ctx: WimmCore & BaseActions & AccountAc
           if (rule) {
             revisePaymentPlan(d, rule.id, changes, uid());
           } else {
-            const id = uid();
-            d.rules.push({ id, ...changes });
-            // Échéance de ce mois déjà passée avant l'ouverture du compte :
-            // déjà prélevée, comprise dans le solde de départ.
-            settleDuesBeforeOpening(d, id, v.openingPaid === "yes" ? true : v.openingPaid === "no" ? false : undefined);
+            createRule(d, changes, v.openingPaid);
           }
         }, "Échéancier enregistré");
       },
@@ -809,6 +811,9 @@ export function createTransactionActions(ctx: WimmCore & BaseActions & AccountAc
           ],
         },
       },
+      ...(openingThisMonth()
+        ? [{ ...openingPaidField(), showWhen: { field: "expenseKind", values: ["fixed"] } }]
+        : []),
     ];
 
 
@@ -906,9 +911,7 @@ export function createTransactionActions(ctx: WimmCore & BaseActions & AccountAc
 
         await change(
           (d) =>
-            d.rules.push({
-              id: uid(),
-
+            createRule(d, {
               name:
                 v.description,
 
@@ -936,7 +939,7 @@ export function createTransactionActions(ctx: WimmCore & BaseActions & AccountAc
                 "credit"
                   ? "credit"
                   : "fixed",
-            }),
+            }, v.openingPaid),
 
           kind === "credit"
             ? "Paiement en plusieurs fois créé"

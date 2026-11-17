@@ -3,7 +3,7 @@ import { APP_VERSION_LABEL } from "./appVersion";
 import {
   Archive, Bell, BookOpen, CalendarDays, ChevronLeft, ChevronRight,
   CircleHelp, Download, History, Info, LayoutGrid, LockKeyhole,
-  LogOut, Palette, RotateCcw, RefreshCw, ShieldCheck, UserRound, Users,
+  LogOut, Palette, RotateCcw, ShieldCheck, UserRound, Users,
 } from "lucide-react";
 
 type SettingsItem = {
@@ -40,8 +40,7 @@ const groups: SettingsGroup[] = [
     id: "foyer", title: "Foyer et finances", description: "Membres et organisation financière", icon: Users,
     items: [
       { id: "membres", title: "Membres du foyer", description: "Invitations et gestion du foyer", icon: Users },
-      { id: "salaire", title: "Salaire", description: "Versement, affectation et rappel", icon: CalendarDays },
-      { id: "mise-a-jour-comptes", title: "Comptes à mettre à jour", description: "Retrouver des soldes fiables après un oubli de saisie", icon: RefreshCw },
+      { id: "salaire", title: "Revenus", description: "Revenus habituels, mois financé et rappel", icon: CalendarDays },
       { id: "archives", title: "Catégories archivées", description: "Consulter et supprimer les archives", icon: Archive },
     ],
   },

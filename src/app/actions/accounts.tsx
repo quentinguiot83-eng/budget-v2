@@ -119,20 +119,6 @@ export function createAccountActions(ctx: WimmCore & BaseActions) {
     );
   }
 
-  function renameAccount(a: Account) {
-    openForm(
-      "Renommer " + a.name,
-      [field("name", "Nouveau nom du compte", a.name, "text",
-        "Le solde, les opérations et les réglages du compte restent inchangés.")],
-      async (v) => change(d => {
-        const target = d.accounts.find(x => x.id === a.id);
-        if (!target) throw Error("Ce compte n’existe plus.");
-        target.name = validateAccountName(v.name, d.accounts, target.id);
-      }, "Compte renommé"),
-      "Enregistrer le nom",
-    );
-  }
-
   function deleteAccount(a: Account) {
     // All dependent records are stored by account ID: never orphan transactions,
     // fixed payments, loans or projects while deleting an account.
@@ -527,18 +513,18 @@ export function createAccountActions(ctx: WimmCore & BaseActions) {
     openForm(
       "Répartir mon épargne",
       [
-        amountField("income", "Revenus mensuels estimés (€)", s.income),
+        // Le revenu vient de Réglages → Revenus habituels : il n'est pas saisi ici.
         ...s.accounts
           .filter((a) => !["current", "personal"].includes(a.group) && !a.archived)
-          .map((a) => ({
-            ...field(a.id, a.name + " (%)", a.allocation, "number"),
+          .map((a, i) => ({
+            ...field(a.id, a.name + " (%)", a.allocation, "number",
+              i === 0 ? "En % de ton revenu de " + money(s.income) + " par mois, modifiable dans Réglages → Revenus." : ""),
             min: 0,
             max: 100,
           })),
       ],
       async (v) => {
         await change((d) => {
-          d.income = euro(v.income);
           for (const a of d.accounts)
             if (a.id in v) a.allocation = Number(v[a.id]);
         }, "Plan d’épargne modifié");
@@ -801,7 +787,7 @@ export function createAccountActions(ctx: WimmCore & BaseActions) {
   }
 
   return {
-    editSharedCash, initialCurrentAccount, renameAccount, deleteAccount,
+    editSharedCash, initialCurrentAccount, deleteAccount,
     restoreArchivedAccount, editAccount, reconcileHouseholdAccounts, allocations,
     reviewAccountInterest, transferPersonal, transfer,
   };
