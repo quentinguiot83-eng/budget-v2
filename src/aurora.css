@@ -127,25 +127,6 @@
 }
 
 /* Voyages — aucun filtre sur la photo : le verre s'applique aux budgets. */
-.app .trips-page-v2 .trips-cover-hero {
-  box-shadow: var(--aurora-drop);
-  border: 1px solid var(--aurora-stroke);
-  border-radius: 24px;
-}
-.app .trips-page-v2 .trips-cover-hero:not(.has-cover) {
-  background: linear-gradient(120deg, rgba(212,246,232,.83), rgba(241,231,255,.82));
-}
-.app .trips-overview-card,
-.app .trips-financing-card,
-.app .trips-categories-card,
-.app .trips-disclosure,
-.app .trips-v2-hero {
-  background: var(--aurora-glass);
-  border: 1px solid var(--aurora-stroke);
-  box-shadow: var(--aurora-drop);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-}
 
 /* Réglages — lignes natives simples, conteneur translucide. */
 .app .wimm-settings-menu { overflow: hidden; border-radius: 23px; }
@@ -216,20 +197,12 @@
   border-color: var(--aurora-stroke);
 }
 :root[data-mode="dark"] .app .projection-chart-card,
-:root[data-mode="dark"] .app .projection-kpi,
-:root[data-mode="dark"] .app .trips-overview-card,
-:root[data-mode="dark"] .app .trips-financing-card,
-:root[data-mode="dark"] .app .trips-categories-card,
-:root[data-mode="dark"] .app .trips-disclosure,
-:root[data-mode="dark"] .app .trips-v2-hero {
+:root[data-mode="dark"] .app .projection-kpi {
   background: var(--aurora-glass);
   border-color: var(--aurora-stroke);
 }
 :root[data-mode="dark"] .app .wimm-settings-entry-icon {
   background: rgba(58,104,89,.23);
-}
-:root[data-mode="dark"] .app .trips-page-v2 .trips-cover-hero:not(.has-cover) {
-  background: linear-gradient(110deg, #244743, #393052);
 }
 
 /* Pas d'animations automatiques coûteuses, et confort iPhone privilégié. */
@@ -903,10 +876,7 @@ body:has(.app),body:has(.app) #root {background:#f0f0ef!important}
   -webkit-backdrop-filter: blur(23px) saturate(1.10);
 }
 :root[data-mode="dark"] .app .projection-chart-card,
-:root[data-mode="dark"] .app .projection-kpi,
-:root[data-mode="dark"] .app .trips-overview-card,
-:root[data-mode="dark"] .app .trips-financing-card,
-:root[data-mode="dark"] .app .trips-categories-card {
+:root[data-mode="dark"] .app .projection-kpi {
   background: linear-gradient(135deg,rgba(51,66,68,.69),rgba(40,52,58,.72)) !important;
   border-color: var(--aurora-stroke) !important;
   box-shadow: var(--aurora-drop) !important;
@@ -1219,8 +1189,7 @@ body:has(.app),body:has(.app) #root {background:#f0f0ef!important}
 
 /* Theme the formerly fixed mint horizon selector (all five presets). */
 :root:not([data-mode="dark"]) .app .projection-topline .pills,
-:root:not([data-mode="dark"]) .app .projects-type-switch,
-:root:not([data-mode="dark"]) .app .trips-page-v2 .trip-tabs {
+:root:not([data-mode="dark"]) .app .projects-type-switch {
   background:
     linear-gradient(135deg,
       color-mix(in srgb,var(--aurora-tone-soft) 77%,rgba(255,255,255,.51)),
@@ -1231,8 +1200,7 @@ body:has(.app),body:has(.app) #root {background:#f0f0ef!important}
   -webkit-backdrop-filter: blur(20px) saturate(1.22);
 }
 :root[data-mode="dark"] .app .projection-topline .pills,
-:root[data-mode="dark"] .app .projects-type-switch,
-:root[data-mode="dark"] .app .trips-page-v2 .trip-tabs {
+:root[data-mode="dark"] .app .projects-type-switch {
   background: color-mix(in srgb,var(--aurora-tone) 14%,rgba(40,54,58,.66)) !important;
   border: 1px solid color-mix(in srgb,var(--aurora-tone) 21%,rgba(220,233,230,.16)) !important;
   box-shadow: inset 0 1px 0 rgba(255,255,255,.09),0 6px 20px rgba(0,0,0,.11);
@@ -1240,27 +1208,23 @@ body:has(.app),body:has(.app) #root {background:#f0f0ef!important}
   -webkit-backdrop-filter: blur(20px);
 }
 .app .projection-topline .pills button.selected,
-.app .projects-type-switch button.selected,
-.app .trips-page-v2 .trip-tabs button.selected {
+.app .projects-type-switch button.selected {
   color: var(--accent-deep) !important;
   border-color: color-mix(in srgb,var(--aurora-tone) 32%,transparent) !important;
   box-shadow: 0 5px 17px color-mix(in srgb,var(--aurora-tone) 14%,transparent),
     inset 0 1px 0 rgba(255,255,255,.62) !important;
 }
 :root:not([data-mode="dark"]) .app .projection-topline .pills button.selected,
-:root:not([data-mode="dark"]) .app .projects-type-switch button.selected,
-:root:not([data-mode="dark"]) .app .trips-page-v2 .trip-tabs button.selected {
+:root:not([data-mode="dark"]) .app .projects-type-switch button.selected {
   background: linear-gradient(135deg,rgba(255,255,255,.90),
     color-mix(in srgb,var(--aurora-tone-soft) 41%,rgba(255,255,255,.83))) !important;
 }
 :root[data-mode="dark"] .app .projection-topline .pills button.selected,
-:root[data-mode="dark"] .app .projects-type-switch button.selected,
-:root[data-mode="dark"] .app .trips-page-v2 .trip-tabs button.selected {
+:root[data-mode="dark"] .app .projects-type-switch button.selected {
   background: color-mix(in srgb,var(--aurora-tone) 22%,rgba(54,67,70,.74)) !important;
   box-shadow: inset 0 1px 0 rgba(255,255,255,.13),0 5px 15px rgba(0,0,0,.10) !important;
 }
-.app .projection-topline .pills button:focus-visible,
-.app .trips-page-v2 .trip-tabs button:focus-visible {
+.app .projection-topline .pills button:focus-visible {
   outline: 2px solid var(--action) !important;
   outline-offset: 2px;
 }
@@ -2208,95 +2172,6 @@ html:root body #root {
 
 
 /* Accueil — cinq dernières dépenses, compactes et dans le verre Wimm. */
-.app .home-recent-expenses-heading {
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:12px;
-  margin:0 0 5px;
-}
-.app .home-recent-expenses-heading h2 { margin:0; font-size:1rem; }
-.app .home-recent-expenses-all {
-  display:inline-flex;
-  align-items:center;
-  gap:4px;
-  font-size:.78rem;
-  white-space:nowrap;
-}
-.app .home-recent-expenses-list { display:grid; }
-.app .home-recent-expense {
-  display:grid;
-  grid-template-columns:38px minmax(0,1fr) auto;
-  align-items:center;
-  width:100%;
-  min-width:0;
-  gap:10px;
-  padding:12px 0;
-  border:0;
-  border-top:1px solid color-mix(in srgb,var(--border) 74%,transparent);
-  border-radius:0;
-  background:transparent;
-  box-shadow:none;
-  color:var(--ink);
-  text-align:left;
-}
-.app .home-recent-expense:first-child { border-top:0; }
-.app .home-recent-expense:focus-visible {
-  outline:2px solid var(--accent-deep);
-  outline-offset:-2px;
-  border-radius:9px;
-}
-@media (hover:hover) {
-  .app .home-recent-expense:hover { background:color-mix(in srgb,var(--surface) 35%,transparent); }
-}
-.app .home-recent-expense-icon {
-  width:36px;
-  height:36px;
-  display:grid;
-  place-items:center;
-  flex-shrink:0;
-  border-radius:12px;
-  background:var(--wimm-coral-wash);
-  color:var(--wimm-coral);
-}
-.app .home-recent-expense-details {
-  display:flex;
-  flex-direction:column;
-  gap:3px;
-  min-width:0;
-}
-.app .home-recent-expense-details strong {
-  overflow:hidden;
-  text-overflow:ellipsis;
-  white-space:nowrap;
-  font-size:.81rem;
-  font-weight:700;
-}
-.app .home-recent-expense-details small {
-  color:var(--muted);
-  font-size:.70rem;
-  overflow:hidden;
-  text-overflow:ellipsis;
-  white-space:nowrap;
-}
-.app .home-recent-expense-amount {
-  white-space:nowrap;
-  font-family:Manrope,sans-serif;
-  font-weight:750;
-  font-size:.82rem;
-  font-variant-numeric:tabular-nums;
-}
-.app .home-recent-expenses-empty {
-  color:var(--muted);
-  font-size:.85rem;
-  padding:15px 0 8px;
-  margin:0;
-}
-@media(max-width:560px) {
-  .app .home-recent-expense {grid-template-columns:34px minmax(0,1fr) auto;gap:8px;}
-  .app .home-recent-expense-icon {width:32px;height:32px;}
-  .app .home-recent-expense-amount {font-size:.79rem;}
-}
 
 /* Couleur financière sémantique : un montant négatif doit toujours être rouge,
    même lorsque le thème Aurora force une couleur d'accent sur les indicateurs. */
@@ -2393,7 +2268,6 @@ html:root body #root {
 .app .home-monthly-categories{display:grid;gap:10px}
 .app .home-monthly-category{display:grid;grid-template-columns:1fr auto;gap:5px 10px}
 .app .home-monthly-category .progress{grid-column:1/-1}
-.app .trips-no-active{padding:12px 16px}
 
 /* ── Graphiques en verre (ex-liquid-charts-preview.css) ── */
 .app .analysis-distribution,

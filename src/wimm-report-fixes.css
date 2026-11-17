@@ -7,8 +7,6 @@
 .app .home-report-breakdown > div {display:flex;align-items:center;justify-content:space-between;gap:10px}
 .app .home-report-breakdown span {font-size:.74rem;color:var(--muted)}
 .app .home-report-breakdown strong {font-size:.82rem;font-variant-numeric:tabular-nums;color:var(--ink)}
-.app .trips-archive-back {display:flex;align-items:center;margin:10px 0 13px}
-.app .trips-archive-back > button {display:flex;align-items:center;gap:6px;min-height:40px;font-size:.8rem}
 @media(max-width:390px) {
  .app .home-monthly-report .home-remaining-card {padding:12px 9px}
  .app .home-monthly-report .home-remaining-card > button.text {font-size:.68rem}

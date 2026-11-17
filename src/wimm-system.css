@@ -238,3 +238,35 @@
 .app details.ws-collapsible .ws-collapse-icon { color: var(--muted); transition: transform .2s; }
 .app details.ws-collapsible[open] .ws-collapse-icon { transform: rotate(180deg); }
 .app details.ws-collapsible[open] > summary { padding-bottom: 4px; border-bottom: 1px solid var(--border); }
+
+/* Projets : sélecteur de voyages, carte du voyage, menu de gestion. */
+.app .ws-trip-picker { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; margin: 0 -2px; padding: 2px; }
+.app .ws-trip-picker::-webkit-scrollbar { display: none; }
+.app .ws-trip-picker > .ws-pill { flex: 0 0 auto; }
+.app .ws-trip-picker img { width: 22px; height: 22px; border-radius: 50%; object-fit: cover; }
+.app .ws-trip-cover { width: calc(100% + 48px); margin: -24px -24px 8px; height: 140px; object-fit: cover; border-radius: var(--ws-radius-card) var(--ws-radius-card) 0 0; display: block; }
+.app .ws-trip .ws-head { align-items: flex-start; }
+.app .ws-trip-manage { display: flex; flex-direction: column; border: 1px solid var(--border); border-radius: var(--ws-radius-field); padding: 0 14px; margin-top: 4px; }
+.app .ws-trip-manage > .ws-row { justify-content: flex-start; min-height: 48px; padding: 10px 0; cursor: pointer; }
+.app .ws-trip-manage > .ws-row.ws-negative { color: var(--ws-negative); }
+.app .ws-trip-add { align-self: flex-start; margin-top: 8px; }
+.app .ws-trip-funding { border-top: 1px solid var(--border); border-bottom: 0; margin-top: 8px; padding-bottom: 0; }
+.app .ws-budget-list > .ws-row:last-child { border-top: 1px solid var(--border); }
+
+/* Projections : graphique dans la carte, sections dépliables. */
+.app .ws-projection-chart { margin: 8px -4px 0; min-width: 0; }
+.app .ws-projection-chart .projection-chart-v2 { margin-top: 0; }
+.app .ws-disclosure > summary { list-style: none; cursor: pointer; }
+.app .ws-disclosure > summary::-webkit-details-marker { display: none; }
+.app .ws-disclosure > summary .ws-chevron { transition: transform .2s; }
+.app .ws-disclosure[open] > summary .ws-chevron { transform: rotate(90deg); }
+.app .ws-disclosure + .ws-disclosure { border-top: 1px solid var(--border); }
+.app .ws-disclosure > summary.ws-row { border-bottom: 0; }
+.app .ws-disclosure-body { display: flex; flex-direction: column; gap: 8px; padding: 0 0 16px; }
+.app .ws-disclosure > .projection-annual-mobile, .app .ws-disclosure > .projection-annual-table { padding-bottom: 16px; }
+.app .ws-project-row { cursor: pointer; }
+.app .ws-projection-more > .ws-disclosure .swipe-actions > .swipe-actions-content { background: transparent; }
+@media (max-width: 850px) and (pointer: coarse) {
+  .app .ws-projection-more > .ws-disclosure .swipe-actions > .swipe-actions-content { background: var(--surface) !important; }
+}
+.app .ws-projection-chart .projection-legend-v2 { display: none; }

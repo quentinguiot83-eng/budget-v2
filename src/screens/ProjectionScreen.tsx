@@ -3,7 +3,7 @@ import { projectionMoney } from "../projectionMoney";
 import ProjectionPageStyles from "../ProjectionPageStyles";
 import SwipeActions from "../SwipeActions";
 import { BlockInfo } from "../ui";
-import { ChartNoAxesCombined, Wallet, Plane, AlertTriangle, Plus, Pencil, Trash2, Target, CalendarDays, ChevronRight, SlidersHorizontal, Info } from "lucide-react";
+import { AlertTriangle, Plus, Pencil, Trash2, Target, CalendarDays, ChevronRight, SlidersHorizontal, Info } from "lucide-react";
 import { Suspense } from "react";
 import { LazyProjectionInteractive } from "../app/shared";
 import type { WimmView } from "../app/buildView";
@@ -13,44 +13,22 @@ export default function ProjectionScreen({ view }: { view: WimmView }) {
     allocations, calc, change, confirmAction, editProject, finalProjection, projectionData, s,
     setYears, totals, years,
   } = view;
+  const horizon = finalProjection ? monthLabel(finalProjection.date) : "";
   return (
-    <div className="projection-dashboard-v2">
+    <div className="ws-stack wimm-projection projection-dashboard-v2">
       <ProjectionPageStyles/>
-      <div className="projection-topline">
-        <div className="pills" aria-label="Durée de la projection">
-          {[1, 5, 10, 30].map(n => (
-            <button type="button" key={n} className={years === n ? "selected" : ""}
-              aria-pressed={years === n} onClick={() => setYears(n)}>
-              {n} an{n > 1 ? "s" : ""}
-            </button>
-          ))}
-        </div>
+      <div className="ws-segmented" role="tablist" aria-label="Durée de la projection" data-tour="projection-horizon">
+        {[1, 5, 10, 30].map(n => (
+          <button type="button" role="tab" key={n} aria-selected={years === n} onClick={() => setYears(n)}>
+            {n} an{n > 1 ? "s" : ""}
+          </button>
+        ))}
       </div>
 
-      <section className="projection-main-card">
-        <div className="projection-main-heading"><ChartNoAxesCombined size={19}/>Patrimoine hors voyage estimé dans {years} an{years > 1 ? "s" : ""}</div>
-        <strong className="projection-main-amount">{finalProjection ? projectionMoney(finalProjection.current + finalProjection.wealth) : "—"}</strong>
-        <p>{finalProjection ? monthLabel(finalProjection.date) : "Simulation en cours"} · Avant fiscalité estimée · Comptes courants et placements, hors épargne voyage.</p>
-      </section>
-
-      <div className="projection-kpis">
-        <section className="projection-kpi">
-          <Wallet size={21}/>
-          <span>Après fiscalité estimée (hors voyage)</span>
-          <strong>{finalProjection ? projectionMoney(finalProjection.current + finalProjection.wealthNet) : "—"}</strong>
-        </section>
-        <section className="projection-kpi">
-          <Plane size={21}/>
-          <span>Épargne voyage (séparée)</span>
-          <strong>{finalProjection ? projectionMoney(finalProjection.travel) : "—"}</strong>
-        </section>
-      </div>
-
-      <section className="card projection-chart-card" data-tour="projection-chart">
-        <div className="projection-card-heading">
-          <div className="block-title">
-            <h2>Évolution estimée</h2>
-            <BlockInfo title="Comprendre les projections">
+      <section className="ws-card ws-hero" data-tour="projection-total" aria-label="Patrimoine estimé">
+        <span className="ws-head-title">
+          <span className="ws-muted">Patrimoine hors voyage{horizon ? " · " + horizon : ""}</span>
+          <BlockInfo title="Comprendre les projections">
           <p>
             Départ : soldes actuels. Simulation à partir du mois
             prochain, revenus et budgets variables constants, charges à
@@ -76,11 +54,18 @@ export default function ProjectionScreen({ view }: { view: WimmView }) {
             financement déjà effectués.
           </p>
 <p>Les déficits ne sont pas automatiquement retirés de vos comptes d’épargne.</p></BlockInfo>
-          </div>
+        </span>
+        <span className="ws-key projection-main-amount">{finalProjection ? projectionMoney(finalProjection.current + finalProjection.wealth) : "—"}</span>
+        <span className="ws-muted">Avant fiscalité estimée · comptes courants et placements</span>
+        <div className="ws-budget-split" data-tour="projection-split">
+          <div><span className="ws-muted">Après fiscalité</span><strong className="ws-figure">{finalProjection ? projectionMoney(finalProjection.current + finalProjection.wealthNet) : "—"}</strong></div>
+          <div><span className="ws-muted">Épargne voyage</span><strong className="ws-figure">{finalProjection ? projectionMoney(finalProjection.travel) : "—"}</strong></div>
         </div>
-        <Suspense fallback={<div className="chart-loading"/>}>
-          <LazyProjectionInteractive points={projectionData}/>
-        </Suspense>
+        <div className="ws-projection-chart" data-tour="projection-chart">
+          <Suspense fallback={<div className="chart-loading"/>}>
+            <LazyProjectionInteractive points={projectionData}/>
+          </Suspense>
+        </div>
         {finalProjection && finalProjection.deficit > 0 && (
           <aside className="projection-cashflow-alert" aria-label="Déficit de trésorerie prévu">
             <div className="projection-cashflow-alert-heading">
@@ -102,14 +87,15 @@ export default function ProjectionScreen({ view }: { view: WimmView }) {
         )}
       </section>
 
-      <section className="card projection-projects-card">
-        <div className="section-head">
-          <h2>Vos projets</h2>
-          <button className="primary" onClick={() => editProject()}>
-            <Plus size={17} />
-            Projet
-          </button>
-        </div>
+      <section className="ws-card ws-list ws-projection-more">
+        <details className="ws-disclosure" data-tour="projection-projects">
+          <summary className="ws-row">
+            <span className="ws-icon-tile" aria-hidden="true"><Target size={20}/></span>
+            <span className="ws-row-main"><span className="ws-row-title">Projets simulés{s.projects.length ? " (" + s.projects.length + ")" : ""}</span>
+              <span className="ws-row-sub">Un voyage, un apport immobilier, un achat…</span></span>
+            <ChevronRight size={18} className="ws-chevron" aria-hidden="true"/>
+          </summary>
+          <div className="ws-disclosure-body">
         {s.projects.slice().sort((a,b) => a.date.localeCompare(b.date)).map(p => (
           <SwipeActions key={p.id} label={p.name} className="project-swipe-row"
             actions={[
@@ -121,35 +107,27 @@ export default function ProjectionScreen({ view }: { view: WimmView }) {
                     d.trips.forEach(t => { if (t.projectId === p.id) t.projectId = undefined; });
                   }, "Projet supprimé")) },
             ]}>
-            <div className="projection-project-row">
-              <span className="projection-project-icon"><Target size={20}/></span>
-              <div className="grow">
-                <strong>{p.name}</strong>
-                <small>{dateLabel(p.date)} · {projectionMoney(p.amount)}</small>
-                <span className={"projection-project-status" + (p.settled ? " financed" : !p.active ? " excluded" : "")}>
-                  {p.settled ? "Financé" : p.active ? "Inclus" : "Exclu"}
-                </span>
-              </div>
+            <div className="ws-row ws-project-row">
+              <span className="ws-row-main">
+                <span className="ws-row-title">{p.name}</span>
+                <span className="ws-row-sub">{dateLabel(p.date)} · {p.settled ? "Financé" : p.active ? "Inclus" : "Exclu de la simulation"}</span>
+              </span>
+              <span className="ws-amount">{projectionMoney(p.amount)}</span>
             </div>
           </SwipeActions>
         ))}
-        {!s.projects.length && (
-          <p className="muted">
-            Ajoutez un voyage, un apport immobilier ou un autre projet
-            pour voir son effet.
-          </p>
-        )}
-      </section>
+            {!s.projects.length && <p className="ws-muted">Ajoutez un projet daté pour voir son effet sur votre patrimoine.</p>}
+            <button type="button" className="ws-link" data-tour="projection-add" onClick={() => editProject()}><Plus size={16} aria-hidden="true"/>Ajouter un projet</button>
+          </div>
+        </details>
 
-      <details className="card projection-annual-card">
-        <summary>
-          <CalendarDays size={20}/>
-          <span className="projection-annual-summary-copy">
-            <strong>Détail des années</strong>
-            <small>Soldes, versements, intérêts et fiscalité</small>
-          </span>
-          <ChevronRight size={19}/>
-        </summary>
+        <details className="ws-disclosure" data-tour="projection-years">
+          <summary className="ws-row">
+            <span className="ws-icon-tile" aria-hidden="true"><CalendarDays size={20}/></span>
+            <span className="ws-row-main"><span className="ws-row-title">Détail des années</span>
+              <span className="ws-row-sub">Soldes, versements, intérêts, fiscalité</span></span>
+            <ChevronRight size={18} className="ws-chevron" aria-hidden="true"/>
+          </summary>
         <div className="projection-annual-mobile">
           {projectionData.filter(p => p.date.endsWith("-01")).map(p => (
             <details key={p.date} className="projection-year-card">
@@ -185,24 +163,24 @@ export default function ProjectionScreen({ view }: { view: WimmView }) {
             </tbody>
           </table>
         </div>
-      </details>
+        </details>
 
-      <details className="projection-settings-card">
-        <summary><SlidersHorizontal size={18}/> Paramètres de simulation <ChevronRight size={18}/></summary>
-        <div className="projection-settings-details">
-          <div className="projection-settings-metrics">
-            <div><span>Revenus mensuels estimés</span><strong>{projectionMoney(s.income)}</strong></div>
-            <div><span>Capacité d’épargne prévue</span><strong>{projectionMoney(totals.capacity)}</strong></div>
+        <details className="ws-disclosure" data-tour="projection-settings">
+          <summary className="ws-row">
+            <span className="ws-icon-tile" aria-hidden="true"><SlidersHorizontal size={20}/></span>
+            <span className="ws-row-main"><span className="ws-row-title">Paramètres de simulation</span>
+              <span className="ws-row-sub">Revenus, répartition, rendements</span></span>
+            <ChevronRight size={18} className="ws-chevron" aria-hidden="true"/>
+          </summary>
+          <div className="ws-disclosure-body">
+            <div className="ws-row"><span className="ws-row-main"><span className="ws-row-title">Revenus mensuels estimés</span></span><span className="ws-amount">{projectionMoney(s.income)}</span></div>
+            <div className="ws-row"><span className="ws-row-main"><span className="ws-row-title">Capacité d’épargne prévue</span></span><span className="ws-amount">{projectionMoney(totals.capacity)}</span></div>
+            <p className="ws-muted">La projection tient compte des comptes, rendements, charges et projets enregistrés. Les résultats sont des estimations, sans garantie.</p>
+            <button type="button" className="ws-pill is-solid" style={{ alignSelf: "flex-start" }} onClick={allocations}>Modifier revenus et répartition</button>
+            <button type="button" className="ws-link" onClick={calc}><Info size={16} aria-hidden="true"/>Voir les calculs</button>
           </div>
-          <p>La projection tient compte des comptes, rendements, charges et projets enregistrés. Les résultats sont des estimations, sans garantie.</p>
-          <button type="button" className="primary" onClick={allocations}>
-            <SlidersHorizontal size={17}/> Modifier revenus et répartition
-          </button>
-          <button type="button" className="text" onClick={calc}>
-            <Info size={17}/> Voir les calculs
-          </button>
-        </div>
-      </details>
+        </details>
+      </section>
     </div>
   );
 }
