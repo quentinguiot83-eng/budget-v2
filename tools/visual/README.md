@@ -18,8 +18,8 @@ changement de style : une modification de CSS ne doit changer que les
 - ordinateur (1280 × 900), clair : les mêmes écrans.
 
 Les captures sont déterministes : date figée au 16 novembre 2026, aucun
-appel réseau (polices système à la place de Google Fonts), animations
-coupées, et chaque capture est refaite jusqu'à ce que la page soit stable.
+appel réseau (DM Sans et Manrope servies depuis `fonts/`, licence OFL),
+animations coupées, et chaque capture est refaite jusqu'à ce que la page soit stable.
 
 ## Parcours
 
