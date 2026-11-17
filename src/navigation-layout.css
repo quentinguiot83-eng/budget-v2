@@ -9,13 +9,6 @@
 .sidebar .sidebar-bottom{padding-top:8px}
 .wimm-pro-shortcut{height:36px;min-width:36px;padding:0 6px;display:grid;place-items:center;border-radius:50%;background:var(--action);color:white;font-weight:850;font-size:.64rem;box-shadow:0 3px 11px color-mix(in srgb,var(--action) 18%,transparent)}
 .wimm-pro-shortcut[aria-current="page"]{outline:2px solid var(--wimm-green);outline-offset:2px}
-.home-personal-shortcut{display:flex;align-items:center;gap:13px;width:100%;text-align:left;padding:16px 18px;background:linear-gradient(110deg,var(--wimm-mint-wash),var(--surface));border:1px solid var(--border);color:var(--ink);border-radius:19px;box-shadow:var(--wimm-card-shadow)}
-.home-personal-shortcut:hover{border-color:var(--wimm-green)}
-.home-personal-icon{display:grid;place-items:center;width:46px;height:46px;flex-shrink:0;border-radius:15px;color:var(--wimm-green);background:color-mix(in srgb,var(--wimm-mint) 20%,var(--surface))}
-.home-personal-copy{display:grid;gap:3px;flex:1;min-width:0}
-.home-personal-copy small{font-size:.72rem;color:var(--muted)}
-.home-personal-copy strong{font-size:1.07rem;font-weight:850;font-variant-numeric:tabular-nums}
-.home-personal-shortcut>svg{color:var(--muted);flex-shrink:0}
 .projects-type-switch{display:grid;grid-template-columns:1fr 1fr;gap:6px;background:var(--wimm-mint-wash);border:1px solid var(--border);border-radius:16px;padding:6px}
 .projects-type-switch button{display:flex;align-items:center;justify-content:center;gap:6px;min-width:0;min-height:42px;padding:8px 5px;border-radius:11px;font-size:.8rem;font-weight:750;white-space:nowrap;color:var(--muted)}
 .projects-type-switch button.selected{background:var(--surface);color:var(--wimm-green);box-shadow:var(--wimm-card-shadow)}
@@ -34,7 +27,6 @@
  .app .bottom-nav button{display:flex;width:100%;align-items:center;justify-content:center;flex-direction:column;font-size:.62rem;border-radius:12px;white-space:nowrap}
  .app .bottom-nav button.active{background:color-mix(in srgb,var(--wimm-mint) 14%,transparent);color:var(--wimm-green)}
  .app .bottom-nav button svg{width:21px;height:21px;stroke-width:1.9}
- .app .mobile-menu-trigger{display:none!important}
  .app .mobile-brand-row{gap:0}
  .app .soft-topbar .flex .desktop-settings-trigger{display:none!important}
  .app .soft-topbar .flex .mobile-profile-trigger{display:grid!important;place-items:center;flex-shrink:0}
@@ -310,11 +302,7 @@
 /* Espacement principal : la hiérarchie vient du contenu, pas de marges énormes. */
 .app .content { gap: 18px; }
 .app .content > .card,
-.app .content > .two-col > .card,
-.app .wimm-home-clean > .card { border-radius: 19px; }
-.app .wimm-home-clean { gap: 16px; }
-.app .home-personal-shortcut { border-radius: 18px; padding: 14px 16px; }
-.app .home-personal-icon { width: 42px; height: 42px; border-radius: 13px; }
+.app .content > .two-col > .card { border-radius: 19px; }
 .app .budget-month-tracker { padding: 21px; }
 .app .budget-month-tracker-total { padding-bottom: 15px; }
 .app .budget-month-tracker-lines { padding-top: 15px; gap: 16px; }
@@ -371,30 +359,6 @@
   }
   .app .page-heading { gap: 10px; }
   .app .content { gap: 15px; }
-  .app .wimm-home-clean { gap: 13px; }
-  .app .wimm-home-clean .home-balance-main {
-    min-height: 0;
-    border-radius: 21px;
-  }
-  .app .wimm-home-clean .home-balance-main .hero-number { margin: 12px 0 10px; }
-  .app .wimm-home-clean .home-balance-available {
-    margin-top: 13px;
-    padding: 13px 14px;
-    gap: 6px;
-    border-radius: 15px;
-  }
-  .app .home-personal-shortcut { padding: 12px 14px; gap: 11px; border-radius: 17px; }
-  .app .home-personal-icon { width: 40px; height: 40px; border-radius: 12px; }
-  .app .home-personal-copy { gap: 2px; }
-  .app .wimm-home-clean .home-income-expenses { gap: 10px; }
-  .app .wimm-home-clean .home-income-expenses .home-remaining-card {
-    padding: 14px 13px;
-    border-radius: 17px;
-    gap: 8px;
-  }
-  .app .wimm-home-clean .home-income::before,
-  .app .wimm-home-clean .home-expenses::before { margin-bottom: 0; }
-  .app .wimm-home-clean > .savings-home-summary { padding: 16px; }
   .app .budget-month-tracker { padding: 17px; border-radius: 20px; }
   .app .budget-month-tracker-total { padding-bottom: 12px; }
   .app .budget-month-tracker-lines { padding-top: 13px; gap: 14px; }
@@ -553,53 +517,6 @@
 
 
 /* Accueil : détail de tous les comptes courants, sans confondre les soldes individuels et le total. */
-.app .home-current-accounts {
-  display:grid;gap:7px;margin-top:15px;padding-top:13px;
-  border-top:1px solid var(--border);min-width:0;
-}
-.app .home-current-accounts-head {
-  display:flex;justify-content:space-between;align-items:center;gap:10px;
-}
-.app .home-current-accounts-head>strong {
-  font-size:.77rem;font-weight:770;color:var(--muted);
-}
-.app .home-current-accounts-head button {
-  display:inline-flex;align-items:center;gap:3px;font-size:.73rem;
-  min-height:32px;padding:5px 3px;
-}
-.app .home-current-accounts-list {display:grid;gap:3px;min-width:0;}
-.app .home-current-account-row {
-  display:flex;align-items:center;justify-content:space-between;gap:12px;
-  width:100%;min-width:0;min-height:42px;padding:8px 10px;text-align:left;
-  border:1px solid transparent;border-radius:11px;
-  background:color-mix(in srgb,var(--surface) 71%,transparent);
-  color:var(--ink);transition:background .15s ease,border-color .15s ease;
-}
-.app .home-current-account-row:hover {
-  background:color-mix(in srgb,var(--wimm-mint-wash) 48%,var(--surface));
-  border-color:var(--border);
-}
-.app .home-current-account-row:focus-visible {outline:2px solid var(--wimm-green);outline-offset:2px;}
-.app .home-current-account-name {
-  display:flex;align-items:center;gap:9px;min-width:0;flex:1;
-  font-size:.79rem;font-weight:670;overflow-wrap:anywhere;
-}
-.app .home-current-account-name svg {flex:0 0 auto;color:var(--muted);}
-.app .home-current-account-name span {min-width:0;}
-.app .home-current-account-row>strong {
-  flex:0 0 auto;font-variant-numeric:tabular-nums;font-size:.82rem;
-  font-weight:800;color:var(--ink);white-space:nowrap;
-}
-.app .home-current-account-row>strong.negative-money {color:var(--negative,#c64a51);}
-@media(max-width:560px) {
-  .app .home-current-accounts {margin-top:11px;padding-top:10px;gap:5px;}
-  .app .home-current-account-row {padding:9px 7px;min-height:41px;gap:8px;}
-  .app .home-current-account-name {font-size:.74rem;gap:7px;}
-  .app .home-current-account-row>strong {font-size:.77rem;}
-}
-@media(prefers-reduced-motion:reduce) {
-  .app .home-current-account-row {transition:none;}
-}
 
 /* Titre du menu « Ajouter » (Pro et compte perso). Ces règles vivaient dans
    pro-suite.css, désormais chargé seulement avec le module Pro. */

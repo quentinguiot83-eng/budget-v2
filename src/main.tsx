@@ -9,6 +9,7 @@ import "./navigation-layout.css";
 import "./aurora.css";
 import "./ios-pwa-layout.css";
 import "./wimm-report-fixes.css";
+import "./wimm-system.css";
 
 // Position fixed can drift after the iPhone PWA resumes from keyboard/background.
 installStandaloneIphoneDock();

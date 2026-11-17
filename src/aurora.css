@@ -71,9 +71,7 @@
 /* Surfaces vitrées : pas d'effet de verre sur les messages d'erreur/alerte. */
 .app .content > .card:not(.home-alerts):not(.budget-overrun-alert):not(.danger-zone),
 .app .content > .two-col > .card:not(.budget-overrun-alert),
-.app .wimm-home-clean > .card:not(.home-alerts),
 .app .account,
-.app .account-card,
 .app .transaction-search,
 .app .transaction-search-results,
 .app .analysis-dashboard .card,
@@ -93,85 +91,10 @@
 }
 
 /* Accueil — la carte principale est un véritable panneau de verre coloré. */
-.app .wimm-home-clean .home-balance-main {
-  position: relative;
-  border: 1px solid color-mix(in srgb, var(--aurora-stroke) 83%, var(--wimm-mint));
-  background:
-    radial-gradient(ellipse at 92% 5%, rgba(194,172,246,.34), transparent 55%),
-    linear-gradient(122deg, rgba(228,255,248,.81), rgba(251,253,255,.66) 48%, rgba(236,229,255,.74));
-  box-shadow: 0 17px 40px rgba(67,104,133,.12), inset 0 1px 0 rgba(255,255,255,.85);
-  border-radius: 26px;
-  backdrop-filter: blur(17px) saturate(1.24);
-  -webkit-backdrop-filter: blur(17px) saturate(1.24);
-}
-.app .wimm-home-clean .home-balance-main::before {
-  width: 215px;
-  height: 205px;
-  right: -55px;
-  top: 15px;
-  border-radius: 43% 57% 64% 36%;
-  opacity: .9;
-  background:
-    radial-gradient(circle at 25% 35%, rgba(118,207,179,.31), transparent 67%),
-    radial-gradient(circle at 69% 77%, rgba(178,157,247,.27), transparent 62%);
-  transform: rotate(-15deg);
-}
-.app .wimm-home-clean .home-balance-main .hero-number {
-  letter-spacing: -.065em;
-  line-height: 1.08;
-  position: relative;
-}
-.app .home-balance-date { color: var(--muted); }
-.app .wimm-home-clean .home-balance-available {
-  position: relative;
-  border: 1px solid rgba(255,255,255,.8);
-  background: rgba(255,255,255,.58);
-  box-shadow: inset 0 1px 0 rgba(255,255,255,.65);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-}
 
 /* Le compte personnel conserve son rôle de raccourci, avec moins de poids. */
-.app .home-personal-shortcut {
-  border: 1px solid var(--aurora-stroke);
-  background: linear-gradient(117deg, rgba(223,248,241,.73), var(--aurora-glass) 78%);
-  box-shadow: var(--aurora-drop);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-}
 
 /* Les deux petites tuiles sont vitrées, mais les montants restent contrastés. */
-.app .wimm-home-clean .home-income-expenses .home-remaining-card {
-  border: 1px solid var(--aurora-stroke);
-  background:
-    radial-gradient(circle at 100% 0%, rgba(157,220,237,.30), transparent 70%),
-    linear-gradient(145deg, rgba(235,247,255,.83), rgba(255,255,255,.60));
-  box-shadow: var(--aurora-drop);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-}
-.app .wimm-home-clean .home-income-expenses .home-expenses {
-  background:
-    radial-gradient(circle at 100% 0%, rgba(247,188,209,.33), transparent 70%),
-    linear-gradient(145deg, rgba(255,237,244,.84), rgba(255,255,255,.60));
-}
-.app .wimm-home-clean .home-income::before,
-.app .wimm-home-clean .home-expenses::before {
-  width: 35px; height: 5px;
-  box-shadow: 0 0 11px color-mix(in srgb, var(--wimm-blue) 20%, transparent);
-}
-.app .wimm-home-clean .home-expenses::before {
-  box-shadow: 0 0 11px color-mix(in srgb, var(--wimm-coral) 20%, transparent);
-}
-.app .wimm-home-clean > .savings-home-summary {
-  background: linear-gradient(125deg, rgba(241,234,255,.74), var(--aurora-glass) 75%);
-  border: 1px solid var(--aurora-stroke);
-}
-.app .wimm-home-clean .home-actions {
-  background: var(--aurora-glass);
-  border-color: var(--aurora-stroke);
-}
-.app .home-action-row { border-top-color: var(--aurora-separator); }
 
 /* Budget — une carte majeure, raccourcis pastel et sous-cartes plus aérées. */
 .app .budget-month-tracker {
@@ -313,8 +236,6 @@
     -webkit-backdrop-filter: blur(16px);
   }
   .app .page-heading { padding-block: 13px 12px; }
-  .app .wimm-home-clean .home-balance-main { padding: 19px; }
-  .app .wimm-home-clean .home-balance-available { background: rgba(255,255,255,.61); }
 }
 
 /* Nuit Aurora — gradients foncés, contrastes préservés, photo non altérée. */
@@ -322,14 +243,10 @@
   background-color: rgba(25,31,47,.86) !important;
   border-bottom-color: rgba(214,228,255,.10);
 }
-:root[data-mode="dark"] .app .wimm-home-clean .home-balance-main,
 :root[data-mode="dark"] .app .wealth-total-card,
 :root[data-mode="dark"] .app .projection-main-card {
   border-color: var(--aurora-stroke);
 }
-:root[data-mode="dark"] .app .wimm-home-clean .home-balance-available,
-:root[data-mode="dark"] .app .wimm-home-clean .home-income-expenses .home-remaining-card,
-:root[data-mode="dark"] .app .wimm-home-clean > .savings-home-summary,
 :root[data-mode="dark"] .app .budget-month-tracker,
 :root[data-mode="dark"] .app .budget-analysis-link,
 :root[data-mode="dark"] .app .projection-chart-card,
@@ -373,11 +290,9 @@
 }
 @media (prefers-reduced-transparency: reduce) {
   .app .soft-topbar,
-  .app .bottom-nav,
-  .app .home-personal-shortcut,
-  .app .wimm-home-clean .home-balance-main,
-  .app .content > .card,
-  .app .projection-chart-card {
+.app .bottom-nav,
+.app .content > .card,
+.app .projection-chart-card {
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
     background-color: var(--surface) !important;
@@ -1062,21 +977,6 @@ body:has(.app),body:has(.app) #root {background:#f0f0ef!important}
     radial-gradient(ellipse 95% 50% at 0% 88%, rgba(61,119,109,.07), transparent 75%),
     linear-gradient(155deg,#192225 0%,#1b2528 48%,#171f22 100%) !important;
 }
-:root:not([data-mode="dark"]) .app .wimm-home-clean .home-balance-main {
-  background: linear-gradient(135deg,rgba(255,255,255,.66),rgba(230,246,238,.48) 66%,rgba(244,250,246,.52)) !important;
-  border: 1px solid rgba(255,255,255,.86) !important;
-  box-shadow: 0 15px 36px rgba(46,80,69,.10), inset 0 1px 0 rgba(255,255,255,.95) !important;
-  backdrop-filter: blur(22px) saturate(1.2);
-  -webkit-backdrop-filter: blur(22px) saturate(1.2);
-}
-:root:not([data-mode="dark"]) .app .wimm-home-clean .home-balance-main::before {
-  background: radial-gradient(circle at 25% 40%,rgba(124,190,158,.20),transparent 75%) !important;
-}
-:root:not([data-mode="dark"]) .app .wimm-home-clean .home-balance-available {
-  background: rgba(255,255,255,.49) !important;
-}
-:root:not([data-mode="dark"]) .app .home-personal-shortcut,
-:root:not([data-mode="dark"]) .app .wimm-home-clean > .savings-home-summary,
 :root:not([data-mode="dark"]) .app .wealth-total-card,
 :root:not([data-mode="dark"]) .app .projection-main-card,
 :root:not([data-mode="dark"]) .app .budget-month-tracker {
@@ -1093,7 +993,6 @@ body:has(.app),body:has(.app) #root {background:#f0f0ef!important}
 }
 
 /* Night mode: charcoal glass, gentle sage accents, no saturated violet or neon. */
-:root[data-mode="dark"] .app .wimm-home-clean .home-balance-main,
 :root[data-mode="dark"] .app .wealth-total-card,
 :root[data-mode="dark"] .app .projection-main-card {
   background: linear-gradient(137deg,rgba(49,68,65,.77),rgba(43,55,60,.79) 65%,rgba(45,56,59,.76)) !important;
@@ -1102,12 +1001,6 @@ body:has(.app),body:has(.app) #root {background:#f0f0ef!important}
   backdrop-filter: blur(23px) saturate(1.10);
   -webkit-backdrop-filter: blur(23px) saturate(1.10);
 }
-:root[data-mode="dark"] .app .wimm-home-clean .home-balance-main::before {
-  background: radial-gradient(circle,rgba(120,177,148,.18),transparent 75%) !important;
-}
-:root[data-mode="dark"] .app .home-personal-shortcut,
-:root[data-mode="dark"] .app .wimm-home-clean .home-balance-available,
-:root[data-mode="dark"] .app .wimm-home-clean > .savings-home-summary,
 :root[data-mode="dark"] .app .budget-month-tracker,
 :root[data-mode="dark"] .app .projection-chart-card,
 :root[data-mode="dark"] .app .projection-kpi,
@@ -1119,9 +1012,6 @@ body:has(.app),body:has(.app) #root {background:#f0f0ef!important}
   box-shadow: var(--aurora-drop) !important;
   backdrop-filter: blur(21px) saturate(1.08);
   -webkit-backdrop-filter: blur(21px) saturate(1.08);
-}
-:root[data-mode="dark"] .app .wimm-home-clean .home-income-expenses .home-remaining-card {
-  border-color: var(--aurora-stroke) !important;
 }
 :root[data-mode="dark"] .app .bottom-nav button.active {
   background: rgba(105,175,145,.16) !important;
@@ -1249,26 +1139,8 @@ body:has(.app),body:has(.app) #root {background:#f0f0ef!important}
   backdrop-filter: blur(32px) saturate(1.35) !important;
   -webkit-backdrop-filter: blur(32px) saturate(1.35) !important;
 }
-:root:not([data-mode="dark"]) .app .wimm-home-clean .home-balance-main::before {  /* no conspicuous blob behind the balance */
-}
-:root:not([data-mode="dark"]) .app .wimm-home-clean .home-balance-available {
-  background:
-    linear-gradient(132deg,rgba(255,255,255,.67),rgba(255,255,255,.21) 74%),
-    color-mix(in srgb,var(--aurora-tone) 8%,rgba(255,255,255,.30)) !important;
-  border: 1px solid rgba(255,255,255,.94) !important;
-  box-shadow: inset 0 1.5px 0 rgba(255,255,255,.98),0 7px 16px rgba(43,74,67,.07) !important;
-  backdrop-filter: blur(28px) saturate(1.30) !important;
-  -webkit-backdrop-filter: blur(28px) saturate(1.30) !important;
-}
 
 /* Retain functional income blue and expense coral as restrained tinted glass. */
-:root:not([data-mode="dark"]) .app .wimm-home-clean .home-income-expenses .home-remaining-card {
-  background: linear-gradient(135deg,rgba(255,255,255,.61),rgba(223,237,255,.40)) !important;
-  border: 1px solid rgba(255,255,255,.91) !important;
-  box-shadow: 0 13px 29px rgba(55,74,92,.09),inset 0 1.5px 0 rgba(255,255,255,.97) !important;
-  backdrop-filter: blur(30px) saturate(1.3) !important;
-  -webkit-backdrop-filter: blur(30px) saturate(1.3) !important;
-}
 
 /* Complementary smaller panels and the month controls also read as glass. */
 :root:not([data-mode="dark"]) .app :is(
@@ -1295,15 +1167,12 @@ body:has(.app),body:has(.app) #root {background:#f0f0ef!important}
 /* Global theme accents: these were hard-coded Wimm green before. */
 .app .soft-topbar .icon,
 .app .soft-topbar .mobile-profile-trigger,
-.app .content button.block-info,
-.app .home-personal-shortcut > svg,
-.app .home-personal-icon {
+.app .content button.block-info {
   color: var(--accent-deep) !important;
 }
 .app .content button.block-info {
   background: color-mix(in srgb,var(--accent-soft) 55%,transparent) !important;
 }
-.app .home-personal-icon,
 .app .wimm-settings-entry-icon {
   background: color-mix(in srgb,var(--aurora-tone) 19%,var(--surface)) !important;
 }
@@ -1360,20 +1229,6 @@ body:has(.app),body:has(.app) #root {background:#f0f0ef!important}
   backdrop-filter: blur(28px) saturate(1.12) !important;
   -webkit-backdrop-filter: blur(28px) saturate(1.12) !important;
 }
-:root[data-mode="dark"] .app .wimm-home-clean .home-balance-available {
-  background: color-mix(in srgb,var(--aurora-tone) 9%,rgba(54,71,71,.54)) !important;
-  border-color: rgba(200,226,222,.24) !important;
-  box-shadow: inset 0 1px 0 rgba(255,255,255,.16),0 7px 16px rgba(0,0,0,.07) !important;
-  backdrop-filter: blur(26px) !important;
-  -webkit-backdrop-filter: blur(26px) !important;
-}
-:root[data-mode="dark"] .app .wimm-home-clean .home-income-expenses .home-remaining-card {
-  background: linear-gradient(136deg,rgba(57,72,81,.74),rgba(41,55,63,.55)) !important;
-  border: 1px solid rgba(190,220,215,.18) !important;
-  box-shadow: inset 0 1px 0 rgba(255,255,255,.12),0 10px 22px rgba(0,0,0,.13) !important;
-  backdrop-filter: blur(25px) !important;
-  -webkit-backdrop-filter: blur(25px) !important;
-}
 :root[data-mode="dark"] .app :is(.month-picker .icon,.month-picker input,.soft-topbar .icon,.soft-topbar .mobile-profile-trigger) {
   background: color-mix(in srgb,var(--aurora-tone) 12%,rgba(55,70,72,.45)) !important;
   border: 1px solid rgba(189,217,212,.18) !important;
@@ -1389,7 +1244,6 @@ body:has(.app),body:has(.app) #root {background:#f0f0ef!important}
   color: var(--accent-deep) !important;
   box-shadow: inset 0 1px 0 rgba(255,255,255,.13);
 }
-:root[data-mode="dark"] .app .home-personal-icon,
 :root[data-mode="dark"] .app .wimm-settings-entry-icon {
   background: color-mix(in srgb,var(--aurora-tone) 21%,rgba(36,52,52,.65)) !important;
 }
@@ -1671,9 +1525,6 @@ body:has(.app),body:has(.app) #root {background:#f0f0ef!important}
   backdrop-filter: blur(24px) saturate(1.10) !important;
   -webkit-backdrop-filter: blur(24px) saturate(1.10) !important;
 }
-:root:not([data-mode="dark"]) .app .wimm-home-clean .home-balance-main::before {
-  opacity: 0 !important;
-}
 :root[data-mode="dark"] .app :is(
   .wimm-home-clean .home-balance-main,
   .home-personal-shortcut,
@@ -1710,44 +1561,10 @@ body:has(.app),body:has(.app) #root {background:#f0f0ef!important}
   backdrop-filter: blur(24px) saturate(1.05) !important;
   -webkit-backdrop-filter: blur(24px) saturate(1.05) !important;
 }
-:root[data-mode="dark"] .app .wimm-home-clean .home-balance-main::before {
-  opacity: 0 !important;
-}
 
 /* Consistent semantic information: green = income / savings; red = expenses. */
-:root:not([data-mode="dark"]) .app .wimm-home-clean .home-income-expenses .home-income {
-  background: linear-gradient(138deg,rgba(253,255,254,.87),rgba(210,241,224,.79)) !important;
-  border: 1px solid rgba(242,255,248,.95) !important;
-  box-shadow: 0 10px 26px rgba(46,103,78,.095),inset 0 1px 0 #fff !important;
-}
-:root:not([data-mode="dark"]) .app .wimm-home-clean .home-income-expenses .home-expenses {
-  background: linear-gradient(138deg,rgba(255,253,253,.88),rgba(250,219,220,.79)) !important;
-  border: 1px solid rgba(255,247,247,.96) !important;
-  box-shadow: 0 10px 26px rgba(118,60,64,.083),inset 0 1px 0 #fff !important;
-}
-:root[data-mode="dark"] .app .wimm-home-clean .home-income-expenses .home-income {
-  background: linear-gradient(130deg,rgba(40,68,57,.78),rgba(42,57,54,.75)) !important;
-  border: 1px solid rgba(158,210,171,.21) !important;
-}
-:root[data-mode="dark"] .app .wimm-home-clean .home-income-expenses .home-expenses {
-  background: linear-gradient(130deg,rgba(73,47,52,.81),rgba(58,44,52,.73)) !important;
-  border: 1px solid rgba(231,164,170,.22) !important;
-}
-.app .wimm-home-clean .home-income::before,
-.app .wimm-home-clean .home-expenses::before { background: #3a9a70 !important; }
-.app .wimm-home-clean .home-expenses::before { background: #de7480 !important; }
-.app .wimm-home-clean .home-income-expenses .home-income .text { color: #287c55 !important; }
-.app .wimm-home-clean .home-income-expenses .home-expenses .text { color: #a94555 !important; }
-:root[data-mode="dark"] .app .wimm-home-clean .home-income-expenses .home-income .text { color: #94d8b5 !important; }
-:root[data-mode="dark"] .app .wimm-home-clean .home-income-expenses .home-expenses .text { color: #f0a3ae !important; }
 
 /* Keep savings visually positive but don't tint the whole summary card. */
-.app .wimm-home-clean .home-balance-available strong {
-  color: var(--wimm-green) !important;
-}
-:root:not([data-mode="dark"]) .app .wimm-home-clean > .savings-home-summary .progress span {
-  background: #529a78 !important;
-}
 /* Projection/wealth headers should not inject an unrelated theme color. */
 .app :is(.projection-main-heading svg,.projection-kpi:first-child > svg,.wealth-total-header > svg) {
   color: var(--muted) !important;
@@ -2424,12 +2241,6 @@ html:root body #root {
    Cette information financière reste indépendante de la couleur du thème. */
 :root { --wimm-available-positive: #287c55; }
 :root[data-mode="dark"] { --wimm-available-positive: #94d8b5; }
-.app .wimm-home-clean .home-balance-available strong.positive-money {
-  color: var(--wimm-available-positive) !important;
-}
-.app .wimm-home-clean .home-balance-available strong.neutral-money {
-  color: var(--ink) !important;
-}
 /* Other navigation/action accents should be theme-selected, not mint. */
 .app :is(
   .trip-hero .trip-icon,
@@ -2531,21 +2342,6 @@ html:root body #root {
 
 
 /* Accueil — cinq dernières dépenses, compactes et dans le verre Wimm. */
-.app .wimm-home-clean > .home-recent-expenses {
-  padding: 17px 20px 12px;
-  overflow: hidden;
-  border-radius: 24px;
-}
-:root:not([data-mode="dark"]) .app .wimm-home-clean > .home-recent-expenses {
-  background: linear-gradient(142deg,rgba(255,255,255,.88),rgba(245,248,247,.72)) !important;
-  border: 1px solid rgba(255,255,255,.88) !important;
-  box-shadow: 0 12px 32px rgba(40,60,66,.08),inset 0 1px 0 rgba(255,255,255,.94) !important;
-}
-:root[data-mode="dark"] .app .wimm-home-clean > .home-recent-expenses {
-  background: linear-gradient(139deg,rgba(49,58,63,.88),rgba(36,45,50,.80)) !important;
-  border: 1px solid rgba(230,240,238,.13) !important;
-  box-shadow: 0 12px 30px rgba(0,0,0,.16),inset 0 1px 0 rgba(255,255,255,.07) !important;
-}
 .app .home-recent-expenses-heading {
   display:flex;
   align-items:center;
@@ -2631,7 +2427,6 @@ html:root body #root {
   margin:0;
 }
 @media(max-width:560px) {
-  .app .wimm-home-clean > .home-recent-expenses {padding:16px 15px 9px;}
   .app .home-recent-expense {grid-template-columns:34px minmax(0,1fr) auto;gap:8px;}
   .app .home-recent-expense-icon {width:32px;height:32px;}
   .app .home-recent-expense-amount {font-size:.79rem;}
@@ -2642,9 +2437,7 @@ html:root body #root {
 :root { --wimm-negative-text: #b13e4b; }
 :root[data-mode="dark"] { --wimm-negative-text: #ff9aa6; }
 .app .negative-money,
-.app .negative,
-.app .wimm-home-clean .home-balance-available strong.negative,
-:root[data-mode="dark"] .app .wimm-home-clean .home-balance-available strong.negative {
+.app .negative {
   color:var(--wimm-negative-text) !important;
 }
 
@@ -2734,7 +2527,6 @@ html:root body #root {
 .app .home-monthly-categories{display:grid;gap:10px}
 .app .home-monthly-category{display:grid;grid-template-columns:1fr auto;gap:5px 10px}
 .app .home-monthly-category .progress{grid-column:1/-1}
-.app .home-cash-invitation{display:inline-flex;align-items:center;gap:7px;justify-self:start;font-size:.72rem;text-align:left;margin-top:8px}
 .app .trips-no-active{padding:12px 16px}
 
 /* ── Graphiques en verre (ex-liquid-charts-preview.css) ── */

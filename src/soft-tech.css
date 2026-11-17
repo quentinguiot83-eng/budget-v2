@@ -34,7 +34,10 @@
 }
 body { color: var(--ink); }
 button, input, select, textarea { font-family: inherit; }
-h1, h2, h3, .hero-number, .large { letter-spacing: -.035em; }
+h1,
+h2,
+h3,
+.large { letter-spacing: -.035em; }
 h1 { font-weight: 800; }
 h2 { font-size: 1.1rem; font-weight: 750; }
 button { transition: background .16s ease, box-shadow .16s ease, transform .16s ease; }
@@ -48,7 +51,7 @@ button:disabled { opacity: .55; }
 .sidebar nav button { border-radius: 14px; }
 .sidebar nav button.active { background: var(--accent-soft); color: var(--accent-deep); }
 .soft-topbar { background: var(--surface); border-color: var(--border); }
-.soft-topbar .icon, .mobile-menu-trigger { width: 38px; height: 38px; border: 0; border-radius: 50%; background: var(--accent-soft); color: var(--accent-deep); }
+.soft-topbar .icon { width: 38px; height: 38px; border: 0; border-radius: 50%; background: var(--accent-soft); color: var(--accent-deep); }
 .soft-topbar .flex { gap: 8px; }
 .soft-wordmark { display: inline-flex; gap: 4px; align-items: center; color: var(--ink); font: 850 1.7rem Manrope, sans-serif; letter-spacing: -.08em; padding: 0; background: transparent; border: 0; }
 .soft-wordmark span { font-size: .9rem; color: var(--accent-deep); align-self: flex-start; margin-top: 6px; }
@@ -57,7 +60,6 @@ button:disabled { opacity: .55; }
 .category,
 .home-remaining-card,
 .add-card,
-.account-card,
 .sheet,
 .prosuite-card,
 .prosuite-metric,
@@ -68,10 +70,6 @@ button:disabled { opacity: .55; }
   border-radius: 24px; box-shadow: var(--soft-shadow);
 }
 .overview { grid-template-columns: 1.6fr 1fr 1fr; }
-.balance-card { border: 0; color: var(--ink); background: var(--soft-gradient); box-shadow: var(--soft-shadow); }
-.balance-card .hero-number { font-weight: 800; }
-.balance-card button { color: var(--accent-deep); font-weight: 700; }
-.balance-card .split { color: var(--muted); gap: 12px; }
 .metric strong { color: var(--ink); }
 .row-icon,
 .add-card > span { background: var(--accent-soft); color: var(--accent-deep); border-radius: 15px; }
@@ -120,7 +118,6 @@ dialog::backdrop { background: rgba(25, 22, 46, .45); backdrop-filter: blur(6px)
   .soft-topbar > div:first-child { display: grid; gap: 4px; min-width: 0; }
   .soft-topbar > div:first-child > .eyebrow { max-width: 190px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-left: 42px; }
   .mobile-brand-row { display: flex; align-items: center; gap: 9px; }
-  .mobile-menu-trigger { width: 32px; height: 32px; border-radius: 11px; }
   .soft-topbar .icon { width: 34px; height: 34px; }
   .soft-topbar .flex { gap: 6px; }
   .page-heading { gap: 14px; }
@@ -129,13 +126,11 @@ dialog::backdrop { background: rgba(25, 22, 46, .45); backdrop-filter: blur(6px)
   .bottom-nav button.active { color: var(--accent-deep); }
   .page-footer { padding-bottom: calc(115px + env(safe-area-inset-bottom)); }
   .overview { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .overview .balance-card { grid-column: 1 / -1; }
   .metric { min-width: 0; min-height: 175px; }
 }
 @media (max-width: 560px) {
   .main { padding-inline: 20px; --mobile-gutter: 20px; }
   .soft-topbar { margin-inline: -20px; padding-inline: 20px; }
-  .balance-card .split { font-size: .74rem; flex-wrap: wrap; }
   .sheet { padding: 22px; }
   .prosuite-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
   .prosuite-metric { min-width: 0; }
@@ -155,7 +150,6 @@ dialog::backdrop { background: rgba(25, 22, 46, .45); backdrop-filter: blur(6px)
 :root[data-mode="dark"] .prosuite-product,
 :root[data-mode="dark"] .prosuite-topbar,
 :root[data-mode="dark"] .prosuite-nav { background: var(--surface); color: var(--ink); border-color: var(--border); }
-:root[data-mode="dark"] .balance-card { background: var(--soft-gradient); color: var(--ink); }
 :root[data-mode="dark"] .available-card,
 :root[data-mode="dark"] .home-remaining-card,
 :root[data-mode="dark"] .prosuite-metric:nth-child(2n+1) { background: var(--soft-blue); }
@@ -218,8 +212,6 @@ dialog::backdrop { background: rgba(25, 22, 46, .45); backdrop-filter: blur(6px)
 .category-grid,
 .add-grid { gap: 18px; }
 .overview { gap: 14px; }
-.balance-card { min-height: 165px; padding: 22px; border-radius: 22px; }
-.balance-card .hero-number { font-size: clamp(2rem, 3vw, 2.6rem); margin: 17px 0; }
 .metric { padding: 19px; gap: 12px; }
 .metric strong { font-size: 1.45rem; }
 .available-card .large { font-size: 1.8rem; }
@@ -270,10 +262,6 @@ dialog::backdrop { background: rgba(25, 22, 46, .45); backdrop-filter: blur(6px)
   .two-col,
 .category-grid,
 .add-grid { gap: 16px; }
-  .balance-card { min-height: 150px; padding: 20px; border-radius: 21px; }
-  .balance-card .hero-number { font-size: 2.05rem; margin: 16px 0; }
-  .balance-card .split > span { font-size: .78rem; }
-  .balance-card .split:last-child > span, .balance-card button { font-size: .7rem; }
   .metric { padding: 15px; border-radius: 19px; gap: 9px; }
   .metric strong { font-size: 1.25rem; }
   .home-remaining-card strong { font-size: 1.17rem; }
@@ -681,70 +669,9 @@ button.block-info:focus-visible { outline: 2px solid currentColor; outline-offse
 }
 
 /* Un seul bilan mensuel : les chiffres essentiels d'abord, les tableaux à la demande. */
-.monthly-bilan-unique { margin-bottom: 0; }
-.monthly-bilan-unique .section-head { align-items: center; margin-bottom: 17px; }
-.monthly-bilan-period { font-size: .76rem; text-align: right; }
-.monthly-bilan-overview {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 12px;
-}
-.monthly-bilan-overview > div {
-  min-width: 0;
-  display: grid;
-  gap: 6px;
-  padding: 13px;
-  background: var(--soft-canvas);
-  border: 1px solid var(--border);
-  border-radius: 15px;
-}
-.monthly-bilan-overview > div:first-child {
-  background: var(--accent-soft);
-}
-.monthly-bilan-overview .muted { font-size: .75rem; }
-.monthly-bilan-overview strong {
-  font-size: clamp(1rem, 2.2vw, 1.35rem);
-  font-weight: 800;
-  font-variant-numeric: tabular-nums;
-  overflow-wrap: anywhere;
-}
-.monthly-bilan-comparison { margin: 16px 0 6px; font-size: .86rem; line-height: 1.5; }
-.monthly-bilan-comparison small { display: block; margin-top: 3px; }
-.monthly-bilan-details {
-  margin-top: 18px;
-  padding-top: 4px;
-  border-top: 1px solid var(--border);
-}
-.monthly-bilan-details > summary {
-  color: var(--accent-deep);
-  font-weight: 750;
-  padding: 13px 3px;
-}
-.monthly-bilan-details-inner { display: grid; gap: 11px; padding-top: 10px; }
-.monthly-bilan-details-inner > h3 { font-size: .97rem; margin: 13px 0 0; }
-.monthly-bilan-top-categories { display: grid; gap: 5px; }
-.monthly-bilan-top-categories > div {
-  display: flex; align-items: baseline; justify-content: space-between;
-  gap: 12px; padding: 8px 0; border-bottom: 1px solid var(--border);
-}
-.monthly-bilan-top-categories strong { white-space: nowrap; font-variant-numeric: tabular-nums; }
-@media (max-width: 560px) {
-  .monthly-bilan-overview { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; }
-  .monthly-bilan-overview > div:first-child { grid-column: 1 / -1; }
-  .monthly-bilan-overview > div { padding: 12px; }
-  .monthly-bilan-overview strong { font-size: 1.07rem; }
-  .monthly-bilan-overview > div:first-child strong { font-size: 1.38rem; }
-  .monthly-bilan-unique .section-head { align-items: flex-start; }
-}
 
 /* Pastels inspirés de la maquette : accents répartis par rôle, sans changer
    la couleur de thème choisie par chaque utilisateur. */
-.home-overview .balance-card, .wealth-overview .balance-card {
-  background: linear-gradient(115deg,
-    color-mix(in srgb, #8cbafa 19%, var(--surface)),
-    color-mix(in srgb, #b09bfa 24%, var(--surface)) 72%,
-    color-mix(in srgb, #8cbbef 18%, var(--surface)));
-}
 .wealth-overview > .metric:nth-child(2), .home-overview > .metric:nth-child(2) {
   background: linear-gradient(125deg,
     color-mix(in srgb, #86d8d1 17%, var(--surface)),var(--surface));
@@ -760,10 +687,6 @@ button.block-info:focus-visible { outline: 2px solid currentColor; outline-offse
 }
 .home-remaining-card:nth-child(2) {
   background: linear-gradient(125deg,color-mix(in srgb, #ffb2c6 20%, var(--surface)),var(--surface));
-}
-:root[data-mode="dark"] .home-overview .balance-card,
-:root[data-mode="dark"] .wealth-overview .balance-card {
-  border: 1px solid color-mix(in srgb,#ada1f4 24%,var(--border));
 }
 
 /* Navigation flottante Wimm — halo pastel, liseré continu et ombre portée. */
@@ -796,13 +719,8 @@ button.block-info:focus-visible { outline: 2px solid currentColor; outline-offse
 }
 .savings-home-summary .section-head { margin: 0; }
 .savings-home-summary .block-title h2 { font-size: 1rem; }
-.savings-home-amount { display: flex; align-items: baseline; flex-wrap: wrap; gap: 6px 12px; }
-.savings-home-amount strong { font-size: clamp(1.35rem, 2.5vw, 1.65rem); letter-spacing: -.04em; font-variant-numeric: tabular-nums; }
-.savings-home-amount .muted { font-size: .81rem; }
 .savings-home-summary .progress { margin: 0; }
 .savings-home-summary > small { font-size: .78rem; }
-.savings-home-link { display: inline-flex; justify-content: flex-start; align-items: center; gap: 5px; width: fit-content; margin-top: 4px; }
-.savings-done-tag { display: inline-flex; align-items: center; gap: 5px; background: var(--accent-soft); color: var(--accent-deep); border-radius: 12px; padding: 6px 9px; font-weight: 750; font-size: .75rem; }
 .savings-wealth-panel { padding: 0 !important; overflow: hidden; border-color: color-mix(in srgb, var(--accent-deep) 17%, var(--border)); }
 .savings-wealth-summary { list-style: none; cursor: pointer; display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 21px 24px; }
 .savings-wealth-summary::-webkit-details-marker { display: none; }
@@ -825,37 +743,13 @@ button.block-info:focus-visible { outline: 2px solid currentColor; outline-offse
 }
 
 /* Accueil Wimm : cinq zones, sans cartes redondantes. */
-.wimm-home-clean { display: grid; gap: 17px; }
-.wimm-home-clean > .home-balance-main { margin: 0; }
-.home-balance-date { color: var(--muted); font-size: .75rem; margin-top: 1px; }
 .home-balance-available { border-top: 1px solid color-mix(in srgb, var(--ink) 12%, transparent); padding-top: 17px; margin-top: 18px; display: grid; gap: 8px; }
 .home-balance-available .block-title { justify-content: space-between; gap: 6px; }
 .home-balance-available .block-title > span { color: var(--muted); font-size: .82rem; }
 .home-balance-available strong { font-size: clamp(1.4rem, 3vw, 1.85rem); font-weight: 850; font-variant-numeric: tabular-nums; }
 .home-balance-available small { color: var(--muted); font-size: .75rem; }
-.wimm-home-clean .home-income-expenses { margin: 0; }
-.wimm-home-clean .home-income-expenses .home-remaining-card { border-radius: 20px; padding: 20px; display: grid; align-content: start; gap: 12px; }
-.wimm-home-clean .home-income-expenses .home-remaining-card strong { font-size: clamp(1.25rem, 2.8vw, 1.65rem); font-variant-numeric: tabular-nums; }
-.wimm-home-clean .home-income-expenses .text { display: inline-flex; align-items: center; gap: 3px; justify-self: start; padding: 0; font-size: .78rem; }
-.wimm-home-clean > .savings-home-summary { margin: 0; }
-.home-actions, .home-alerts { display: grid; gap: 0; }
-.home-actions .section-head, .home-alerts .section-head { margin-bottom: 9px; }
-.home-alerts { background: color-mix(in srgb, #efc388 11%, var(--surface)); border-color: color-mix(in srgb, #c88f40 30%, var(--border)); }
-.home-alerts .section-head h2 { display: inline-flex; align-items: center; gap: 9px; }
-.home-action-row { border: 0; border-top: 1px solid var(--border); border-radius: 0; background: transparent; color: var(--ink); width: 100%; display: flex; align-items: center; gap: 13px; padding: 14px 2px; text-align: left; cursor: pointer; }
-.home-action-row:first-of-type { border-top: 0; }
-.home-action-row > span { min-width: 0; display: grid; gap: 4px; flex: 1; }
-.home-action-row strong { font-size: .86rem; font-weight: 750; }
-.home-action-row small { font-size: .76rem; color: var(--muted); }
-.home-action-row > svg:first-child { color: var(--accent-deep); flex: 0 0 auto; }
-.home-action-row > svg:last-child { color: var(--muted); flex: 0 0 auto; }
-.home-alerts .home-action-row > svg:first-child { color: #b17b3b; }
-@media (max-width: 560px) {
-  .wimm-home-clean { gap: 14px; }
-  .wimm-home-clean .home-income-expenses { grid-template-columns: repeat(2, minmax(0,1fr)); gap: 10px; }
-  .wimm-home-clean .home-income-expenses .home-remaining-card { padding: 15px 12px; min-width: 0; gap: 10px; }
-  .wimm-home-clean .home-income-expenses .home-remaining-card strong { font-size: clamp(1.1rem, 5vw, 1.4rem); overflow-wrap: anywhere; }
-}
+.home-actions { display: grid; gap: 0; }
+.home-actions .section-head { margin-bottom: 9px; }
 
 /* Budget simplifié : trois raccourcis et enveloppes en liste compacte. */
 .budget-quick-links { display: grid !important; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px !important; margin: 15px 0 24px !important; }
@@ -918,77 +812,22 @@ body, #root { background: var(--soft-canvas); }
 .content > .card,
 .content > .two-col > .card,
 .account,
-.account-card,
 .transaction-search,
 .transaction-search-results,
 .analysis-dashboard .card,
-.wimm-home-clean > .card,
 .home-remaining-card {
   border: 1px solid color-mix(in srgb, var(--border) 88%, var(--ink) 2%);
   box-shadow: var(--wimm-card-shadow);
 }
 .content .section-head h2 { font-weight: 800; letter-spacing: -.026em; }
-.content .large, .content .hero-number,
-.home-remaining-card strong, .account .large, .metric strong {
+.content .large,
+.home-remaining-card strong,
+.account .large,
+.metric strong {
   font-variant-numeric: tabular-nums; letter-spacing: -.045em;
 }
 .content button.primary:not(:disabled) { box-shadow: 0 5px 14px color-mix(in srgb, var(--accent-deep) 16%, transparent); }
 .content button.primary:hover:not(:disabled), .content button.secondary:hover:not(:disabled) { transform: translateY(-1px); }
-.wimm-home-clean .home-balance-main {
-  position: relative; isolation: isolate; overflow: hidden;
-  border: 1px solid color-mix(in srgb, var(--wimm-mint) 24%, var(--border));
-  background: linear-gradient(117deg,
-    color-mix(in srgb, var(--wimm-mint-wash) 76%, var(--surface)) 0%,
-    var(--surface) 57%, color-mix(in srgb, var(--wimm-blue-wash) 62%, var(--surface)) 100%);
-  box-shadow: 0 14px 34px color-mix(in srgb, var(--wimm-green) 11%, transparent);
-}
-.wimm-home-clean .home-balance-main::before {
-  content: ""; position: absolute; z-index: -1; pointer-events: none;
-  width: 145px; height: 145px; right: -38px; top: 33px;
-  border-radius: 42% 58% 61% 39%;
-  background: radial-gradient(circle at 28% 28%, color-mix(in srgb, var(--wimm-mint) 27%, transparent), transparent 70%);
-  transform: rotate(-24deg);
-}
-.wimm-home-clean .home-balance-main .hero-number { font-size: clamp(2.15rem, 5vw, 3.5rem); font-weight: 850; }
-.wimm-home-clean .home-balance-available {
-  border: 1px solid color-mix(in srgb, var(--wimm-mint) 13%, var(--border));
-  border-radius: 18px; padding: 15px 17px; margin-top: 16px;
-  background: color-mix(in srgb, var(--surface) 83%, transparent);
-}
-.wimm-home-clean .home-balance-available strong { color: var(--wimm-green); }
-.wimm-home-clean .home-income {
-  background: linear-gradient(140deg, var(--wimm-blue-wash), color-mix(in srgb, var(--wimm-blue-wash) 25%, var(--surface)));
-  border-color: color-mix(in srgb, var(--wimm-blue) 17%, var(--border));
-}
-.wimm-home-clean .home-expenses {
-  background: linear-gradient(140deg, var(--wimm-coral-wash), color-mix(in srgb, var(--wimm-coral-wash) 27%, var(--surface)));
-  border-color: color-mix(in srgb, var(--wimm-coral) 16%, var(--border));
-}
-.wimm-home-clean .home-income::before, .wimm-home-clean .home-expenses::before {
-  content: ""; display: block; width: 33px; height: 6px; border-radius: 99px; margin-bottom: 2px;
-  background: var(--wimm-blue);
-}
-.wimm-home-clean .home-expenses::before { background: var(--wimm-coral); }
-.wimm-home-clean > .savings-home-summary {
-  background: linear-gradient(115deg, var(--wimm-lavender-wash), color-mix(in srgb, var(--wimm-lavender-wash) 24%, var(--surface)));
-  border-color: color-mix(in srgb, var(--wimm-lavender) 20%, var(--border));
-}
-.wimm-home-clean > .savings-home-summary .progress span { box-shadow: 0 0 11px color-mix(in srgb, var(--wimm-lavender) 23%, transparent); }
-.wimm-home-clean .home-actions .home-action-row > svg:first-child {
-  width: 38px; height: 38px; padding: 10px; border-radius: 13px;
-  background: var(--wimm-mint-wash); color: var(--wimm-green);
-}
-.wimm-home-clean .home-actions .home-action-row:nth-of-type(even) > svg:first-child {
-  background: var(--wimm-blue-wash); color: var(--wimm-blue);
-}
-.wimm-home-clean .home-alerts {
-  background: linear-gradient(125deg, var(--wimm-amber-wash), var(--surface));
-  border-color: color-mix(in srgb, var(--wimm-amber) 24%, var(--border));
-}
-.wimm-home-clean .home-alerts .home-action-row > svg:first-child {
-  width: 38px; height: 38px; padding: 10px; border-radius: 13px;
-  background: color-mix(in srgb, var(--wimm-amber) 12%, var(--surface)); color: var(--wimm-amber);
-}
 /* Budget : une synthèse majeure, les catégories restent compactes. */
 .budget-month-tracker {
   background: linear-gradient(115deg, var(--wimm-blue-wash) 0%, var(--surface) 53%, var(--wimm-lavender-wash) 100%);
@@ -1002,7 +841,7 @@ body, #root { background: var(--soft-canvas); }
 .budget-quick-links button:nth-child(3) { color: var(--wimm-lavender); background: var(--wimm-lavender-wash); border-color: color-mix(in srgb, var(--wimm-lavender) 18%, var(--border)); }
 .budget-analysis-link { background: linear-gradient(100deg, var(--surface), color-mix(in srgb, var(--wimm-lavender-wash) 42%, var(--surface))); box-shadow: var(--wimm-card-shadow); }
 /* Patrimoine, comptes et épargne. */
-.wealth-overview .balance-card, .savings-wealth-summary {
+.savings-wealth-summary {
   background: linear-gradient(110deg, var(--wimm-mint-wash), var(--surface) 60%, var(--wimm-lavender-wash));
 }
 /* Projections : cohérence des KPI et mise en avant des graphiques. */
@@ -1029,7 +868,6 @@ body, #root { background: var(--soft-canvas); }
 .add-card:nth-of-type(3n+1) { background: var(--wimm-blue-wash); }
 .add-card:nth-of-type(3n+2) { background: var(--wimm-mint-wash); }
 .add-card:nth-of-type(3n+3) { background: var(--wimm-lavender-wash); }
-:root[data-mode="dark"] .wimm-home-clean .home-balance-available { background: color-mix(in srgb, var(--surface) 83%, transparent); }
 @media (prefers-reduced-motion: reduce) {
  .content button.primary, .content button.secondary, .bottom-nav button { transition: none; }
  .content button.primary:hover, .content button.secondary:hover { transform: none; }
@@ -1041,12 +879,6 @@ body, #root { background: var(--soft-canvas); }
 .trip-tabs button.selected, .trip-tabs button.active { color: var(--wimm-green); background: var(--surface); box-shadow: var(--wimm-card-shadow); }
 .trip-category { border-radius: 16px; }
 /* Compte perso : solde principal identifiable, histoire et échéances différenciées. */
-.content:has(.personal-advances-card) .overview .balance-card,
-.content:has(.personal-history-card) .overview .balance-card {
-  background: linear-gradient(117deg, var(--wimm-lavender-wash), var(--surface) 64%, var(--wimm-blue-wash));
-  border: 1px solid color-mix(in srgb, var(--wimm-lavender) 23%, var(--border));
-  box-shadow: var(--wimm-card-shadow);
-}
 .personal-page-settings { background: var(--wimm-lavender-wash) !important; border-color: color-mix(in srgb, var(--wimm-lavender) 23%, var(--border)) !important; }
 .personal-advances-card { background: linear-gradient(135deg, var(--wimm-blue-wash), var(--surface) 70%); border-color: color-mix(in srgb, var(--wimm-blue) 19%, var(--border)) !important; }
 .personal-installments-card { background: linear-gradient(135deg, var(--wimm-mint-wash), var(--surface) 72%); border-color: color-mix(in srgb, var(--wimm-mint) 19%, var(--border)) !important; }

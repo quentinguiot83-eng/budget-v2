@@ -1,0 +1,176 @@
+/*
+ * Système visuel Wimm — composants communs des écrans allégés.
+ *
+ * Six tailles de texte, trois arrondis, une ombre. Les couleurs reprennent
+ * les variables des thèmes (--action, --accent-soft, --ink, --muted,
+ * --surface, --border) : le thème choisi et le mode sombre s'appliquent
+ * sans rien ajouter ici. Polices inchangées : DM Sans pour le texte,
+ * Manrope pour les titres et les montants.
+ *
+ * Chargé en dernier (main.tsx). Préfixe « ws- » pour ne jamais entrer en
+ * conflit avec les anciennes feuilles.
+ */
+
+:root {
+  --ws-fs-key: 2.5rem;      /* 40 px — chiffre clé d'un écran */
+  --ws-fs-title: 1.75rem;   /* 28 px — titre d'écran */
+  --ws-fs-card: 1.25rem;    /* 20 px — titre de carte, montant secondaire */
+  --ws-fs-body: 1rem;       /* 16 px — texte */
+  --ws-fs-small: .875rem;   /* 14 px — texte secondaire */
+  --ws-fs-label: .75rem;    /* 12 px — libellé en capitales */
+
+  --ws-radius-field: 12px;
+  --ws-radius-card: 20px;
+  --ws-radius-pill: 999px;
+
+  --ws-shadow: 0 12px 31px rgba(35, 55, 56, .086), inset 0 1px 0 rgba(255, 255, 255, .96);
+  --ws-card-bg: color-mix(in srgb, var(--surface) 88%, transparent);
+  --ws-card-edge: color-mix(in srgb, var(--surface) 70%, var(--border));
+
+  --ws-positive: #287c55;
+  --ws-negative: #b4434b;
+  --ws-warning: #a35c00;
+  --ws-positive-soft: color-mix(in srgb, var(--ws-positive) 11%, var(--surface));
+  --ws-warning-soft: color-mix(in srgb, var(--ws-warning) 12%, var(--surface));
+}
+:root[data-mode="dark"] {
+  --ws-shadow: 0 12px 31px rgba(0, 0, 0, .24);
+  --ws-card-bg: color-mix(in srgb, var(--surface) 92%, transparent);
+  --ws-positive: #94d8b5;
+  --ws-negative: #ffabb6;
+  --ws-warning: #f2c27a;
+}
+
+.app .ws-stack { display: flex; flex-direction: column; gap: 16px; }
+
+/* Carte en verre, la même partout. */
+.app .ws-card {
+  background: var(--ws-card-bg);
+  border: 1px solid var(--ws-card-edge);
+  border-radius: var(--ws-radius-card);
+  box-shadow: var(--ws-shadow);
+  backdrop-filter: saturate(1.2) blur(14px);
+  -webkit-backdrop-filter: saturate(1.2) blur(14px);
+  padding: 20px;
+  margin: 0;
+  color: var(--ink);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+.app .ws-card.ws-hero { padding: 24px; gap: 8px; }
+.app .ws-card.ws-list { padding-top: 8px; padding-bottom: 8px; gap: 0; }
+
+/* Textes. */
+.app .ws-card-title {
+  margin: 0;
+  font: 800 var(--ws-fs-card)/1.25 Manrope, -apple-system, sans-serif;
+  color: var(--ink);
+}
+.app .ws-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; min-width: 0; }
+.app .ws-head-title { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.app .ws-label {
+  font-size: var(--ws-fs-label); font-weight: 600; letter-spacing: .06em;
+  text-transform: uppercase; color: var(--muted);
+}
+.app .ws-muted { font-size: var(--ws-fs-small); color: var(--muted); line-height: 1.45; margin: 0; }
+.app .ws-text { font-size: var(--ws-fs-body); line-height: 1.45; margin: 0; }
+.app .ws-key {
+  font: 800 var(--ws-fs-key)/1.1 Manrope, -apple-system, sans-serif;
+  font-variant-numeric: tabular-nums; letter-spacing: -.02em; color: var(--ink);
+  overflow-wrap: anywhere;
+}
+.app .ws-figure {
+  font: 800 var(--ws-fs-card)/1.2 Manrope, -apple-system, sans-serif;
+  font-variant-numeric: tabular-nums; color: var(--ink);
+}
+.app .ws-amount { font-size: var(--ws-fs-body); font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.app .ws-positive { color: var(--ws-positive); }
+.app .ws-negative { color: var(--ws-negative); }
+.app .ws-warning { color: var(--ws-warning); }
+
+/* Bandeau mis en avant sous un chiffre clé (ex. disponible du mois). */
+.app .ws-highlight {
+  display: flex; justify-content: space-between; align-items: center; gap: 12px;
+  background: var(--ws-positive-soft); border-radius: var(--ws-radius-field);
+  padding: 12px 14px; margin-top: 8px; font-size: var(--ws-fs-small); color: var(--ink);
+}
+.app .ws-highlight.is-negative { background: color-mix(in srgb, var(--ws-negative) 11%, var(--surface)); }
+
+/* Lignes de liste : un titre, un sous-titre, une valeur, une flèche. */
+.app .ws-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  min-height: 52px; padding: 12px 0; width: 100%;
+  border: 0; border-bottom: 1px solid var(--border); background: none;
+  color: var(--ink); text-align: left; text-decoration: none; font: inherit;
+}
+.app .ws-row:last-child { border-bottom: 0; }
+.app button.ws-row, .app a.ws-row { cursor: pointer; }
+.app .ws-row-main { display: flex; flex-direction: column; min-width: 0; flex: 1 1 auto; gap: 2px; }
+.app .ws-row-title { font-size: var(--ws-fs-body); font-weight: 600; line-height: 1.3; overflow-wrap: anywhere; }
+.app .ws-row-sub { font-size: var(--ws-fs-small); color: var(--muted); line-height: 1.35; overflow-wrap: anywhere; }
+.app .ws-row-end { display: flex; align-items: center; gap: 6px; flex: 0 0 auto; }
+.app .ws-row svg.ws-chevron { color: var(--muted); flex: 0 0 auto; }
+.app .ws-icon-tile {
+  width: 40px; height: 40px; border-radius: var(--ws-radius-field); flex: 0 0 auto;
+  display: grid; place-items: center; background: var(--accent-soft); color: var(--action, var(--accent-deep));
+}
+.app .ws-icon-tile.is-warning { background: var(--ws-warning-soft); color: var(--ws-warning); }
+
+/* Barre de progression. */
+.app .ws-progress {
+  height: 8px; border-radius: var(--ws-radius-pill); overflow: hidden;
+  background: var(--accent-soft); display: block; width: 100%;
+}
+.app .ws-progress.is-thin { height: 6px; }
+.app .ws-progress > span {
+  display: block; height: 100%; border-radius: inherit;
+  background: var(--action, var(--accent-deep)); max-width: 100%;
+}
+.app .ws-progress.is-over > span { background: var(--ws-negative); }
+
+/* Sélecteur segmenté (onglets d'un écran, horizon…). */
+.app .ws-segmented {
+  display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr);
+  background: color-mix(in srgb, var(--border) 80%, transparent);
+  border-radius: var(--ws-radius-pill); padding: 4px; gap: 2px;
+}
+.app .ws-segmented > button {
+  min-height: 40px; border: 0; border-radius: var(--ws-radius-pill); background: transparent;
+  font-size: var(--ws-fs-small); font-weight: 600; color: var(--muted); padding: 0 8px;
+}
+.app .ws-segmented > button[aria-selected="true"], .app .ws-segmented > button.active {
+  background: var(--surface); color: var(--ink); box-shadow: 0 2px 8px rgba(27, 36, 51, .08);
+}
+
+/* Boutons. */
+.app .ws-pill {
+  min-height: 40px; padding: 0 14px; border: 0; border-radius: var(--ws-radius-pill);
+  background: var(--accent-soft); color: var(--action, var(--accent-deep));
+  font-size: var(--ws-fs-small); font-weight: 600; white-space: nowrap;
+  display: inline-flex; align-items: center; gap: 6px;
+}
+.app .ws-pill.is-solid { background: var(--ink); color: var(--surface); }
+.app .ws-link {
+  min-height: 44px; padding: 0; border: 0; background: none;
+  color: var(--action, var(--accent-deep)); font-size: var(--ws-fs-small); font-weight: 600;
+  display: inline-flex; align-items: center; gap: 4px; text-decoration: none; align-self: flex-start;
+}
+.app .ws-info {
+  width: 24px; height: 24px; padding: 0; border: 0; background: none; color: var(--muted);
+  display: inline-grid; place-items: center; flex: 0 0 auto;
+}
+.app .ws-icon-button {
+  width: 44px; height: 44px; border-radius: var(--ws-radius-pill); border: 0; flex: 0 0 auto;
+  background: var(--accent-soft); color: var(--action, var(--accent-deep)); display: grid; place-items: center;
+}
+
+/* Deux chiffres côte à côte dans une même carte (revenus / dépenses…). */
+.app .ws-split { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); padding: 0; gap: 0; }
+.app .ws-split > * {
+  display: flex; flex-direction: column; gap: 4px; padding: 16px 20px; min-width: 0;
+  border: 0; background: none; color: var(--ink); text-align: left; font: inherit;
+}
+.app .ws-split > * + * { border-left: 1px solid var(--border); }
+.app .ws-split > button { cursor: pointer; }
