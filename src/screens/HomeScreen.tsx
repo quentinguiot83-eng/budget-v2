@@ -1,9 +1,8 @@
 import { dateLabel, money, balance, today, month, monthLabel, estimatedAnnualInterest, isPersonalBudgetExpense, expenseBudgetMonth } from "../engine";
-import GettingStartedChecklist from "../GettingStartedChecklist";
+import FirstSteps from "../FirstSteps";
 import { personalBalance } from "../personal";
 import { Row, Progress } from "../ui";
 import { Info, ChevronRight, Coins, UserRound, CalendarDays, Bell, Wallet } from "lucide-react";
-import { onboardingChecklistPreviewEnabled } from "../app/shared";
 import type { WimmView } from "../app/buildView";
 
 const chevron = <ChevronRight size={18} className="ws-chevron" aria-hidden="true"/>;
@@ -16,8 +15,8 @@ export default function HomeScreen({ view }: { view: WimmView }) {
     historicalTripExpense, homeMonthSections, householdCashBalance, interestDue,
     interestReviewYear, navigate, personalOwnerId, ps, raiseRepeatedBudget, recentExpenses,
     repeatedBudgetAlerts, reviewAccountInterest, s, salaryAlert, salaryPlannedDate,
-    savingMonthMarkedDone, savingsPanel, savingsTarget, selectedMonth, session,
-    setTutorialMode, setTutorialOpen, setTutorialPage, setTxCategoryFilter, setTxFilter,
+    savingMonthMarkedDone, savingsPanel, savingsTarget, selectedMonth,
+    setTxCategoryFilter, setTxFilter,
     totals, txDetails, txRows,
   } = view;
 
@@ -40,15 +39,7 @@ export default function HomeScreen({ view }: { view: WimmView }) {
 
   return (
     <div className="ws-stack wimm-home">
-      {homeMonthSections.showInteractiveDashboard && onboardingChecklistPreviewEnabled && (
-        <GettingStartedChecklist
-          state={s}
-          storageKey={`wimm-onboarding-checklist-${session?.user.id || "demo"}`}
-          preview={onboardingChecklistPreviewEnabled}
-          onNavigate={navigate}
-          onHelp={() => { setTutorialPage("home"); setTutorialMode("page"); setTutorialOpen(true); }}
-        />
-      )}
+      {homeMonthSections.showInteractiveDashboard && selectedMonth === month() && <FirstSteps view={view}/>}
 
       {homeMonthSections.showAccountBalances && (
         <section className="ws-card ws-hero" data-tour="home-overview" aria-label="Solde et disponible">

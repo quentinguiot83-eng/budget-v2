@@ -19,8 +19,8 @@ export function createBaseActions(ctx: WimmCore) {
     setActiveTrip, setBackRoute, setDoc, setError, setMobileQuickAddOpen, setMonth, setNotice,
     setPersonalDoc, setPersonalFiltersExpanded, setPersonalTab, setPersonalTransactionCategory,
     setPersonalTransactionQuery, setPersonalTransactionType, setRoute, setSaving,
-    setSettingsCategory, setSettingsDetail, setSheet, setShowArchivedTrip, setTutorialOpen,
-    setTxCategoryFilter, setTxFilter, subRoutes, tutorialSeen,
+    setSettingsCategory, setSettingsDetail, setSheet, setShowArchivedTrip, setSession, setJourneyReplay,
+    setTxCategoryFilter, setTxFilter, subRoutes,
   } = ctx;
 
 
@@ -90,16 +90,19 @@ export function createBaseActions(ctx: WimmCore) {
   function showError(e: unknown) {
     setError(e instanceof Error ? e.message : "Une erreur est survenue.");
   }
-  async function closeTutorial() {
-    setTutorialOpen(false);
-    if (demoEnabled || !session || tutorialSeen) return;
-    const { error } = await api.auth.updateUser({
-      data: {
-        wimm_tutorial_started: true,
-        wimm_tutorial_seen: true,
-      },
+  // Relance la visite courte du premier lancement depuis l'accueil.
+  async function replayTour() {
+    setSheet(null);
+    setSettingsCategory(null);
+    setSettingsDetail(null);
+    navigate("home");
+    if (demoEnabled || !session) { setJourneyReplay(true); return; }
+    const { data, error } = await api.auth.updateUser({
+      data: { wimm_progressive_onboarding: true, wimm_journey_done: false, wimm_journey_step: "home-balance" },
     });
-    if (error) setNotice("Tutoriel fermé. Vous pourrez le rouvrir depuis Réglages.");
+    if (error) { setNotice("Impossible de relancer la visite pour le moment."); return; }
+    if (data.user) setSession(previous => previous ? { ...previous, user: data.user } : previous);
+    setJourneyReplay(true);
   }
   async function commit(next: State, action: string) {
     if (busy.current) throw Error("Un enregistrement est déjà en cours.");
@@ -299,7 +302,7 @@ export function createBaseActions(ctx: WimmCore) {
   }
 
   return {
-    navigate, goBack, showError, closeTutorial, commit, change, commitPersonal, changePersonal,
+    navigate, goBack, showError, replayTour, commit, change, commitPersonal, changePersonal,
     openForm, explain, confirmAction, openBudgetTransactions, accountOptions,
     expenseAccountOptions, ensureCashPayment,
   };

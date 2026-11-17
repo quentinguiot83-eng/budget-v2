@@ -9,10 +9,6 @@
 .sidebar .sidebar-bottom{padding-top:8px}
 .wimm-pro-shortcut{height:36px;min-width:36px;padding:0 6px;display:grid;place-items:center;border-radius:50%;background:var(--action);color:white;font-weight:850;font-size:.64rem;box-shadow:0 3px 11px color-mix(in srgb,var(--action) 18%,transparent)}
 .wimm-pro-shortcut[aria-current="page"]{outline:2px solid var(--wimm-green);outline-offset:2px}
-.projects-type-switch{display:grid;grid-template-columns:1fr 1fr;gap:6px;background:var(--wimm-mint-wash);border:1px solid var(--border);border-radius:16px;padding:6px}
-.projects-type-switch button{display:flex;align-items:center;justify-content:center;gap:6px;min-width:0;min-height:42px;padding:8px 5px;border-radius:11px;font-size:.8rem;font-weight:750;white-space:nowrap;color:var(--muted)}
-.projects-type-switch button.selected{background:var(--surface);color:var(--wimm-green);box-shadow:var(--wimm-card-shadow)}
-.projects-type-switch button small{font-size:.58rem;color:var(--muted)}
 @media(min-width:851px){
  .app .bottom-nav,.app .floating-add-button,.app .quick-add-layer{display:none!important}
  .app .sidebar{overflow:hidden}
@@ -48,8 +44,6 @@
  .app .soft-topbar>.flex{gap:3px}
  .app .soft-topbar .icon{width:32px;height:32px}
  .app .wimm-pro-shortcut{height:31px;min-width:31px;font-size:.56rem;padding:0 5px}
- .projects-type-switch button{font-size:.70rem;gap:3px}
- .projects-type-switch button small{font-size:.52rem}
 }
 
 /* Adaptive safe-area navigation for compact and Plus-sized iPhones. */
@@ -118,10 +112,6 @@
 .swipe-actions-desktop-options button:hover {background:var(--wimm-mint-wash)}
 .swipe-actions-desktop-options button.danger-action {color:var(--wimm-coral)}
 .swipe-actions-rail {display:none}
-.budget-category-list>.swipe-actions {border-bottom:1px solid var(--border)}
-.budget-category-list>.swipe-actions:last-child {border-bottom:0}
-.budget-category-list>.swipe-actions>.swipe-actions-content>.category {border:0!important;border-radius:0!important;box-shadow:none!important;background:transparent!important;margin:0!important;padding:15px 38px 15px 0!important}
-.budget-category-list>.swipe-actions>.swipe-actions-content>.category .grow {min-width:0}
 .account-swipe-row {margin-bottom:9px}
 .account-swipe-row .swipe-actions-content {padding-right:34px}
 .transaction-swipe-row {margin-bottom:1px}
@@ -142,12 +132,9 @@
   .swipe-actions-rail {position:absolute;inset:0 0 0 auto;z-index:0;display:flex;width:var(--swipe-distance);align-items:stretch;justify-content:flex-end;background:var(--surface);visibility:hidden}
   .swipe-actions.is-open>.swipe-actions-rail {visibility:visible}
   .swipe-actions>.swipe-actions-content {background:var(--surface)!important;isolation:isolate}
-  .budget-category-list>.swipe-actions>.swipe-actions-content>.category {background:var(--surface)!important}
   .swipe-actions-rail .swipe-action {display:flex;flex:0 0 80px;flex-direction:column;justify-content:center;align-items:center;gap:6px;text-align:center;background:var(--wimm-mint-wash);color:var(--wimm-green);font-size:.68rem;font-weight:770}
   .swipe-actions-rail .swipe-action.danger-action {background:color-mix(in srgb,var(--wimm-coral) 10%,var(--surface));color:var(--wimm-coral)}
   .swipe-actions-desktop-menu {display:none}
-  .budget-category-list>.swipe-actions>.swipe-actions-content>.category {padding:15px 1px!important}
-  .budget-category-list>.swipe-actions.is-open>.swipe-actions-content {background:var(--surface)!important}
   .account-swipe-row .swipe-actions-content {padding-right:0}
   .transaction-swipe-row .swipe-actions-content {padding-right:0}
 }
@@ -155,8 +142,6 @@
 
 /* Keep contextual menus unobstructed and row layout consistent. */
 @media(min-width:851px), (pointer:fine) {
-  .budget-category-list {overflow:visible!important}
-  .budget-category-list>.swipe-actions>.swipe-actions-content>.category {padding-right:40px!important}
   .fixed-swipe-row>.swipe-actions-content,
   .credit-swipe-row>.swipe-actions-content,
   .personal-budget-swipe-row>.swipe-actions-content,
@@ -164,7 +149,6 @@
   .swipe-actions-desktop-menu {display:block}
 }
 @media(max-width:850px) and (pointer:coarse) {
-  .budget-category-list>.swipe-actions>.swipe-actions-content>.category {padding-right:1px!important}
   .fixed-swipe-row>.swipe-actions-content,
   .credit-swipe-row>.swipe-actions-content,
   .personal-budget-swipe-row>.swipe-actions-content,

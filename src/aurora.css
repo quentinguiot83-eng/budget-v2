@@ -228,49 +228,13 @@
 /* Aurora V2 — finition des listes, formulaires et graphiques.
    Les conteneurs de balayage restent fonctionnels mais cessent de forcer
    de grandes bandes blanches dans des surfaces translucides. */
-.app .budget-category-list {
-  min-width: 0;
-  padding: 3px 14px !important;
-  background: var(--aurora-glass-strong) !important;
-  border: 1px solid var(--aurora-stroke) !important;
-  box-shadow: var(--aurora-drop);
-  border-radius: 21px;
-  overflow: hidden !important;
-}
-.app .budget-category-list > .swipe-actions {
-  min-width: 0;
-  margin: 0 !important;
-  border-bottom: 1px solid var(--aurora-separator);
-}
-.app .budget-category-list > .swipe-actions:last-child { border-bottom: 0; }
-.app .budget-category-list > .swipe-actions > .swipe-actions-content {
-  background: transparent !important;
-}
-.app .budget-category-list > .swipe-actions > .swipe-actions-content > .category {
-  min-height: 0 !important;
-  margin: 0 !important;
-  padding: 14px 2px !important;
-  border: 0 !important;
-  border-radius: 0 !important;
-  background: transparent !important;
-  box-shadow: none !important;
-}
-.app .budget-category-list .category .progress {
-  margin-top: 10px;
-  height: 6px;
-}
-.app .budget-category-list .category .meta { margin-top: 7px; }
 
 /* Patrimoine : une seule surface, des lignes de hauteur constante. */
 
 /* Les rails des gestes sont masqués par une surface opaque lorsqu'une
    ligne est ouverte. Le fond ne doit pas apparaître par transparence. */
 @media (max-width: 850px) and (pointer: coarse) {
-  .app .budget-category-list > .swipe-actions.is-open > .swipe-actions-content,
-.app .transaction-search-results .transaction-swipe-row.is-open > .swipe-actions-content {
-    background: var(--surface) !important;
-  }
-  .app .budget-category-list > .swipe-actions.is-open > .swipe-actions-content > .category {
+  .app .transaction-search-results .transaction-swipe-row.is-open > .swipe-actions-content {
     background: var(--surface) !important;
   }
 }
@@ -567,17 +531,12 @@ body:has(.app),body:has(.app) #root {background:#f0f0ef!important}
 :root:not([data-mode="dark"]) .app .bottom-nav button.active {
   background:rgba(101,151,138,.14)!important;
 }
-:root:not([data-mode="dark"]) .app .budget-category-list,
 :root:not([data-mode="dark"]) .app .transaction-search-results {
   background:rgba(255,255,255,.48)!important;
   border:1px solid rgba(255,255,255,.75)!important;
   box-shadow:var(--aurora-drop)!important;
   backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
 }
-:root:not([data-mode="dark"]) .app .budget-category-list .category {
-  padding-block:10px!important;
-}
-:root:not([data-mode="dark"]) .app .budget-category-list .category .progress {margin-top:7px}
 :root:not([data-mode="dark"]) .app .projection-projects-card,
 :root:not([data-mode="dark"]) .app .projection-projects-card > *,
 :root:not([data-mode="dark"]) .app .projection-projects-card .row,
@@ -1188,8 +1147,7 @@ body:has(.app),body:has(.app) #root {background:#f0f0ef!important}
  */
 
 /* Theme the formerly fixed mint horizon selector (all five presets). */
-:root:not([data-mode="dark"]) .app .projection-topline .pills,
-:root:not([data-mode="dark"]) .app .projects-type-switch {
+:root:not([data-mode="dark"]) .app .projection-topline .pills {
   background:
     linear-gradient(135deg,
       color-mix(in srgb,var(--aurora-tone-soft) 77%,rgba(255,255,255,.51)),
@@ -1199,28 +1157,24 @@ body:has(.app),body:has(.app) #root {background:#f0f0ef!important}
   backdrop-filter: blur(20px) saturate(1.22);
   -webkit-backdrop-filter: blur(20px) saturate(1.22);
 }
-:root[data-mode="dark"] .app .projection-topline .pills,
-:root[data-mode="dark"] .app .projects-type-switch {
+:root[data-mode="dark"] .app .projection-topline .pills {
   background: color-mix(in srgb,var(--aurora-tone) 14%,rgba(40,54,58,.66)) !important;
   border: 1px solid color-mix(in srgb,var(--aurora-tone) 21%,rgba(220,233,230,.16)) !important;
   box-shadow: inset 0 1px 0 rgba(255,255,255,.09),0 6px 20px rgba(0,0,0,.11);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
 }
-.app .projection-topline .pills button.selected,
-.app .projects-type-switch button.selected {
+.app .projection-topline .pills button.selected {
   color: var(--accent-deep) !important;
   border-color: color-mix(in srgb,var(--aurora-tone) 32%,transparent) !important;
   box-shadow: 0 5px 17px color-mix(in srgb,var(--aurora-tone) 14%,transparent),
     inset 0 1px 0 rgba(255,255,255,.62) !important;
 }
-:root:not([data-mode="dark"]) .app .projection-topline .pills button.selected,
-:root:not([data-mode="dark"]) .app .projects-type-switch button.selected {
+:root:not([data-mode="dark"]) .app .projection-topline .pills button.selected {
   background: linear-gradient(135deg,rgba(255,255,255,.90),
     color-mix(in srgb,var(--aurora-tone-soft) 41%,rgba(255,255,255,.83))) !important;
 }
-:root[data-mode="dark"] .app .projection-topline .pills button.selected,
-:root[data-mode="dark"] .app .projects-type-switch button.selected {
+:root[data-mode="dark"] .app .projection-topline .pills button.selected {
   background: color-mix(in srgb,var(--aurora-tone) 22%,rgba(54,67,70,.74)) !important;
   box-shadow: inset 0 1px 0 rgba(255,255,255,.13),0 5px 15px rgba(0,0,0,.10) !important;
 }
@@ -1940,16 +1894,6 @@ html:root body #root {
     color-mix(in srgb,var(--aurora-tone) 8%,#30393d),#30393d) !important;
   border-color: rgba(222,232,229,.15) !important;
 }
-.app .tutorial-learning-hub .tutorial-learning-icon {
-  color: var(--accent-deep) !important;
-  background: color-mix(in srgb,var(--aurora-tone) 12%,var(--surface)) !important;
-}
-.app .tutorial-learning-hub .tutorial-learning-head .eyebrow {
-  color: var(--accent-deep) !important;
-}
-:root[data-mode="dark"] .app .tutorial-learning-hub .tutorial-learning-icon {
-  background: color-mix(in srgb,var(--aurora-tone) 20%,#374044) !important;
-}
 /* The current date belongs to the selected theme (not permanent green).
    Other date states and payment/alert colors stay intact. */
 :root:not([data-mode="dark"]) .app .calendar-grid .day.today {
@@ -2088,15 +2032,8 @@ html:root body #root {
 :root:not([data-mode="dark"]) .app .prosuite-native .prosuite-nav {
   background: rgba(255,255,255,.74) !important;
 }
-:root:not([data-mode="dark"]) .app .prosuite-native .prosuite-metric:nth-child(n+3),
-:root:not([data-mode="dark"]) .app .prosuite-native .prosuite-shortcuts button {
-  background: rgba(255,255,255,.85) !important;
-  background-image: none !important;
-}
 :root[data-mode="dark"] .app .prosuite-native .prosuite-topbar,
-:root[data-mode="dark"] .app .prosuite-native .prosuite-nav,
-:root[data-mode="dark"] .app .prosuite-native .prosuite-metric:nth-child(n+3),
-:root[data-mode="dark"] .app .prosuite-native .prosuite-shortcuts button {
+:root[data-mode="dark"] .app .prosuite-native .prosuite-nav {
   background: rgba(46,56,60,.89) !important;
   background-image: none !important;
   border-color: rgba(222,231,229,.16) !important;
@@ -2107,9 +2044,6 @@ html:root body #root {
   box-shadow: inset 0 1px 0 color-mix(in srgb,var(--aurora-tone) 11%,transparent) !important;
 }
 .app .prosuite-native .prosuite-pagehead > div > span {
-  color: var(--accent-deep) !important;
-}
-.app .prosuite-native .prosuite-shortcuts svg {
   color: var(--accent-deep) !important;
 }
 /* The first two professional metrics remain SEMANTIC financial indicators. */

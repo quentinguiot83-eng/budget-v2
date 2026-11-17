@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from "react";
 import { ArrowLeft, ArrowRight, BadgeCheck, BriefcaseBusiness, CalendarDays, Check, CircleHelp, Landmark, Plus, Trash2, UserRound, Wallet } from "lucide-react";
-import { month, today, type State, uid } from "./engine";
+import { month, today, type State, uid, previousDate, settleDuesBeforeOpening } from "./engine";
 
 type Group = "wealth" | "travel";
 type ExtraAccount = { id: string; name: string; group: Group; opening: string; allocation: string };
@@ -15,6 +15,8 @@ export type InitialSetupDraft = {
   incomeSources?: InitialIncomeSource[];
   salaryBudget: "current" | "next"; salaryReminder: boolean;
   fixed: FixedCharge[]; categories: VariableBudget[];
+  // Début en cours de mois : ce qui s'est déjà passé depuis le 1er.
+  monthStart?: { incomeReceived: boolean; spent: string; saved: string };
 };
 
 const initialCategories = [
@@ -120,7 +122,42 @@ export function applyInitialSetup(state: State, draft: InitialSetupDraft) {
       category, start: row.first, interval: row.interval, count: 0, kind: "fixed"
     });
   }
+  settleDuesBeforeOpening(state);
+  recordMonthStart(state, draft);
 }
+
+// Opérations du mois déjà passées avant le premier lancement. Datées la veille
+// du solde de départ, elles ne changent pas le solde mais comptent dans le
+// budget, les revenus et les statistiques du mois.
+export function recordMonthStart(state: State, draft: InitialSetupDraft) {
+  const start = draft.monthStart;
+  if (!start) return;
+  const current = state.accounts.find(a => a.group === "current" && !a.archived);
+  const m = month(draft.asOf);
+  if (!current || draft.asOf.slice(8) === "01") return;
+  const before = previousDate(draft.asOf);
+  if (start.incomeReceived) {
+    const sources = (state.incomeSources ?? []).filter(x => x.frequency === "monthly");
+    for (const source of sources) {
+      state.transactions.push({
+        id: uid(), type: "income", amount: source.amount, date: before,
+        description: source.name, account: current.id, incomeType: "Salaire", budgetMonth: m,
+      });
+      if (!source.receivedMonths.includes(m)) source.receivedMonths.push(m);
+    }
+    state.salaryReceivedMonths ??= [];
+    if (sources.length && !state.salaryReceivedMonths.includes(m)) state.salaryReceivedMonths.push(m);
+  }
+  const spent = parseEuros(start.spent || "0", "dépenses déjà faites");
+  if (spent > 0) state.transactions.push({
+    id: uid(), type: "expense", amount: spent, date: before,
+    description: PRE_WIMM_SPENDING, account: current.id,
+  });
+  const saved = parseEuros(start.saved || "0", "épargne déjà versée");
+  if (saved > 0) state.onboardingSaved = { month: m, amount: saved };
+}
+
+export const PRE_WIMM_SPENDING = "Dépenses avant Wimm";
 
 export default function SetupWizard({ householdName, onComplete }: {
   householdName: string;

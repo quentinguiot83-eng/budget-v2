@@ -3,7 +3,7 @@
 import { type BankRow, reconcileBankRows, normalizeBankLabel } from "../../bankImport";
 import type { BankDraft } from "../../BankReconciliation";
 import { revisePaymentPlan, removeCreditPlan } from "../../creditSchedules";
-import { type Tx, today, uid, euro, shiftMonth, month, type Rule, addMonths, type Due, type Trip, dateAt, loanRemaining, money, dateLabel, monthLabel, isPersonalBudgetExpense, incomeBudgetMonth, expenseBudgetMonth } from "../../engine";
+import { type Tx, today, uid, euro, shiftMonth, month, type Rule, addMonths, type Due, type Trip, dateAt, loanRemaining, money, dateLabel, monthLabel, isPersonalBudgetExpense, incomeBudgetMonth, expenseBudgetMonth, settleDuesBeforeOpening } from "../../engine";
 import { favoriteFromTransaction, checkFavorite, quickSuggestions } from "../../quickEntry";
 import { SortableList } from "../../SortableList";
 import SwipeActions from "../../SwipeActions";
@@ -186,7 +186,11 @@ export function createTransactionActions(ctx: WimmCore & BaseActions & AccountAc
           if (rule) {
             revisePaymentPlan(d, rule.id, changes, uid());
           } else {
-            d.rules.push({ id: uid(), ...changes });
+            const id = uid();
+            d.rules.push({ id, ...changes });
+            // Échéance de ce mois déjà passée avant l'ouverture du compte :
+            // déjà prélevée, comprise dans le solde de départ.
+            settleDuesBeforeOpening(d, id);
           }
         }, "Échéancier enregistré");
       },

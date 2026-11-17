@@ -62,21 +62,11 @@ function useWimmCore() {
     [proEnabled, setProEnabled] = useState(false),
     [mobileQuickAddOpen, setMobileQuickAddOpen] = useState(false),
     [projectsSection, setProjectsSection] = useState<"trips" | "other">("trips"),
-    [tutorialOpen, setTutorialOpen] = useState(false),
-    [tutorialPage, setTutorialPage] = useState<string | null>(null),
-    [tutorialMode, setTutorialMode] = useState<"quick" | "library" | "page">("quick"),
+    [journeyReplay, setJourneyReplay] = useState(false),
     [expandedPersonalBudgets, setExpandedPersonalBudgets] = useState<Record<string, boolean>>({}),
     [selectedPersonalBudget, setSelectedPersonalBudget] = useState<string | null>(null),
     [settingsCategory, setSettingsCategory] = useState<string | null>(null),
     [settingsDetail, setSettingsDetail] = useState<string | null>(null);
-  // The full guided tour must start from predictable sections, even if the
-  // user previously left Projects on the future features tab or Settings open.
-  useEffect(() => {
-    if (!tutorialOpen || tutorialMode === "page") return;
-    setProjectsSection("trips");
-    setSettingsCategory(null);
-    setSettingsDetail(null);
-  }, [tutorialOpen, tutorialMode]);
 
   const quickAddButtonRef = useRef<HTMLButtonElement>(null);
   const desktopQuickAddButtonRef = useRef<HTMLButtonElement>(null);
@@ -92,7 +82,6 @@ function useWimmCore() {
     return () => window.removeEventListener("keydown", handleQuickAddKeyDown);
   }, [mobileQuickAddOpen]);
 
-  const tutorialAutoOpened = useRef(false);
   const busy = useRef(false),
     docRef = useRef(doc),
     personalDocRef = useRef(personalDoc),
@@ -129,8 +118,6 @@ function useWimmCore() {
   const displayName = [session?.user.user_metadata?.display_name, session?.user.user_metadata?.full_name, session?.user.user_metadata?.name]
     .find((value): value is string => typeof value === "string" && value.trim().length > 0)?.trim()
     || (demoEnabled ? previewName : session?.user.email?.split("@")[0] || "");
-  const tutorialSeen = session?.user.user_metadata?.wimm_tutorial_seen === true;
-  const tutorialStarted = session?.user.user_metadata?.wimm_tutorial_started === true;
   const totals = stats(s, selectedMonth);
   // Les cinq dépenses réelles les plus récentes du mois affiché, et non les échéances à venir.
   // reverse() conserve la dernière opération enregistrée en tête à date égale.
@@ -226,17 +213,6 @@ function useWimmCore() {
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
   }, [session?.user.id]);
-  // The guided discovery begins only after the first current account is configured.
-  // "started" prevents the welcome panel reopening every time the app is launched.
-  useEffect(() => {
-    if (demoEnabled || !session || !doc?.household || !current ||
-        tutorialSeen || tutorialStarted || tutorialAutoOpened.current) return;
-    tutorialAutoOpened.current = true;
-    setTutorialMode("quick");
-    setTutorialPage(null);
-    setTutorialOpen(true);
-    void api.auth.updateUser({ data: { wimm_tutorial_started: true } });
-  }, [session?.user.id, doc?.household?.id, current?.id, tutorialSeen, tutorialStarted]);
   useEffect(() => {
     if (demoEnabled) return;
     const refresh = () => {
@@ -342,11 +318,9 @@ function useWimmCore() {
     setPersonalTab, setPersonalTransactionCategory, setPersonalTransactionQuery,
     setPersonalTransactionType, setPreviewName, setProEnabled, setProjectsSection, setRoute,
     setSaving, setSelectedPersonalBudget, setSession, setSettingsCategory, setSettingsDetail,
-    setSheet, setShowArchivedTrip, setShowTransactionReconciliation, setTheme, setTutorialMode,
-    setTutorialOpen, setTutorialPage, setTxCategoryFilter, setTxFilter, setYears,
+    setSheet, setShowArchivedTrip, setShowTransactionReconciliation, setTheme, setJourneyReplay, setTxCategoryFilter, setTxFilter, setYears,
     settingsCategory, settingsDetail, sheet, showArchivedTrip, showTransactionReconciliation,
-    sortedTx, subRoutes, theme, totals, tripCoverUrls, tutorialAutoOpened, tutorialMode,
-    tutorialOpen, tutorialPage, tutorialSeen, txCategoryFilter, txFilter, variableSpent, years,
+    sortedTx, subRoutes, theme, totals, tripCoverUrls, journeyReplay, txCategoryFilter, txFilter, variableSpent, years,
   };
 }
 
