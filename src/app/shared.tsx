@@ -12,9 +12,6 @@ export const BankReconciliation = deferred(() => import("../BankReconciliation")
 export const AnalysisDashboard = deferred(() => import("../AnalysisDashboard"), <div className="chart-loading" />);
 export const GuidedJourney = deferred(() => import("../GuidedJourney"));
 
-export const LazyChart = lazy(
-  () => import("../Charts"),
-);
 export const LazyProjectionInteractive = lazy(() => import("../ProjectionInteractiveChart"));
 export const LazyPersonalProjectionChart = lazy(() => import("../PersonalProjectionChart"));
 
@@ -37,14 +34,6 @@ export const themes = [
   ["sage", "Sauge"],
   ["rose", "Rose"],
   ["peach", "Pêche"],
-];
-export const palette = [
-  "#739cc7",
-  "#92b5a2",
-  "#b09bc8",
-  "#d5a1ad",
-  "#d6b291",
-  "#8aaec1",
 ];
 export const field = (
   name: string,
