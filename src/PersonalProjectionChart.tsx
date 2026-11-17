@@ -53,8 +53,8 @@ export default function PersonalProjectionChart({ points }: { points: Point[] })
           <ComposedChart data={points} margin={{top:13,right:10,left:0,bottom:4}}
             onMouseMove={move} onClick={move}>
             <defs><linearGradient id="wimm-glass-personal-area" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#9478ee" stopOpacity={0.24}/>
-              <stop offset="100%" stopColor="#9478ee" stopOpacity={0}/>
+              <stop offset="0%" stopColor="var(--action, var(--accent-deep))" stopOpacity={0.24}/>
+              <stop offset="100%" stopColor="var(--action, var(--accent-deep))" stopOpacity={0}/>
             </linearGradient></defs>
             <CartesianGrid vertical={false} stroke="var(--border)" strokeOpacity={0.55}/>
             <XAxis dataKey="date" ticks={ticks} tickFormatter={v=>monthLabel(String(v)).replace(/^(.)/,c=>c.toUpperCase())}
@@ -65,10 +65,10 @@ export default function PersonalProjectionChart({ points }: { points: Point[] })
             {selected !== null && <ReferenceLine x={active.date} stroke="#a4adb7" strokeDasharray="3 5"/>}
             <Area type="monotone" dataKey="balance" fill="url(#wimm-glass-personal-area)"
               stroke="none" fillOpacity={1} legendType="none" activeDot={false} isAnimationActive={false}/>
-            <Line type="monotone" dataKey="balance" stroke="#8266dc" strokeWidth={3.2}
+            <Line type="monotone" dataKey="balance" stroke="var(--action, var(--accent-deep))" strokeWidth={3.2}
               dot={false} activeDot={{r:5}} isAnimationActive={false}/>
             {selected !== null && <ReferenceDot x={active.date} y={active.balance} r={5}
-              fill="#8266dc" stroke="var(--surface)" strokeWidth={2}/>}
+              fill="var(--action, var(--accent-deep))" stroke="var(--surface)" strokeWidth={2}/>}
           </ComposedChart>
         </ResponsiveContainer>
       </div>
