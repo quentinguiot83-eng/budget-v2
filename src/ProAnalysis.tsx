@@ -1,7 +1,7 @@
 import {useState} from "react";
 import {Area, Bar, CartesianGrid, ComposedChart, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis} from "recharts";
 import {ChevronDown, CircleHelp} from "lucide-react";
-import {currentProMonth,formatProMonth,moveProMonth,monthRangeProSeries,proEuro,type ProCashEntry,type ProInvoiceSummary} from "./proFinance";
+import {currentProMonth,formatProMonth,moveProMonth,monthRangeProSeries,proEuro,proFullEuro,type ProCashEntry,type ProInvoiceSummary} from "./proFinance";
 import "./pro-analysis.css";
 
 type Period="3"|"6"|"12"|"year"|"custom";
@@ -64,15 +64,15 @@ export default function ProAnalysis({month,transactions,invoices,clients,opening
         </ResponsiveContainer>
       </div>:<p className="pro-an-empty">Choisissez une période valide.</p>}
     </section>
-    <div className="pro-an-kpis pro-v3-kpis">{selection.map(i=><div key={i.key}><span>{i.label}</span><strong>{i.key==="treasury"&&series.at(-1)?.treasury===null?"—":proEuro(total(i.key))}</strong><small>{i.key==="treasury"?"Solde en fin de période":"Total sur la période"}</small></div>)}</div>
+    <div className="pro-an-kpis pro-v3-kpis">{selection.map(i=><div key={i.key}><span>{i.label}</span><strong>{i.key==="treasury"&&series.at(-1)?.treasury===null?"—":proFullEuro(total(i.key))}</strong><small>{i.key==="treasury"?"Solde en fin de période":"Total sur la période"}</small></div>)}</div>
     <section className="pro-an-card pro-v3-details">
       <h2>Détails</h2>
       {([{id:"expenses",label:"Répartition des dépenses"},{id:"clients",label:"CA facturé par client"},{id:"charges",label:"Prélèvements & fiscalité"}] as const).map(item=><div className="pro-v3-detail" key={item.id}>
         <button type="button" aria-expanded={details===item.id} onClick={()=>setDetails(details===item.id?"":item.id)}>{item.label}<ChevronDown size={17}/></button>
         {details===item.id&&<div className="pro-v3-detail-body">
-          {item.id==="expenses"&&(expenseCategories.length?expenseCategories.map(([name,value])=><div className="pro-an-client" key={name}><span>{name}</span><strong>{proEuro(value)}</strong></div>):<p>Aucune dépense sur la période.</p>)}
-          {item.id==="clients"&&(customers.length?customers.map(([id,value])=><div className="pro-an-client" key={id}><span>{clients.find(c=>c.id===id)?.companyName||clients.find(c=>c.id===id)?.name||"Client non renseigné"}</span><strong>{proEuro(value)}</strong></div>):<p>Aucune facture émise sur la période.</p>)}
-          {item.id==="charges"&&<><div className="pro-an-client"><span>Virements Pro → perso</span><strong>{proEuro(total("salary"))}</strong></div><div className="pro-an-client"><span>Cotisations payées</span><strong>{proEuro(total("contributions"))}</strong></div><div className="pro-an-client"><span>Impôts payés</span><strong>{proEuro(total("tax"))}</strong></div></>}
+          {item.id==="expenses"&&(expenseCategories.length?expenseCategories.map(([name,value])=><div className="pro-an-client" key={name}><span>{name}</span><strong>{proFullEuro(value)}</strong></div>):<p>Aucune dépense sur la période.</p>)}
+          {item.id==="clients"&&(customers.length?customers.map(([id,value])=><div className="pro-an-client" key={id}><span>{clients.find(c=>c.id===id)?.companyName||clients.find(c=>c.id===id)?.name||"Client non renseigné"}</span><strong>{proFullEuro(value)}</strong></div>):<p>Aucune facture émise sur la période.</p>)}
+          {item.id==="charges"&&<><div className="pro-an-client"><span>Virements Pro → perso</span><strong>{proFullEuro(total("salary"))}</strong></div><div className="pro-an-client"><span>Cotisations payées</span><strong>{proFullEuro(total("contributions"))}</strong></div><div className="pro-an-client"><span>Impôts payés</span><strong>{proFullEuro(total("tax"))}</strong></div></>}
         </div>}
       </div>)}
     </section>

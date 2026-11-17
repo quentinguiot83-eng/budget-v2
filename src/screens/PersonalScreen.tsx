@@ -337,7 +337,7 @@ export default function PersonalScreen({ view }: { view: WimmView }) {
   <button type="button" className="ws-pill" onClick={() => transferPersonal()}>Virer</button>
 </nav>
 
-<section className="card transaction-search-results personal-v2-history personal-v2-transactions" aria-label="Aperçu des transactions">
+<section className="card transaction-search-results personal-v2-history personal-v2-transactions" aria-label="Aperçu des opérations">
 <div className="ws-head"><h2 className="ws-card-title">Dernières opérations</h2>
 <button type="button" className="ws-link" onClick={()=>setPersonalTab("transactions")}>Tout voir <ChevronRight size={16} aria-hidden="true"/></button></div>
 {monthlyHistory.length?<div className="personal-v2-history-rows">{renderPersonalHistoryRows(monthlyHistory.slice(0,3))}</div>
@@ -349,7 +349,7 @@ export default function PersonalScreen({ view }: { view: WimmView }) {
   <div className="transaction-search-top personal-v4-search-top">
     <label className="transaction-search-input">
       <Search size={18} aria-hidden="true"/>
-      <span className="sr-only">Rechercher une transaction</span>
+      <span className="sr-only">Rechercher une opération</span>
       <input type="search" placeholder="Nom, catégorie ou montant…" value={personalTransactionQuery}
         onChange={e=>setPersonalTransactionQuery(e.target.value)}/>
     </label>

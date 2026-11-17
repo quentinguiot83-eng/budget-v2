@@ -79,7 +79,7 @@ const cents=(v:string)=>Math.round((Number(v.replace(",","."))||0)*100);
 const euros=(v:number)=>(v/100).toFixed(2);
 const today=()=>new Date().toISOString().slice(0,10);
 const addDays=(date:string,days:number)=>{const d=new Date(date+"T12:00:00");d.setDate(d.getDate()+days);return d.toISOString().slice(0,10)};
-const dateFr=(v?:string|null)=>v?new Date(v+"T12:00:00").toLocaleDateString("fr-FR"):"—";
+const dateFr=(v?:string|null)=>v?new Date(v+"T12:00:00").toLocaleDateString("fr-FR",{day:"numeric",month:"short",year:"numeric"}):"—";
 const payLabel:Record<PaymentMethod,string>={card:"CB",check:"Chèque",cash:"Espèces",transfer:"Virement",other:"Autre"};
 const quoteLabel:Record<string,string>={draft:"Brouillon",sent:"Envoyé",accepted:"Accepté",refused:"Refusé",expired:"Expiré"};
 const legalLabel:Record<string,string>={micro:"Micro-entreprise",ei:"EI",eurl:"EURL",sasu:"SASU",sarl:"SARL",sas:"SAS",other:"Entreprise"};

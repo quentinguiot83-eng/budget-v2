@@ -124,7 +124,7 @@ export function createAccountActions(ctx: WimmCore & BaseActions) {
     openForm(
       "Renommer " + a.name,
       [field("name", "Nouveau nom du compte", a.name, "text",
-        "Le solde, les transactions et les réglages du compte restent inchangés.")],
+        "Le solde, les opérations et les réglages du compte restent inchangés.")],
       async (v) => change(d => {
         const target = d.accounts.find(x => x.id === a.id);
         if (!target) throw Error("Ce compte n’existe plus.");
@@ -490,7 +490,7 @@ export function createAccountActions(ctx: WimmCore & BaseActions) {
     if(!accounts.length)return;
     openForm("Mettre à jour mes comptes",
       accounts.map(a=>field("reconcile_"+a.id,a.name+" · solde bancaire réel (€)",balance(s,a.id)/100,"number",
-        "Un ajustement conserve vos transactions et explique la différence.")),
+        "Un ajustement conserve vos opérations et explique la différence.")),
       async values=>{
         const deltas=accounts.map(a=>({
           account:a,

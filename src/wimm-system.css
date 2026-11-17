@@ -306,7 +306,7 @@
 .app .content.ws-classic button.secondary.compact,
 .app .content.ws-classic button.primary.compact { min-height: 36px; padding: 0 12px; }
 .app .content.ws-classic button.text {
-  color: var(--action, var(--accent-deep)); font-size: var(--ws-fs-small); font-weight: 600;
+  color: var(--ink); font-size: var(--ws-fs-small); font-weight: 600;
 }
 .app .content.ws-classic select,
 .app .content.ws-classic input:not([type="checkbox"]):not([type="radio"]):not([type="range"]) {
@@ -400,3 +400,14 @@
 .app .prosuite-native .pro-an-period-pills button.active { background: var(--ink); border-color: var(--ink); color: var(--surface); }
 .app .prosuite-native .billing-v2-status.sent { background: var(--accent-soft); color: var(--action, var(--accent-deep)); }
 .app .personal-page-v2 .personal-v2-panel-icon { background: var(--accent-soft); color: var(--action, var(--accent-deep)); }
+
+/*
+ * Liens d'action en encre (gris foncé) : la couleur du thème reste aux
+ * boutons et aux éléments sélectionnés, le vert aux montants positifs.
+ * Ainsi un lien ne se confond jamais avec un montant positif.
+ */
+.app .ws-link { color: var(--ink); }
+.app .ws-link svg { color: var(--muted); }
+.app .ws-link.ws-negative { color: var(--ws-negative); }
+.app .prosuite-native .billing-v2-actions button:not(.danger) { background: var(--accent-soft); color: var(--action, var(--accent-deep)); }
+.app .prosuite-native .billing-v2-actions button.danger { color: var(--ws-negative); }

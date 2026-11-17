@@ -345,7 +345,7 @@ export default function OnboardingTutorial({
             </button>;
           })}
         </div>
-        <p className="wimm-library-footer">Les exemples sont fictifs : le tutoriel ne crée aucune transaction et ne modifie aucun solde.</p>
+        <p className="wimm-library-footer">Les exemples sont fictifs : le tutoriel ne crée aucune opération et ne modifie aucun solde.</p>
       </section>
     </div>
   );

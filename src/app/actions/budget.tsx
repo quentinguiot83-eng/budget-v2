@@ -56,7 +56,7 @@ export function createBudgetActions(ctx: WimmCore & BaseActions & AccountActions
           d.categories.push({
             id, name, icon:draft.icon, budgets:{[selectedMonth]:draft.kind==="fixed"?0:euro(draft.budget||"0")},
           });
-        }, "Catégorie créée depuis une transaction");
+        }, "Catégorie créée depuis une opération");
         return {value:id,label:name};
       },
     };

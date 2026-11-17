@@ -150,7 +150,7 @@ export default function ProgressiveSetupWizard({
           <label>Solde bancaire actuel (€)<input {...amountInput} required value={draft.opening} onChange={e=>patch({opening:e.target.value})}/></label>
           <label>Solde constaté le<input type="date" max={today()} value={draft.asOf} required onChange={e=>patch({asOf:e.target.value})}/></label>
         </div>
-        <p className="wimm-setup-hint"><CircleHelp size={16}/> Votre solde de départ est une référence, pas une transaction fictive.</p>
+        <p className="wimm-setup-hint"><CircleHelp size={16}/> Votre solde de départ est une référence, pas une opération fictive.</p>
         <details className="progressive-details">
           <summary>Ajouter d'autres comptes <span>Facultatif <ChevronDown size={16}/></span></summary>
           <div className="progressive-details-inner">
@@ -193,7 +193,7 @@ export default function ProgressiveSetupWizard({
             Le versement du mois en cours a déjà été reçu et figure dans mes soldes.</label></div>
         </div>)}
         {!!revenues.length&&<div className="wimm-setup-review"><strong>Moyenne mensuelle pour les projections</strong><span><b>{monthly.toLocaleString("fr-FR",{style:"currency",currency:"EUR"})}</b></span></div>}
-        <p className="wimm-setup-hint"><CircleHelp size={16}/> Ces montants servent aux prévisions ; aucune transaction bancaire n'est créée automatiquement.</p>
+        <p className="wimm-setup-hint"><CircleHelp size={16}/> Ces montants servent aux prévisions ; aucune opération bancaire n'est créée automatiquement.</p>
       </div>}
 
       {page===3&&<div className="wimm-setup-body">

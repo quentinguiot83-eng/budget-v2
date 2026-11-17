@@ -253,7 +253,7 @@ export default function SetupWizard({ householdName, onComplete }: {
             <label>Le salaire finance<select value={draft.salaryBudget} onChange={e => patch({ salaryBudget:e.target.value as "current"|"next" })}><option value="next">Le mois suivant</option><option value="current">Le mois du versement</option></select></label>
           </div>
           <div className="wimm-setup-checks"><label><input type="checkbox" checked={draft.salaryReminder} onChange={e => patch({ salaryReminder:e.target.checked })}/><span>Me rappeler de confirmer la réception du salaire.</span></label></div>
-          <p className="wimm-setup-hint"><CircleHelp size={16}/> Il s’agit d’une estimation pour les projections. Elle ne crée pas de revenu fictif dans vos transactions.</p>
+          <p className="wimm-setup-hint"><CircleHelp size={16}/> Il s’agit d’une estimation pour les projections. Elle ne crée pas de revenu fictif dans vos opérations.</p>
         </div>}
         {page === 3 && <div className="wimm-setup-body">
           <div className="wimm-setup-subhead"><h2>Vos dépenses récurrentes</h2><button type="button" onClick={() => patch({ fixed:[...draft.fixed,{ id:uid(),name:"",amount:"0",category:"Maison",first:today(),interval:1 }] })}><Plus size={16}/> Ajouter</button></div>
@@ -292,7 +292,7 @@ export default function SetupWizard({ householdName, onComplete }: {
           <div className="wimm-setup-review"><strong>Budgets variables</strong><span>{(variablesTotal/100).toLocaleString("fr-FR", {style:"currency",currency:"EUR"})} / mois</span></div>
           <div className="wimm-setup-review"><strong>Épargne</strong><span>{totalShares.toLocaleString("fr-FR")} % répartis{draft.savingDone ? " · Déjà effectuée ce mois" : ""}</span></div>
           <div className="wimm-setup-ready"><Check size={20}/><span><strong>Prêt pour la découverte rapide !</strong> Wimm enregistrera vos paramètres, puis vous présentera ses neuf fonctions essentielles.</span></div>
-          <p className="wimm-setup-hint"><CircleHelp size={16}/> L’enregistrement initial ne crée aucune transaction bancaire. Les soldes de départ sont la référence.</p>
+          <p className="wimm-setup-hint"><CircleHelp size={16}/> L’enregistrement initial ne crée aucune opération bancaire. Les soldes de départ sont la référence.</p>
         </div>}
         {error && <p className="wimm-setup-error" role="alert">{error}</p>}
         <div className="wimm-setup-footer">

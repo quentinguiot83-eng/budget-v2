@@ -322,7 +322,7 @@ export function validatePersonal(
     ).size !== p.transactions.length
   )
     throw Error(
-      "Transaction personnelle en double.",
+      "Opération personnelle en double.",
     );
 
   if (

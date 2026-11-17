@@ -62,7 +62,7 @@ export default function TransactionSearch({ state, month, setMonth, add, rows, i
       <button type="button" className="secondary" aria-expanded={reconciliationOpen} onClick={toggleReconciliation}>
         <ArrowLeftRight size={17}/> {reconciliationOpen ? "Fermer le rapprochement" : "Rapprochement bancaire"} <ChevronRight size={16} aria-hidden="true"/>
       </button>
-      <small className="muted">Comparer un relevé CSV à vos transactions, sans créer de doublons.</small>
+      <small className="muted">Comparer un relevé CSV à vos opérations, sans créer de doublons.</small>
     </div>
     {reconciliationOpen && <div className="transaction-reconcile-panel">{reconciliation}</div>}
     <section className="card transaction-search-results">

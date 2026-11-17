@@ -38,7 +38,7 @@ export default function BudgetScreen({ view }: { view: WimmView }) {
 
       <nav className="ws-pill-row" data-tour="budget-tools" aria-label="Outils du budget">
         <button type="button" className="ws-pill" onClick={() => navigate("fixed")}>Fixes</button>
-        <button type="button" className="ws-pill" onClick={() => navigate("transactions")}>Transactions</button>
+        <button type="button" className="ws-pill" onClick={() => navigate("transactions")}>Opérations</button>
         <button type="button" className="ws-pill" onClick={() => navigate("calendar")}>Calendrier</button>
       </nav>
 

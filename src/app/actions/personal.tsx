@@ -30,7 +30,7 @@ export function createPersonalActions(ctx: WimmCore & BaseActions & AccountActio
           if(d.budgets.some(item=>item.name.trim().toLocaleLowerCase("fr-FR")===name.toLocaleLowerCase("fr-FR")))
             throw Error("Cette catégorie personnelle existe déjà.");
           d.budgets.push({id,name,amount:euro(draft.budget||"0"),start:selectedMonth});
-        }, "Catégorie personnelle créée depuis une transaction");
+        }, "Catégorie personnelle créée depuis une opération");
         return {value:id,label:name};
       },
     };

@@ -281,7 +281,6 @@
   flex:1;
   font-size:14px;
   line-height:1.3;
-  text-transform:capitalize;
   min-width:0;
   overflow:hidden;
   text-overflow:ellipsis;

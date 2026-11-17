@@ -42,7 +42,7 @@ export const TUTORIAL_CHAPTERS: TourChapter[] = [
     s("budget", "[data-tour='budget-tools'] button:nth-child(1)", "Tes charges fixes", "Touche Fixes pour accéder aux dépenses et abonnements programmés.", true),
     s("fixed", ".page-remaining-summary-fixed", "Prévoir les dépenses fixes", "Les échéances trimestrielles et annuelles ne comptent que dans leur mois prévu."),
     s("calendar", ".calendar-grid", "Ton calendrier", "Retrouve les échéances à venir et valide-les lorsqu'elles sont réellement débitées."),
-    s("transactions", ".transaction-search-top", "Tes transactions", "Cherche une opération et filtre-la par catégorie, date ou montant."),
+    s("transactions", ".transaction-search-top", "Tes opérations", "Cherche une opération et filtre-la par catégorie, date ou montant."),
     s("analysis", ".analysis-overview-card", "L'analyse financière", "Découvre où va ton argent et compare tes habitudes dans le temps.")
   ] },
   { id: "operations", title: "Ajouter", description: "Opérations, crédits et relevés", steps: [
@@ -99,7 +99,7 @@ export const QUICK_TOUR_STEPS: TourStep[] = [
 ];
 export const TUTORIAL_PAGE_TITLES: Record<string, string> = {
   home: "Accueil", budget: "Budget", add: "Ajouter", fixed: "Dépenses fixes",
-  calendar: "Calendrier", transactions: "Transactions", analysis: "Analyse financière",
+  calendar: "Calendrier", transactions: "Opérations", analysis: "Analyse financière",
   wealth: "Patrimoine", trips: "Projets", projection: "Projections", personal: "Compte personnel",
   loans: "Crédits et prêts", pro: "Mode Pro", settings: "Réglages", bank: "Import bancaire"
 };

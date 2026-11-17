@@ -131,7 +131,7 @@ export default function BankReconciliation({state,onImport}:Props){
     });
     const confirmed=new Set(bestMatches.map(m=>m.rowIndex));
     setSelected(old=>old.filter(i=>!confirmed.has(i)));
-    setConfirm(false);setMessage(bestMatches.length+" correspondance(s) confirmée(s) sans créer de nouvelle transaction.");
+    setConfirm(false);setMessage(bestMatches.length+" correspondance(s) confirmée(s) sans créer de nouvelle opération.");
   }
   function selectAllNew(){
     const ids=new Set(newRowsForBatch.map(r=>r.index));

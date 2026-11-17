@@ -294,7 +294,7 @@ function useWimmCore() {
     {title:"PRINCIPAL",items:[
       {id:"home",label:"Accueil",icon:<Home/>},
       {id:"budget",label:"Budget",icon:<ChartNoAxesCombined/>},
-      {id:"transactions",label:"Transactions",icon:<ArrowLeftRight/>},
+      {id:"transactions",label:"Opérations",icon:<ArrowLeftRight/>},
     ]},
     {title:"FINANCES",items:[
       {id:"wealth",label:"Patrimoine",icon:<Wallet/>},
