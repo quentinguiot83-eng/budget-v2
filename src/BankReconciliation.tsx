@@ -101,7 +101,7 @@ export default function BankReconciliation({state,onImport}:Props){
     setError("");setMessage("");resetPreview();
     try{
       const result=convertBankRows(table,map);
-      if(result.some(r=>r.date>today()))throw Error("Le CSV contient des opérations futures. Vérifiez le fichier et les dates.");
+      if(result.some(r=>r.date>today()))throw Error("Le CSV contient des opérations futures. Vérifie le fichier et les dates.");
       setRows(result);setMappingOpen(false);
     }catch(e){setError(e instanceof Error?e.message:"Impossible d’analyser le fichier.");}
   }
@@ -155,10 +155,10 @@ export default function BankReconciliation({state,onImport}:Props){
     for(const r of selection){
       if(r.status==="matched"||r.date<accountStart||r.date>today()){setError("Une ligne sélectionnée est déjà présente ou hors période autorisée.");return;}
       if(r.status==="possible"&&duplicateChoices[r.index]?.action!=="import"){
-        setError("Choisissez d’abord comment traiter chaque doublon possible.");return;
+        setError("Choisis d’abord comment traiter chaque doublon possible.");return;
       }
       const category= r.type==="expense"?effectiveCategory(r):undefined;
-      if(r.type==="expense"&&!category){setError("Choisissez une catégorie pour toutes les dépenses sélectionnées.");return;}
+      if(r.type==="expense"&&!category){setError("Choisis une catégorie pour toutes les dépenses sélectionnées.");return;}
       prepared.push({date:r.date,description:r.description,amount:r.amount,type:r.type,account,
         category,incomeType:r.type==="income"?"Autre":undefined,bankImportKey:r.key});
     }
@@ -170,11 +170,11 @@ export default function BankReconciliation({state,onImport}:Props){
     }catch(e){setError(e instanceof Error?e.message:"Import impossible.");}
     finally{setBusy(false);}
   }
-  if(!accounts.length)return <section className="card"><h2>Rapprochement bancaire</h2><p>Ajoutez d’abord un compte courant.</p></section>;
+  if(!accounts.length)return <section className="card"><h2>Rapprochement bancaire</h2><p>Ajoute d’abord un compte courant.</p></section>;
   return <div className="wimm-bank-reconcile">
     <section className="card">
       <div className="section-head"><div className="block-title"><h2><ArrowLeftRight size={19}/> Rapprochement bancaire</h2></div></div>
-      <p className="muted">1. Choisissez votre compte et un relevé CSV : Wimm identifie les opérations déjà enregistrées, puis vous propose seulement celles qui manquent.</p>
+      <p className="muted">1. Choisis ton compte et un relevé CSV : Wimm identifie les opérations déjà enregistrées, puis te propose seulement celles qui manquent.</p>
       <div className="wimm-bank-toolbar">
         <label>Compte à rapprocher<select value={account} onChange={e=>{setAccount(e.target.value);setTable(null);setFileName("");resetPreview();setMessage("");setError("");}}>
           {accounts.map(a=><option value={a.id} key={a.id}>{a.name}</option>)}
@@ -192,7 +192,7 @@ export default function BankReconciliation({state,onImport}:Props){
           {rows.length>0?"Modifier les colonnes reconnues":"Vérifier les colonnes du relevé"}
         </button>
         {(mappingOpen||!rows.length)&&<>
-          <p className="muted">Choisissez Date, Libellé et « Montant signé » (négatif = dépense), ou les colonnes Débit et Crédit.</p>
+          <p className="muted">Choisis Date, Libellé et « Montant signé » (négatif = dépense), ou les colonnes Débit et Crédit.</p>
           <div className="wimm-bank-mapping-grid">{mappingLabels.map(x=><label key={x.key}>{x.label}
             <select value={map[x.key]} onChange={e=>{setMap(old=>({...old,[x.key]:Number(e.target.value)}));resetPreview();}}>
               <option value={-1}>Non utilisé</option>
@@ -205,7 +205,7 @@ export default function BankReconciliation({state,onImport}:Props){
       {message&&<p role="status" className="wimm-bank-success"><CheckCircle2 size={17}/> {message}</p>}
     </section>
     {rows.length>0&&<section className="card">
-      <div className="section-head"><div><h2>2. Vérifiez les opérations</h2><p className="muted">Les opérations déjà présentes ne seront pas importées une deuxième fois.</p></div></div>
+      <div className="section-head"><div><h2>2. Vérifie les opérations</h2><p className="muted">Les opérations déjà présentes ne seront pas importées une deuxième fois.</p></div></div>
       <div className="wimm-bank-summary" aria-label="Résumé du relevé">
         <div><strong>{rows.length}</strong><span>Opérations analysées</span></div>
         <div><strong>{countMatched}</strong><span>Déjà présentes</span></div>
@@ -243,7 +243,7 @@ export default function BankReconciliation({state,onImport}:Props){
         {!visibleRows.length && <div className="wimm-bank-empty">
           <CheckCircle2 size={24}/>
           <strong>{reviewTab==="possible"?"Aucun doublon à vérifier":reviewTab==="todo"?"Aucune opération à traiter":"Aucune opération dans cette vue"}</strong>
-          <p className="muted">Vous pouvez changer de filtre pour consulter le relevé complet.</p>
+          <p className="muted">Tu peux changer de filtre pour consulter le relevé complet.</p>
         </div>}
         {visibleRows.slice(0,visible).map(row=>{
           const decision=duplicateChoices[row.index];
@@ -259,7 +259,7 @@ export default function BankReconciliation({state,onImport}:Props){
             <label className="wimm-bank-row-main"><input type="checkbox" disabled={!allowed||busy} checked={checked} onChange={()=>toggle(row.index)}/>
               <span><strong>{row.description}</strong>
                 <small>{row.date} · {duplicateSummary}{row.date<accountStart?" · Avant solde initial":""}</small>
-                {needsTransferCheck&&<small className="wimm-bank-transfer-warning">Virement possible : vérifiez qu’il ne s’agit pas d’un transfert entre vos comptes.</small>}
+                {needsTransferCheck&&<small className="wimm-bank-transfer-warning">Virement possible : vérifie qu’il ne s’agit pas d’un transfert entre tes comptes.</small>}
               </span>
               <strong className={row.type==="income"?"positive":"negative-money"}>{row.type==="expense"?"−":"+"}{money(row.amount)}</strong></label>
             {row.status==="possible" && <div className="wimm-bank-duplicate-review">
@@ -328,7 +328,7 @@ export default function BankReconciliation({state,onImport}:Props){
           <button className="secondary" type="button" disabled={busy||!batchCategory||!selection.some(r=>r.type==="expense")}
             onClick={applyCategoryToSelection}>Appliquer</button>
         </div>}
-        {unmatchedExpenses>0 && <p className="wimm-bank-category-alert" role="status">{unmatchedExpenses} dépense(s) sans catégorie. Utilisez l’attribution groupée ou choisissez la catégorie sur chaque ligne.</p>}
+        {unmatchedExpenses>0 && <p className="wimm-bank-category-alert" role="status">{unmatchedExpenses} dépense(s) sans catégorie. Utilise l’attribution groupée ou choisis la catégorie sur chaque ligne.</p>}
         <label><input type="checkbox" checked={confirm} disabled={!selection.length||busy||unmatchedExpenses>0} onChange={e=>setConfirm(e.target.checked)}/>
           J’ai vérifié les virements, les doublons et les catégories. Je confirme l’ajout des opérations sélectionnées.</label>
         <button className="primary" type="button" disabled={!confirm||!selection.length||busy||unmatchedExpenses>0} onClick={()=>void importRows()}>

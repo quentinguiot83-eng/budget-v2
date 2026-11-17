@@ -11,7 +11,7 @@ import SettingsNavigation from "../SettingsNavigation";
 import { BlockInfo, Row } from "../ui";
 import VersionHistoryPanel from "../VersionHistoryPanel";
 import { Check, LogOut, Users, ArrowUpRight, RefreshCw, Pencil } from "lucide-react";
-import { choice, demoEnabled, field, themes } from "../app/shared";
+import { choice, toggle, demoEnabled, field, themes } from "../app/shared";
 import type { WimmView } from "../app/buildView";
 
 export default function SettingsScreen({ view }: { view: WimmView }) {
@@ -42,7 +42,7 @@ export default function SettingsScreen({ view }: { view: WimmView }) {
 !demoEnabled ? (
   <div data-tour="phone-notifications"><PhoneNotifications state={s} /></div>
 ) : (
-  <section className="card"><p className="muted">Les notifications sont disponibles après connexion à votre compte Wimm.</p></section>
+  <section className="card"><p className="muted">Les notifications sont disponibles après connexion à ton compte Wimm.</p></section>
 )
 )}
       {settingsDetail === "tutoriel" && (
@@ -55,7 +55,7 @@ export default function SettingsScreen({ view }: { view: WimmView }) {
       {settingsDetail === "apparence" && (
 <div className="two-col settings-appearance">
 <section className="card">
-          <div className="section-head"><div className="block-title"><h2>Apparence</h2><BlockInfo title="Apparence"><p>Automatique suit le mode clair ou sombre choisi dans les réglages de votre téléphone. Clair et Nuit gardent le même thème à tout moment.</p></BlockInfo></div></div>
+          <div className="section-head"><div className="block-title"><h2>Apparence</h2><BlockInfo title="Apparence"><p>Automatique suit le mode clair ou sombre choisi dans les réglages de ton téléphone. Clair et Nuit gardent le même thème à tout moment.</p></BlockInfo></div></div>
           <div className="appearance-choices" role="group" aria-label="Apparence">
             {([["light", "Clair"], ["dark", "Nuit"], ["auto", "Automatique"]] as const).map(([mode, label]) => (
               <button type="button" key={mode} aria-pressed={appearanceMode === mode} onClick={() => {
@@ -64,7 +64,7 @@ export default function SettingsScreen({ view }: { view: WimmView }) {
               }}>{label}</button>
             ))}
           </div>
-          <div className="section-head"><div className="block-title"><h2>Votre couleur</h2><BlockInfo title="Votre couleur"><p>Un thème personnel, même dans un foyer partagé.</p></BlockInfo></div></div>
+          <div className="section-head"><div className="block-title"><h2>Ta couleur</h2><BlockInfo title="Ta couleur"><p>Un thème personnel, même dans un foyer partagé.</p></BlockInfo></div></div>
           <div className="theme-grid">
             {themes.map(([id, label]) => (
               <button
@@ -77,7 +77,7 @@ export default function SettingsScreen({ view }: { view: WimmView }) {
                     if (!demoEnabled)
                       await rpc("budget_theme", { p_theme: id });
                     setTheme(id);
-                    setNotice(demoEnabled ? "Couleur appliquée à l’aperçu." : "Votre thème est enregistré.");
+                    setNotice(demoEnabled ? "Couleur appliquée à l’aperçu." : "Ton thème est enregistré.");
                   } catch (e) {
                     showError(e);
                   }
@@ -95,13 +95,13 @@ export default function SettingsScreen({ view }: { view: WimmView }) {
 )}
       {["profil", "connexion"].includes(settingsDetail || "") && (
         <section className="card">
-  <h2>{settingsDetail === "connexion" ? "Connexion et accès" : "Votre compte"}</h2>
+  <h2>{settingsDetail === "connexion" ? "Connexion et accès" : "Ton compte"}</h2>
   {settingsDetail === "profil" && (<>
 <p>{session?.user.email || "Aperçu de démonstration"}</p>
           <div className="profile-name-row"><span>Nom affiché : <strong>{displayName || "Non renseigné"}</strong></span>
-            <button className="text" onClick={() => openForm("Votre nom affiché", [field("name", "Nom affiché", displayName)], async v => {
+            <button className="text" onClick={() => openForm("Ton nom affiché", [field("name", "Nom affiché", displayName)], async v => {
               const name = v.name.trim();
-              if (!name) throw Error("Indiquez votre nom affiché.");
+              if (!name) throw Error("Indique ton nom affiché.");
               if (demoEnabled) setPreviewName(name);
               else {
                 const { data, error } = await api.auth.updateUser({ data: { display_name: name } });
@@ -206,7 +206,7 @@ export default function SettingsScreen({ view }: { view: WimmView }) {
               try {
                 if (demoEnabled) {
                   setNotice(
-                    "Les invitations sont disponibles après connexion à votre vrai foyer.",
+                    "Les invitations sont disponibles après connexion à ton vrai foyer.",
                   );
                   return;
                 }
@@ -221,7 +221,7 @@ export default function SettingsScreen({ view }: { view: WimmView }) {
         )}
         {invite && (
           <div className="invite">
-            <strong>Code ou lien à transmettre à votre partenaire</strong>
+            <strong>Code ou lien à transmettre à ton partenaire</strong>
             <code>{invite}</code>
             <p>
               Valable 7 jours, une seule utilisation. Générer un nouveau
@@ -246,7 +246,7 @@ export default function SettingsScreen({ view }: { view: WimmView }) {
                   .then(() => setNotice("Code copié"))
                   .catch(() =>
                     setNotice(
-                      "Sélectionnez et copiez le code affiché.",
+                      "Sélectionne et copie le code affiché.",
                     ),
                   )
               }
@@ -260,17 +260,17 @@ export default function SettingsScreen({ view }: { view: WimmView }) {
       {settingsDetail === "mise-a-jour-comptes" && (
         <section className="card wimm-settings-account-refresh">
           <div className="section-head">
-            <div className="block-title"><h2>Vos comptes ne sont plus à jour ?</h2></div>
+            <div className="block-title"><h2>Tes comptes ne sont plus à jour ?</h2></div>
             <RefreshCw size={20} aria-hidden="true" />
           </div>
           <p>
-            Vous avez oublié de saisir des transactions depuis quelque temps et
-            vos soldes ne correspondent plus à ceux de votre banque ?
-            Vous pouvez les mettre à jour ici.
+            Tu as oublié de saisir des transactions depuis quelque temps et
+            tes soldes ne correspondent plus à ceux de ta banque ?
+            Tu peux les mettre à jour ici.
           </p>
           <p className="muted">
             Wimm enregistre seulement la différence pour retrouver le bon solde.
-            Vos anciennes transactions restent conservées, mais les dépenses
+            Tes anciennes transactions restent conservées, mais les dépenses
             oubliées ne sont pas recréées automatiquement.
           </p>
           <button type="button" className="primary"
@@ -307,7 +307,7 @@ export default function SettingsScreen({ view }: { view: WimmView }) {
           <div>
             <h2>Salaire</h2>
             <p className="muted">
-              Choisissez la date prévue et le mois auquel votre salaire
+              Choisis la date prévue et le mois auquel ton salaire
               doit être affecté dans le budget.
             </p>
           </div>
@@ -325,27 +325,27 @@ export default function SettingsScreen({ view }: { view: WimmView }) {
                       "Jour prévu de réception",
                       salaryDay,
                       "number",
-                      "Si le mois est plus court, Wimm utilisera automatiquement le dernier jour du mois.",
+                      "Si le mois est plus court, Wimm prend le dernier jour du mois.",
                     ),
                     min: 1,
                     max: 31,
                     step: "1",
                   },
-                  choice(
+                  toggle(
                     "budget",
-                    "Affecter le salaire au",
+                    "Le salaire finance",
                     [
-                      ["current", "Mois de réception"],
-                      ["next", "Mois suivant"],
+                      ["current", "Ce mois-ci"],
+                      ["next", "Le mois suivant"],
                     ],
                     salaryBudget,
                   ),
-                  choice(
+                  toggle(
                     "reminder",
-                    "Rappel à la date prévue",
+                    "Rappel le jour prévu",
                     [
-                      ["yes", "Activé"],
-                      ["no", "Désactivé"],
+                      ["yes", "Oui"],
+                      ["no", "Non"],
                     ],
                     salaryReminder ? "yes" : "no",
                   ),
@@ -388,7 +388,7 @@ export default function SettingsScreen({ view }: { view: WimmView }) {
 
         <Row
           title="Rappel"
-          value={salaryReminder ? "Activé" : "Désactivé"}
+          value={salaryReminder ? "Oui" : "Non"}
         />
       </section>
 )}
@@ -396,8 +396,8 @@ export default function SettingsScreen({ view }: { view: WimmView }) {
 <section className="card">
         <h2>Rubriques affichées</h2>
         <p className="muted">
-          Choisissez les espaces utiles à votre quotidien. Masquer une
-          rubrique ne supprime aucune donnée : vous pourrez la réactiver
+          Choisis les espaces utiles à ton quotidien. Masquer une
+          rubrique ne supprime aucune donnée : tu pourras la réactiver
           à tout moment.
         </p>
         <div className="visibility-list">
@@ -406,19 +406,19 @@ export default function SettingsScreen({ view }: { view: WimmView }) {
               id: "personal",
               label: "Compte perso",
               description:
-                "Gérez vos comptes et dépenses privés séparément du budget du foyer.",
+                "Gère tes comptes et dépenses privés séparément du budget du foyer.",
             },
             {
               id: "trips",
               label: "Projets",
               description:
-                "Préparez vos voyages, leurs budgets par catégorie et les dépenses associées.",
+                "Prépare tes voyages, leurs budgets par catégorie et les dépenses associées.",
             },
             {
               id: "loans",
               label: "Crédits et prêts",
               description:
-                "Suivez vos crédits, prêts à un tiers, mensualités et montants restant à rembourser.",
+                "Suis tes crédits, prêts à un tiers, échéances et montants restant à rembourser.",
             },
           ].map(({ id, label, description }) => (
             <label className="visibility-item" key={id}>
@@ -443,7 +443,7 @@ export default function SettingsScreen({ view }: { view: WimmView }) {
             <span className="visibility-copy">
               <strong>Professionnel</strong>
               <span>
-                Gérez vos entreprises, clients, factures, encaissements,
+                Gère tes entreprises, clients, factures, encaissements,
                 rendez-vous et trésorerie.
               </span>
             </span>
@@ -473,7 +473,7 @@ export default function SettingsScreen({ view }: { view: WimmView }) {
       {settingsDetail === "archives" && (
 <section className="card archived-category-settings">
         <h2>Catégories archivées</h2>
-        <p className="muted">Supprimez une catégorie inutilisée ou transférez son historique vers une catégorie active.</p>
+        <p className="muted">Supprime une catégorie inutilisée ou transfère son historique vers une catégorie active.</p>
         {s.categories.filter(c => c.archived).map(c => {
           const usage = categoryUsage(s, c.id);
           return <div className="archived-category-row" key={c.id}><div><strong>{c.name}</strong><small className="muted">Archivée depuis {monthLabel(c.archived!)} · {usage.transactions} opération(s) · {usage.rules} échéance(s)</small></div><button type="button" className="text danger-text" onClick={() => removeArchivedCategory(c)}>Supprimer</button></div>;
@@ -503,10 +503,10 @@ export default function SettingsScreen({ view }: { view: WimmView }) {
 )}
       {settingsDetail === "confidentialite" && (
 <section className="card wimm-settings-info">
-        <h2>Confidentialité de vos finances</h2>
-        <p>Vos comptes et opérations personnels sont séparés des données du foyer. Les autres membres du foyer ne peuvent pas consulter le détail de vos dépenses privées.</p>
+        <h2>Confidentialité de tes finances</h2>
+        <p>Tes comptes et opérations personnels sont séparés des données du foyer. Les autres membres du foyer ne peuvent pas consulter le détail de tes dépenses privées.</p>
         <p className="muted">Les virements entre le foyer et le compte personnel restent visibles dans l’historique commun lorsque cela concerne le budget du foyer.</p>
-        <p>Les fichiers JSON et CSV téléchargés sont enregistrés sur votre appareil. Conservez ces exports dans un emplacement privé et protégé.</p>
+        <p>Les fichiers JSON et CSV téléchargés sont enregistrés sur ton appareil. Conserve ces exports dans un emplacement privé et protégé.</p>
         <p className="muted">La gestion des sessions actives et la suppression du compte ne sont pas encore disponibles depuis cet écran.</p>
       </section>
 )}
@@ -514,14 +514,14 @@ export default function SettingsScreen({ view }: { view: WimmView }) {
 <section className="card danger-zone">
         <h2>Réinitialisation</h2>
         <p>
-          Remettre une enveloppe à zéro conserve les dépenses. Archiver
+          Remettre un budget à zéro conserve les dépenses. Archiver
           une catégorie conserve tout son historique.
         </p>
         <button
           className="secondary"
           onClick={() =>
             openForm(
-              "Remettre une enveloppe à zéro",
+              "Remettre un budget à zéro",
               [
                 choice(
                   "category",
@@ -540,11 +540,11 @@ export default function SettingsScreen({ view }: { view: WimmView }) {
                   d.categories.find(
                     (c) => c.id === v.category,
                   )!.budgets[v.month] = 0;
-                }, "Enveloppe remise à zéro"),
+                }, "Budget remis à zéro"),
             )
           }
         >
-          Réinitialiser une enveloppe
+          Remettre un budget à zéro
         </button>
         {isOwner && (
           <button
@@ -555,7 +555,7 @@ export default function SettingsScreen({ view }: { view: WimmView }) {
                 [
                   field(
                     "confirmation",
-                    "Saisissez REINITIALISER",
+                    "Saisis REINITIALISER",
                     "",
                     "text",
                     `${s.transactions.length} opérations, ${s.accounts.length} comptes, catégories, voyages, prêts et projets seront réinitialisés pour tous les membres. Les anciennes versions restent récupérables dans l’historique. Les comptes utilisateurs et le foyer restent.`,
@@ -595,8 +595,8 @@ export default function SettingsScreen({ view }: { view: WimmView }) {
           <span className="wimm-release-build">Compilation {APP_BUILD_ID}</span>
           <small className="muted">Construite le {APP_BUILD_DATE_LABEL}</small>
         </div>
-        <p className="muted">Le numéro de version évolue à chaque nouvelle mise à jour publiée. La référence de compilation s'actualise automatiquement à chaque déploiement.</p>
-        <p className="muted">Application de gestion du budget, du patrimoine, des voyages et des finances personnelles, installable sur l'écran d'accueil de votre iPhone.</p>
+        <p className="muted">Le numéro de version évolue à chaque nouvelle mise à jour publiée. La référence de compilation s’actualise automatiquement à chaque déploiement.</p>
+        <p className="muted">Application de gestion du budget, du patrimoine, des voyages et des finances personnelles, installable sur l’écran d’accueil de ton iPhone.</p>
       </section>
 )}
     </div>

@@ -298,7 +298,7 @@ export function createBaseActions(ctx: WimmCore) {
   function ensureCashPayment(accountId:string,amount:number,existing?:Tx){
     const a=s.accounts.find(a=>a.id===accountId);
     if(a?.isCash && amount>balance(s,a.id)+(existing?.account===a.id?existing.amount:0))
-      throw Error("Espèces insuffisantes. Choisissez un compte bancaire ou saisissez des espèces.");
+      throw Error("Espèces insuffisantes. Choisis un compte bancaire ou saisis des espèces.");
   }
 
   return {

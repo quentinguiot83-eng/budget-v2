@@ -499,3 +499,15 @@
   background: var(--accent-soft); color: var(--action, var(--accent-deep)); font-weight: 600; font-size: var(--ws-fs-small);
 }
 .app .ws-page-help-foot { display: flex; justify-content: space-between; align-items: center; gap: 12px; border-top: 1px solid var(--border); padding-top: 12px; }
+
+/* Formulaires : deux ou trois choix courts en boutons côte à côte. */
+.field-segmented {
+  display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 4px;
+  background: color-mix(in srgb, var(--border) 80%, transparent); border-radius: 999px; padding: 4px;
+}
+.field-segmented > button {
+  min-height: 40px; border: 0; border-radius: 999px; background: transparent; color: var(--muted);
+  font: inherit; font-size: .875rem; font-weight: 600; cursor: pointer; padding: 0 8px;
+}
+.field-segmented > button[aria-pressed="true"] { background: var(--surface); color: var(--ink); box-shadow: 0 2px 8px rgba(27, 36, 51, .08); }
+.field-segmented > button:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }

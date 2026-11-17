@@ -159,7 +159,7 @@ export default function ProgressiveSetupWizard({
           </label>
           <div className="wob-field">
             <span>Il arrive vers le</span>
-            <div className="wob-segmented" role="group" aria-label="Jour d'arrivée du revenu">
+            <div className="wob-segmented" role="group" aria-label="Jour d’arrivée du revenu">
               {DAYS.map(d => <button type="button" key={d} aria-pressed={!otherDay && main.day === d}
                 onClick={() => { setOtherDay(false); updateIncome(main.id, { day: d }); }}>{d === "1" ? "1er" : d}</button>)}
               <button type="button" aria-pressed={otherDay || !DAYS.includes(main.day)} onClick={() => setOtherDay(true)}>Autre</button>

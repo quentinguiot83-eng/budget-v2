@@ -20,7 +20,7 @@ export function revisePaymentPlan(state: State, ruleId: string, changes: RuleCha
   const confirmed = state.transactions.filter(tx => tx.dueKey?.startsWith(ruleId + ":"));
   const confirmedDueDates = confirmed.map(tx => tx.dueKey!.slice(ruleId.length + 1)).sort();
   if (confirmedDueDates.some(date => date >= changes.start)) {
-    throw Error("La nouvelle première échéance doit suivre les mensualités déjà validées.");
+    throw Error("La nouvelle première échéance doit suivre les paiements déjà validés.");
   }
 
   if (!confirmed.length) {

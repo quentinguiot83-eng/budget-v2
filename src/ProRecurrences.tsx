@@ -52,8 +52,8 @@ export default function ProRecurrences({clients,vatEnabled,defaultVat,onSuite,on
  const update=(patch:Partial<Draft>)=>setDraft(v=>v?{...v,...patch}:null);
  const save=()=>{
    if(!draft)return;
-   if(!draft.clientId||draft.title.trim().length<2||!draft.startDate){setError("Renseignez le client, la prestation et la date de début.");return}
-   if(cents(draft.unitPrice)<0||!draft.unitPrice){setError("Renseignez un tarif valide.");return}
+   if(!draft.clientId||draft.title.trim().length<2||!draft.startDate){setError("Renseigne le client, la prestation et la date de début.");return}
+   if(cents(draft.unitPrice)<0||!draft.unitPrice){setError("Renseigne un tarif valide.");return}
    void invoke("budget_pro_recurring_save",{p_rule:{...draft,dayOne:Number(draft.dayOne),dayTwo:Number(draft.dayTwo),unitPrice:cents(draft.unitPrice),vatRate:vatEnabled?Number(draft.vatRate):0}},"Récurrence enregistrée",true);
  };
  const clientName=(id:string)=>clients.find(c=>c.id===id)?.companyName||clients.find(c=>c.id===id)?.name||"Client";
@@ -85,7 +85,7 @@ export default function ProRecurrences({clients,vatEnabled,defaultVat,onSuite,on
       <button type="button" disabled={busy} onClick={()=>void invoke("budget_pro_recurring_refresh",undefined,"Planning actualisé")}><RefreshCw size={16}/> Actualiser</button>
       <button type="button" disabled={busy} onClick={()=>void invoke("budget_pro_recurring_prepare_now",undefined,"Les prestations facturables ont été préparées en brouillons")}><FileText size={16}/> Préparer les brouillons</button>
     </div>
-    <p className="pro-recurring-help">Les interventions futures sont planifiées. Une prestation doit être marquée « Effectuée » avant d'être facturée. En facturation mensuelle, le brouillon est préparé au début du mois suivant. Aucune facture n'est émise ni envoyée automatiquement.</p>
+    <p className="pro-recurring-help">Les interventions futures sont planifiées. Une prestation doit être marquée « Effectuée » avant d’être facturée. En facturation mensuelle, le brouillon est préparé au début du mois suivant. Aucune facture n’est émise ni envoyée automatiquement.</p>
    </>}
    {draft&&createPortal(<div className="pro-recurring-dialog-layer" role="presentation"><button className="pro-recurring-backdrop" type="button" onClick={()=>setDraft(null)} aria-label="Fermer le formulaire"/><section className="pro-recurring-dialog" role="dialog" aria-modal="true" aria-label="Contrat de facturation récurrente"><div className="pro-recurring-dialog-head"><strong>{draft.id?"Modifier le contrat":"Nouvelle récurrence"}</strong><button type="button" onClick={()=>setDraft(null)} aria-label="Fermer"><X size={20}/></button></div>
      <div className="pro-recurring-dialog-body">

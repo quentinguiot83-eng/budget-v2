@@ -9,7 +9,7 @@ export default function ConfirmActionContent({ text, run, close }: {
   const [error, setError] = useState("");
   return (
     <div className="confirm-action-content">
-      <p><strong>Êtes-vous sûr ?</strong></p>
+      <p><strong>Tu confirmes ?</strong></p>
       <p>{text}</p>
       <div className="confirm-action-buttons">
         <button type="button" className="secondary" onClick={close} disabled={busy}>Annuler</button>
@@ -19,7 +19,7 @@ export default function ConfirmActionContent({ text, run, close }: {
           setError("");
           try { await run(); close(); }
           catch (reason) {
-            setError(reason instanceof Error ? reason.message : "L'opération n'a pas abouti.");
+            setError(reason instanceof Error ? reason.message : "L’opération n’a pas abouti.");
             setBusy(false);
           }
         }}>{busy ? "Traitement…" : "Oui, confirmer"}</button>

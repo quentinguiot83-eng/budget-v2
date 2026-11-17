@@ -32,7 +32,7 @@ export default function FixedExpensesScreen({ view }: { view: WimmView }) {
         <div className="ws-head" style={{ paddingTop: 8 }}>
           <span className="ws-head-title">
             <h2 className="ws-card-title">Dépenses fixes</h2>
-            <BlockInfo title="Dépenses fixes"><p>Chaque charge est comptée uniquement dans son mois d’échéance. Glissez une ligne pour la modifier ou l’arrêter.</p></BlockInfo>
+            <BlockInfo title="Dépenses fixes"><p>Chaque charge est comptée uniquement dans son mois d’échéance. Glisse une ligne pour la modifier ou l’arrêter.</p></BlockInfo>
           </span>
           <button type="button" className="ws-link" data-tour="fixed-add" onClick={() => editRule()}><Plus size={16} aria-hidden="true"/>Dépense fixe</button>
         </div>
@@ -65,11 +65,11 @@ export default function FixedExpensesScreen({ view }: { view: WimmView }) {
       </section>
 
       {credits.length > 0 && (
-        <section className="ws-card ws-list" aria-label="Crédits et achats en plusieurs fois">
+        <section className="ws-card ws-list" aria-label="Crédits et paiements en plusieurs fois">
           <div className="ws-head" style={{ paddingTop: 8 }}>
             <span className="ws-head-title">
               <h2 className="ws-card-title">Crédits</h2>
-              <BlockInfo title="Mensualités de crédits"><p>Les mensualités prévues figurent dans les charges fixes du mois où elles sont dues. Elles ne sont pas comptées une seconde fois.</p></BlockInfo>
+              <BlockInfo title="Échéances des crédits"><p>Les échéances prévues figurent dans les charges fixes du mois où elles sont dues. Elles ne sont pas comptées une seconde fois.</p></BlockInfo>
             </span>
             <button type="button" className="ws-link" onClick={() => navigate("loans")}>Gérer <ChevronRight size={16} aria-hidden="true"/></button>
           </div>

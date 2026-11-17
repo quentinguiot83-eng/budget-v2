@@ -49,9 +49,9 @@ export default function App() {
             <WimmWordmark />
           </div>
           <h1>
-            Anticipez vos finances.
+            Anticipe tes finances.
             <br />
-            Construisez vos projets d’avenir.
+            Construis tes projets d’avenir.
           </h1>
           <p>
             Budget, épargne, voyages et projets réunis au même endroit.
@@ -60,7 +60,7 @@ export default function App() {
             <div className="visual-icon">
               <Wallet size={34} />
             </div>
-            <strong>Votre foyer, vos repères.</strong>
+            <strong>Ton foyer, tes repères.</strong>
             <div className="fake-line" />
             <div className="fake-line short" />
             <div className="swatches">
@@ -84,13 +84,13 @@ export default function App() {
                   ? "Nouveau mot de passe"
                   : "Se connecter"}
           </h2>
-          <p className="muted">Un compte personnel pour votre foyer partagé.</p>
+          <p className="muted">Un compte personnel pour ton foyer partagé.</p>
           {authMode === "signup" && signupEmail ? (
             <div className="auth-email-check" role="status" aria-live="polite">
               <div className="auth-email-check-icon">✉</div>
-              <h3>Vérifiez votre boîte mail</h3>
-              <p>Pour activer votre compte Wimm, ouvrez le lien de confirmation envoyé à <strong>{signupEmail}</strong>.</p>
-              <p className="muted">Pensez aussi à vérifier les courriers indésirables. Revenez ensuite sur Wimm pour vous connecter.</p>
+              <h3>Vérifie ta boîte mail</h3>
+              <p>Pour activer ton compte Wimm, ouvre le lien de confirmation envoyé à <strong>{signupEmail}</strong>.</p>
+              <p className="muted">Pense aussi à vérifier les courriers indésirables. Reviens ensuite sur Wimm pour te connecter.</p>
               <button type="button" className="secondary" onClick={async () => {
                 setError("");
                 try {
@@ -100,7 +100,7 @@ export default function App() {
                     options: { emailRedirectTo: location.origin },
                   });
                   if (resendError) throw resendError;
-                  setNotice("Si une confirmation est nécessaire, un nouveau lien vous a été envoyé.");
+                  setNotice("Si une confirmation est nécessaire, un nouveau lien t’a été envoyé.");
                 } catch (e) {
                   setError(e instanceof Error ? e.message : String(e));
                 }
@@ -138,7 +138,7 @@ export default function App() {
             submit={async (v) => {
               if (authMode === "signup") {
                 if (v.password.length < 10)
-                  throw Error("Choisissez au moins 10 caractères.");
+                  throw Error("Choisis au moins 10 caractères.");
                 const { data, error } = await api.auth.signUp({
                   email: v.email,
                   password: v.password,
@@ -149,7 +149,7 @@ export default function App() {
                   setSignupEmail(v.email.trim());
                   setNotice("");
                 } else {
-                  setNotice("Votre compte a été créé et votre session est active.");
+                  setNotice("Ton compte a été créé et ta session est active.");
                 }
               } else if (authMode === "reset") {
                 const { error } = await api.auth.resetPasswordForEmail(
@@ -160,7 +160,7 @@ export default function App() {
                 setNotice("Si ce compte existe, un lien a été envoyé.");
               } else if (authMode === "new-password") {
                 if (v.password.length < 10)
-                  throw Error("Choisissez au moins 10 caractères.");
+                  throw Error("Choisis au moins 10 caractères.");
                 const { error } = await api.auth.updateUser({
                   password: v.password,
                 });
@@ -202,7 +202,7 @@ export default function App() {
           )}
           {error && <p className="error">{error}</p>}
           <p className="auth-foot">
-            Vos données sont réservées aux membres de votre foyer.
+            Tes données sont réservées aux membres de ton foyer.
           </p>
         </section>
       </main>
@@ -211,7 +211,7 @@ export default function App() {
     return (
       <div className="loading">
         <img src="/wimm-icon.png" alt="Wimm" className="loading-brand-logo" />
-        <p>Ouverture de votre foyer…</p>
+        <p>Ouverture de ton foyer…</p>
       </div>
     );
   if (!doc?.household || welcomePreviewEnabled)
@@ -248,7 +248,7 @@ export default function App() {
         await rpc("budget_pro_toggle", {p_enabled:professional});
         setProEnabled(professional);
       } catch {
-        setNotice("Profil enregistré. Vérifiez les options du module Pro dans Réglages.");
+        setNotice("Profil enregistré. Vérifie les options du module Pro dans Réglages.");
       }
       const {data,error}=await api.auth.updateUser({
         data:{wimm_requires_profile:false,wimm_profile_selected:true}
@@ -273,12 +273,12 @@ export default function App() {
           const { error: progressError } = await api.auth.updateUser({
             data: { wimm_progressive_onboarding: true, wimm_tutorial_started: true, wimm_tutorial_seen: true, wimm_journey_step: "welcome", wimm_journey_done: false, wimm_profile_selected: true, wimm_requires_profile: false }
           });
-          if (progressError) setNotice("Configuration enregistrée. Votre guide de démarrage reste disponible dans les réglages.");
+          if (progressError) setNotice("Configuration enregistrée. Ton guide de démarrage reste disponible dans les réglages.");
           try {
             await rpc("budget_pro_toggle", { p_enabled: draft.professional === true });
             setProEnabled(draft.professional === true);
           } catch {
-            setNotice("Foyer initialisé. Le choix de l’espace Pro n’a pas pu être enregistré : vérifiez-le dans Réglages.");
+            setNotice("Foyer initialisé. Le choix de l’espace Pro n’a pas pu être enregistré : vérifie-le dans Réglages.");
           }
         }}
       />
@@ -365,7 +365,7 @@ export default function App() {
               {alerts.length > 0 && <i>{alerts.length}</i>}
             </button>
             {proEnabled && <button type="button" className="wimm-pro-shortcut" data-tour-route="pro"
-              aria-label="Accéder à l'espace professionnel" aria-current={route==="pro"?"page":undefined}
+              aria-label="Accéder à l’espace professionnel" aria-current={route==="pro"?"page":undefined}
               onClick={()=>navigate("pro")}>PRO</button>}
             <button type="button" className="icon desktop-settings-trigger" data-tour-route="settings" aria-label="Réglages"
               onClick={()=>navigate("settings")}><Settings size={21}/></button>
@@ -420,8 +420,8 @@ export default function App() {
               <div className="personal-page-title-row">
                 <div className="block-title personal-page-title">
                   <h1>{titles[route]}</h1>
-                  <BlockInfo title="Votre compte personnel">
-                    <p>Son solde, ses achats et son historique sont visibles uniquement depuis votre compte Wimm.</p>
+                  <BlockInfo title="Ton compte personnel">
+                    <p>Son solde, ses achats et son historique sont visibles uniquement depuis ton compte Wimm.</p>
                     <p>Les autres membres du foyer voient uniquement les virements depuis le compte commun et le budget personnel lié, sans accès aux opérations privées.</p>
                   </BlockInfo>
                 </div>
@@ -478,11 +478,11 @@ export default function App() {
           {!current && !["settings", "wealth", "pro"].includes(route) && (
             <section className="card setup-card" data-tour="setup-account">
               <div>
-                <h2>Commençons par votre compte courant.</h2>
+                <h2>Commençons par ton compte courant.</h2>
                 <p>
-                  Renseignez le solde réellement affiché par votre banque.
-                  Wimm vous demandera aussi si le salaire et l’épargne de ce mois
-                  sont déjà compris dans vos soldes. Maison, Courses, Sorties et
+                  Renseigne le solde réellement affiché par ta banque.
+                  Wimm te demandera aussi si le salaire et l’épargne de ce mois
+                  sont déjà compris dans tes soldes. Maison, Courses, Sorties et
                   Transports seront créées avec des budgets à personnaliser.
                 </p>
               </div>
@@ -605,7 +605,7 @@ export default function App() {
               </button>
               <button type="button" className="quick-add-primary-action"
                 onClick={()=>{setMobileQuickAddOpen(false);addPersonalMoney();}}>
-                <span className="quick-add-item-icon income"><ArrowDownLeft size={19}/></span><span>Ajouter de l'argent</span>
+                <span className="quick-add-item-icon income"><ArrowDownLeft size={19}/></span><span>Ajouter de l’argent</span>
               </button>
               <button type="button" className="quick-add-primary-action"
                 onClick={()=>{setMobileQuickAddOpen(false);transferPersonal();}}>

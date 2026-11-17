@@ -343,7 +343,7 @@ export function validatePersonal(
     dueKeys.length
   )
     throw Error(
-      "Cette mensualité personnelle a déjà été validée.",
+      "Ce paiement a déjà été validé.",
     );
 
   for (const t of p.transactions) {

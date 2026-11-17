@@ -111,7 +111,7 @@ export function convertBankRows(table:CsvTable,map:CsvMapping):BankRow[]{
   const {columns,rows}=table;
   const exists=(i:number)=>Number.isInteger(i)&&i>=0&&i<columns.length;
   if(!exists(map.date)||!exists(map.description)||(!exists(map.amount)&&!(exists(map.debit)&&exists(map.credit))))
-    throw Error("Sélectionnez les colonnes Date, Libellé et Montant ou Débit/Crédit.");
+    throw Error("Sélectionne les colonnes Date, Libellé et Montant ou Débit/Crédit.");
   const useAmount=exists(map.amount);
   const required=[map.date,map.description,...(useAmount?[map.amount]:[map.debit,map.credit])];
   if(new Set(required).size!==required.length)throw Error("Chaque champ doit utiliser une colonne différente.");

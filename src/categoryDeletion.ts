@@ -14,9 +14,9 @@ export function deleteArchivedCategory(state: State, id: string, replacementId?:
   const source = state.categories.find(c => c.id === id);
   if (!source?.archived) throw Error("Seule une catégorie archivée peut être supprimée définitivement.");
   const usage = categoryUsage(state, id);
-  if (usage.linkedPersonal) throw Error("Cette catégorie est liée à un compte personnel. Réaffectez d’abord ce compte à une autre catégorie depuis ses réglages.");
+  if (usage.linkedPersonal) throw Error("Cette catégorie est liée à un compte personnel. Réaffecte d’abord ce compte à une autre catégorie depuis ses réglages.");
   const used = usage.transactions + usage.rules > 0;
-  if (used && !replacementId) throw Error("Choisissez une catégorie pour conserver les dépenses et échéances.");
+  if (used && !replacementId) throw Error("Choisis une catégorie pour conserver les dépenses et échéances.");
   const target = replacementId ? categoryReplacements(state, id).find(c => c.id === replacementId) : undefined;
   if (replacementId && !target) throw Error("La catégorie de destination n’est pas compatible ou n’est plus disponible.");
   if (target) {

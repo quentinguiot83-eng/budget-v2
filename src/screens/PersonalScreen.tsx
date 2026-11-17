@@ -34,13 +34,13 @@ export default function PersonalScreen({ view }: { view: WimmView }) {
           ) && (
             <section className="card">
               <h2>
-                Importer votre ancien
+                Importer ton ancien
                 compte perso
               </h2>
 
               <p className="muted">
-                Choisissez uniquement
-                votre propre compte.
+                Choisis uniquement
+                ton propre compte.
                 Après migration, ses
                 données personnelles
                 quitteront le document
@@ -91,7 +91,7 @@ export default function PersonalScreen({ view }: { view: WimmView }) {
           )}
 
           <Empty
-            title="Configurez votre compte perso"
+            title="Configure ton compte perso"
             action={
               <button
                 className="primary"
@@ -103,8 +103,8 @@ export default function PersonalScreen({ view }: { view: WimmView }) {
               </button>
             }
           >
-            Un compte privé lié à votre
-            enveloppe personnelle du
+            Un compte privé lié à ton
+            budget perso dans le
             budget commun.
           </Empty>
         </>
@@ -230,7 +230,7 @@ export default function PersonalScreen({ view }: { view: WimmView }) {
                   else explain(h.title || "Virement perso", <>
                     <div className="big-number">+{money(h.amount)}</div>
                     <p>{dateLabel(h.date)} · Virement du foyer</p>
-                    <p>Virement du compte commun vers votre budget personnel.</p>
+                    <p>Virement du compte commun vers ton budget personnel.</p>
                   </>);
                 }}
               />
@@ -290,12 +290,12 @@ export default function PersonalScreen({ view }: { view: WimmView }) {
   </div>
 </div>
 {personalTab==="home"&&<>
-<section className="ws-card ws-hero" aria-label="Solde de votre compte personnel">
+<section className="ws-card ws-hero" aria-label="Solde de ton compte personnel">
   <div className="ws-head">
     <span className="ws-muted">Solde privé · {account.name}</span>
     <button type="button" className="ws-link" style={{ minHeight: 32 }}
       onClick={() => explain("Confidentialité du compte perso", <>
-        <p>Le solde et les opérations privées sont accessibles uniquement à votre compte Wimm.</p>
+        <p>Le solde et les opérations privées sont accessibles uniquement à ton compte Wimm.</p>
         <p>Les autres membres du foyer voient le budget lié et les virements depuis le compte commun, sans voir les dépenses personnelles.</p>
       </>)}>
       <UserRound size={14} aria-hidden="true"/>Privé
@@ -390,7 +390,7 @@ export default function PersonalScreen({ view }: { view: WimmView }) {
   <p className="muted" role="status">{filteredPersonalHistory.length} opération{filteredPersonalHistory.length!==1?"s":""}</p>
   {filteredPersonalHistory.length
     ? <SortableList items={filteredPersonalHistory}>{renderPersonalHistoryRows}</SortableList>
-    : <p className="muted padded">Aucune opération correspondant à votre recherche sur {monthLabel(selectedMonth)}.</p>}
+    : <p className="muted padded">Aucune opération correspondant à ta recherche sur {monthLabel(selectedMonth)}.</p>}
 </section>
 </>}
 {personalTab==="budgets"&&<>
@@ -398,7 +398,7 @@ export default function PersonalScreen({ view }: { view: WimmView }) {
                 <div className="personal-v3-panel-head">
                   <span className="personal-v2-panel-icon"><Wallet size={21}/></span>
                   <span className="personal-v2-panel-copy">
-                    <strong>Enveloppe du foyer · {monthLabel(selectedMonth)}</strong>
+                    <strong>Budget du foyer · {monthLabel(selectedMonth)}</strong>
                     <small>Budget, versements et reports</small>
                   </span>
                   
@@ -444,7 +444,7 @@ export default function PersonalScreen({ view }: { view: WimmView }) {
                   </h2>
 
                   <BlockInfo title="Fonctionnement des budgets personnels">
-                    <p>Chaque budget suit les dépenses réelles et affiche le montant encore disponible. Les prévisions n’affectent pas le budget commun et ne débitent pas votre compte.</p>
+                    <p>Chaque budget suit les dépenses réelles et affiche le montant encore disponible. Les prévisions n’affectent pas le budget commun et ne débitent pas ton compte.</p>
                   </BlockInfo>
                 </div>
 
@@ -548,9 +548,9 @@ export default function PersonalScreen({ view }: { view: WimmView }) {
                     Projection du compte perso
                   </h2>
                   <BlockInfo title="Comment fonctionne la projection ?">
-                    <p>La projection est basée sur votre solde actuel, les futurs virements de budget, vos avances, vos mensualités connues et vos budgets mensuels personnels.</p>
+                    <p>La projection est basée sur ton solde actuel, les futurs virements de budget, tes avances, tes échéances connues et tes budgets mensuels personnels.</p>
                     <p>Les budgets mensuels personnels sont des dépenses futures prévues. Les dépenses futures enregistrées sont prises en compte sans être déduites deux fois des budgets.</p>
-                    <p>Touchez ou faites glisser votre doigt sur la courbe pour consulter un autre mois.</p>
+                    <p>Touche ou faites glisser ton doigt sur la courbe pour consulter un autre mois.</p>
                   </BlockInfo>
                 </div>
 
@@ -618,7 +618,7 @@ export default function PersonalScreen({ view }: { view: WimmView }) {
                     Avances en cours
                   </h2>
                   <BlockInfo title="Fonctionnement des avances personnelles">
-                    <p>Le montant a déjà quitté le compte courant. Seule sa part mensuelle réduit maintenant votre budget perso.</p>
+                    <p>Le montant a déjà quitté le compte courant. Seule sa part mensuelle réduit maintenant ton budget perso.</p>
                   </BlockInfo>
                 </div>
 
@@ -777,7 +777,7 @@ export default function PersonalScreen({ view }: { view: WimmView }) {
                     Paiements en plusieurs fois
                   </h2>
                   <BlockInfo title="Paiements en plusieurs fois">
-                    <p>Ces échéances débitent uniquement votre compte perso.</p>
+                    <p>Ces échéances débitent uniquement ton compte perso.</p>
                   </BlockInfo>
                 </div>
 
@@ -922,7 +922,7 @@ export default function PersonalScreen({ view }: { view: WimmView }) {
                           "Supprimer " +
                             r.name +
                             " ?",
-                          "Les échéances futures seront supprimées. Les mensualités déjà validées pour cet échéancier seront également retirées de l’historique et recréditées sur le solde du compte perso.",
+                          "Les échéances futures seront supprimées. Les paiements déjà validés pour cet échéancier seront également retirées de l’historique et recréditées sur le solde du compte perso.",
                           async () =>
                             changePersonal(
                               (d) => {
@@ -959,7 +959,7 @@ export default function PersonalScreen({ view }: { view: WimmView }) {
 
               {!ps.rules.length && (
                 <p className="muted">
-                  Aucun paiement en plusieurs fois sur votre compte perso.
+                  Aucun paiement en plusieurs fois sur ton compte perso.
                 </p>
               )}
             </section>

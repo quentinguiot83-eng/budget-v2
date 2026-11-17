@@ -4,7 +4,7 @@ import { validateAccountName } from "../../accountNames";
 import { accountLinks, canDeleteAccount, removeAccountSafely, canArchiveAccount, accountRemovalBlockers } from "../../accountRemoval";
 import { balance, euro, uid, today, month, type Account, money, estimatedAnnualInterest, type Category, personalBudgetEnvelope, personalEnvelope, monthLabel, type Trip, monthlyPlan, isSavingsTransfer, savingsBudgetMonth, type Tx, stats, deposits } from "../../engine";
 import { seedStarterCategories } from "../../starterCategories";
-import { amountField, field, choice } from "../shared";
+import { amountField, field, choice, toggle } from "../shared";
 import type { WimmCore } from "../useWimmApp";
 import type { BaseActions } from "./base";
 
@@ -17,7 +17,7 @@ export function createAccountActions(ctx: WimmCore & BaseActions) {
   function editSharedCash(){
     const cash=s.accounts.find(a=>a.isCash&&!a.archived);
     openForm("Espèces du foyer",[
-      amountField("cash","Montant d’espèces disponible (€)",cash?balance(s,cash.id):0),
+      amountField("cash","Espèces disponibles (€)",cash?balance(s,cash.id):0),
     ],async v=>{
       const target=euro(v.cash);
       if(target<0)throw Error("Le solde des espèces ne peut pas être négatif.");
@@ -37,7 +37,7 @@ export function createAccountActions(ctx: WimmCore & BaseActions) {
   }
   function initialCurrentAccount() {
     openForm(
-      "Configurer mon compte courant",
+      "Ton compte courant",
       [
         field("name", "Nom du compte", "Compte courant"),
         field(
@@ -45,34 +45,33 @@ export function createAccountActions(ctx: WimmCore & BaseActions) {
           "Solde actuel (€)",
           0,
           "number",
-          "Saisissez exactement le solde que votre banque affiche aujourd’hui. Il peut être négatif si le compte est à découvert.",
+          "Le solde affiché par ta banque aujourd’hui, même négatif.",
         ),
         field(
           "date",
           "Solde constaté au",
           today(),
           "date",
-          "N’ajoutez ensuite que les opérations qui ne sont pas déjà comprises dans ce solde.",
+          "N’ajoute ensuite que les opérations qui ne sont pas déjà comprises dans ce solde.",
         ),
-        choice(
+        toggle(
           "salaryReceived",
-          "Le salaire de ce mois est-il déjà reçu et inclus dans ce solde ?",
+          "Ton salaire de ce mois est déjà sur le compte ?",
           [
-            ["no", "Non, il reste à recevoir"],
-            ["yes", "Oui, il est déjà inclus"],
+            ["yes", "Oui"],
+            ["no", "Pas encore"],
           ],
           "no",
-          "Cette réponse concerne uniquement le mois de démarrage. Wimm évite ainsi de compter le salaire une deuxième fois.",
+          "Wimm évite ainsi de le compter deux fois.",
         ),
-        choice(
+        toggle(
           "savingDone",
-          "L’épargne prévue ce mois est-elle déjà effectuée et reflétée dans vos soldes ?",
+          "Ton épargne du mois est déjà versée ?",
           [
-            ["no", "Non, elle reste à faire"],
-            ["yes", "Oui, elle est déjà effectuée"],
+            ["yes", "Oui"],
+            ["no", "Pas encore"],
           ],
           "no",
-          "Choisissez Oui si vos virements d’épargne de ce mois ont déjà été réalisés avant le démarrage de Wimm.",
         ),
       ],
       async (v) => {
@@ -151,16 +150,16 @@ export function createAccountActions(ctx: WimmCore & BaseActions) {
       confirmAction(
         "Archiver « " + a.name + " » ?",
         "Ce compte contient " + links.transactions + " opération(s) historiques. Elles seront conservées et le compte sera masqué des soldes actifs et des projections. " +
-          "Son solde est de 0 €. Vous pourrez le restaurer depuis la rubrique « Comptes archivés » de Patrimoine.",
+          "Son solde est de 0 €. Tu pourras le restaurer depuis la rubrique « Comptes archivés » de Patrimoine.",
         async () => change(d => removeAccountSafely(d, a.id, "archive"), "Compte archivé"),
       );
       return;
     }
     const blockers = accountRemovalBlockers(links);
     explain("Impossible de supprimer « " + a.name + " » pour le moment", <>
-      <p>Ce compte est encore lié à des données financières. Le supprimer maintenant pourrait fausser vos comptes et effacer des références importantes.</p>
+      <p>Ce compte est encore lié à des données financières. Le supprimer maintenant pourrait fausser tes comptes et effacer des références importantes.</p>
       {blockers.length > 0 && <ul>{blockers.map((item, index) => <li key={index}>{item}</li>)}</ul>}
-      <p>Conservez l'historique : transférez le solde restant, puis détachez les crédits, échéances, prêts ou projets liés. Une fois le compte à zéro et ses engagements retirés, vous pourrez l'archiver depuis ici.</p>
+      <p>Conserve l’historique : transfère le solde restant, puis détache les crédits, échéances, prêts ou projets liés. Une fois le compte à zéro et ses engagements retirés, tu pourras l’archiver depuis ici.</p>
       <p>Si le compte est nouveau et sans aucune donnée liée, le bouton « Supprimer » le retirera définitivement.</p>
     </>);
   }
@@ -182,61 +181,64 @@ export function createAccountActions(ctx: WimmCore & BaseActions) {
           "Nom du compte",
           a?.name || (!current ? "Compte courant" : ""),
         ),
-        choice(
+        toggle(
           "group",
-          "Utilisation",
+          "Type de compte",
           [
-            ["current", "Compte courant"],
-            ["wealth", "Patrimoine"],
-            ["travel", "Voyages"],
+            ["current", "Courant"],
+            ["wealth", "Épargne"],
+            ["travel", "Voyage"],
           ],
           a?.group || "current",
         ),
         ...(!a
           ? [
-              field("opening", "Solde de départ (€)", 0, "number",
-                "Indiquez le solde réellement affiché par la banque. Un compte courant peut avoir un solde négatif (découvert)."),
+              field("opening", "Solde actuel (€)", 0, "number",
+                "Le solde affiché par ta banque, même négatif pour un compte courant."),
               field(
                 "date",
                 "Solde constaté au",
                 today(),
                 "date",
-                "N’ajoutez ensuite que les opérations non incluses dans ce solde.",
+                "N’ajoute ensuite que les opérations non incluses dans ce solde.",
               ),
             ]
           : []),
         ...(!a && !current
           ? [
-              choice(
+              toggle(
                 "salaryReceived",
-                "Le salaire de ce mois est-il déjà reçu et inclus dans ce solde ?",
+                "Ton salaire de ce mois est déjà sur le compte ?",
                 [
-                  ["no", "Non, il reste à recevoir"],
-                  ["yes", "Oui, il est déjà inclus"],
+                  ["yes", "Oui"],
+                  ["no", "Pas encore"],
                 ],
                 "no",
-                "Cette réponse concerne uniquement le mois de démarrage. Wimm évite ainsi de compter le salaire une deuxième fois.",
+                "Wimm évite ainsi de le compter deux fois.",
               ),
-              choice(
+              toggle(
                 "savingDone",
-                "L’épargne prévue ce mois est-elle déjà effectuée et incluse dans vos soldes ?",
+                "Ton épargne du mois est déjà versée ?",
                 [
-                  ["no", "Non, elle reste à faire"],
-                  ["yes", "Oui, elle est déjà incluse"],
+                  ["yes", "Oui"],
+                  ["no", "Pas encore"],
                 ],
                 "no",
-                "Choisissez Oui si les soldes de vos livrets ou placements reflètent déjà les virements d’épargne de ce mois.",
               ),
             ]
           : []),
-        field(
-          "rate",
-          "Rendement annuel estimé (%)",
-          a?.rate || 0,
-          "number",
-        ),
+        {
+          ...field(
+            "rate",
+            "Rendement annuel estimé (%)",
+            a?.rate || 0,
+            "number",
+          ),
+          showWhen: { field: "group", values: ["wealth", "travel"] },
+        },
 
-        choice(
+        {
+          ...choice(
           "taxMode",
           "Fiscalité dans les projections",
           [
@@ -255,7 +257,9 @@ export function createAccountActions(ctx: WimmCore & BaseActions) {
           ],
           a?.taxMode ||
             "none",
-        ),
+          ),
+          showWhen: { field: "group", values: ["wealth", "travel"] },
+        },
 
         {
           ...field(
@@ -276,7 +280,10 @@ export function createAccountActions(ctx: WimmCore & BaseActions) {
           },
         },
 
-        amountField("cap", "Plafond (€) — 0 = sans plafond", a?.cap || 0),
+        {
+          ...amountField("cap", "Plafond (€, facultatif)", a?.cap || 0, "Laisse vide s’il n’y a pas de plafond."),
+          showWhen: { field: "group", values: ["wealth", "travel"] },
+        },
         {
           ...choice(
             "capType",
@@ -349,8 +356,10 @@ export function createAccountActions(ctx: WimmCore & BaseActions) {
       ],
       async (v) => {
 
+        // Un compte courant n'a ni rendement, ni fiscalité, ni plafond.
+        const isCurrent = v.group === "current";
         const taxMode =
-          v.taxMode as
+          (isCurrent ? "none" : v.taxMode || "none") as
             | "none"
             | "yield"
             | "exit";
@@ -373,12 +382,12 @@ export function createAccountActions(ctx: WimmCore & BaseActions) {
           )
         ) {
           throw Error(
-            "Indiquez un taux de fiscalité compris entre 0 et 100 %.",
+            "Indique un taux de fiscalité compris entre 0 et 100 %.",
           );
         }
 
         const cap =
-          euro(v.cap);
+          isCurrent ? 0 : euro(v.cap || "0");
 
         const hasCap =
           cap > 0;
@@ -427,7 +436,7 @@ export function createAccountActions(ctx: WimmCore & BaseActions) {
             opening: a?.opening ?? euro(v.opening),
             date: a?.date ?? v.date,
             rate:
-              Number(v.rate),
+              isCurrent ? 0 : Number(v.rate || 0),
 
             taxMode,
 
@@ -450,7 +459,7 @@ export function createAccountActions(ctx: WimmCore & BaseActions) {
             d.transactions.some((t) => t.account === a.id || t.to === a.id)
           )
             throw Error(
-              "Créez un autre compte pour changer de type en conservant cet historique.",
+              "Crée un autre compte pour changer de type en conservant cet historique.",
             );
           if (entry.group === "current") {
             entry.allocation = 0;
@@ -488,9 +497,9 @@ export function createAccountActions(ctx: WimmCore & BaseActions) {
   function reconcileHouseholdAccounts() {
     const accounts = s.accounts.filter(a=>!a.archived && a.group!=="personal");
     if(!accounts.length)return;
-    openForm("Mettre à jour mes comptes",
-      accounts.map(a=>field("reconcile_"+a.id,a.name+" · solde bancaire réel (€)",balance(s,a.id)/100,"number",
-        "Un ajustement conserve vos opérations et explique la différence.")),
+    openForm("Mettre à jour mes soldes",
+      accounts.map((a,i)=>field("reconcile_"+a.id,a.name+" (€)",balance(s,a.id)/100,"number",
+        i===0?"Le solde affiché par ta banque aujourd’hui. Wimm ajoute un ajustement pour la différence, sans toucher à tes opérations.":"")),
       async values=>{
         const deltas=accounts.map(a=>({
           account:a,
@@ -498,7 +507,7 @@ export function createAccountActions(ctx: WimmCore & BaseActions) {
         }));
         if(deltas.some(x=>!Number.isSafeInteger(x.actual)||
           (x.account.group!=="current"&&x.actual<0)))
-          throw Error("Vérifiez les soldes saisis. Un livret ou placement ne peut pas être négatif.");
+          throw Error("Un compte d’épargne ne peut pas être négatif.");
         await change(state=>{
           for(const item of deltas){
             const difference=item.actual-balance(state,item.account.id);
@@ -506,10 +515,10 @@ export function createAccountActions(ctx: WimmCore & BaseActions) {
             state.transactions.push({
               id:uid(),type:"adjust",account:item.account.id,
               date:today(),amount:difference,
-              description:"Réconciliation bancaire : solde réel vérifié"
+              description:"Mise à jour du solde"
             });
           }
-        },"Réconciliation des comptes");
+        },"Soldes mis à jour");
       }
     );
   }
@@ -540,24 +549,25 @@ export function createAccountActions(ctx: WimmCore & BaseActions) {
     const previous = account.interestReviews?.[String(year)];
     const expected = previous?.expected ?? estimatedAnnualInterest(s, account, year);
     openForm("Intérêts " + year + " · " + account.name, [
-      choice("received", "Avez-vous reçu les intérêts ou le rendement ?",
-        [["yes", "Oui, montant reçu"], ["no", "Non, rien reçu"]],
+      toggle("received", "As-tu reçu des intérêts ?",
+        [["yes", "Oui"], ["no", "Non"]],
         previous && previous.actual === 0 ? "no" : "yes",
-        "Pour un placement sans crédit annuel (PEA, ETF…), répondez Non."),
-      { ...amountField("amount", "Montant réellement reçu (€)", previous?.actual ?? expected,
-          "Estimation Wimm : " + money(expected) + ". Indiquez le montant du relevé bancaire."),
+        "Pour un placement sans versement annuel (PEA, ETF…), réponds Non."),
+      { ...amountField("amount", "Montant reçu (€)", previous?.actual ?? expected,
+          "Estimation Wimm : " + money(expected) + ". Indique le montant de ton relevé."),
         showWhen: { field: "received", values: ["yes"] } },
-      { ...field("date", "Date bancaire de réception", today(), "date"),
+      { ...field("date", "Date de réception", today(), "date"),
         showWhen: { field: "received", values: ["yes"] } },
-      { ...choice("included", "Ce montant figure-t-il déjà dans le solde Wimm ?",
-          [["no", "Non, l'ajouter au solde"], ["yes", "Oui, ne pas l'ajouter deux fois"]],
-          previous && !previous.postedTransactionId ? "yes" : "no"),
+      { ...toggle("included", "Déjà compté dans ton solde Wimm ?",
+          [["yes", "Oui"], ["no", "Non"]],
+          previous && !previous.postedTransactionId ? "yes" : "no",
+          "Si oui, Wimm ne l’ajoute pas une deuxième fois."),
         showWhen: { field: "received", values: ["yes"] } },
     ], async v => {
       const amount = v.received === "no" ? 0 : euro(v.amount);
-      if (amount < 0) throw Error("Le montant doit être positif.");
+      if (amount < 0) throw Error("Le montant ne peut pas être négatif.");
       if (amount > 0 && (v.date > today() || v.date < account.date))
-        throw Error("Date bancaire invalide ou antérieure à l'ouverture du compte.");
+        throw Error("La date doit être passée et postérieure à l’ouverture du compte.");
       await change(d => {
         const a = d.accounts.find(x => x.id === account.id);
         if (!a) throw Error("Compte introuvable.");
@@ -576,7 +586,7 @@ export function createAccountActions(ctx: WimmCore & BaseActions) {
   }
   function transferPersonal(category?: Category) {
     if (!current) {
-      setNotice("Ajoutez d’abord un compte courant commun.");
+      setNotice("Ajoute d’abord un compte courant commun.");
       return;
     }
     const target = category ?? s.categories.find(c => c.id === ps.account?.category);
@@ -604,16 +614,16 @@ export function createAccountActions(ctx: WimmCore & BaseActions) {
         amountField("amount", "Montant (€)", envelope.remaining,
           "Depuis " + current.name + " · Disponible sur ce budget : " +
           money(envelope.remaining) + ". Ce suivi ne déclenche pas de virement bancaire."),
-        field("date", "Date du virement bancaire", today(), "date"),
+        field("date", "Date du virement", today(), "date"),
         field("budgetMonth", "Mois du budget concerné", selectedMonth, "month",
           "La date bancaire reste réelle : un virement en octobre peut financer novembre."),
-        choice("overdraft", "Autoriser un découvert sur le compte commun",
-          [["no", "Non"], ["yes", "Oui, je confirme"]], "no"),
+        toggle("overdraft", "Autoriser un découvert ?",
+          [["no", "Non"], ["yes", "Oui"]], "no", "Sur " + current.name + ", si le virement le fait passer sous zéro."),
       ],
       async v => {
         const amount = euro(v.amount);
         if (amount <= 0) throw Error("Le montant doit être supérieur à zéro.");
-        if (!/^\d{4}-\d{2}$/.test(v.budgetMonth)) throw Error("Mois budgétaire invalide.");
+        if (!/^\d{4}-\d{2}$/.test(v.budgetMonth)) throw Error("Choisis un mois valide.");
         const targetEnvelope = owner
           ? personalBudgetEnvelope(s, owner, target.id, v.budgetMonth,
               own ? month(ps.account!.date) : target.personalSince)
@@ -621,14 +631,14 @@ export function createAccountActions(ctx: WimmCore & BaseActions) {
         if (amount > targetEnvelope.remaining) {
           throw Error("Il reste " + money(targetEnvelope.remaining) + " à virer pour " + monthLabel(v.budgetMonth) + ".");
         }
-        if (v.date > today()) throw Error("Enregistrez le virement à sa date réelle.");
+        if (v.date > today()) throw Error("Enregistre le virement à sa date réelle.");
         const firstDate = own ? ps.account!.date : legacy?.date ||
           (target.personalSince ? target.personalSince + "-01" : "");
         if (firstDate && v.date < firstDate) {
           throw Error("Cette date précède l’ouverture du compte personnel.");
         }
         if (balance(s, current.id, v.date) < amount && v.overdraft !== "yes") {
-          throw Error("Le solde du compte commun serait négatif après ce virement.");
+          throw Error("Le compte serait à découvert. Réduis le montant ou autorise le découvert.");
         }
         await change(d => {
           if (owner) {
@@ -652,7 +662,7 @@ export function createAccountActions(ctx: WimmCore & BaseActions) {
 
   function transfer(to?: Account, travel?: Trip, from?: Account) {
     if (s.accounts.length < 2) {
-      setNotice("Ajoutez au moins deux comptes pour effectuer un virement.");
+      setNotice("Ajoute au moins deux comptes pour effectuer un virement.");
       return;
     }
     const plan = monthlyPlan(s, selectedMonth);
@@ -697,12 +707,12 @@ export function createAccountActions(ctx: WimmCore & BaseActions) {
               ? "Financement " + travel.name
               : "Virement interne",
         ),
-        choice(
+        toggle(
           "saving",
-          "Rattachement au plan d’épargne",
+          "Compter dans l’épargne de " + monthLabel(selectedMonth).split(" ")[0] + " ?",
           [
-            ["none", "Aucun"],
-            [selectedMonth, monthLabel(selectedMonth)],
+            [selectedMonth, "Oui"],
+            ["none", "Non"],
           ],
           to ? selectedMonth : "none",
         ),
@@ -715,14 +725,15 @@ export function createAccountActions(ctx: WimmCore & BaseActions) {
           ],
           travel?.id || "none",
         ),
-        choice(
+        toggle(
           "overdraft",
-          "Autoriser un solde négatif après ce virement",
+          "Autoriser un découvert ?",
           [
             ["no", "Non"],
-            ["yes", "Oui, je confirme"],
+            ["yes", "Oui"],
           ],
           "no",
+          "Sur le compte source, si le virement le fait passer sous zéro.",
         ),
       ],
       async (v) => {
@@ -766,7 +777,7 @@ export function createAccountActions(ctx: WimmCore & BaseActions) {
           v.overdraft !== "yes"
         )
           throw Error(
-            "Ce virement rendrait le compte source négatif. Réduisez le montant ou confirmez le découvert.",
+            "Le compte serait à découvert. Réduis le montant ou autorise le découvert.",
           );
         const destination = s.accounts.find((a) => a.id === tx.to);
         if (
@@ -782,7 +793,7 @@ export function createAccountActions(ctx: WimmCore & BaseActions) {
             )
         )
           throw Error(
-            "Le plafond du compte serait dépassé. Versez le surplus sur son compte de relais.",
+            "Le plafond du compte serait dépassé. Verse le surplus sur son compte de relais.",
           );
         await change((d) => d.transactions.push(tx), "Virement enregistré");
       },

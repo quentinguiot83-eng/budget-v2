@@ -76,7 +76,7 @@ export default function TripCoverEditor({
         <small>Facultatif · format paysage</small>
       </div>
       {!trip ? (
-        <p className="trip-edit-photo-hint">Enregistrez ce voyage pour pouvoir ajouter sa photo.</p>
+        <p className="trip-edit-photo-hint">Enregistre ce voyage pour pouvoir ajouter sa photo.</p>
       ) : (
         <>
           <div className={"trip-edit-photo-preview" + (previewUrl ? " has-image" : "")}>
@@ -84,7 +84,7 @@ export default function TripCoverEditor({
               <img src={previewUrl} alt=""
                 onError={() => {
                   setPreviewUrl("");
-                  setError("La photo ne peut pas être affichée. Fermez puis rouvrez la modification pour actualiser son accès.");
+                  setError("La photo ne peut pas être affichée. Ferme puis rouvre la modification pour actualiser son accès.");
                 }}
                 style={{ objectPosition: "50% " + position + "%" }}/>
             ) : (

@@ -33,8 +33,8 @@ export default function ProjectsScreen({ view }: { view: WimmView }) {
         <section className="ws-card">
           <span className="ws-icon-tile" aria-hidden="true"><Target size={20}/></span>
           <span className="ws-label">Bientôt</span>
-          <h2 className="ws-card-title">Vos futurs projets, au même endroit</h2>
-          <p className="ws-muted">Vous pourrez bientôt suivre d’autres projets : un achat immobilier, une voiture ou tout objectif d’épargne. Vos voyages restent inchangés.</p>
+          <h2 className="ws-card-title">Tes futurs projets, au même endroit</h2>
+          <p className="ws-muted">Tu pourras bientôt suivre d’autres projets : un achat immobilier, une voiture ou tout objectif d’épargne. Tes voyages restent inchangés.</p>
           <button type="button" className="ws-link" onClick={() => setProjectsSection("trips")}>Voir mes voyages <ChevronRight size={15} aria-hidden="true"/></button>
         </section>
       </div>
@@ -43,7 +43,7 @@ export default function ProjectsScreen({ view }: { view: WimmView }) {
 
   const trip = (() => {
     if (!current) return s.trips.length
-      ? <p className="ws-muted">Aucun voyage actif. Ouvrez « Voyages terminés » pour consulter vos anciens séjours.</p>
+      ? <p className="ws-muted">Aucun voyage actif. Ouvre « Voyages terminés » pour consulter tes anciens séjours.</p>
       : null;
     const t = current;
     const tx = s.transactions.filter(x => x.trip === t.id);
@@ -61,16 +61,16 @@ export default function ProjectsScreen({ view }: { view: WimmView }) {
     const image = cover(t.coverPath);
 
     const closeOrReopen = () => t.closedAt
-      ? confirmAction("Réouvrir ce voyage ?", "Vous pourrez de nouveau ajouter des dépenses et modifier ses enveloppes.",
+      ? confirmAction("Réouvrir ce voyage ?", "Tu pourras de nouveau ajouter des dépenses et modifier ses catégories.",
           async () => change(d => { d.trips.find(x => x.id === t.id)!.closedAt = undefined; setShowArchivedTrip(false); }, "Voyage réouvert"))
       : confirmAction("Clôturer ce voyage ?", "Il sera déplacé dans Voyages terminés. Son historique et son coût total resteront accessibles.",
           async () => change(d => { d.trips.find(x => x.id === t.id)!.closedAt = today(); setActiveTrip(""); setShowArchivedTrip(false); }, "Voyage clôturé"));
     const remove = () => confirmAction("Supprimer le voyage ?",
-      "La suppression est possible seulement sans opération liée. Sinon conservez-le pour garder son historique.",
+      "La suppression est possible seulement sans opération liée. Sinon conserve-le pour garder son historique.",
       async () => {
         await change(d => {
           if (d.transactions.some(x => x.trip === t.id))
-            throw Error("Ce voyage possède des opérations. Il est conservé pour votre historique.");
+            throw Error("Ce voyage possède des opérations. Il est conservé pour ton historique.");
           d.trips = d.trips.filter(x => x.id !== t.id);
           setActiveTrip("");
         }, "Voyage supprimé");
@@ -128,9 +128,9 @@ export default function ProjectsScreen({ view }: { view: WimmView }) {
           </div>
         </section>
 
-        <section className="ws-card ws-list ws-budget-list" data-tour="trips-envelopes" aria-label="Enveloppes du voyage">
+        <section className="ws-card ws-list ws-budget-list" data-tour="trips-envelopes" aria-label="Catégories du voyage">
           <div className="ws-head" style={{ paddingTop: 8 }}>
-            <h2 className="ws-card-title">Enveloppes</h2>
+            <h2 className="ws-card-title">Catégories</h2>
             {!t.closedAt && <button type="button" className="ws-link" data-tour="trips-add-envelope" onClick={() => tripCategory(t)}>
               <Plus size={16} aria-hidden="true"/>Ajouter</button>}
           </div>
@@ -157,9 +157,9 @@ export default function ProjectsScreen({ view }: { view: WimmView }) {
               </SwipeActions>
             );
           })}
-          {!categories.length && <p className="ws-muted ws-empty">Aucune enveloppe pour le moment. Ajoutez-en pour répartir le budget du voyage.</p>}
+          {!categories.length && <p className="ws-muted ws-empty">Aucune catégorie pour le moment. Ajoute-en pour répartir le budget du voyage.</p>}
           <div className="ws-row">
-            <span className="ws-row-main"><span className="ws-row-sub">{allocated <= t.budget ? "Non réparti" : "Enveloppes au-dessus du budget"}</span></span>
+            <span className="ws-row-main"><span className="ws-row-sub">{allocated <= t.budget ? "Non réparti" : "Catégories au-dessus du budget"}</span></span>
             <span className={`ws-amount${allocated > t.budget ? " ws-negative" : ""}`}>{money(Math.abs(t.budget - allocated))}</span>
           </div>
         </section>
@@ -175,7 +175,7 @@ export default function ProjectsScreen({ view }: { view: WimmView }) {
             <button type="button" className="ws-row" key={x.id} onClick={() => txDetails(x)}>
               <span className="ws-row-main">
                 <span className="ws-row-title">{x.description || "Dépense"}</span>
-                <span className="ws-row-sub">{dateLabel(x.date)} · {t.categories.find(c => c.id === x.tripCategory)?.name || "Sans enveloppe"}</span>
+                <span className="ws-row-sub">{dateLabel(x.date)} · {t.categories.find(c => c.id === x.tripCategory)?.name || "Sans catégorie"}</span>
               </span>
               <span className="ws-amount ws-negative">−{money(x.amount)}</span>
             </button>
@@ -207,8 +207,8 @@ export default function ProjectsScreen({ view }: { view: WimmView }) {
       {!s.trips.length ? (
         <section className="ws-card">
           <span className="ws-icon-tile" aria-hidden="true"><Plane size={20}/></span>
-          <h2 className="ws-card-title">Quel sera votre prochain départ ?</h2>
-          <p className="ws-muted">Prévoyez le budget, suivez les dépenses et son financement.</p>
+          <h2 className="ws-card-title">Quel sera ton prochain départ ?</h2>
+          <p className="ws-muted">Prévois le budget, suis les dépenses et son financement.</p>
           <button type="button" className="ws-pill is-solid" style={{ alignSelf: "flex-start" }} onClick={() => editTrip()}>Préparer un voyage</button>
         </section>
       ) : trip}

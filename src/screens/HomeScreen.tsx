@@ -33,7 +33,7 @@ export default function HomeScreen({ view }: { view: WimmView }) {
     {currentAccounts.map(a => <Row key={a.id} title={a.name} sub={dateLabel(a.date)} value={money(balance(s, a.id))}/>)}
     <p>Les échéances à venir ne sont pas incluses dans le solde actuel.</p>
     <button type="button" className="text" onClick={editSharedCash}>
-      <Coins size={15} aria-hidden="true"/> {householdCashBalance > 0 ? "Modifier les espèces" : "Vous avez des espèces ? Saisir un montant"}
+      <Coins size={15} aria-hidden="true"/> {householdCashBalance > 0 ? "Modifier les espèces" : "Tu as des espèces ? Saisir un montant"}
     </button>
   </>);
 
@@ -56,7 +56,7 @@ export default function HomeScreen({ view }: { view: WimmView }) {
             </div>
           )}
           {showAvailable && !availableThisMonth.hasRealIncome &&
-            <p className="ws-muted">Les revenus du mois restent à renseigner pour calculer l'épargne réservée.</p>}
+            <p className="ws-muted">Les revenus du mois restent à renseigner pour calculer l’épargne réservée.</p>}
         </section>
       )}
 
@@ -181,14 +181,14 @@ export default function HomeScreen({ view }: { view: WimmView }) {
               <button type="button" className="ws-row" onClick={() => navigate("calendar")}>
                 <span className="ws-icon-tile is-warning" aria-hidden="true"><CalendarDays size={20}/></span>
                 <span className="ws-row-main"><span className="ws-row-title">{alerts.length} paiement{alerts.length > 1 ? "s" : ""} à valider</span>
-                  <span className="ws-row-sub">Vérifier les échéances sur votre banque</span></span>
+                  <span className="ws-row-sub">Vérifier les échéances sur ta banque</span></span>
                 {chevron}
               </button>
             )}
             {salaryAlert && (
               <button type="button" className="ws-row" onClick={confirmSalary}>
                 <span className="ws-icon-tile" aria-hidden="true"><CalendarDays size={20}/></span>
-                <span className="ws-row-main"><span className="ws-row-title">Confirmer votre salaire</span>
+                <span className="ws-row-main"><span className="ws-row-title">Confirmer ton salaire</span>
                   <span className="ws-row-sub">Prévu le {dateLabel(salaryPlannedDate)}</span></span>
                 {chevron}
               </button>
@@ -204,7 +204,7 @@ export default function HomeScreen({ view }: { view: WimmView }) {
             {savingsToDo && (
               <button type="button" className="ws-row" onClick={() => navigate("wealth")}>
                 <span className="ws-icon-tile" aria-hidden="true"><Wallet size={20}/></span>
-                <span className="ws-row-main"><span className="ws-row-title">Verser l'épargne restante</span>
+                <span className="ws-row-main"><span className="ws-row-title">Verser l’épargne restante</span>
                   <span className="ws-row-sub">{money(savingsGoal - totals.saved)} à verser</span></span>
                 {chevron}
               </button>

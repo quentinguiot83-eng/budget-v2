@@ -59,7 +59,7 @@ export default function ProClientPicker({clients, value, onChange, onCreate, req
   const cancel = () => {setCreating(false);setError("");setDraft(newDraft());setExpanded(false);};
   const save = async () => {
     if (!draft.name.trim() || busy) return;
-    if (duplicate) {setError("Ce client existe déjà. Sélectionnez sa fiche pour éviter un doublon.");return;}
+    if (duplicate) {setError("Ce client existe déjà. Sélectionne sa fiche pour éviter un doublon.");return;}
     setBusy(true);setError("");
     try {
       const created = await onCreate({...draft, name:draft.name.trim(), companyName:draft.companyName.trim()});
@@ -85,7 +85,7 @@ export default function ProClientPicker({clients, value, onChange, onCreate, req
           {options.map(c=><option key={c.id} value={c.id}>{c.companyName?c.companyName+" — ":""}{c.name}</option>)}
         </select>
       </label>
-      {query&&!matching.length&&<small>Aucun client trouvé. Vous pouvez en créer un sans quitter ce formulaire.</small>}
+      {query&&!matching.length&&<small>Aucun client trouvé. Tu peux en créer un sans quitter ce formulaire.</small>}
     </>:<div className="pro-client-create" onKeyDown={e=>{if(e.key==="Enter"&&(e.target as HTMLElement).tagName!=="TEXTAREA"){e.preventDefault();void save();}}}>
       <div className="pro-client-create-head"><strong>Nouveau client</strong><button type="button" title="Annuler" aria-label="Revenir au choix du client" onClick={cancel}><X size={18}/></button></div>
       <label>Nom du client<input autoFocus required value={draft.name} onChange={e=>update({name:e.target.value})} placeholder="Nom et prénom"/></label>

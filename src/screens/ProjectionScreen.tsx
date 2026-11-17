@@ -53,7 +53,7 @@ export default function ProjectionScreen({ view }: { view: WimmView }) {
             projet lié à un voyage est réduit des virements de
             financement déjà effectués.
           </p>
-<p>Les déficits ne sont pas automatiquement retirés de vos comptes d’épargne.</p></BlockInfo>
+<p>Les déficits ne sont pas automatiquement retirés de tes comptes d’épargne.</p></BlockInfo>
         </span>
         <span className="ws-key projection-main-amount">{finalProjection ? projectionMoney(finalProjection.current + finalProjection.wealth) : "—"}</span>
         <span className="ws-muted">Avant fiscalité estimée · comptes courants et placements</span>
@@ -116,7 +116,7 @@ export default function ProjectionScreen({ view }: { view: WimmView }) {
             </div>
           </SwipeActions>
         ))}
-            {!s.projects.length && <p className="ws-muted">Ajoutez un projet daté pour voir son effet sur votre patrimoine.</p>}
+            {!s.projects.length && <p className="ws-muted">Ajoute un projet daté pour voir son effet sur ton patrimoine.</p>}
             <button type="button" className="ws-link" data-tour="projection-add" onClick={() => editProject()}><Plus size={16} aria-hidden="true"/>Ajouter un projet</button>
           </div>
         </details>

@@ -53,7 +53,7 @@ const styles = String.raw`
 .personal-v2-history>details[open]>summary svg{transform:rotate(90deg)}
 .personal-v2-history-rows {min-width:0}
 
-/* Personal v3: account tabs, modelled after Wimm Pro's compact menu. */
+/* Personal v3: account tabs, modelled after Wimm Pro’s compact menu. */
 .personal-v3-month-picker{margin:0;width:100%;min-width:0}
 .personal-v3-panel-head{display:flex;align-items:center;gap:11px;min-height:78px;padding:17px 18px}
 .personal-v3-panel-head>.personal-v2-panel-copy{flex:1}

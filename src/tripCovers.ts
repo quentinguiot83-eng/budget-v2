@@ -69,7 +69,7 @@ export function useTripCoverUrls(trips: Trip[], householdId: string | undefined,
 
 export async function compressTripCover(file: File): Promise<Blob> {
   if (!file.type.startsWith("image/") && !/\.(jpe?g|png|webp|heic|heif)$/i.test(file.name))
-    throw Error("Choisissez une photo JPEG, PNG, WebP ou HEIC.");
+    throw Error("Choisis une photo JPEG, PNG, WebP ou HEIC.");
   if (file.size > PHOTO_MAX_BYTES)
     throw Error("La photo est trop volumineuse (20 Mo maximum).");
 
@@ -78,7 +78,7 @@ export async function compressTripCover(file: File): Promise<Blob> {
     const img = await new Promise<HTMLImageElement>((resolve, reject) => {
       const element = new Image();
       element.onload = () => resolve(element);
-      element.onerror = () => reject(Error("Cette photo ne peut pas être ouverte. Essayez au format JPEG."));
+      element.onerror = () => reject(Error("Cette photo ne peut pas être ouverte. Essaie au format JPEG."));
       element.src = url;
     });
     const width = img.naturalWidth;
@@ -111,7 +111,7 @@ export async function compressTripCover(file: File): Promise<Blob> {
 export async function uploadTripCover(file: File, householdId: string, tripId: string) {
   if (!householdId || !tripId) throw Error("Voyage introuvable.");
   const blob = await compressTripCover(file);
-  if (blob.size > 2 * 1024 * 1024) throw Error("Cette photo reste trop lourde après compression. Essayez une autre image.");
+  if (blob.size > 2 * 1024 * 1024) throw Error("Cette photo reste trop lourde après compression. Essaie une autre image.");
   const extension = blob.type === "image/webp" ? "webp" : "jpg";
   const path = householdId + "/" + tripId + "/" + crypto.randomUUID() + "." + extension;
   const { error } = await api.storage.from(TRIP_COVERS_BUCKET).upload(path, blob, {
@@ -121,7 +121,7 @@ export async function uploadTripCover(file: File, householdId: string, tripId: s
   });
   if (error) {
     const message = /bucket not found|not found|row-level security|does not exist|unauthorized/i.test(error.message)
-      ? "Le stockage des photos n’est pas encore configuré dans Supabase. Appliquez le script trip_covers.sql."
+      ? "Le stockage des photos n’est pas encore configuré dans Supabase. Applique le script trip_covers.sql."
       : error.message;
     throw Error(message);
   }

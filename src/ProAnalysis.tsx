@@ -35,15 +35,15 @@ export default function ProAnalysis({month,transactions,invoices,clients,opening
   const toggle=(key:Key)=>setSelected(s=>s.includes(key)?s.length===1?s:s.filter(x=>x!==key):[...s,key]);
   const formatMoney=(v:unknown)=>proEuro(Math.round(Number(v||0)*100));
   return <div className="pro-an pro-v3-analysis">
-    <div className="pro-an-heading"><h1>Analyse</h1><p>Choisissez les données à comparer.</p></div>
+    <div className="pro-an-heading"><h1>Analyse</h1><p>Choisis les données à comparer.</p></div>
     <section className="pro-an-period">
       <div className="pro-an-period-pills">{([["3","3 mois"],["6","6 mois"],["12","12 mois"],["year","Année"],["custom","Personnalisé"]] as const).map(([k,label])=><button type="button" key={k} className={period===k?"active":""} aria-pressed={period===k} onClick={()=>setPeriod(k)}>{label}</button>)}</div>
       {period==="custom"&&<div className="pro-an-custom"><label>Du<input type="month" value={startCustom} onChange={e=>setStartCustom(e.target.value)}/></label><label>Au<input type="month" value={endCustom} onChange={e=>setEndCustom(e.target.value)}/></label></div>}
       <small>{valid?formatProMonth(start)+(start!==end?" → "+formatProMonth(end):""):"Dates incohérentes"}</small>
     </section>
     <section className="pro-an-card">
-      <h2>Évolution de l'activité</h2>
-      <p>Un seul graphique. Touchez les indicateurs à afficher ou masquer.</p>
+      <h2>Évolution de l’activité</h2>
+      <p>Un seul graphique. Touche les indicateurs à afficher ou masquer.</p>
       <div className="pro-v3-series">{indicators.map(i=><button type="button" key={i.key} onClick={()=>toggle(i.key)} aria-pressed={selected.includes(i.key)} className={selected.includes(i.key)?"selected":""} style={{"--indicator":i.color} as React.CSSProperties}><span/>{i.label}</button>)}</div>
       {valid&&data.length?<div className="pro-an-chart pro-v3-chart" role="img" aria-label="Graphique interactif des indicateurs financiers sélectionnés">
         <ResponsiveContainer width="100%" height="100%">
@@ -62,7 +62,7 @@ export default function ProAnalysis({month,transactions,invoices,clients,opening
             {selection.map(item=>item.key==="expenses"?<Bar key={item.key} dataKey={item.key} name={item.label} fill={item.color} barSize={14} radius={[4,4,0,0]}/>:<Area key={item.key} dataKey={item.key} name={item.label} type="monotone" stroke={item.color} fill={`url(#wimm-pro-glass-${item.key})`} fillOpacity={1} strokeWidth={2.8} connectNulls={false}/>)}
           </ComposedChart>
         </ResponsiveContainer>
-      </div>:<p className="pro-an-empty">Choisissez une période valide.</p>}
+      </div>:<p className="pro-an-empty">Choisis une période valide.</p>}
     </section>
     <div className="pro-an-kpis pro-v3-kpis">{selection.map(i=><div key={i.key}><span>{i.label}</span><strong>{i.key==="treasury"&&series.at(-1)?.treasury===null?"—":proFullEuro(total(i.key))}</strong><small>{i.key==="treasury"?"Solde en fin de période":"Total sur la période"}</small></div>)}</div>
     <section className="pro-an-card pro-v3-details">
@@ -76,6 +76,6 @@ export default function ProAnalysis({month,transactions,invoices,clients,opening
         </div>}
       </div>)}
     </section>
-    <p className="pro-an-note"><CircleHelp size={15}/> Indicateurs issus des écritures Wimm. Le CA encaissé, le CA facturé, le résultat d'activité et la trésorerie ne sont pas interchangeables.</p>
+    <p className="pro-an-note"><CircleHelp size={15}/> Indicateurs issus des écritures Wimm. Le CA encaissé, le CA facturé, le résultat d’activité et la trésorerie ne sont pas interchangeables.</p>
   </div>;
 }

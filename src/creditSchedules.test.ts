@@ -37,7 +37,7 @@ test("cannot overwrite an already confirmed payment's scheduled date", () => {
   const { state, original } = fixture();
   state.transactions.push({ id:"paid", type:"expense", amount:11500, date:"2026-10-18",
     description:"OM", account:"current", dueKey:"old:2026-10-12" });
-  assert.throws(() => revisePaymentPlan(state,"old",{...original,count:2},"next"),/validées/);
+  assert.throws(() => revisePaymentPlan(state,"old",{...original,count:2},"next"),/validés/);
   assert.equal(state.rules.length,1);
 });
 

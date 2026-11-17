@@ -34,7 +34,7 @@ export default function AddPage({
   return (
     <div className="add-page-layout">
       <div className="section-head">
-        <div className="block-title"><h2>Que souhaitez-vous enregistrer ?</h2><BlockInfo title="Enregistrer une opération"><p>Pour une charge déjà planifiée, utilisez « Valider » dans le calendrier afin d’éviter un doublon.</p></BlockInfo></div>
+        <div className="block-title"><h2>Que veux-tu enregistrer ?</h2><BlockInfo title="Enregistrer une opération"><p>Pour une charge déjà planifiée, utilise « Valider » dans le calendrier afin d’éviter un doublon.</p></BlockInfo></div>
 
         <button
           className="text"
@@ -66,7 +66,7 @@ export default function AddPage({
           {
             title: "Un virement",
             desc:
-              "Déplacer de l’argent entre vos comptes",
+              "Déplacer de l’argent entre tes comptes",
             icon: <ArrowLeftRight />,
             fn: transfer,
           },
@@ -135,7 +135,7 @@ export default function AddPage({
       )}
       <section className="card">
         <div className="section-head"><div className="block-title"><h2><FileSpreadsheet size={18}/> Rapprochement bancaire</h2></div></div>
-        <p className="muted">Importer un relevé CSV pour retrouver les opérations manquantes, sans doublons ni connexion à votre banque.</p>
+        <p className="muted">Importer un relevé CSV pour retrouver les opérations manquantes, sans doublons ni connexion à ta banque.</p>
         <button className="secondary" type="button" onClick={bankReconciliation}>Comparer un relevé CSV <ChevronRight size={16}/></button>
       </section>
     </div>

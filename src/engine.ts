@@ -2395,7 +2395,7 @@ export function validate(s: State) {
 
     if (t.date > today() && !t.dueKey)
 
-  throw Error("Pour une opération future, créez une échéance.");
+  throw Error("Pour une opération future, crée une échéance.");
 
     if (t.category && !s.categories.some((c) => c.id === t.category))
 

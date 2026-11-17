@@ -48,7 +48,7 @@ export const PAGE_HELP: Record<string, { title: string; points: [string, string]
   ] },
   loans: { title: "Crédits et prêts en 3 points", points: [
     ["En haut", "Ce qu’il te reste à rembourser et l’argent à récupérer."],
-    ["Les crédits", "Chaque mensualité arrive dans tes charges fixes le mois venu."],
+    ["Les crédits", "Chaque échéance arrive dans tes charges fixes le mois venu."],
     ["L’argent prêté", "Touche « Remboursé » quand on te rend une somme."],
   ] },
   analysis: { title: "L’Analyse en 3 points", points: [

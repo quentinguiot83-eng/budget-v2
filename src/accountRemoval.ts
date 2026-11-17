@@ -51,7 +51,7 @@ export function accountRemovalBlockers(links: AccountLinks): string[] {
   if (links.incomingRelays) parts.push(links.incomingRelays+" compte(s) utilisant ce compte comme destination de relais");
   if (links.transactions && links.balance !== 0)
     parts.push("solde restant : " + (links.balance / 100).toLocaleString("fr-FR", { style: "currency", currency: "EUR" }) +
-      " (effectuez un virement ou un ajustement avant d'archiver)");
+      " (effectue un virement ou un ajustement avant d’archiver)");
   return parts;
 }
 export function removeAccountSafely(state: State, accountId: string, mode: "delete" | "archive" | "restore"): void {
@@ -66,11 +66,11 @@ export function removeAccountSafely(state: State, accountId: string, mode: "dele
   const links = accountLinks(state, accountId);
   if (mode === "delete") {
     if (!canDeleteAccount(links))
-      throw Error("Ce compte contient encore des données liées. Vous pouvez l’archiver une fois son solde et ses engagements régularisés.");
+      throw Error("Ce compte contient encore des données liées. Tu peux l’archiver une fois son solde et ses engagements régularisés.");
     state.accounts = state.accounts.filter(a => a.id !== accountId);
     return;
   }
   if (!canArchiveAccount(links))
-    throw Error("Pour archiver le compte, conservez son historique, ramenez son solde à zéro et retirez ses engagements ou références en cours.");
+    throw Error("Pour archiver le compte, conserve son historique, ramène son solde à zéro et retire ses engagements ou références en cours.");
   target.archived = true;
 }

@@ -25,7 +25,7 @@ export function createBudgetActions(ctx: WimmCore & BaseActions & AccountActions
   function removeArchivedCategory(c: Category) {
     const usage = categoryUsage(s, c.id);
     if (usage.linkedPersonal || ps.account?.category === c.id) {
-      explain("Catégorie liée à un compte perso", <p>Réaffectez d’abord le compte personnel à une autre catégorie depuis ses réglages. Son propriétaire doit effectuer ce changement avant la suppression.</p>);
+      explain("Catégorie liée à un compte perso", <p>Réaffecte d’abord le compte personnel à une autre catégorie depuis ses réglages. Son propriétaire doit effectuer ce changement avant la suppression.</p>);
       return;
     }
     if (!usage.transactions && !usage.rules) {
@@ -33,14 +33,14 @@ export function createBudgetActions(ctx: WimmCore & BaseActions & AccountActions
       return;
     }
     const targets = categoryReplacements(s, c.id);
-    if (!targets.length) { explain("Choisir une destination", <p>Créez d’abord une catégorie active compatible pour recevoir les dépenses et échéances de « {c.name} ».</p>); return; }
+    if (!targets.length) { explain("Choisir une destination", <p>Crée d’abord une catégorie active compatible pour recevoir les dépenses et échéances de « {c.name} ».</p>); return; }
     openForm("Transférer et supprimer « " + c.name + " »", [
       choice("target", "Transférer vers", targets.map(target => [target.id, target.name] as [string,string]), targets[0].id),
 
     ], async v => {
       await change(d => deleteArchivedCategory(d, c.id, v.target), "Historique transféré et catégorie supprimée");
     }, "Oui, transférer et supprimer", (
-      <p>Êtes-vous sûr de vouloir supprimer cette catégorie ? {usage.transactions} opération(s) et {usage.rules} échéance(s) seront réaffectées à la catégorie sélectionnée. Les montants et dates seront conservés.</p>
+      <p>Veux-tu vraiment supprimer cette catégorie ? {usage.transactions} opération(s) et {usage.rules} échéance(s) seront réaffectées à la catégorie sélectionnée. Les montants et dates seront conservés.</p>
     ));
   }
   function householdCategoryCreator(): InlineChoiceCreator {
@@ -134,13 +134,13 @@ export function createBudgetActions(ctx: WimmCore & BaseActions & AccountActions
     if (!category) return;
     openForm("Adapter le budget · " + category.name, [
       amountField("amount", "Nouveau budget mensuel (€)", item.suggested,
-        "Suggestion fondée sur les deux derniers mois. Vous choisissez le nouveau montant."),
-      field("start", "Appliquer à partir du mois", month(), "month"),
+        "Suggestion basée sur tes deux derniers mois, à ajuster librement."),
+      field("start", "À partir du mois", month(), "month"),
     ], async v => {
       const amount = euro(v.amount);
       if (amount <= 0) throw Error("Le budget doit être supérieur à zéro.");
       if (!/^\d{4}-\d{2}$/.test(v.start) || v.start < month())
-        throw Error("Choisissez le mois en cours ou un mois futur.");
+        throw Error("Choisis le mois en cours ou un mois futur.");
       await change(d => {
         const target = d.categories.find(c => c.id === item.id);
         if (!target) throw Error("Budget introuvable.");
@@ -324,7 +324,7 @@ export function createBudgetActions(ctx: WimmCore & BaseActions & AccountActions
               <p>Après les paiements à venir, les projets du mois et l’épargne à effectuer.</p>
               <p>Calcul au {dateLabel(today())} · jusqu’au {dateLabel(a.end)}</p>
               <Row title="Solde actuel des comptes courants" value={money(a.cash)} />
-              <Row title="Charges et mensualités encore à payer" value={"− " + money(a.fixed)} />
+              <Row title="Charges et échéances encore à payer" value={"− " + money(a.fixed)} />
               {a.pending.map((d) => <Row key={d.key} title={d.rule.name}
                 sub={`${dateLabel(d.date)}${d.date < today() ? " · en retard" : ""}`}
                 value={money(d.rule.amount)} />)}
@@ -338,9 +338,9 @@ export function createBudgetActions(ctx: WimmCore & BaseActions & AccountActions
               <p>Les opérations déjà payées sont dans le solde et ne sont pas déduites une deuxième fois.
                 Les revenus futurs et remboursements attendus ne sont pas ajoutés tant qu’ils ne sont pas reçus.
                 Les échéances annuelles et trimestrielles sont réservées uniquement à leur échéance.</p>
-              <p>Ce montant sert à vos dépenses variables, comme les courses et les sorties :
-                leurs enveloppes ne sont pas déduites à nouveau. Les dépenses non saisies ne peuvent pas être anticipées.
-                Le solde dépend de vos saisies dans Wimm.</p>
+              <p>Ce montant sert à tes dépenses variables, comme les courses et les sorties :
+                leurs budgets ne sont pas déduits à nouveau. Les dépenses non saisies ne peuvent pas être anticipées.
+                Le solde dépend de tes saisies dans Wimm.</p>
               {!a.hasRealIncome && <p>L’épargne sera réservée après la saisie des revenus affectés à ce mois.</p>}
             </>,
           )}><Info size={17} /></button>);
@@ -370,7 +370,7 @@ export function createBudgetActions(ctx: WimmCore & BaseActions & AccountActions
       "Calcul de la capacité d’épargne",
       <>
         <p className="muted capacity-intro">
-          Estimation pour {monthLabel(selectedMonth)} : vos revenus prévus, moins les charges fixes et les budgets variables.
+          Estimation pour {monthLabel(selectedMonth)} : tes revenus prévus, moins les charges fixes et les budgets variables.
         </p>
 
         <div className="capacity-summary">
@@ -381,7 +381,7 @@ export function createBudgetActions(ctx: WimmCore & BaseActions & AccountActions
         </div>
 
         <p className="muted capacity-hint">
-          Ce montant est une prévision, pas le solde disponible sur vos comptes.
+          Ce montant est une prévision, pas le solde disponible sur tes comptes.
           Les revenus estimés sont pris en compte même s’ils n’ont pas encore été reçus.
         </p>
 
@@ -583,7 +583,7 @@ export function createBudgetActions(ctx: WimmCore & BaseActions & AccountActions
                 <span className="ws-row-title">{totals.forecast?.categories.find(x => x.id === c.id)?.name ?? c.name}</span>
                 {isPersonal && (
                   <span className="ws-row-sub">
-                    {isMine ? "Votre budget personnel" : c.personalOwner ? "Budget personnel du foyer" : "Ancien compte perso à migrer"}
+                    {isMine ? "Ton budget personnel" : c.personalOwner ? "Budget personnel du foyer" : "Ancien compte perso à migrer"}
                   </span>
                 )}
                 {totals.forecast && <span className="ws-row-sub">{totals.forecast.fixedCategories ? "Budget prévu figé" : "Budget variable figé"}</span>}
@@ -657,7 +657,7 @@ export function createBudgetActions(ctx: WimmCore & BaseActions & AccountActions
     if (location === "home") {
       const pct = goal > 0 ? Math.min(100, Math.round(((done ? goal : totals.saved) / goal) * 100)) : 0;
       return (
-        <section className="ws-card" data-tour="home-savings" aria-label="Votre épargne du mois">
+        <section className="ws-card" data-tour="home-savings" aria-label="Ton épargne du mois">
           <div className="ws-head">
             <span className="ws-head-title">
               <span className="ws-label">Épargne du mois</span>
@@ -685,7 +685,7 @@ export function createBudgetActions(ctx: WimmCore & BaseActions & AccountActions
       <div className="ws-head">
         <span className="ws-head-title">
           <h2 className="ws-card-title">Épargne du mois</h2>
-          <button type="button" className="ws-info" aria-label="Détail du calcul de l'épargne" onClick={calc}><Info size={16}/></button>
+          <button type="button" className="ws-info" aria-label="Détail du calcul de l’épargne" onClick={calc}><Info size={16}/></button>
         </span>
         {done && <span className="ws-label ws-positive"><Check size={14} aria-hidden="true" /> Fait</span>}
       </div>
@@ -701,7 +701,7 @@ export function createBudgetActions(ctx: WimmCore & BaseActions & AccountActions
         <section className="ws-card" data-tour="wealth-savings" aria-label="Épargne du mois">
           {head}
           <p className="ws-muted">{!hasIncome
-            ? "Votre objectif sera calculé lorsque les revenus du mois seront enregistrés."
+            ? "Ton objectif sera calculé lorsque les revenus du mois seront enregistrés."
             : "Aucun versement d’épargne prévu pour ce mois."}
             {totals.saved > 0 && " " + money(totals.saved) + " déjà versés ce mois-ci."}</p>
           {allocationLink("Configurer mon épargne")}
@@ -715,7 +715,7 @@ export function createBudgetActions(ctx: WimmCore & BaseActions & AccountActions
           <div className="ws-head">
             <span className="ws-head-title">
               <h2 className="ws-card-title">Épargne du mois</h2>
-              <button type="button" className="ws-info" aria-label="Détail du calcul de l'épargne"
+              <button type="button" className="ws-info" aria-label="Détail du calcul de l’épargne"
                 onClick={(e) => { e.preventDefault(); e.stopPropagation(); calc(); }}><Info size={16}/></button>
             </span>
             <span className="ws-row-end">

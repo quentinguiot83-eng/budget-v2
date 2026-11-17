@@ -58,7 +58,7 @@ export default function DataProtectionPanel({ household, personal, demo, isOwner
     setSuccess("");
     setBusy(kind);
     try {
-      if (kind.startsWith("personal") && !personal) throw Error("Le compte personnel n'est pas encore chargé.");
+      if (kind.startsWith("personal") && !personal) throw Error("Le compte personnel n’est pas encore chargé.");
       if (kind === "professional-json") {
         if (demo || !proEnabled) throw Error("La sauvegarde Pro nécessite un espace professionnel activé.");
         // Read-only RPC; do not use budget_pro_suite_load, which may create defaults.
@@ -67,7 +67,7 @@ export default function DataProtectionPanel({ household, personal, demo, isOwner
         if (new TextEncoder().encode(output).length > MAX_BACKUP_SIZE)
           throw Error("Sauvegarde Pro trop volumineuse pour le format JSON actuel (20 Mo).");
         const completed = await sendFile("Wimm-Pro-complet-" + date + ".json", output, "application/json;charset=utf-8");
-        if (completed) setSuccess("Export Pro préparé. Conservez ce fichier en lieu sûr.");
+        if (completed) setSuccess("Export Pro préparé. Conserve ce fichier en lieu sûr.");
         return;
       }
       const prefix = kind.startsWith("personal") ? "Wimm-compte-prive-" : "Wimm-foyer-";
@@ -103,9 +103,9 @@ export default function DataProtectionPanel({ household, personal, demo, isOwner
         mime = "text/csv;charset=utf-8";
       }
       const completed = await sendFile(name, output, mime);
-      if (completed) setSuccess("Fichier préparé. Conservez-le dans un emplacement privé et protégé.");
+      if (completed) setSuccess("Fichier préparé. Conserve-le dans un emplacement privé et protégé.");
     } catch (e) {
-      setError(e instanceof Error ? e.message : "L’export a échoué. Réessayez.");
+      setError(e instanceof Error ? e.message : "L’export a échoué. Réessaie.");
     } finally {
       setBusy("");
     }
@@ -150,7 +150,7 @@ export default function DataProtectionPanel({ household, personal, demo, isOwner
     setRestoring(true);
     try {
       const expected = candidate.scope === "household" ? household.revision : personal?.revision;
-      if (expected === undefined) throw Error("Révision actuelle indisponible. Actualisez Wimm.");
+      if (expected === undefined) throw Error("Révision actuelle indisponible. Actualise Wimm.");
       await rpc("budget_restore_import", {
         p_backup: candidate.backup,
         p_expected_revision: expected,
@@ -174,7 +174,7 @@ export default function DataProtectionPanel({ household, personal, demo, isOwner
         <span className="wimm-security-symbol"><ShieldCheck size={24}/></span>
         <div>
           <h2>Protection et sauvegardes</h2>
-          <p className="muted">Conservez une copie personnelle de vos finances, sans transférer vos données à un service supplémentaire.</p>
+          <p className="muted">Conserve une copie personnelle de tes finances, sans transférer tes données à un service supplémentaire.</p>
         </div>
       </div>
       <div className="wimm-security-row">
@@ -222,7 +222,7 @@ export default function DataProtectionPanel({ household, personal, demo, isOwner
           <FileCheck2 size={21}/>
           <div>
             <strong>Vérifier une sauvegarde</strong>
-            <small>Vérifiez l’intégrité et comparez les opérations avant toute restauration</small>
+            <small>Vérifie l’intégrité et compare les opérations avant toute restauration</small>
           </div>
         </div>
         <label className="wimm-security-verify-action">
@@ -245,7 +245,7 @@ export default function DataProtectionPanel({ household, personal, demo, isOwner
           {verification.householdId && verification.householdId !== household.id &&
             <span className="wimm-security-foreign">Attention : cette sauvegarde provient d’un autre foyer.</span>}
           {verification.metadataProtected ? null :
-            <small>Ancienne sauvegarde : la date et la révision ne sont pas protégées par l’empreinte. Vous pouvez créer une nouvelle sauvegarde au format renforcé.</small>}
+            <small>Ancienne sauvegarde : la date et la révision ne sont pas protégées par l’empreinte. Tu peux créer une nouvelle sauvegarde au format renforcé.</small>}
           {comparable &&
             <div className="wimm-security-comparison" aria-label="Comparaison sans restauration">
               <strong>Comparaison avec {comparable.label.toLowerCase()}</strong>
@@ -263,12 +263,12 @@ export default function DataProtectionPanel({ household, personal, demo, isOwner
             return <div className="wimm-security-restore" aria-label="Restaurer un fichier JSON">
               <strong><ArchiveRestore size={16}/> Restaurer ce fichier</strong>
               <p className="muted">Attention : la restauration remplace entièrement
-                {candidate.scope === "household" ? " le budget partagé du foyer" : " votre compte privé"}
+                {candidate.scope === "household" ? " le budget partagé du foyer" : " ton compte privé"}
                 . Elle ramènera les opérations de {comparison.current} à {comparison.file}.
                 Les modifications depuis cette sauvegarde seront remplacées.</p>
               <p className="muted">L’état actuel sera conservé automatiquement dans l’historique.
                 Les photos, fichiers externes et données Pro ne seront pas restaurés.</p>
-              <label htmlFor="wimm-import-confirm">Saisissez <strong>RESTAURER</strong> pour confirmer</label>
+              <label htmlFor="wimm-import-confirm">Saisis <strong>RESTAURER</strong> pour confirmer</label>
               <input id="wimm-import-confirm" type="text" autoComplete="off"
                 value={confirmation} disabled={restoring || !!busy}
                 placeholder="RESTAURER" onChange={e => setConfirmation(e.target.value)}/>
@@ -287,7 +287,7 @@ export default function DataProtectionPanel({ household, personal, demo, isOwner
       </div>
       <div className="wimm-security-explainer">
         <Info size={17}/>
-        <p><strong>Important :</strong> les sauvegardes JSON contiennent vos informations financières en clair et doivent être conservées dans un espace protégé. Le CSV sert à consulter les opérations, pas à restaurer Wimm. Les données de l'espace Pro et les fichiers photo ne font pas partie de ces exports. {demo ? "En démonstration, les données téléchargées sont fictives." : "Un export ne modifie jamais vos comptes."}</p>
+        <p><strong>Important :</strong> les sauvegardes JSON contiennent tes informations financières en clair et doivent être conservées dans un espace protégé. Le CSV sert à consulter les opérations, pas à restaurer Wimm. Les données de l'espace Pro et les fichiers photo ne font pas partie de ces exports. {demo ? "En démonstration, les données téléchargées sont fictives." : "Un export ne modifie jamais tes comptes."}</p>
       </div>
       {error && <p className="error" role="alert">{error}</p>}
       {success && <p className="wimm-security-success" role="status">{success}</p>}

@@ -125,7 +125,7 @@ export default function ProjectionInteractiveChart({ points }: { points: Project
       <div className="projection-chart-reading" aria-live="polite">
         <div className="projection-chart-reading-header">
           <strong>{monthLabel(active.date)}</strong>
-          <small>Glissez sur la courbe pour explorer</small>
+          <small>Glisse sur la courbe pour explorer</small>
         </div>
         <div className="projection-chart-reading-values">
           <div className="projection-reading-gross"><span>Patrimoine hors voyage</span><strong>{projectionMoney(active.patrimonyExcludingTravel)}</strong></div>
