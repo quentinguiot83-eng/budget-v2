@@ -11,6 +11,7 @@ coupées. Deux captures du même code donnent les mêmes images.
 """
 
 import base64
+import json
 import sys
 from pathlib import Path
 
@@ -52,11 +53,20 @@ def _font_face(family: str, weights: str, file: str) -> str:
 FONTS_CSS = _font_face("DM Sans", "100 1000", "dm-sans.woff2") + _font_face("Manrope", "200 800", "manrope.woff2")
 
 
-def route_requests(base_url: str):
+PRO_FIXTURE = json.loads((Path(__file__).resolve().parent / "fixtures" / "pro.json").read_text())
+
+
+def route_requests(base_url: str, pro: bool = False):
+    """Sert l'app locale et les polices ; avec pro=True, répond aussi aux
+    appels Supabase de Wimm Pro avec des données fictives (fixtures/pro.json)."""
     def handle(route):
         u = route.request.url
         if u.startswith(base_url):
             return route.continue_()
+        if pro and "/rest/v1/rpc/" in u:
+            name = u.rsplit("/", 1)[-1].split("?")[0]
+            return route.fulfill(status=200, content_type="application/json",
+                                 body=json.dumps(PRO_FIXTURE.get(name)))
         if u.startswith("https://fonts.googleapis.com/"):
             return route.fulfill(status=200, content_type="text/css", body=FONTS_CSS)
         return route.abort()
@@ -115,6 +125,66 @@ def stable_screenshot(page, path, full_page=True, attempts=6):
     Path(path).write_bytes(previous)
 
 
+# Écrans hors navigation principale : premier lancement, visite, aide,
+# compte perso créé dans la démo, et Wimm Pro avec des données fictives.
+# Chaque entrée : (nom, adresse, étapes, page entière). Étapes : "click:CSS",
+# "text:libellé de bouton", "fill:aria-label=valeur", "nav:onglet".
+EXTRAS = [
+    ("premier-bienvenue", "?demo=1&welcome_preview=1", [], True),
+    ("premier-rejoindre", "?demo=1&welcome_preview=1", ["text:Rejoindre un foyer"], True),
+    ("premier-solde", "?demo=1&onboarding_preview=1", ["fill:Solde du compte courant=1250"], True),
+    ("premier-revenu", "?demo=1&onboarding_preview=1",
+     ["fill:Solde du compte courant=1250", "text:Continuer", "fill:Revenu mensuel=2100"], True),
+    ("premier-ce-mois", "?demo=1&onboarding_preview=1",
+     ["fill:Solde du compte courant=1250", "text:Continuer", "fill:Revenu mensuel=2100", "text:Continuer"], True),
+    ("visite-etape-1", "?demo=1&onboarding_journey=1", [], False),
+    ("visite-etape-3", "?demo=1&onboarding_journey=1", ["click:.wimm-journey-next", "click:.wimm-journey-next"], False),
+    ("accueil-premiers-pas", "?demo=1&onboarding_checklist=1", [], True),
+    ("aide-budget", "?demo=1", ["nav:Budget", "click:.page-info"], False),
+    ("perso-accueil", "?demo=1", ["nav:Compte perso", "text:Créer mon compte perso",
+     "fill:Solde actuel (€)=420", "click:.sheet button.primary, [role=dialog] button.primary, dialog button.primary"], True),
+    ("perso-budgets", "?demo=1", ["nav:Compte perso", "text:Créer mon compte perso",
+     "fill:Solde actuel (€)=420", "click:.sheet button.primary, [role=dialog] button.primary, dialog button.primary",
+     "click:.personal-ws-tabs button:nth-child(3)"], True),
+] + [("pro-" + slug, "?demo=1&screen=pro", [] if label == "Accueil" else ["click:.pro-v4-nav button >> text=" + label], True)
+     for slug, label in [("accueil", "Accueil"), ("facturation", "Facturation"), ("clients", "Clients"),
+                         ("agenda", "Agenda"), ("catalogue", "Catalogue"), ("finances", "Finances"), ("analyse", "Analyse")]]
+
+
+def capture_extras(browser, url: str, out: Path):
+    problems = []
+    for name, query, steps, full_page in EXTRAS:
+        ctx = browser.new_context(viewport={"width": 390, "height": 844}, device_scale_factor=2,
+                                  is_mobile=True, has_touch=True, locale="fr-FR", timezone_id="Europe/Paris")
+        ctx.route("**/*", route_requests(url, pro=name.startswith("pro-")))
+        ctx.add_init_script("localStorage.setItem('wimm-appearance-mode', 'light');")
+        page = ctx.new_page()
+        page.clock.set_fixed_time(FROZEN_NOW)
+        page.on("pageerror", lambda e, n=name: problems.append(f"{n}: {e}"))
+        page.goto(url + "/" + query)
+        page.add_style_tag(content=FREEZE_MOTION)
+        settle(page)
+        try:
+            for step in steps:
+                kind, _, arg = step.partition(":")
+                if kind == "click":
+                    page.locator(arg).first.click()
+                elif kind == "text":
+                    page.locator("button", has_text=arg).first.click()
+                elif kind == "fill":
+                    label, _, value = arg.partition("=")
+                    page.get_by_label(label).last.fill(value)
+                elif kind == "nav" and not click_nav(page, arg):
+                    raise AssertionError(f"onglet « {arg} » introuvable")
+                page.wait_for_timeout(700)
+            settle(page)
+            stable_screenshot(page, out / f"extra-{name}.png", full_page=full_page)
+        except Exception as e:  # noqa: BLE001
+            problems.append(f"{name}: {e}")
+        ctx.close()
+    return problems
+
+
 def main():
     out = Path(sys.argv[1])
     url = sys.argv[2] if len(sys.argv) > 2 else "http://localhost:4173"
@@ -159,6 +229,8 @@ def main():
                         stable_screenshot(page, out / f"{vp_name}-{mode}-menu-ajouter.png",
                                           full_page=False)
                 ctx.close()
+
+        problems.extend(capture_extras(browser, url, out))
         browser.close()
 
     count = len(list(out.glob("*.png")))

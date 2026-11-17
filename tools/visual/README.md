@@ -44,3 +44,16 @@ par écran : avant, après, et les pixels changés en rouge.
 
 Le mode démonstration ne contient ni module Pro, ni compte perso configuré,
 ni crédit : ces écrans sont capturés dans leur état vide.
+
+## Écrans hors navigation (« extra-… »)
+
+`capture.py` capture aussi, en iPhone clair, les écrans que la navigation
+principale n'atteint pas : premier lancement (bienvenue, rejoindre, solde,
+revenu, « Depuis le 1er … »), visite (étapes 1 et 3), aide « Découvrir cet
+écran », carte « Premiers pas », compte perso créé dans la démo et les
+sept onglets de Wimm Pro.
+
+Wimm Pro n'a pas de démonstration : ses appels Supabase reçoivent les
+données fictives de `fixtures/pro.json` (une entreprise, deux clients,
+quelques opérations, une facture, un rendez-vous). Rien n'est envoyé
+au vrai serveur.
