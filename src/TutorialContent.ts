@@ -61,19 +61,19 @@ export const TUTORIAL_CHAPTERS: TourChapter[] = [
     s("wealth", "[data-tour='wealth-allocations'], [data-tour='wealth-savings'] > summary", "Répartir ton épargne", "Attribue un pourcentage de l'épargne disponible à chacun de tes comptes.", true, "saving")
   ] },
   { id: "trips", title: "Projets", description: "Préparer un voyage et son financement", steps: [
-    s("trips", ".projects-type-switch", "Tes projets", "Les voyages disposent déjà d'un budget et de catégories dédiées."),
-    s("trips", ".trips-top-actions button", "Créer un voyage", "Choisis son nom, ses dates et son budget global.", true, "trip"),
-    s("trips", ".trips-categories-card .section-head button, .trips-categories-card", "Les catégories du voyage", "Prévois un montant pour le transport, le logement, les repas…", true, "tripCategory"),
-    s("trips", ".trips-overview-card button", "Ses dépenses", "Chaque achat du voyage est enregistré à part du budget courant.", true, "tripExpense"),
-    s("trips", ".trips-financing-card button", "Financer le voyage", "Transfère de l'argent depuis un compte de ton patrimoine.", true, "tripFunding"),
-    s("trips", ".projects-type-switch button:nth-child(2)", "Autres projets", "Cette partie est encore en développement. Les projets ponctuels peuvent déjà être simulés dans Projections.")
+    s("trips", "[data-tour='trips-selector']", "Tes projets", "Les voyages disposent déjà d'un budget et de catégories dédiées."),
+    s("trips", "[data-tour='trips-create']", "Créer un voyage", "Choisis son nom, ses dates et son budget global.", true, "trip"),
+    s("trips", "[data-tour='trips-add-envelope'], [data-tour='trips-envelopes']", "Les catégories du voyage", "Prévois un montant pour le transport, le logement, les repas…", true, "tripCategory"),
+    s("trips", "[data-tour='trips-budget'] .ws-trip-add", "Ses dépenses", "Chaque achat du voyage est enregistré à part du budget courant.", true, "tripExpense"),
+    s("trips", "[data-tour='trips-funding'] button", "Financer le voyage", "Transfère de l'argent depuis un compte de ton patrimoine.", true, "tripFunding"),
+    s("trips", "[data-tour='trips-selector'] button:nth-child(2)", "Autres projets", "Cette partie est encore en développement. Les projets ponctuels peuvent déjà être simulés dans Projections.")
   ] },
   { id: "projection", title: "Projections", description: "Comprendre ton avenir financier", steps: [
-    s("projection", ".projection-main-card .projection-main-amount", "Ton avenir estimé", "Wimm simule l'évolution de ton patrimoine à partir de ta situation actuelle."),
-    s("projection", ".projection-topline .pills", "Choisir la durée", "Visualise ton évolution sur 1, 5, 10 ou 30 ans.", true),
+    s("projection", "[data-tour='projection-total'] .projection-main-amount", "Ton avenir estimé", "Wimm simule l'évolution de ton patrimoine à partir de ta situation actuelle."),
+    s("projection", "[data-tour='projection-horizon']", "Choisir la durée", "Visualise ton évolution sur 1, 5, 10 ou 30 ans.", true),
     s("projection", ".projection-chart-v2, .projection-legend-v2", "Lire le graphique", "Patrimoine global, épargne voyage et fiscalité estimée : ce sont des hypothèses, pas des garanties."),
-    s("projection", ".projection-projects-card .section-head button", "Simuler un projet", "Ajoute un montant et une date pour mesurer son impact sur ton avenir financier.", true, "projectionProject"),
-    s("projection", ".projection-settings-card summary", "Les paramètres", "Consulte ou ajuste les hypothèses prises en compte dans le calcul.")
+    s("projection", "[data-tour='projection-add'], [data-tour='projection-projects'] > summary", "Simuler un projet", "Ajoute un montant et une date pour mesurer son impact sur ton avenir financier.", true, "projectionProject"),
+    s("projection", "[data-tour='projection-settings'] > summary", "Les paramètres", "Consulte ou ajuste les hypothèses prises en compte dans le calcul.")
   ] },
   { id: "settings", title: "Réglages", description: "Compte, personnalisation et sécurité", steps: [
     s("settings", "[data-settings-category='compte']", "Mon compte", "Retrouve tes informations et les options de connexion."),

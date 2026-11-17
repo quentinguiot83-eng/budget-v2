@@ -89,9 +89,9 @@ button:disabled { opacity: .55; }
 .add-card:nth-child(4) > span { background: var(--soft-lilac); }
 .add-card p,
 .muted { color: var(--muted); }
-.pills, .trip-tabs { background: var(--accent-soft); border-radius: 16px; padding: 5px; }
-.pills button, .trip-tabs button { border-radius: 12px; color: var(--muted); background: transparent; }
-.pills button.selected, .trip-tabs button.active { background: var(--surface); color: var(--accent-deep); box-shadow: var(--soft-shadow); }
+.pills { background: var(--accent-soft); border-radius: 16px; padding: 5px; }
+.pills button { border-radius: 12px; color: var(--muted); background: transparent; }
+.pills button.selected { background: var(--surface); color: var(--accent-deep); box-shadow: var(--soft-shadow); }
 .field input, .field select, .field textarea, .prosuite-form input, .prosuite-form select, .prosuite-form textarea { background: var(--soft-canvas); color: var(--ink); border-color: var(--border); border-radius: 14px; }
 .sheet { padding: 28px; }
 dialog { border-radius: 26px; }
@@ -708,9 +708,6 @@ body, #root { background: var(--soft-canvas); }
 
 /* Soft Fintech Pastel — quatre espaces spécialisés. */
 /* Voyages : horizon turquoise, enveloppes aérées et onglets faciles à lire. */
-.trip-tabs { border: 1px solid color-mix(in srgb, var(--wimm-mint) 15%, var(--border)); background: color-mix(in srgb, var(--wimm-mint-wash) 65%, var(--surface)); border-radius: 18px; }
-.trip-tabs button.selected, .trip-tabs button.active { color: var(--wimm-green); background: var(--surface); box-shadow: var(--wimm-card-shadow); }
-.trip-category { border-radius: 16px; }
 /* Compte perso : solde principal identifiable, histoire et échéances différenciées. */
 .personal-page-settings { background: var(--wimm-lavender-wash) !important; border-color: color-mix(in srgb, var(--wimm-lavender) 23%, var(--border)) !important; }
 .personal-advances-card { background: linear-gradient(135deg, var(--wimm-blue-wash), var(--surface) 70%); border-color: color-mix(in srgb, var(--wimm-blue) 19%, var(--border)) !important; }

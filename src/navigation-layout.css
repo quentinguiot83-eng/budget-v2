@@ -13,11 +13,6 @@
 .projects-type-switch button{display:flex;align-items:center;justify-content:center;gap:6px;min-width:0;min-height:42px;padding:8px 5px;border-radius:11px;font-size:.8rem;font-weight:750;white-space:nowrap;color:var(--muted)}
 .projects-type-switch button.selected{background:var(--surface);color:var(--wimm-green);box-shadow:var(--wimm-card-shadow)}
 .projects-type-switch button small{font-size:.58rem;color:var(--muted)}
-.projects-coming-soon{display:flex;align-items:center;flex-direction:column;text-align:center;gap:13px;padding:40px min(7vw,38px);max-width:680px;margin:0 auto}
-.projects-future-icon{display:grid;place-items:center;width:67px;height:67px;border-radius:21px;color:var(--wimm-green);background:var(--wimm-mint-wash)}
-.projects-coming-soon h2{font-size:1.25rem;margin:0}
-.projects-coming-soon p{margin:0;max-width:450px;line-height:1.5}
-.projects-coming-soon button{display:flex;align-items:center;gap:8px}
 @media(min-width:851px){
  .app .bottom-nav,.app .floating-add-button,.app .quick-add-layer{display:none!important}
  .app .sidebar{overflow:hidden}
@@ -307,9 +302,6 @@
 .app .projection-chart-card,
 .app .projection-projects-card,
 .app .projection-annual-card { border-radius: 19px; }
-.app .trips-page-v2 { gap: 14px; }
-.app .trips-overview-card,
-.app .trips-categories-card { border-radius: 19px; }
 .app .settings-v2,
 .app .wimm-settings-nav { gap: 15px; }
 
@@ -356,9 +348,6 @@
   .app .projection-chart-card,
   .app .projection-projects-card,
   .app .projection-annual-card { padding: 16px 14px; border-radius: 18px; }
-  .app .trips-overview-card,
-  .app .trips-categories-card { padding: 15px; border-radius: 18px; }
-  .app .trips-financing-card { padding: 14px; border-radius: 17px; }
   .app .settings-v2,
   .app .wimm-settings-nav { gap: 13px; }
   .app .wimm-settings-entry { min-height: 69px; gap: 12px; padding: 12px 15px; }
@@ -486,7 +475,6 @@
 .fixed-credits-overview .rule-row { display:flex; gap:12px; align-items:center; padding:11px 0; border-top:1px solid var(--border); }
 .fixed-credits-overview .rule-row:first-of-type { border-top:0; }
 .fixed-credits-overview .rule-row .grow { min-width:0; display:grid; gap:4px; }
-.trips-management-inline { justify-content:flex-end; margin:6px 0 20px; padding:0 3px; }
 .transaction-reconcile-entry { display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin:12px 0 16px; }
 .transaction-reconcile-entry button { display:inline-flex; align-items:center; gap:8px; }
 .transaction-reconcile-entry small { font-size:.78rem; }
@@ -495,8 +483,6 @@
   .transaction-reconcile-entry { flex-direction:column; align-items:stretch; gap:6px; }
   .transaction-reconcile-entry button { width:100%; justify-content:center; }
   .transaction-reconcile-entry small { padding-inline:5px; }
-  .trips-management-inline { justify-content:stretch; }
-  .trips-management-inline button { flex:1; }
 }
 
 

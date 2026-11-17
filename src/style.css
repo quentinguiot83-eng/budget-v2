@@ -575,13 +575,11 @@ fieldset {
   align-items: center;
   flex-wrap: wrap;
 }
-.pills button,
-.trip-tabs button {
+.pills button {
   font-size: 0.8125rem;
   padding: 9px 13px;
 }
-.pills .selected,
-.trip-tabs .selected {
+.pills .selected {
   background: var(--accent);
   color: #283c51;
   font-weight: 650;
@@ -651,35 +649,6 @@ th:first-child {
   right: 22px;
   top: 38px;
   color: #9aa9b9;
-}
-.trip-tabs {
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-.trip-tabs button {
-  display: flex;
-  gap: 9px;
-  align-items: center;
-}
-.trip-icon {
-  background: #c6dfd3;
-  width: 80px;
-  height: 80px;
-  border-radius: 25px;
-  display: grid;
-  place-items: center;
-  color: #557c6b;
-}
-.trip-category {
-  padding: 14px 0;
-  border-bottom: 1px solid var(--border);
-}
-.trip-category .split {
-  font-size: 0.875rem;
-}
-.trip-category .split > strong {
-  flex: 1;
 }
 .filters {
   display: flex;
@@ -1242,24 +1211,6 @@ dialog {
     right: 12px;
     top: 30px;
     width: 14px;
-  }
-  .trip-icon {
-    width: 52px;
-    height: 52px;
-    border-radius: 17px;
-  }
-  .trip-icon svg {
-    width: 26px;
-  }
-  .trip-category .split {
-    flex-wrap: wrap;
-  }
-  .trip-category .split > span {
-    font-size: 0.8125rem;
-  }
-  .trip-category .split > .icon {
-    width: 27px;
-    height: 27px;
   }
   .due {
     gap: 9px;
@@ -1907,8 +1858,8 @@ body{min-height:100dvh}
 .content{display:grid}
 .content>.card,
 .content>[data-tour]>.card{margin-block:0}
-.pills button,.trip-tabs button{border:1px solid var(--border)}
-.pills button.selected,.trip-tabs button.selected{border-color:var(--accent)}
+.pills button{border:1px solid var(--border)}
+.pills button.selected{border-color:var(--accent)}
 :root[data-mode="dark"] .month-picker .icon{background:var(--surface);color:var(--ink)}
 :root[data-mode="dark"] .recharts-tooltip-label,:root[data-mode="dark"] .recharts-tooltip-item{color:var(--ink)!important}
 :root[data-mode="dark"] .recharts-cartesian-axis-tick-value{fill:var(--muted)}
