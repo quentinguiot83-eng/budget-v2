@@ -410,10 +410,6 @@ fieldset {
   margin-bottom: 8px;
   flex-wrap: wrap;
 }
-.category-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-}
 .toolbar {
   display: flex;
   gap: 10px;
@@ -1024,8 +1020,7 @@ dialog {
     margin-left: 210px;
     padding: 0 25px;
   }
-  .category-grid,
-.add-grid {
+  .add-grid {
     grid-template-columns: repeat(2, 1fr);
   }
   .overview {
@@ -1197,9 +1192,6 @@ dialog {
   }
   .row-value {
     max-width: 43%;
-  }
-  .category-grid {
-    grid-template-columns: 1fr;
   }
   .budget-summary {
     grid-template-columns: 1fr 1fr;

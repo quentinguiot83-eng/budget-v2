@@ -13,6 +13,9 @@ from pathlib import Path
 
 from playwright.sync_api import sync_playwright
 
+# Carte de catégorie du Budget (nouvelle, puis ancienne avant l'allègement).
+CATEGORY = "article[data-budget-category], article.category"
+
 from capture import FREEZE_MOTION, FROZEN_NOW, click_nav, route_requests, stable_screenshot
 
 
@@ -45,12 +48,12 @@ def new_category(page):
     page.get_by_label("Budget variable mensuel (€)").first.fill("150")
     page.locator("button", has_text="Enregistrer").first.click()
     page.wait_for_timeout(1000)
-    assert page.locator("article.category", has_text="Animaux").count() == 1, "catégorie non ajoutée"
+    assert page.locator(CATEGORY, has_text="Animaux").count() == 1, "catégorie non ajoutée"
 
 
 def category_transactions(page):
     go(page, "Budget")
-    page.locator("article.category", has_text="Courses").first.click(position={"x": 40, "y": 40})
+    page.locator(CATEGORY, has_text="Courses").first.click(position={"x": 40, "y": 40})
     page.wait_for_timeout(1200)
     assert "Toutes les transactions" in page.locator("h1").first.inner_text(), "écran des transactions non ouvert"
     assert page.get_by_text("Courses du mois").count() > 0, "filtre de catégorie non appliqué"

@@ -97,17 +97,6 @@
 /* Les deux petites tuiles sont vitrées, mais les montants restent contrastés. */
 
 /* Budget — une carte majeure, raccourcis pastel et sous-cartes plus aérées. */
-.app .budget-month-tracker {
-  background:
-    radial-gradient(ellipse at 100% 0%, rgba(195,168,249,.23), transparent 66%),
-    linear-gradient(120deg, rgba(228,243,255,.82), rgba(253,251,255,.69));
-  border: 1px solid var(--aurora-stroke);
-  box-shadow: var(--aurora-drop);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-  border-radius: 23px;
-}
-.app .budget-month-tracker-total { border-bottom-color: var(--aurora-separator); }
 .app .budget-quick-links button {
   border: 1px solid var(--aurora-stroke);
   background: rgba(224,248,240,.73);
@@ -117,13 +106,6 @@
 }
 .app .budget-quick-links button:nth-child(2) { background: rgba(230,236,255,.78); }
 .app .budget-quick-links button:nth-child(3) { background: rgba(240,232,255,.77); }
-.app .budget-analysis-link {
-  background: var(--aurora-glass);
-  border: 1px solid var(--aurora-stroke);
-  box-shadow: var(--aurora-drop);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-}
 
 /* Patrimoine et Projections — hiérarchie claire et graphiques non voilés. */
 .app .wealth-total-card,
@@ -247,8 +229,6 @@
 :root[data-mode="dark"] .app .projection-main-card {
   border-color: var(--aurora-stroke);
 }
-:root[data-mode="dark"] .app .budget-month-tracker,
-:root[data-mode="dark"] .app .budget-analysis-link,
 :root[data-mode="dark"] .app .projection-chart-card,
 :root[data-mode="dark"] .app .wealth-breakdown-card,
 :root[data-mode="dark"] .app .projection-kpi,
@@ -978,8 +958,7 @@ body:has(.app),body:has(.app) #root {background:#f0f0ef!important}
     linear-gradient(155deg,#192225 0%,#1b2528 48%,#171f22 100%) !important;
 }
 :root:not([data-mode="dark"]) .app .wealth-total-card,
-:root:not([data-mode="dark"]) .app .projection-main-card,
-:root:not([data-mode="dark"]) .app .budget-month-tracker {
+:root:not([data-mode="dark"]) .app .projection-main-card {
   background: linear-gradient(135deg,rgba(255,255,255,.61),rgba(229,243,236,.42)) !important;
   border: 1px solid var(--aurora-stroke) !important;
   box-shadow: var(--aurora-drop) !important;
@@ -1001,7 +980,6 @@ body:has(.app),body:has(.app) #root {background:#f0f0ef!important}
   backdrop-filter: blur(23px) saturate(1.10);
   -webkit-backdrop-filter: blur(23px) saturate(1.10);
 }
-:root[data-mode="dark"] .app .budget-month-tracker,
 :root[data-mode="dark"] .app .projection-chart-card,
 :root[data-mode="dark"] .app .projection-kpi,
 :root[data-mode="dark"] .app .trips-overview-card,

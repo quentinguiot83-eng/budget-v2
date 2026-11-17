@@ -303,13 +303,8 @@
 .app .content { gap: 18px; }
 .app .content > .card,
 .app .content > .two-col > .card { border-radius: 19px; }
-.app .budget-month-tracker { padding: 21px; }
-.app .budget-month-tracker-total { padding-bottom: 15px; }
-.app .budget-month-tracker-lines { padding-top: 15px; gap: 16px; }
 .app .budget-quick-links { margin: 4px 0 8px !important; }
 .app .budget-quick-links button { border-radius: 15px; }
-.app .budget-analysis-link { margin: 0 !important; border-radius: 16px; }
-.app .budget-category-heading { margin: 6px 0 4px; }
 .app .projection-dashboard-v2 { gap: 16px; }
 .app .projection-main-card { border-radius: 20px; }
 .app .projection-kpi { border-radius: 16px; }
@@ -359,13 +354,8 @@
   }
   .app .page-heading { gap: 10px; }
   .app .content { gap: 15px; }
-  .app .budget-month-tracker { padding: 17px; border-radius: 20px; }
-  .app .budget-month-tracker-total { padding-bottom: 12px; }
-  .app .budget-month-tracker-lines { padding-top: 13px; gap: 14px; }
-  .app .budget-month-tracker-line { gap: 8px; }
   .app .budget-quick-links { gap: 9px !important; }
   .app .budget-quick-links button { min-height: 61px; padding: 10px 5px !important; border-radius: 14px; }
-  .app .budget-analysis-link { padding: 12px 14px; }
   .app .projection-dashboard-v2 { gap: 13px; }
   .app .projection-main-card { padding: 17px; border-radius: 19px; }
   .app .projection-kpi { padding: 12px; border-radius: 15px; }

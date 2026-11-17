@@ -209,7 +209,6 @@ dialog::backdrop { background: rgba(25, 22, 46, .45); backdrop-filter: blur(6px)
 .section-head { margin-bottom: 14px; gap: 10px; }
 .section-head .text { font-size: .78rem; }
 .two-col,
-.category-grid,
 .add-grid { gap: 18px; }
 .overview { gap: 14px; }
 .metric { padding: 19px; gap: 12px; }
@@ -225,7 +224,6 @@ dialog::backdrop { background: rgba(25, 22, 46, .45); backdrop-filter: blur(6px)
 .category .progress { margin: 11px 0 9px; }
 .card > .category { padding: 11px 0 0; box-shadow: none; }
 .category h3 { font-size: .92rem; }
-.category-icon { width: 36px; height: 36px; }
 .row { padding: 12px 0; }
 .row-label { font-size: .85rem; }
 .row-icon { width: 35px; height: 35px; padding: 8px; border-radius: 12px; }
@@ -260,7 +258,6 @@ dialog::backdrop { background: rgba(25, 22, 46, .45); backdrop-filter: blur(6px)
   .card p { font-size: .82rem; line-height: 1.5; }
   .card .muted, .card small { font-size: .76rem; }
   .two-col,
-.category-grid,
 .add-grid { gap: 16px; }
   .metric { padding: 15px; border-radius: 19px; gap: 9px; }
   .metric strong { font-size: 1.25rem; }
@@ -279,8 +276,6 @@ dialog::backdrop { background: rgba(25, 22, 46, .45); backdrop-filter: blur(6px)
   .category .progress { margin: 10px 0 8px; }
   .category h3 { font-size: .88rem; }
   .category p { font-size: .78rem; margin-top: 3px; }
-  .category-icon { width: 34px; height: 34px; border-radius: 11px; }
-  .category-icon svg { width: 19px; height: 19px; }
   .row-label { font-size: .82rem; }
   .row-value { font-size: .76rem; }
   .toolbar { gap: 7px; }
@@ -324,7 +319,6 @@ dialog::backdrop { background: rgba(25, 22, 46, .45); backdrop-filter: blur(6px)
 .profile-name-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding-block: 10px 18px; font-size: .82rem; }
 .emoji-picker { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 7px; margin: 6px 0; }
 .emoji-picker button { display: grid; place-items: center; min-height: 44px; font-size: 1.4rem; }
-.category-icon { font-size: 1.25rem; }
 .account .account-icon { width: 36px; height: 36px; }
 .account .account-icon svg { width: 19px; height: 19px; }
 .account > p { margin: 9px 0; }
@@ -340,7 +334,7 @@ dialog::backdrop { background: rgba(25, 22, 46, .45); backdrop-filter: blur(6px)
   .bottom-nav svg { width: 21px; height: 21px; }
   .page-footer { padding-bottom: 80px; }
 }
-.emoji-picker button, .category-icon { font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif; }
+.emoji-picker button { font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif; }
 
 /* Contextual help keeps blocks compact, with a touch-friendly control. */
 button.block-info { display: inline-flex; align-items: center; justify-content: center; flex: 0 0 auto; width: 36px; height: 36px; min-height: 36px; padding: 0; border: 0; border-radius: 50%; background: var(--accent-soft); color: var(--accent-deep); }
@@ -367,8 +361,6 @@ button.block-info:focus-visible { outline: 2px solid currentColor; outline-offse
 .block-title h2 { margin: 0; }
 .block-title .block-title { gap: 7px; }
 .block-title .block-info { width: 30px; height: 30px; min-height: 30px; }
-.budget-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
-.budget-actions button { min-height: 46px; padding: 10px; border-radius: 14px; justify-content: center; font-size: .82rem; }
 .list-sort { display: flex; align-items: center; justify-content: flex-end; gap: 8px; margin: 0 0 12px; font-size: .78rem; color: var(--muted); }
 .list-sort select { width: auto; max-width: 210px; min-height: 38px; padding: 7px 10px; font-size: .78rem; background: var(--surface); color: var(--ink); border: 1px solid var(--border); border-radius: 10px; }
 @media(max-width:560px) { .page-heading > .month-picker { min-width: 0; width: 100%; margin-top: 2px; } .budget-summary { padding: 18px; } .budget-summary > div:first-child > strong { font-size: 1.9rem; } }
@@ -382,16 +374,6 @@ button.block-info:focus-visible { outline: 2px solid currentColor; outline-offse
 
 /* Les choix d'emojis sont conservés, mais représentés par des traits simples
    et monochromes, cohérents avec les icônes Wimm et les thèmes clair/sombre. */
-.category-icon {
-  display: inline-grid;
-  place-items: center;
-  flex: 0 0 auto;
-  background: var(--accent-soft);
-  border: 1px solid color-mix(in srgb, var(--accent-deep) 12%, var(--border));
-  box-shadow: none;
-  color: var(--accent-deep);
-  border-radius: 13px;
-}
 .category-glyph { display: block; color: inherit; flex: 0 0 auto; }
 .emoji-picker-glyph {
   display: inline-grid;
@@ -413,7 +395,6 @@ button.block-info:focus-visible { outline: 2px solid currentColor; outline-offse
   box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent-deep) 15%, transparent);
 }
 .emoji-picker button:focus-visible { outline: 2px solid var(--accent-deep); outline-offset: 2px; }
-:root[data-mode="dark"] .category-icon,
 :root[data-mode="dark"] .emoji-picker button {
   box-shadow: inset 0 1px 0 color-mix(in srgb, white 8%, transparent);
 }
@@ -450,11 +431,6 @@ button.block-info:focus-visible { outline: 2px solid currentColor; outline-offse
 
 /* Monthly variable budget: global progress first, then the three highest
    utilisation ratios, preserving navigation to the full budget page. */
-.category-percent-limit {
-  background: color-mix(in srgb, #c16a65 13%, var(--surface));
-  color: #b25c55;
-}
-:root[data-mode="dark"] .category-percent-limit { color: #ffb6a9; }
 .home-budget-top-list { display: grid; }
 .home-budget-top-list .category {
   min-width: 0;
@@ -475,23 +451,10 @@ button.block-info:focus-visible { outline: 2px solid currentColor; outline-offse
   font-weight: 750;
 }
 .home-budget-top-list .category p { margin-top: 3px; font-size: .78rem; }
-.home-budget-top-list .category-icon { width: 37px; height: 37px; }
 .home-budget-top-list .category .progress { margin: 9px 0 0; height: 5px; }
-.category-percent {
-  flex: 0 0 auto;
-  align-self: flex-start;
-  background: var(--accent-soft);
-  color: var(--accent-deep);
-  font-size: .74rem;
-  font-weight: 800;
-  padding: 6px 8px;
-  border-radius: 9px;
-  white-space: nowrap;
-}
 @media (max-width: 560px) {
   .available-card { padding: 18px 20px; }
   .available-card .large { font-size: 1.95rem; }
-  .home-budget-top-list .category-icon { width: 34px; height: 34px; }
 }
 
 /* Résumés déplacés depuis l'accueil vers les pages auxquelles ils appartiennent. */
@@ -543,26 +506,6 @@ button.block-info:focus-visible { outline: 2px solid currentColor; outline-offse
 
 
 /* Cartes des enveloppes personnelles : l'essentiel d'abord, détails à la demande. */
-.category-personal .flex { align-items: center; gap: 12px; }
-.category-personal .grow { min-width: 0; }
-.category-personal .personal-budget-month {
-  display: flex; align-items: baseline; flex-wrap: wrap;
-  gap: 5px 10px; margin-top: 9px;
-}
-.category-personal .personal-budget-month > .muted { font-size: .77rem; }
-.category-personal .personal-budget-month > strong {
-  color: var(--ink); font-size: 1.06rem; font-weight: 800;
-  font-variant-numeric: tabular-nums;
-}
-.personal-budget-actions { display: inline-flex; align-items: center; flex: 0 0 auto; gap: 4px; }
-.personal-budget-toggle {
-  color: var(--accent-deep) !important;
-  background: var(--accent-soft) !important;
-  border-color: color-mix(in srgb, var(--accent-deep) 14%, var(--border));
-}
-.personal-budget-toggle[aria-expanded="true"] {
-  border-color: color-mix(in srgb, var(--accent-deep) 34%, var(--border));
-}
 .personal-budget-details {
   padding-top: 13px; margin-top: 16px; display: grid; gap: 9px;
   border-top: 1px solid var(--border);
@@ -574,11 +517,6 @@ button.block-info:focus-visible { outline: 2px solid currentColor; outline-offse
 }
 .personal-budget-privacy { display: block; font-size: .74rem; }
 @media (max-width: 560px) {
-  .category-personal { padding: 17px; }
-  .category-personal .flex { gap: 9px; }
-  .category-personal .category-icon { width: 39px; height: 39px; }
-  .personal-budget-actions { gap: 0; }
-  .personal-budget-actions .icon { width: 35px; min-width: 35px; padding: 6px; }
   .personal-budget-details > .personal-budget-transfer { width: 100%; }
 }
 
@@ -611,44 +549,6 @@ button.block-info:focus-visible { outline: 2px solid currentColor; outline-offse
 }
 
 /* Synthèse Budget : total mensuel et uniquement deux suivis lisibles. */
-.budget-month-tracker {
-  padding: 24px;
-  color: var(--ink);
-  min-width: 0;
-}
-.budget-month-tracker-total {
-  display: grid; gap: 6px;
-  padding-bottom: 18px;
-  border-bottom: 1px solid var(--border);
-}
-.budget-month-tracker-total > span {
-  font-size: .82rem; font-weight: 650; color: var(--muted);
-}
-.budget-month-tracker-total > strong {
-  font: 850 clamp(1.8rem, 3.2vw, 2.3rem)/1.2 Manrope, sans-serif;
-  color: var(--ink); letter-spacing: -.055em;
-  font-variant-numeric: tabular-nums;
-}
-.budget-month-tracker-lines { display: grid; gap: 19px; padding-top: 18px; }
-.budget-month-tracker-line { display: grid; gap: 10px; min-width: 0; }
-.budget-month-tracker-line-head {
-  display: flex; justify-content: space-between; align-items: baseline;
-  flex-wrap: wrap; gap: 5px 12px; min-width: 0;
-}
-.budget-month-tracker-line-head > span:first-child {
-  font-size: .86rem; font-weight: 750;
-}
-.budget-month-tracker-amount {
-  color: var(--ink); font-size: .84rem; font-weight: 750;
-  font-variant-numeric: tabular-nums; white-space: nowrap;
-}
-.budget-month-tracker-amount .muted { font-weight: 500; }
-.budget-month-tracker-line .progress {
-  height: 8px; margin: 0; background: var(--border);
-}
-.budget-month-tracker-line:last-child .progress span {
-  background: var(--accent-deep);
-}
 @media (max-width: 560px) {
   .personal-page-title-row { gap: 6px 8px; flex-wrap: nowrap; }
   .personal-page-title { gap: 3px; }
@@ -658,10 +558,6 @@ button.block-info:focus-visible { outline: 2px solid currentColor; outline-offse
     min-height: 38px; padding: 7px 9px; gap: 5px; font-size: .76rem;
   }
   .personal-page-settings svg { width: 15px; height: 15px; }
-  .budget-month-tracker { padding: 20px; }
-  .budget-month-tracker-lines { gap: 18px; }
-  .budget-month-tracker-line-head > span:first-child { font-size: .81rem; }
-  .budget-month-tracker-amount { font-size: .8rem; }
 }
 @media (max-width: 365px) {
   .personal-page-title-row { flex-wrap: wrap; }
@@ -754,13 +650,11 @@ button.block-info:focus-visible { outline: 2px solid currentColor; outline-offse
 /* Budget simplifié : trois raccourcis et enveloppes en liste compacte. */
 .budget-quick-links { display: grid !important; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px !important; margin: 15px 0 24px !important; }
 .budget-quick-links button { min-width: 0 !important; min-height: 66px; display: flex !important; flex-direction: column; align-items: center; justify-content: center; gap: 7px; padding: 11px 6px !important; border-radius: 17px; color: var(--accent-deep); font-weight: 700; font-size: .77rem; }
-.budget-category-heading { margin: 12px 0 13px; gap: 10px; }
 .budget-add-category { display: inline-flex; align-items: center; justify-content: center; gap: 5px; white-space: nowrap; }
 .budget-category-list { display: grid !important; grid-template-columns: 1fr !important; gap: 0 !important; border: 1px solid var(--border); background: var(--surface); border-radius: 21px; padding: 5px 17px; overflow: hidden; }
 .budget-category-list > .category { border: 0 !important; border-bottom: 1px solid var(--border) !important; border-radius: 0 !important; box-shadow: none !important; background: transparent !important; padding: 15px 0 !important; margin: 0 !important; min-height: 0 !important; }
 .budget-category-list > .category:last-child { border-bottom: 0 !important; }
 .budget-category-list .category .flex { gap: 10px; }
-.budget-category-list .category-icon { width: 39px; height: 39px; flex: 0 0 39px; }
 .budget-category-list .category .grow strong { font-size: .89rem; }
 .budget-category-list .category .grow p { margin: 4px 0 0; font-size: .76rem; }
 .budget-category-list .category .progress { height: 7px; margin: 11px 0 0; }
@@ -769,19 +663,12 @@ button.block-info:focus-visible { outline: 2px solid currentColor; outline-offse
   .budget-quick-links { gap: 8px !important; }
   .budget-quick-links button { font-size: .72rem; }
   .budget-category-list { padding: 4px 13px; }
-  .budget-category-heading h2 { font-size: 1.06rem; }
 }
 
 /* Point d'entrée Analyse : présent, mais sans quatrième grosse tuile. */
-.budget-analysis-link { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 12px; border: 1px solid var(--border); border-radius: 16px; background: var(--surface); color: var(--ink); padding: 13px 16px; margin: -9px 0 20px; text-align: left; cursor: pointer; }
-.budget-analysis-link > span { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-.budget-analysis-link strong { font-size: .86rem; }
-.budget-analysis-link small { font-size: .72rem; color: var(--muted); }
-.budget-analysis-link svg { color: var(--accent-deep); flex-shrink: 0; }
 .transaction-period-simple { display: flex; align-items: end; gap: 12px; flex-wrap: wrap; }
 .transaction-period-simple > .field { flex: 1 1 190px; min-width: 0; }
 .transaction-period-simple > .text { margin-inline-start: auto; }
-@media (max-width: 560px) { .budget-analysis-link small { flex-basis: 100%; margin-left: 29px; } }
 
 /* Wimm 2026 • Soft Fintech Pastel — identité harmonisée.
    Couleurs fonctionnelles constantes; le thème utilisateur continue à piloter les actions. */
@@ -829,17 +716,9 @@ body, #root { background: var(--soft-canvas); }
 .content button.primary:not(:disabled) { box-shadow: 0 5px 14px color-mix(in srgb, var(--accent-deep) 16%, transparent); }
 .content button.primary:hover:not(:disabled), .content button.secondary:hover:not(:disabled) { transform: translateY(-1px); }
 /* Budget : une synthèse majeure, les catégories restent compactes. */
-.budget-month-tracker {
-  background: linear-gradient(115deg, var(--wimm-blue-wash) 0%, var(--surface) 53%, var(--wimm-lavender-wash) 100%);
-  border: 1px solid color-mix(in srgb, var(--wimm-blue) 20%, var(--border));
-  border-radius: 26px; box-shadow: var(--wimm-card-shadow);
-}
-.budget-month-tracker-line:first-child .progress span { background: color-mix(in srgb, var(--wimm-mint) 75%, var(--surface)); }
-.budget-month-tracker-line:last-child .progress span { background: color-mix(in srgb, var(--wimm-lavender) 77%, var(--surface)); }
 .budget-quick-links button { border: 1px solid color-mix(in srgb, var(--wimm-mint) 16%, var(--border)); background: var(--wimm-mint-wash); }
 .budget-quick-links button:nth-child(2) { color: var(--wimm-blue); background: var(--wimm-blue-wash); border-color: color-mix(in srgb, var(--wimm-blue) 16%, var(--border)); }
 .budget-quick-links button:nth-child(3) { color: var(--wimm-lavender); background: var(--wimm-lavender-wash); border-color: color-mix(in srgb, var(--wimm-lavender) 18%, var(--border)); }
-.budget-analysis-link { background: linear-gradient(100deg, var(--surface), color-mix(in srgb, var(--wimm-lavender-wash) 42%, var(--surface))); box-shadow: var(--wimm-card-shadow); }
 /* Patrimoine, comptes et épargne. */
 .savings-wealth-summary {
   background: linear-gradient(110deg, var(--wimm-mint-wash), var(--surface) 60%, var(--wimm-lavender-wash));
@@ -858,7 +737,7 @@ body, #root { background: var(--soft-canvas); }
 /* Transactions, échéances, voyages, saisie : pastilles et dégradés légers. */
 .transaction-search { background: linear-gradient(155deg, var(--surface) 63%, color-mix(in srgb, var(--wimm-blue-wash) 54%, var(--surface))); }
 .transaction-search-results { border-radius: 24px; }
-.transaction-search-results .row-icon, .transaction-search-results .category-icon {
+.transaction-search-results .row-icon {
   background: var(--wimm-blue-wash); color: var(--wimm-blue);
 }
 .transaction-search-period select { background: var(--wimm-mint-wash); }
