@@ -445,3 +445,37 @@
 .app .ws-search input { border: 0 !important; background: none !important; flex: 1; min-width: 0; font-size: var(--ws-fs-body); padding: 0; min-height: 44px; box-shadow: none !important; outline: none; }
 .app .ws-filters { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; padding: 4px 0 12px; border-bottom: 1px solid var(--border); }
 .app .ws-filters > .field:first-child { grid-column: 1 / -1; }
+
+/* Calendrier : cases sobres, aujourd'hui et échéances en couleur du thème. */
+.app .ws-calendar .calendar-grid { gap: 4px; }
+.app .ws-calendar .calendar-grid .day {
+  min-height: 44px; border: 0; border-radius: 10px; background: transparent; box-shadow: none;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; padding: 4px 0;
+}
+.app .ws-calendar .calendar-grid .day strong { font-size: var(--ws-fs-small); font-weight: 600; }
+.app .ws-calendar .calendar-grid .day small { width: 6px; height: 6px; border-radius: 50%; background: var(--action, var(--accent-deep)); font-size: 0; color: transparent; }
+.app .ws-calendar .calendar-grid .day.has-due { background: var(--accent-soft); }
+.app .ws-calendar .calendar-grid .day.today { background: var(--ink); color: var(--surface); }
+.app .ws-calendar .calendar-grid .day.today small { background: var(--surface); }
+.app .ws-calendar .calendar-grid .day-name { font-size: var(--ws-fs-label); color: var(--muted); text-align: center; font-weight: 600; }
+
+/* Analyse : chiffres sans pavés colorés, périodes et filtres en pastilles. */
+:root:not(#ws) .app .analysis-overview-grid > div,
+:root:not(#ws) .app .analysis-primary-metric {
+  background: transparent !important; border: 0 !important; box-shadow: none !important;
+  border-radius: 0 !important; padding: 10px 0 !important;
+}
+:root:not(#ws) .app .analysis-overview-grid { gap: 0 16px !important; border-top: 1px solid var(--border); }
+:root:not(#ws) .app .analysis-overview-grid > div > span { color: var(--muted) !important; font-size: var(--ws-fs-small) !important; }
+:root:not(#ws) .app .analysis-overview-grid > div > strong { color: var(--ink) !important; font: 800 var(--ws-fs-card)/1.2 Manrope, -apple-system, sans-serif !important; }
+:root:not(#ws) .app .analysis-period-options button,
+:root:not(#ws) .app .analysis-local-filters button {
+  min-height: 36px !important; border: 0 !important; border-radius: var(--ws-radius-pill) !important;
+  background: var(--accent-soft) !important; color: var(--action, var(--accent-deep)) !important;
+  box-shadow: none !important; font-size: var(--ws-fs-small) !important; font-weight: 600 !important;
+}
+:root:not(#ws) .app .analysis-period-options button.active,
+:root:not(#ws) .app .analysis-period-options button[aria-pressed="true"],
+:root:not(#ws) .app .analysis-local-filters button.active,
+:root:not(#ws) .app .analysis-local-filters button[aria-pressed="true"] { background: var(--ink) !important; color: var(--surface) !important; }
+:root:not(#ws) .app .analysis-range-icon { color: var(--muted) !important; }

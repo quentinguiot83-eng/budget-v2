@@ -666,14 +666,8 @@ body, #root { background: var(--soft-canvas); }
 .personal-advances-card, .personal-installments-card, .personal-budgets-card, .personal-history-card { box-shadow: var(--wimm-card-shadow); }
 .personal-history-card .row { padding-block: 12px; }
 /* Crédits et prêts : deux sections clairement séparées, sans toucher aux calculs. */
-.loans-soft-page { display: grid; gap: 17px; }
-.loans-soft-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 0; }
-.loans-soft-actions > button { flex: 1 1 170px; min-height: 46px; border-radius: 15px; }
-.loans-soft-page > .card { margin: 0; border-radius: 22px; box-shadow: var(--wimm-card-shadow); }
 .loans-credits-card { background: linear-gradient(136deg, var(--wimm-blue-wash), var(--surface) 40%); border: 1px solid color-mix(in srgb, var(--wimm-blue) 19%, var(--border)); }
 .loans-lent-card { background: linear-gradient(136deg, var(--wimm-mint-wash), var(--surface) 42%); border: 1px solid color-mix(in srgb, var(--wimm-mint) 20%, var(--border)); }
-.loans-soft-page .rule-row { border-bottom: 1px solid var(--border); padding-block: 16px; }
-.loans-soft-page .rule-row:last-child { border-bottom: 0; }
 /* Espace Pro : tableau de bord et sous-pages avec identité cohérente. */
 .prosuite-native.prosuite-layer { --pro-green: var(--wimm-green); }
 .prosuite-native .prosuite-topbar { background: linear-gradient(105deg, var(--wimm-mint-wash), var(--surface)); border-color: color-mix(in srgb, var(--wimm-mint) 18%, var(--border)); box-shadow: var(--wimm-card-shadow); }
@@ -695,7 +689,6 @@ body, #root { background: var(--soft-canvas); }
 :root[data-mode="dark"] .loans-credits-card,
 :root[data-mode="dark"] .loans-lent-card { color: var(--ink); }
 @media (max-width: 560px) {
-  .loans-soft-actions > button { flex-basis: 0; min-width: 0; font-size: .78rem; padding-inline: 9px; }
   .prosuite-native .prosuite-metric { min-width: 0; }
 }
 
