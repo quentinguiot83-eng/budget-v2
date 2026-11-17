@@ -12,12 +12,12 @@
  */
 
 :root {
-  --ws-fs-key: 2.5rem;      /* 40 px — chiffre clé d'un écran */
-  --ws-fs-title: 1.75rem;   /* 28 px — titre d'écran */
-  --ws-fs-card: 1.25rem;    /* 20 px — titre de carte, montant secondaire */
-  --ws-fs-body: 1rem;       /* 16 px — texte */
-  --ws-fs-small: .875rem;   /* 14 px — texte secondaire */
-  --ws-fs-label: .75rem;    /* 12 px — libellé en capitales */
+  --ws-fs-key: 2rem;        /* 32 px — chiffre clé d'un écran */
+  --ws-fs-title: 1.5rem;    /* 24 px — titre d'écran */
+  --ws-fs-card: 1.0625rem;  /* 17 px — titre de carte, montant secondaire */
+  --ws-fs-body: .9375rem;   /* 15 px — texte */
+  --ws-fs-small: .8125rem;  /* 13 px — texte secondaire */
+  --ws-fs-label: .6875rem;  /* 11 px — libellé en capitales */
 
   --ws-radius-field: 12px;
   --ws-radius-card: 20px;
@@ -51,7 +51,7 @@
   box-shadow: var(--ws-shadow);
   backdrop-filter: saturate(1.2) blur(14px);
   -webkit-backdrop-filter: saturate(1.2) blur(14px);
-  padding: 20px;
+  padding: 16px;
   margin: 0;
   color: var(--ink);
   display: flex;
@@ -59,8 +59,8 @@
   gap: 12px;
   min-width: 0;
 }
-.app .ws-card.ws-hero { padding: 24px; gap: 8px; }
-.app .ws-card.ws-list { padding-top: 8px; padding-bottom: 8px; gap: 0; }
+.app .ws-card.ws-hero { padding: 20px; gap: 6px; }
+.app .ws-card.ws-list { padding-top: 6px; padding-bottom: 6px; gap: 0; }
 
 /* Textes. */
 .app .ws-card-title {
@@ -101,7 +101,7 @@
 /* Lignes de liste : un titre, un sous-titre, une valeur, une flèche. */
 .app .ws-row {
   display: flex; align-items: center; justify-content: space-between; gap: 12px;
-  min-height: 52px; padding: 12px 0; width: 100%;
+  min-height: 46px; padding: 10px 0; width: 100%;
   border: 0; border-bottom: 1px solid var(--border); background: none;
   color: var(--ink); text-align: left; text-decoration: none; font: inherit;
 }
@@ -113,7 +113,7 @@
 .app .ws-row-end { display: flex; align-items: center; gap: 6px; flex: 0 0 auto; }
 .app .ws-row svg.ws-chevron { color: var(--muted); flex: 0 0 auto; }
 .app .ws-icon-tile {
-  width: 40px; height: 40px; border-radius: var(--ws-radius-field); flex: 0 0 auto;
+  width: 34px; height: 34px; border-radius: 10px; flex: 0 0 auto;
   display: grid; place-items: center; background: var(--accent-soft); color: var(--action, var(--accent-deep));
 }
 .app .ws-icon-tile.is-warning { background: var(--ws-warning-soft); color: var(--ws-warning); }
@@ -137,7 +137,7 @@
   border-radius: var(--ws-radius-pill); padding: 4px; gap: 2px;
 }
 .app .ws-segmented > button {
-  min-height: 40px; border: 0; border-radius: var(--ws-radius-pill); background: transparent;
+  min-height: 36px; border: 0; border-radius: var(--ws-radius-pill); background: transparent;
   font-size: var(--ws-fs-small); font-weight: 600; color: var(--muted); padding: 0 8px;
 }
 .app .ws-segmented > button[aria-selected="true"], .app .ws-segmented > button.active {
@@ -146,14 +146,14 @@
 
 /* Boutons. */
 .app .ws-pill {
-  min-height: 40px; padding: 0 14px; border: 0; border-radius: var(--ws-radius-pill);
+  min-height: 36px; padding: 0 12px; border: 0; border-radius: var(--ws-radius-pill);
   background: var(--accent-soft); color: var(--action, var(--accent-deep));
   font-size: var(--ws-fs-small); font-weight: 600; white-space: nowrap;
   display: inline-flex; align-items: center; gap: 6px;
 }
 .app .ws-pill.is-solid { background: var(--ink); color: var(--surface); }
 .app .ws-link {
-  min-height: 44px; padding: 0; border: 0; background: none;
+  min-height: 40px; padding: 0; border: 0; background: none;
   color: var(--action, var(--accent-deep)); font-size: var(--ws-fs-small); font-weight: 600;
   display: inline-flex; align-items: center; gap: 4px; text-decoration: none; align-self: flex-start;
 }
@@ -162,14 +162,14 @@
   display: inline-grid; place-items: center; flex: 0 0 auto;
 }
 .app .ws-icon-button {
-  width: 44px; height: 44px; border-radius: var(--ws-radius-pill); border: 0; flex: 0 0 auto;
+  width: 38px; height: 38px; border-radius: var(--ws-radius-pill); border: 0; flex: 0 0 auto;
   background: var(--accent-soft); color: var(--action, var(--accent-deep)); display: grid; place-items: center;
 }
 
 /* Deux chiffres côte à côte dans une même carte (revenus / dépenses…). */
 .app .ws-split { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); padding: 0; gap: 0; }
 .app .ws-split > * {
-  display: flex; flex-direction: column; gap: 4px; padding: 16px 20px; min-width: 0;
+  display: flex; flex-direction: column; gap: 2px; padding: 14px 16px; min-width: 0;
   border: 0; background: none; color: var(--ink); text-align: left; font: inherit;
 }
 .app .ws-split > * + * { border-left: 1px solid var(--border); }
@@ -191,11 +191,11 @@
 .app .ws-budget-list > .swipe-actions:last-of-type { border-bottom: 0; }
 .app .ws-budget-list > .swipe-actions > .swipe-actions-content { background: transparent; }
 .app .ws-budget-item {
-  display: flex; flex-direction: column; gap: 8px; padding: 14px 0;
+  display: flex; flex-direction: column; gap: 6px; padding: 12px 0;
   cursor: pointer; color: var(--ink); min-width: 0; outline-offset: 2px;
 }
 .app .ws-budget-item-head { display: flex; align-items: center; gap: 12px; min-width: 0; }
-.app .ws-budget-item .ws-icon-tile { width: 36px; height: 36px; }
+.app .ws-budget-item .ws-icon-tile { width: 32px; height: 32px; }
 .app .ws-budget-amount { white-space: nowrap; flex: 0 0 auto; }
 .app .ws-budget-foot { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
 .app .ws-budget-foot > * { white-space: nowrap; }
@@ -213,18 +213,18 @@
 .app .ws-account-group > .swipe-actions { border-bottom: 1px solid var(--border); min-width: 0; }
 .app .ws-account-group > .swipe-actions:last-of-type { border-bottom: 0; }
 .app .ws-account-group > .swipe-actions > .swipe-actions-content { background: transparent; }
-.app .ws-account > summary { list-style: none; cursor: pointer; border-bottom: 0; }
-.app .ws-account > summary::-webkit-details-marker { display: none; }
-.app .ws-account-body { display: flex; flex-direction: column; gap: 12px; padding: 0 0 16px 52px; }
+.app .ws-account > .ws-row { border-bottom: 0; cursor: pointer; }
+.app .ws-account-body { display: flex; flex-direction: column; gap: 10px; padding: 0 0 14px; }
 .app .ws-account-cap { display: flex; flex-direction: column; gap: 6px; }
-.app .ws-account-actions { display: flex; flex-wrap: wrap; gap: 8px; }
-.app .ws-account-links { display: flex; flex-wrap: wrap; gap: 0 16px; }
+.app .ws-account-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.app .ws-account-actions > .ws-pill { justify-content: center; white-space: normal; text-align: center; line-height: 1.2; }
+.app .ws-pill.is-danger { background: color-mix(in srgb, var(--ws-negative) 10%, var(--surface)); color: var(--ws-negative); }
 .app .ws-account-tools { display: flex; flex-wrap: wrap; gap: 0 20px; border-top: 1px solid var(--border); padding-top: 4px; }
 .app .ws-archived > summary { list-style: none; cursor: pointer; }
 .app .ws-archived > summary::-webkit-details-marker { display: none; }
 .app .ws-archived:not([open]) > summary { border-bottom: 0; }
 @media (min-width: 851px), (pointer: fine) {
-  .app .ws-account-group .ws-account > summary { padding-right: 40px; }
+  .app .ws-account-group .ws-account > .ws-row { padding-right: 40px; }
 }
 @media (max-width: 850px) and (pointer: coarse) {
   .app .ws-account-group > .swipe-actions > .swipe-actions-content { background: var(--surface) !important; }
@@ -244,7 +244,7 @@
 .app .ws-trip-picker::-webkit-scrollbar { display: none; }
 .app .ws-trip-picker > .ws-pill { flex: 0 0 auto; }
 .app .ws-trip-picker img { width: 22px; height: 22px; border-radius: 50%; object-fit: cover; }
-.app .ws-trip-cover { width: calc(100% + 48px); margin: -24px -24px 8px; height: 140px; object-fit: cover; border-radius: var(--ws-radius-card) var(--ws-radius-card) 0 0; display: block; }
+.app .ws-trip-cover { width: calc(100% + 40px); margin: -20px -20px 8px; height: 140px; object-fit: cover; border-radius: var(--ws-radius-card) var(--ws-radius-card) 0 0; display: block; }
 .app .ws-trip .ws-head { align-items: flex-start; }
 .app .ws-trip-manage { display: flex; flex-direction: column; border: 1px solid var(--border); border-radius: var(--ws-radius-field); padding: 0 14px; margin-top: 4px; }
 .app .ws-trip-manage > .ws-row { justify-content: flex-start; min-height: 48px; padding: 10px 0; cursor: pointer; }
@@ -316,3 +316,14 @@
 .app .content.ws-classic .progress > span { border-radius: inherit; }
 .app .content.ws-classic .loans-soft-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
 .app .content.ws-classic .loans-soft-actions > button { padding: 6px 10px; line-height: 1.2; }
+
+/* Détail d'un budget personnel : lignes libellé / montant. */
+.app .ws-budget-details { display: flex; flex-direction: column; gap: 8px; padding-top: 4px; cursor: default; }
+.app .ws-detail-row { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; font-size: var(--ws-fs-small); }
+.app .ws-detail-row.is-total { border-top: 1px solid var(--border); padding-top: 8px; font-weight: 600; color: var(--ink); }
+.app .ws-budget-details > .ws-pill { align-self: flex-start; }
+.app .ws-pill:disabled { opacity: .5; }
+
+/* Cartes contenant des lignes glissables : fond plein, pour que les lignes
+   (fond opaque sur mobile) ne forment pas des blocs blancs. */
+.app .ws-card:has(.swipe-actions) { background: var(--surface); }

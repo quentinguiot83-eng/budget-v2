@@ -622,64 +622,24 @@ export function createBudgetActions(ctx: WimmCore & BaseActions & AccountActions
             )}
 
             {!simple && !totals.forecast && envelope && isPersonal && expanded ? (
-              <div className="personal-budget-details" id={"personal-budget-details-" + c.id}>
-                <small className="muted">Budget personnel du foyer · {monthLabel(selectedMonth)}</small>
-
-                <div className="split meta">
-                  <span>
-                    Budget mensuel :{" "}
-                    {money(
-                      envelope.base,
-                    )}
-                  </span>
-                  <span>
-                    Report :{" "}
-                    {money(
-                      envelope.carryIn,
-                    )}
-                  </span>
-                </div>
-
-                <div className="split meta">
-                  <span>
-                    Déjà engagé :{" "}
-                    {money(
-                      envelope.committed,
-                    )}
-                  </span>
-                  <span>
-                    Reste :{" "}
-                    {money(
-                      envelope.remaining,
-                    )}
-                  </span>
-                </div>
-
-                {envelope.carryOut >
-                  0 && (
-                  <p className="negative">
-                    {money(
-                      envelope.carryOut,
-                    )}{" "}
-                    seront déduits du
-                    mois suivant.
-                  </p>
-                )}
-
-                <button type="button" className="secondary compact personal-budget-transfer"
+              <div className="ws-budget-details" id={"personal-budget-details-" + c.id}>
+                {([
+                  ["Budget mensuel", envelope.base],
+                  ["Report du mois précédent", envelope.carryIn],
+                  ["Déjà engagé", envelope.committed],
+                ] as const).map(([label, value]) => (
+                  <div className="ws-detail-row" key={label}><span className="ws-muted">{label}</span><span className="ws-amount">{money(value)}</span></div>
+                ))}
+                <div className="ws-detail-row is-total"><span>Reste à virer</span><span className="ws-amount">{money(envelope.remaining)}</span></div>
+                {envelope.carryOut > 0 && <p className="ws-muted ws-negative">{money(envelope.carryOut)} seront déduits du mois suivant.</p>}
+                <button type="button" className="ws-pill personal-budget-transfer"
                   disabled={envelope.remaining <= 0 || !current}
                   onClick={() => transferPersonal(c)}>
-                  <ArrowLeftRight size={17} />
+                  <ArrowLeftRight size={16} aria-hidden="true" />
                   Virer depuis le compte commun
                 </button>
-                <small className="muted personal-budget-privacy">
-                  Les achats et le solde du compte personnel restent privés.
-                </small>
-                {legacyPersonal && !c.personalOwner && (
-                  <small className="muted">
-                    Ancien compte : migration possible dans l’onglet Compte perso.
-                  </small>
-                )}
+                <p className="ws-muted">Les achats et le solde du compte personnel restent privés.
+                  {legacyPersonal && !c.personalOwner ? " Ancien compte : migration possible dans l’onglet Compte perso." : ""}</p>
               </div>
             ) : null}
           </article>
