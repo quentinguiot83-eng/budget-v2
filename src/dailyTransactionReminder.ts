@@ -42,7 +42,7 @@ export function dailyTransactionReminder(
   return {
     key: `daily-transactions:${clock.date}`,
     kind: "reminder",
-    title: "Tes transactions du jour",
+    title: "Tes opérations du jour",
     body: "Pense à enregistrer les dépenses et les revenus d’aujourd’hui dans Wimm.",
     url: "/?screen=add",
   };

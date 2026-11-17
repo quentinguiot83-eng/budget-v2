@@ -1,7 +1,7 @@
 import { CalendarDays, ChevronRight, Clock3 } from "lucide-react";
 import {type ReserveEstimate} from "./proReserve";
 import {
-  currentProMonth,formatProMonth,proEuro,proFullEuro,proInvoiceRemaining,unpaidProInvoices,
+  currentProMonth,formatProMonth,proFullEuro,proInvoiceRemaining,unpaidProInvoices,
   type ProInvoiceSummary,type ProEventSummary,
 } from "./proFinance";
 import "./pro-dashboard.css";
@@ -69,7 +69,7 @@ export default function ProDashboard({
         <span className={`ws-icon-tile${overdue.length?" is-warning":""}`} aria-hidden="true"><Clock3 size={18}/></span>
         <span className="ws-row-main"><span className="ws-row-title">{alerts.length} facture{alerts.length>1?"s":""} à encaisser</span>
           <span className="ws-row-sub">{overdue.length?overdue.length+" en retard":"Aucune en retard"}</span></span>
-        <span className="ws-amount">{proEuro(alertAmount)}</span>
+        <span className="ws-amount">{proFullEuro(alertAmount)}</span>
         <ChevronRight size={18} className="ws-chevron" aria-hidden="true"/>
       </button>}
     </section>}
@@ -79,7 +79,7 @@ export default function ProDashboard({
         <button type="button" className="ws-link" onClick={onAgenda}>Agenda <ChevronRight size={16} aria-hidden="true"/></button></div>
       {upcoming.map(e=><div className="ws-row" key={e.id}>
         <span className="ws-row-main"><span className="ws-row-title">{e.title}</span>
-          <span className="ws-row-sub">{new Date(e.startsAt).toLocaleDateString("fr-FR",{weekday:"short",day:"numeric",month:"short"})} · {new Date(e.startsAt).toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"})}</span></span>
+          <span className="ws-row-sub">{new Date(e.startsAt).toLocaleDateString("fr-FR",{day:"numeric",month:"short",year:"numeric"})} · {new Date(e.startsAt).toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"})}</span></span>
       </div>)}
     </section>}
   </div>;

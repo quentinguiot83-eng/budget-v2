@@ -587,7 +587,7 @@ function TreasuryPage({
       <div className="pro-v4-payment-list">
         {adjustablePayments.map(t=><div className="pro-v4-payment-item" key={t.id}>
           <span><strong>{t.kind==="contribution_payment"?"Cotisations Urssaf":"Impôt"}</strong>
-            <small>{new Date(t.date+"T12:00:00").toLocaleDateString("fr-FR")} · Période {t.kind==="contribution_payment"?(t.contributionPeriodKey??t.date.slice(0,7)):(t.taxPeriodKey??t.date.slice(0,7))}</small></span>
+            <small>{new Date(t.date+"T12:00:00").toLocaleDateString("fr-FR",{day:"numeric",month:"short",year:"numeric"})} · Période {t.kind==="contribution_payment"?(t.contributionPeriodKey??t.date.slice(0,7)):(t.taxPeriodKey??t.date.slice(0,7))}</small></span>
           <strong>{euro(t.amount)}</strong>
           <button type="button" onClick={()=>editPayment(t)}><Pencil size={15}/> Modifier</button>
         </div>)}
@@ -622,7 +622,7 @@ function TreasuryPage({
         <table className="prosuite-table prosuite-treasury-table">
           <thead><tr><th>Date</th><th>Opération</th><th>Règlement</th><th>Montant</th><th></th></tr></thead>
           <tbody>{rows.map(t=><tr key={t.id}>
-            <td>{new Date(t.date+"T12:00:00").toLocaleDateString("fr-FR")}</td>
+            <td>{new Date(t.date+"T12:00:00").toLocaleDateString("fr-FR",{day:"numeric",month:"short",year:"numeric"})}</td>
             <td>{t.label}<small className="prosuite-block">{t.category||t.kind}</small></td>
             <td>{t.paymentMethod?payLabel[t.paymentMethod]:"—"}</td>
             <td className={t.kind==="income"?"positive":""}>{t.kind==="income"?"+":"−"}{euro(t.amount)}</td>

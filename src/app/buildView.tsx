@@ -90,7 +90,7 @@ export function buildView(app: ReadyApp) {
     settings: "Réglages",
     fixed: "Dépenses fixes",
     calendar: "Calendrier des paiements",
-    transactions: "Toutes les transactions",
+    transactions: "Toutes les opérations",
     analysis: "Analyse financière",
     bank: "Rapprochement bancaire",
     loans: "Crédits et prêts",

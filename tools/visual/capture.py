@@ -19,11 +19,11 @@ from playwright.sync_api import sync_playwright
 FROZEN_NOW = "2026-11-16T10:00:00+01:00"
 
 # Écrans atteints par la navigation principale. Le libellé est le texte
-# exact du bouton de navigation.
+# exact du bouton de navigation (« A|B » : A, sinon B).
 SCREENS = [
     ("accueil", "Accueil"),
     ("budget", "Budget"),
-    ("transactions", "Transactions"),
+    ("transactions", "Opérations|Transactions"),
     ("patrimoine", "Patrimoine"),
     ("depenses-fixes", "Dépenses fixes"),
     ("credits-prets", "Crédits et prêts"),
@@ -73,7 +73,12 @@ FREEZE_MOTION = """
 
 
 def click_nav(page, label: str) -> bool:
-    """Clique le premier bouton de navigation portant exactement ce libellé."""
+    """Clique le premier bouton de navigation portant exactement ce libellé
+    (plusieurs libellés possibles séparés par « | », pour comparer deux versions)."""
+    return any(_click_nav(page, one) for one in label.split("|"))
+
+
+def _click_nav(page, label: str) -> bool:
     return page.evaluate(
         """(label) => {
             const buttons = [...document.querySelectorAll("nav button, nav a")];

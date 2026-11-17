@@ -149,7 +149,7 @@ export default function PhoneNotifications({ state }: { state: State }) {
         <div className="wimm-daily-reminder-settings">
           <label className="check-row">
             <input type="checkbox" checked={dailyReminder} onChange={e => setDailyReminder(e.target.checked)} disabled={busy} />
-            <span><strong>Rappel quotidien de saisie</strong><small>Penser à enregistrer les transactions de la journée</small></span>
+            <span><strong>Rappel quotidien de saisie</strong><small>Penser à enregistrer les opérations de la journée</small></span>
           </label>
           {dailyReminder && (
             <div className="wimm-daily-reminder-time">

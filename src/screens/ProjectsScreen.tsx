@@ -66,11 +66,11 @@ export default function ProjectsScreen({ view }: { view: WimmView }) {
       : confirmAction("Clôturer ce voyage ?", "Il sera déplacé dans Voyages terminés. Son historique et son coût total resteront accessibles.",
           async () => change(d => { d.trips.find(x => x.id === t.id)!.closedAt = today(); setActiveTrip(""); setShowArchivedTrip(false); }, "Voyage clôturé"));
     const remove = () => confirmAction("Supprimer le voyage ?",
-      "La suppression est possible seulement sans transaction liée. Sinon conservez-le pour garder son historique.",
+      "La suppression est possible seulement sans opération liée. Sinon conservez-le pour garder son historique.",
       async () => {
         await change(d => {
           if (d.transactions.some(x => x.trip === t.id))
-            throw Error("Ce voyage possède des transactions. Il est conservé pour votre historique.");
+            throw Error("Ce voyage possède des opérations. Il est conservé pour votre historique.");
           d.trips = d.trips.filter(x => x.id !== t.id);
           setActiveTrip("");
         }, "Voyage supprimé");

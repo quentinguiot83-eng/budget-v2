@@ -70,7 +70,7 @@ export default function HomeScreen({ view }: { view: WimmView }) {
       )}
 
       {homeMonthSections.showMonthlyReview && <section className="card home-monthly-report" aria-label={"Bilan financier de "+monthLabel(selectedMonth)}>
-        <div className="section-head"><h2>Bilan de {monthLabel(selectedMonth)}</h2><span className="muted">Transactions vérifiables</span></div>
+        <div className="section-head"><h2>Bilan de {monthLabel(selectedMonth)}</h2><span className="muted">Opérations vérifiables</span></div>
         <div className="home-remaining-grid home-income-expenses">
           <div className="home-remaining-card home-income">
             <span className="muted">Revenus du mois</span><strong>{money(historicalIncome)}</strong>
