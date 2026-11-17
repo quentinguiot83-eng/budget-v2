@@ -27,7 +27,7 @@
   --ws-card-bg: color-mix(in srgb, var(--surface) 88%, transparent);
   --ws-card-edge: color-mix(in srgb, var(--surface) 70%, var(--border));
 
-  --ws-positive: #287c55;
+  --ws-positive: #24734f;
   --ws-negative: #b4434b;
   --ws-warning: #a35c00;
   --ws-positive-soft: color-mix(in srgb, var(--ws-positive) 11%, var(--surface));
@@ -511,3 +511,27 @@
 }
 .field-segmented > button[aria-pressed="true"] { background: var(--surface); color: var(--ink); box-shadow: 0 2px 8px rgba(27, 36, 51, .08); }
 .field-segmented > button:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+
+/* Mode sombre : --action reste foncé (fond des boutons pleins) ; en texte sur
+   fond teinté, on prend la teinte claire pour rester lisible. */
+:root[data-mode="dark"] .app .ws-pill:not(.is-solid),
+:root[data-mode="dark"] .app .ws-icon-button { color: var(--accent-deep); }
+
+/* Zones à toucher d'au moins 44 px (recommandation Apple), sans changer
+   l'apparence : une zone invisible déborde autour des petits boutons. */
+:where(.app .ws-info, .app .ws-pill, .app .ws-link, .app .ws-icon-button, .app .soft-topbar .icon,
+  .app .wimm-settings-back, .app .month-picker .icon) { position: relative; }
+.app .ws-info::after, .app .ws-pill::after, .app .ws-link::after, .app .ws-icon-button::after,
+.app .soft-topbar .icon::after, .app .wimm-settings-back::after, .app .month-picker .icon::after {
+  content: ""; position: absolute; inset: min(0px, calc((100% - 44px) / 2)); 
+}
+.app .ws-pill::after, .app .ws-link::after { inset: min(0px, calc((100% - 44px) / 2)) 0; }
+
+/* « Réduire les animations » (réglage de l'iPhone ou de l'ordinateur) :
+   transitions et animations quasi instantanées dans toute l'app. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .01ms !important; animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important; scroll-behavior: auto !important;
+  }
+}

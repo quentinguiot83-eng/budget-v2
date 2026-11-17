@@ -17,6 +17,24 @@
         );
       }
     </script>
+    <script>
+      // iPhone : suivre la taille du texte choisie dans Réglages → Luminosité et
+      // affichage → Taille du texte. 17 px est la taille standard d'iOS, qui
+      // correspond aux 16 px de Wimm ; plafonné à 135 % pour garder la mise en page.
+      if (/iPhone|iPad|iPod/i.test(navigator.userAgent) && CSS.supports("font", "-apple-system-body")) {
+        const applyTextSize = () => {
+          const probe = document.createElement("span");
+          probe.style.font = "-apple-system-body";
+          document.documentElement.appendChild(probe);
+          const system = parseFloat(getComputedStyle(probe).fontSize) || 17;
+          probe.remove();
+          const size = Math.min(16 * 1.35, Math.max(14, system * 16 / 17));
+          document.documentElement.style.fontSize = size === 16 ? "" : size + "px";
+        };
+        applyTextSize();
+        document.addEventListener("visibilitychange", () => { if (!document.hidden) applyTextSize(); });
+      }
+    </script>
     <meta name="theme-color" content="#ffffff" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />

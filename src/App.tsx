@@ -549,7 +549,7 @@ export default function App() {
             onClick={() =>
               window.scrollTo({
                 top: 0,
-                behavior: "smooth",
+                behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
               })
             }
           >
