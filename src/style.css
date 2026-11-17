@@ -440,14 +440,6 @@ fieldset {
 .account h3 {
   margin: 20px 0 10px;
 }
-.account-icon {
-  display: grid;
-  place-items: center;
-  width: 40px;
-  height: 40px;
-  background: var(--accent-soft);
-  color: var(--accent-deep);
-}
 .account-actions {
   display: flex;
   gap: 8px;

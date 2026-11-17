@@ -168,7 +168,6 @@ dialog::backdrop { background: rgba(25, 22, 46, .45); backdrop-filter: blur(6px)
 .billing-v2-secondary { border-radius: 15px; }
 .billing-v2-tabs span { background: var(--accent-soft); color: var(--accent-deep); }
 .billing-v2-form input, .billing-v2-form select, .billing-v2-form textarea { background: var(--soft-canvas); color: var(--ink); border-color: var(--border); border-radius: 14px; }
-.account-icon { border-radius: 14px; }
 .live-tour-popover { border-radius: 24px; box-shadow: 0 12px 45px #25243825; }
 @media (max-width: 800px) {
   .prosuite-native .prosuite-nav { gap: 7px; margin-bottom: 20px; border: 1px solid var(--border); }
@@ -319,8 +318,6 @@ dialog::backdrop { background: rgba(25, 22, 46, .45); backdrop-filter: blur(6px)
 .profile-name-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding-block: 10px 18px; font-size: .82rem; }
 .emoji-picker { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 7px; margin: 6px 0; }
 .emoji-picker button { display: grid; place-items: center; min-height: 44px; font-size: 1.4rem; }
-.account .account-icon { width: 36px; height: 36px; }
-.account .account-icon svg { width: 19px; height: 19px; }
 .account > p { margin: 9px 0; }
 .account > small { display: block; font-size: .72rem; line-height: 1.4; }
 .account .progress { margin-block: 9px; }
@@ -609,47 +606,12 @@ button.block-info:focus-visible { outline: 2px solid currentColor; outline-offse
 
 /* L'accueil n'affiche que la synthèse ; les opérations sont regroupées
    au début de Patrimoine et se replient après validation du mois. */
-.savings-home-summary {
-  display: grid; align-content: start; gap: 12px;
-  background: linear-gradient(135deg, color-mix(in srgb, #a9d7ee 14%, var(--surface)), var(--surface));
-}
-.savings-home-summary .section-head { margin: 0; }
-.savings-home-summary .block-title h2 { font-size: 1rem; }
-.savings-home-summary .progress { margin: 0; }
-.savings-home-summary > small { font-size: .78rem; }
-.savings-wealth-panel { padding: 0 !important; overflow: hidden; border-color: color-mix(in srgb, var(--accent-deep) 17%, var(--border)); }
-.savings-wealth-summary { list-style: none; cursor: pointer; display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 21px 24px; }
-.savings-wealth-summary::-webkit-details-marker { display: none; }
-.savings-wealth-summary:focus-visible { outline: 2px solid var(--accent-deep); outline-offset: -4px; }
-.savings-wealth-heading { display: grid; gap: 6px; min-width: 0; }
-.savings-wealth-heading > strong { font-size: 1.01rem; color: var(--ink); }
-.savings-wealth-heading > small { font-size: .78rem; }
-.savings-wealth-summary-right { display: flex; align-items: center; gap: 12px; flex: 0 0 auto; }
-.savings-wealth-summary-right > strong { font-size: .86rem; font-variant-numeric: tabular-nums; white-space: nowrap; }
-.savings-wealth-summary-right svg { color: var(--accent-deep); transition: transform .2s ease; }
-.savings-wealth-details[open] .savings-wealth-summary-right svg { transform: rotate(90deg); }
-.savings-wealth-content { padding: 6px 24px 23px; display: grid; gap: 12px; }
-.savings-wealth-content > .progress { margin: 7px 0; }
-.savings-wealth-content > .text { justify-self: start; }
-@media (max-width: 560px) {
-  .savings-home-summary { padding: 19px; }
-  .savings-wealth-summary { padding: 18px; flex-wrap: wrap; gap: 9px; }
-  .savings-wealth-summary-right { width: 100%; justify-content: space-between; }
-  .savings-wealth-content { padding: 4px 18px 20px; }
-}
 
 /* Accueil Wimm : cinq zones, sans cartes redondantes. */
-.home-balance-available { border-top: 1px solid color-mix(in srgb, var(--ink) 12%, transparent); padding-top: 17px; margin-top: 18px; display: grid; gap: 8px; }
-.home-balance-available .block-title { justify-content: space-between; gap: 6px; }
-.home-balance-available .block-title > span { color: var(--muted); font-size: .82rem; }
-.home-balance-available strong { font-size: clamp(1.4rem, 3vw, 1.85rem); font-weight: 850; font-variant-numeric: tabular-nums; }
-.home-balance-available small { color: var(--muted); font-size: .75rem; }
 .home-actions { display: grid; gap: 0; }
 .home-actions .section-head { margin-bottom: 9px; }
 
 /* Budget simplifié : trois raccourcis et enveloppes en liste compacte. */
-.budget-quick-links { display: grid !important; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px !important; margin: 15px 0 24px !important; }
-.budget-quick-links button { min-width: 0 !important; min-height: 66px; display: flex !important; flex-direction: column; align-items: center; justify-content: center; gap: 7px; padding: 11px 6px !important; border-radius: 17px; color: var(--accent-deep); font-weight: 700; font-size: .77rem; }
 .budget-add-category { display: inline-flex; align-items: center; justify-content: center; gap: 5px; white-space: nowrap; }
 .budget-category-list { display: grid !important; grid-template-columns: 1fr !important; gap: 0 !important; border: 1px solid var(--border); background: var(--surface); border-radius: 21px; padding: 5px 17px; overflow: hidden; }
 .budget-category-list > .category { border: 0 !important; border-bottom: 1px solid var(--border) !important; border-radius: 0 !important; box-shadow: none !important; background: transparent !important; padding: 15px 0 !important; margin: 0 !important; min-height: 0 !important; }
@@ -660,8 +622,6 @@ button.block-info:focus-visible { outline: 2px solid currentColor; outline-offse
 .budget-category-list .category .progress { height: 7px; margin: 11px 0 0; }
 .budget-category-list .category .meta { margin-top: 8px; font-size: .72rem; }
 @media (max-width: 560px) {
-  .budget-quick-links { gap: 8px !important; }
-  .budget-quick-links button { font-size: .72rem; }
   .budget-category-list { padding: 4px 13px; }
 }
 
@@ -716,13 +676,7 @@ body, #root { background: var(--soft-canvas); }
 .content button.primary:not(:disabled) { box-shadow: 0 5px 14px color-mix(in srgb, var(--accent-deep) 16%, transparent); }
 .content button.primary:hover:not(:disabled), .content button.secondary:hover:not(:disabled) { transform: translateY(-1px); }
 /* Budget : une synthèse majeure, les catégories restent compactes. */
-.budget-quick-links button { border: 1px solid color-mix(in srgb, var(--wimm-mint) 16%, var(--border)); background: var(--wimm-mint-wash); }
-.budget-quick-links button:nth-child(2) { color: var(--wimm-blue); background: var(--wimm-blue-wash); border-color: color-mix(in srgb, var(--wimm-blue) 16%, var(--border)); }
-.budget-quick-links button:nth-child(3) { color: var(--wimm-lavender); background: var(--wimm-lavender-wash); border-color: color-mix(in srgb, var(--wimm-lavender) 18%, var(--border)); }
 /* Patrimoine, comptes et épargne. */
-.savings-wealth-summary {
-  background: linear-gradient(110deg, var(--wimm-mint-wash), var(--surface) 60%, var(--wimm-lavender-wash));
-}
 /* Projections : cohérence des KPI et mise en avant des graphiques. */
 [data-tour="projection-chart"] { background: linear-gradient(180deg, color-mix(in srgb, var(--wimm-lavender-wash) 40%, var(--surface)), var(--surface) 45%); }
 /* Analyse : grille colorée par familles de chiffres, graphiques intacts. */
