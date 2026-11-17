@@ -4,7 +4,7 @@ import PersonalPageStyles from "../PersonalPageStyles";
 import { SortableList } from "../SortableList";
 import SwipeActions from "../SwipeActions";
 import { Row, Empty, BlockInfo, Progress } from "../ui";
-import { UserRound, Pencil, Trash2, ArrowDownLeft, ArrowUpRight, Home, ArrowLeftRight, Wallet, TrendingUp, ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight, CircleHelp, Coins, Plus, Search, SlidersHorizontal, ChartNoAxesCombined, CalendarDays, Check } from "lucide-react";
+import { UserRound, Pencil, Trash2, ArrowDownLeft, ArrowUpRight, Wallet, ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight, Coins, Plus, Search, SlidersHorizontal, ChartNoAxesCombined, CalendarDays, Check } from "lucide-react";
 import { Suspense } from "react";
 import { LazyPersonalProjectionChart } from "../app/shared";
 import type { WimmView } from "../app/buildView";
@@ -269,12 +269,12 @@ export default function PersonalScreen({ view }: { view: WimmView }) {
           <>
             <PersonalPageStyles/>
             <div className="personal-page-v2">
-<nav className="personal-v3-nav" aria-label="Navigation du compte personnel">
-{([{id:"home",label:"Accueil",Icon:Home},{id:"transactions",label:"Opérations",Icon:ArrowLeftRight},
-{id:"budgets",label:"Budgets",Icon:Wallet},{id:"projection",label:"Prévisions",Icon:TrendingUp}] as const).map(({id,label,Icon})=>
-<button key={id} type="button" className={personalTab===id?"active":""} aria-current={personalTab===id?"page":undefined}
-  onClick={()=>{setPersonalTab(id);setMobileQuickAddOpen(false);}}><Icon size={21}/><span>{label}</span></button>)}
-</nav>
+<div className="ws-segmented personal-ws-tabs" role="tablist" aria-label="Navigation du compte personnel">
+{([{id:"home",label:"Accueil"},{id:"transactions",label:"Opérations"},
+{id:"budgets",label:"Budgets"},{id:"projection",label:"Prévisions"}] as const).map(({id,label})=>
+<button key={id} type="button" role="tab" aria-selected={personalTab===id}
+  onClick={()=>{setPersonalTab(id);setMobileQuickAddOpen(false);}}>{label}</button>)}
+</div>
 <div className="month-picker month-picker-inline-arrows personal-v3-month-picker">
   <div className="month-picker-arrow-group month-picker-arrow-group-prev">
     {selectedMonth>month()&&<button className="month-reset icon" type="button" aria-label="Revenir au mois actuel" title="Mois actuel" onClick={()=>setMonth(month())}><ChevronsLeft size={19}/></button>}
@@ -290,76 +290,61 @@ export default function PersonalScreen({ view }: { view: WimmView }) {
   </div>
 </div>
 {personalTab==="home"&&<>
-<div className="personal-v3-page-heading"><span>MON COMPTE</span><h2>Vue d’ensemble</h2></div>
-<section className="personal-v2-hero" aria-label="Solde de votre compte personnel">
-                <div className="personal-v2-hero-header">
-                  <span className="personal-v2-account"><Wallet size={19}/>{account.name}</span>
-                  <button type="button" className="personal-v2-private"
-                    onClick={() => explain("Confidentialité du compte perso", <>
-                      <p>Le solde et les opérations privées sont accessibles uniquement à votre compte Wimm.</p>
-                      <p>Les autres membres du foyer voient le budget lié et les virements depuis le compte commun, sans voir les dépenses personnelles.</p>
-                    </>)}>
-                    <UserRound size={15}/> Privé <CircleHelp size={14}/>
-                  </button>
-                </div>
-                <div className="personal-v2-amount">
-                  <span>Solde privé actuel</span>
-                  <strong className={privateBalance < 0 ? "negative-money" : undefined}>{money(privateBalance)}</strong>
-                </div>
+<section className="ws-card ws-hero" aria-label="Solde de votre compte personnel">
+  <div className="ws-head">
+    <span className="ws-muted">Solde privé · {account.name}</span>
+    <button type="button" className="ws-link" style={{ minHeight: 32 }}
+      onClick={() => explain("Confidentialité du compte perso", <>
+        <p>Le solde et les opérations privées sont accessibles uniquement à votre compte Wimm.</p>
+        <p>Les autres membres du foyer voient le budget lié et les virements depuis le compte commun, sans voir les dépenses personnelles.</p>
+      </>)}>
+      <UserRound size={14} aria-hidden="true"/>Privé
+    </button>
+  </div>
+  <span className={`ws-key${privateBalance < 0 ? " ws-negative" : ""}`}>{money(privateBalance)}</span>
+  <span className="ws-muted">{privateCash > 0 ? money(privateBank) + " en banque · " + money(privateCash) + " en espèces" : "Solde actuel · " + dateLabel(today())}</span>
+  {selectedMonth===month()&&<div className={`ws-highlight${personalEndOfMonth < 0 ? " is-negative" : ""}`}>
+    <span className="ws-head-title">Disponible fin de mois
+      <BlockInfo title="Calcul du disponible estimé">
+        <p>Solde actuel + virements prévus − budgets restants, dépenses futures et échéances à payer.</p>
+      </BlockInfo>
+    </span>
+    <span className={`ws-figure${personalEndOfMonth < 0 ? " ws-negative" : " ws-positive"}`}>{money(personalEndOfMonth)}</span>
+  </div>}
+</section>
 
-                <div className="personal-v2-cash-accounts">
-                  <Row title={account.name} value={money(privateBank)}/>
-                  {privateCash>0&&<Row title="Espèces" value={money(privateCash)}/>}
-                  <button type="button" className="text" onClick={editPersonalCash}>
-                    <Coins size={15}/> {privateCash>0?"Modifier les espèces":"Ajouter des espèces"}
-                  </button>
-                </div>
-                {selectedMonth===month()&&<div className="personal-v2-month-estimate">
-                  <div className="personal-v4-estimate-label">
-                    <span>Disponible estimé fin de mois</span>
-                    <BlockInfo title="Calcul du disponible estimé">
-                      <p>Solde actuel + virements prévus − budgets restants, dépenses futures et échéances à payer.</p>
-                    </BlockInfo>
-                  </div>
-                  <strong className={personalEndOfMonth<0?"negative-money":"positive-money"}>{money(personalEndOfMonth)}</strong>
-                </div>}
-                <div className="personal-v2-totals">
-                  <div>
-                    <small>Budget lié au foyer</small>
-                    <strong>{money(envelope.base)} / mois</strong>
-                    <span>{category?.name || "Non configuré"}</span>
-                  </div>
-                  <div className="personal-v2-due">
-                    <small>Reste à virer</small>
-                    <strong className={envelope.remaining < 0 ? "negative-money" : undefined}>{money(envelope.remaining)}</strong>
-                    <span>{envelope.carryIn > 0 ? money(envelope.carryIn) + " reportés" : "Aucun report"}</span>
-                  </div>
-                </div>
-              </section>
+<section className="ws-card ws-list" aria-label="Budget lié au foyer">
+  <div className="ws-row">
+    <span className="ws-row-main"><span className="ws-row-title">Budget lié au foyer</span>
+      <span className="ws-row-sub">{category?.name || "Non configuré"} · {money(envelope.base)} / mois</span></span>
+  </div>
+  <div className="ws-row">
+    <span className="ws-row-main"><span className="ws-row-title">Reste à virer</span>
+      <span className="ws-row-sub">{envelope.carryIn > 0 ? money(envelope.carryIn) + " reportés" : "Aucun report"}</span></span>
+    <span className={`ws-amount${envelope.remaining < 0 ? " ws-negative" : ""}`}>{money(envelope.remaining)}</span>
+  </div>
+  <button type="button" className="ws-row" onClick={editPersonalCash}>
+    <span className="ws-row-main"><span className="ws-row-title">Espèces</span>
+      <span className="ws-row-sub">{privateCash > 0 ? "Modifier le montant" : "Ajouter un montant en espèces"}</span></span>
+    <span className="ws-amount">{money(privateCash)}</span>
+    <ChevronRight size={18} className="ws-chevron" aria-hidden="true"/>
+  </button>
+</section>
 
-              <div className="personal-v2-quick-actions">
-                <button type="button" className="primary" onClick={() => personalExpense()}>
-                  <Plus size={18}/> Ajouter une dépense
-                </button>
-                <button type="button" className="secondary" onClick={() => addPersonalMoney()}>
-                  <ArrowDownLeft size={18}/> Ajouter de l'argent
-                </button>
-                <button type="button" className="secondary" onClick={() => transferPersonal()}>
-                  <ArrowLeftRight size={18}/> Virer mon budget
-                </button>
-              </div>
+<nav className="ws-pill-row" aria-label="Actions du compte perso">
+  <button type="button" className="ws-pill" onClick={() => personalExpense()}>Dépense</button>
+  <button type="button" className="ws-pill" onClick={() => addPersonalMoney()}>Ajouter</button>
+  <button type="button" className="ws-pill" onClick={() => transferPersonal()}>Virer</button>
+</nav>
 
-              
 <section className="card transaction-search-results personal-v2-history personal-v2-transactions" aria-label="Aperçu des transactions">
-<div className="personal-v2-history-header"><h2>Dernières transactions</h2><span>{monthLabel(selectedMonth)} · 3 max.</span></div>
+<div className="ws-head"><h2 className="ws-card-title">Dernières opérations</h2>
+<button type="button" className="ws-link" onClick={()=>setPersonalTab("transactions")}>Tout voir <ChevronRight size={16} aria-hidden="true"/></button></div>
 {monthlyHistory.length?<div className="personal-v2-history-rows">{renderPersonalHistoryRows(monthlyHistory.slice(0,3))}</div>
-:<p className="muted padded">Aucune opération ce mois-ci.</p>}
-<button type="button" className="text personal-v2-history-toggle" onClick={()=>setPersonalTab("transactions")}>
-Tout voir et trier <ChevronRight size={17}/></button>
+:<p className="ws-muted" style={{ padding: "8px 0" }}>Aucune opération ce mois-ci.</p>}
 </section>
 </>}
 {personalTab==="transactions"&&<>
-<div className="personal-v3-page-heading"><span>MON HISTORIQUE</span><h2>Mes opérations</h2></div>
 <section className="card personal-v4-search-panel" aria-label="Rechercher des opérations privées">
   <div className="transaction-search-top personal-v4-search-top">
     <label className="transaction-search-input">
@@ -409,7 +394,6 @@ Tout voir et trier <ChevronRight size={17}/></button>
 </section>
 </>}
 {personalTab==="budgets"&&<>
-<div className="personal-v3-page-heading"><span>MON BUDGET</span><h2>Mes budgets personnels</h2></div>
 <section className="personal-v2-panel personal-v2-envelope">
                 <div className="personal-v3-panel-head">
                   <span className="personal-v2-panel-icon"><Wallet size={21}/></span>
@@ -544,7 +528,6 @@ Tout voir et trier <ChevronRight size={17}/></button>
               
 </>}
 {personalTab==="projection"&&<>
-<div className="personal-v3-page-heading"><span>MES PRÉVISIONS</span><h2>Mon argent à venir</h2></div>
 <section className="personal-v2-panel personal-v2-projection-panel">
                 <div className="personal-v3-panel-head">
                   <span className="personal-v2-panel-icon"><ChartNoAxesCombined size={20}/></span>

@@ -327,3 +327,55 @@
 /* Cartes contenant des lignes glissables : fond plein, pour que les lignes
    (fond opaque sur mobile) ne forment pas des blocs blancs. */
 .app .ws-card:has(.swipe-actions) { background: var(--surface); }
+
+/*
+ * Wimm Pro : même système visuel. Les écrans Pro gardent leur structure ;
+ * en-tête et onglets allégés, cartes, titres et boutons alignés.
+ * Les anciennes feuilles Pro utilisent !important : « :not(#ws) » donne
+ * à ces règles la priorité sans toucher à ces feuilles.
+ */
+:root:not(#ws) .app .prosuite-native .prosuite-topbar {
+  background: transparent !important; border: 0 !important; box-shadow: none !important;
+  backdrop-filter: none !important; -webkit-backdrop-filter: none !important;
+  padding: 0 4px !important; min-height: 0 !important;
+}
+:root:not(#ws) .app .prosuite-native .prosuite-business-title strong { font: 800 var(--ws-fs-title)/1.2 Manrope, -apple-system, sans-serif !important; color: var(--ink) !important; }
+:root:not(#ws) .app .prosuite-native .prosuite-card {
+  background: var(--ws-card-bg) !important; border: 1px solid var(--ws-card-edge) !important;
+  border-radius: var(--ws-radius-card) !important; box-shadow: var(--ws-shadow) !important;
+}
+:root:not(#ws) .app .prosuite-native .prosuite-card h2,
+:root:not(#ws) .app .prosuite-native .prosuite-cardhead h2 { font: 800 var(--ws-fs-card)/1.25 Manrope, -apple-system, sans-serif !important; color: var(--ink) !important; }
+:root:not(#ws) .app .prosuite-native .prosuite-pagehead > div > span,
+:root:not(#ws) .app .prosuite-native [class*="eyebrow"] { display: none !important; }
+:root:not(#ws) .app .prosuite-native .prosuite-pagehead h1,
+:root:not(#ws) .app .prosuite-native .billing-v2-head h1 { font: 800 var(--ws-fs-title)/1.2 Manrope, -apple-system, sans-serif !important; margin: 0 !important; }
+:root:not(#ws) .app .prosuite-native .prosuite-pagehead p,
+:root:not(#ws) .app .prosuite-native .billing-v2-head p { font-size: var(--ws-fs-small) !important; color: var(--muted) !important; }
+:root:not(#ws) .app .prosuite-native .prosuite-btn {
+  min-height: 40px !important; border-radius: var(--ws-radius-pill) !important; border: 0 !important; box-shadow: none !important;
+  background: var(--ink) !important; color: var(--surface) !important; font-size: var(--ws-fs-small) !important; font-weight: 600 !important;
+}
+:root:not(#ws) .app .prosuite-native .prosuite-btn.secondary { background: var(--accent-soft) !important; color: var(--action, var(--accent-deep)) !important; }
+@media (max-width: 850px) {
+  :root:not(#ws) .app .prosuite-native .prosuite-v3-nav.pro-v4-nav {
+    display: flex !important; gap: 2px !important; overflow-x: auto !important; scrollbar-width: none !important;
+    padding: 4px !important; min-height: 0 !important; height: auto !important;
+    border-radius: var(--ws-radius-pill) !important; border: 0 !important; box-shadow: none !important;
+    background: color-mix(in srgb, var(--border) 80%, transparent) !important;
+    backdrop-filter: none !important; -webkit-backdrop-filter: none !important;
+  }
+  :root:not(#ws) .app .prosuite-native .prosuite-v3-nav.pro-v4-nav::-webkit-scrollbar { display: none; }
+  :root:not(#ws) .app .prosuite-native .prosuite-v3-nav.pro-v4-nav > .pro-v4-menu-caption { display: none !important; }
+  :root:not(#ws) .app .prosuite-native .prosuite-v3-nav.pro-v4-nav button {
+    flex: 0 0 auto !important; width: auto !important; min-width: 0 !important; max-width: none !important;
+    height: 36px !important; min-height: 36px !important; padding: 0 14px !important;
+    flex-direction: row !important; border-radius: var(--ws-radius-pill) !important;
+    background: transparent !important; color: var(--muted) !important; box-shadow: none !important; border: 0 !important;
+  }
+  :root:not(#ws) .app .prosuite-native .prosuite-v3-nav.pro-v4-nav button span { font-size: var(--ws-fs-small) !important; font-weight: 600 !important; }
+  :root:not(#ws) .app .prosuite-native .prosuite-v3-nav.pro-v4-nav button svg { display: none !important; }
+  :root:not(#ws) .app .prosuite-native .prosuite-v3-nav.pro-v4-nav button.active {
+    background: var(--surface) !important; color: var(--ink) !important; box-shadow: 0 2px 8px rgba(27, 36, 51, .08) !important;
+  }
+}

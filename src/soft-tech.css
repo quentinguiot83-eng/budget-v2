@@ -512,7 +512,6 @@ button.block-info:focus-visible { outline: 2px solid currentColor; outline-offse
   display: inline-flex; align-items: center; justify-content: center; gap: 9px;
   min-height: 43px; width: fit-content; margin-top: 6px; max-width: 100%;
 }
-.personal-budget-privacy { display: block; font-size: .74rem; }
 @media (max-width: 560px) {
   .personal-budget-details > .personal-budget-transfer { width: 100%; }
 }
