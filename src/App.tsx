@@ -19,7 +19,7 @@ import { applyInitialSetup } from "./SetupWizard";
 import TransactionSearch from "./TransactionSearch";
 import { Form, BlockInfo, Modal } from "./ui";
 import { WimmWordmark } from "./WimmWordmark";
-import { Wallet, Users, House, Plus, Settings, Info, Bell, ChevronLeft, Pencil, ChevronsLeft, ChevronRight, ChevronsRight, CalendarDays, ArrowUpRight, ArrowDownLeft, ArrowLeftRight, Check } from "lucide-react";
+import { SlidersHorizontal, Wallet, Users, House, Plus, Settings, Info, Bell, ChevronLeft, ChevronsLeft, ChevronRight, ChevronsRight, CalendarDays, ArrowUpRight, ArrowDownLeft, ArrowLeftRight, Check } from "lucide-react";
 import { AnalysisDashboard, BankReconciliation, GuidedJourney, OnboardingTutorial, ProWorkspace, demoEnabled, field, forgetPendingInvitation, onboardingJourneyPreviewEnabled, onboardingPreviewEnabled, pendingHouseholdInvitation, themes } from "./app/shared";
 import { useWimmApp } from "./app/useWimmApp";
 import { buildView } from "./app/buildView";
@@ -453,10 +453,10 @@ export default function App() {
                   </BlockInfo>
                 </div>
                 {ps.account && (
-                  <button type="button" className="secondary personal-page-settings"
+                  <button type="button" className="ws-icon-button personal-page-settings"
+                    aria-label="Paramètres du compte perso" title="Paramètres du compte perso"
                     onClick={() => editPersonalAccount()}>
-                    <Pencil size={16} />
-                    Paramétrer
+                    <SlidersHorizontal size={18} aria-hidden="true" />
                   </button>
                 )}
               </div>

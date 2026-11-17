@@ -411,3 +411,28 @@
 .app .ws-link.ws-negative { color: var(--ws-negative); }
 .app .prosuite-native .billing-v2-actions button:not(.danger) { background: var(--accent-soft); color: var(--action, var(--accent-deep)); }
 .app .prosuite-native .billing-v2-actions button.danger { color: var(--ws-negative); }
+
+/*
+ * Une seule façon d'ajouter : un lien « + … » léger, comme « + Catégorie »
+ * ou « + Compte ». Tout bouton d'ajout (icône « + ») des écrans secondaires,
+ * du compte perso et de Pro prend cette forme.
+ */
+:root:not(#ws) .app .content.ws-classic button.primary:has(> svg.lucide-plus),
+:root:not(#ws) .app .content.ws-classic button.secondary:has(> svg.lucide-plus),
+:root:not(#ws) .app .prosuite-native .prosuite-btn:has(> svg.lucide-plus) {
+  background: none !important; border: 0 !important; box-shadow: none !important;
+  color: var(--ink) !important; width: auto !important; min-height: 40px !important;
+  padding: 0 !important; justify-content: flex-start !important; align-self: flex-start;
+  font-size: var(--ws-fs-small) !important; font-weight: 600 !important; gap: 4px !important;
+}
+:root:not(#ws) .app .content.ws-classic button.primary:has(> svg.lucide-plus) > svg,
+:root:not(#ws) .app .content.ws-classic button.secondary:has(> svg.lucide-plus) > svg,
+:root:not(#ws) .app .prosuite-native .prosuite-btn:has(> svg.lucide-plus) > svg { width: 16px; height: 16px; color: var(--muted); }
+
+/* Un seul bouton d'aide ⓘ : sans pastille, gris, comme dans les écrans allégés. */
+:root:not(#ws) .app .block-info {
+  width: 24px !important; height: 24px !important; min-width: 24px !important; min-height: 24px !important;
+  padding: 0 !important; border: 0 !important; box-shadow: none !important;
+  background: none !important; color: var(--muted) !important;
+}
+:root:not(#ws) .app .block-info svg { width: 16px !important; height: 16px !important; }

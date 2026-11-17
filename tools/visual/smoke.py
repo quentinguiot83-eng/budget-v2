@@ -55,7 +55,7 @@ def category_transactions(page):
     go(page, "Budget")
     page.locator(CATEGORY, has_text="Courses").first.click(position={"x": 40, "y": 40})
     page.wait_for_timeout(1200)
-    assert page.locator("h1").first.inner_text() in ("Toutes les opérations", "Toutes les transactions"), "écran des opérations non ouvert"
+    assert page.locator("h1").first.inner_text() in ("Opérations", "Toutes les opérations", "Toutes les transactions"), "écran des opérations non ouvert"
     assert page.get_by_text("Courses du mois").count() > 0, "filtre de catégorie non appliqué"
 
 
@@ -84,7 +84,7 @@ def income(page):
         click_button(page, "Revenus")
     except AssertionError:  # ancien accueil (avant l'allègement)
         click_button(page, "Voir les revenus")
-    assert page.locator("h1").first.inner_text() in ("Toutes les opérations", "Toutes les transactions"), "revenus non ouverts"
+    assert page.locator("h1").first.inner_text() in ("Opérations", "Toutes les opérations", "Toutes les transactions"), "revenus non ouverts"
 
 
 SCENARIOS = [
