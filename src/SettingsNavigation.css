@@ -2,7 +2,6 @@
 .settings-v2 {
   display: flex;
   flex-direction: column;
-  gap: 20px;
   padding-bottom: 12px;
 }
 .settings-v2 > :not(.wimm-settings-nav) {
@@ -11,16 +10,8 @@
 }
 .wimm-settings-nav {
   display: grid;
-  gap: 16px;
   width: 100%;
   max-width: 850px;
-}
-.wimm-settings-menu {
-  overflow: hidden;
-  border: 1px solid var(--border);
-  border-radius: 23px;
-  background: var(--surface);
-  box-shadow: var(--soft-shadow);
 }
 .wimm-settings-entry {
   display: flex;
@@ -29,17 +20,9 @@
   min-height: 76px;
   gap: 14px;
   padding: 15px 20px;
-  border: none;
-  background: transparent;
   color: var(--ink);
   text-align: left;
   transition: background .16s ease;
-}
-.wimm-settings-entry + .wimm-settings-entry {
-  border-top: 1px solid var(--border);
-}
-.wimm-settings-entry:hover, .wimm-settings-entry:focus-visible {
-  background: var(--accent-soft);
 }
 .wimm-settings-entry-icon {
   display: grid;
@@ -48,8 +31,6 @@
   height: 46px;
   flex: 0 0 46px;
   border-radius: 15px;
-  background: var(--accent-soft);
-  color: var(--accent-deep);
 }
 .wimm-settings-entry-copy {
   display: grid;
@@ -71,7 +52,6 @@
 }
 .wimm-settings-chevron {
   flex: 0 0 auto;
-  color: var(--muted);
 }
 .wimm-settings-heading {
   display: flex;
@@ -86,8 +66,6 @@
   height: 39px;
   flex: 0 0 39px;
   border-radius: 50%;
-  background: var(--accent-soft);
-  color: var(--accent-deep);
 }
 .wimm-settings-back:hover {
   filter: brightness(.96);
@@ -128,12 +106,8 @@
   margin-bottom: 2px;
 }
 @media(max-width: 650px) {
-  .settings-v2 { gap: 16px; }
-  .wimm-settings-entry { min-height: 72px; padding: 13px 15px; gap: 12px; }
-  .wimm-settings-entry-icon { width: 43px; height: 43px; flex-basis: 43px; border-radius: 13px; }
   .wimm-settings-entry-copy strong { font-size: .91rem; }
   .wimm-settings-entry-copy small { font-size: .73rem; }
-  .wimm-settings-menu { border-radius: 21px; }
 }
 
 /* Optional daily reminder alongside existing phone notification preferences. */
@@ -171,5 +145,4 @@
 .wimm-release-number {color: var(--ink);font-size: clamp(1.25rem, 4.5vw, 1.65rem);line-height: 1.25}
 .wimm-release-status {display: inline-flex;align-items: center;padding: 4px 9px;border-radius: 999px;background: var(--surface);color: var(--accent-deep);font-size: .72rem;font-weight: 750}
 .wimm-release-build {color: var(--ink);font-size: .77rem;font-weight: 600;font-variant-numeric: tabular-nums}
-.wimm-release-card small {font-size: .73rem}
 .wimm-footer-version {font-size: .76rem;color: var(--muted)}

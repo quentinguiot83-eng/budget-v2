@@ -153,8 +153,7 @@
 }
 .app .ws-pill.is-solid { background: var(--ink); color: var(--surface); }
 .app .ws-link {
-  min-height: 40px; padding: 0; border: 0; background: none;
-  color: var(--action, var(--accent-deep)); font-size: var(--ws-fs-small); font-weight: 600;
+  min-height: 40px; padding: 0; border: 0; background: none; font-size: var(--ws-fs-small); font-weight: 600;
   display: inline-flex; align-items: center; gap: 4px; text-decoration: none; align-self: flex-start;
 }
 .app .ws-info {
@@ -183,7 +182,6 @@
 .app .ws-empty { display: flex; flex-direction: column; gap: 8px; align-items: flex-start; padding: 12px 0 16px; }
 
 /* Budget : résumé du mois et lignes de catégories. */
-.app .ws-budget-planned { color: var(--muted); }
 .app .ws-budget-split { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin-top: 8px; }
 .app .ws-budget-split > div { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
 .app .ws-budget-split .ws-amount, .app .ws-budget-amount .ws-amount { color: var(--ink); }
@@ -196,7 +194,7 @@
 }
 .app .ws-budget-item-head { display: flex; align-items: center; gap: 12px; min-width: 0; }
 .app .ws-budget-item .ws-icon-tile { width: 32px; height: 32px; }
-.app .ws-budget-amount { white-space: nowrap; flex: 0 0 auto; }
+.app .ws-budget-amount { flex: 0 0 auto; }
 .app .ws-budget-foot { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
 .app .ws-budget-foot > * { white-space: nowrap; }
 @media (max-width: 850px) and (pointer: coarse) {
@@ -249,7 +247,7 @@
 .app .ws-trip-manage { display: flex; flex-direction: column; border: 1px solid var(--border); border-radius: var(--ws-radius-field); padding: 0 14px; margin-top: 4px; }
 .app .ws-trip-manage > .ws-row { justify-content: flex-start; min-height: 48px; padding: 10px 0; cursor: pointer; }
 .app .ws-trip-manage > .ws-row.ws-negative { color: var(--ws-negative); }
-.app .ws-trip-funding { border-top: 1px solid var(--border); border-bottom: 0; margin-top: 8px; padding-bottom: 0; }
+.app .ws-trip-funding { border-top: 1px solid var(--border); margin-top: 8px; padding-bottom: 0; }
 .app .ws-budget-list > .ws-row:last-child { border-top: 1px solid var(--border); }
 
 /* Projections : graphique dans la carte, sections dépliables. */
@@ -314,8 +312,6 @@
 }
 .app .content.ws-classic .progress { border-radius: var(--ws-radius-pill); background: var(--accent-soft); }
 .app .content.ws-classic .progress > span { border-radius: inherit; }
-.app .content.ws-classic .loans-soft-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
-.app .content.ws-classic .loans-soft-actions > button { padding: 6px 10px; line-height: 1.2; }
 
 /* Détail d'un budget personnel : lignes libellé / montant. */
 .app .ws-budget-details { display: flex; flex-direction: column; gap: 8px; padding-top: 4px; cursor: default; }
@@ -353,8 +349,7 @@
 :root:not(#ws) .app .prosuite-native .prosuite-pagehead p,
 :root:not(#ws) .app .prosuite-native .billing-v2-head p { font-size: var(--ws-fs-small) !important; color: var(--muted) !important; }
 :root:not(#ws) .app .prosuite-native .prosuite-btn {
-  min-height: 40px !important; border-radius: var(--ws-radius-pill) !important; border: 0 !important; box-shadow: none !important;
-  background: var(--ink) !important; color: var(--surface) !important; font-size: var(--ws-fs-small) !important; font-weight: 600 !important;
+  min-height: 40px !important; border-radius: var(--ws-radius-pill) !important; border: 0 !important; box-shadow: none !important; font-size: var(--ws-fs-small) !important; font-weight: 600 !important;
 }
 :root:not(#ws) .app .prosuite-native .prosuite-btn.secondary { background: var(--accent-soft) !important; color: var(--action, var(--accent-deep)) !important; }
 @media (max-width: 850px) {
@@ -455,7 +450,7 @@
 .app .ws-calendar .calendar-grid .day strong { font-size: var(--ws-fs-small); font-weight: 600; }
 .app .ws-calendar .calendar-grid .day small { width: 6px; height: 6px; border-radius: 50%; background: var(--action, var(--accent-deep)); font-size: 0; color: transparent; }
 .app .ws-calendar .calendar-grid .day.has-due { background: var(--accent-soft); }
-.app .ws-calendar .calendar-grid .day.today { background: var(--ink); color: var(--surface); }
+.app .ws-calendar .calendar-grid .day.today { color: var(--surface); }
 .app .ws-calendar .calendar-grid .day.today small { background: var(--surface); }
 .app .ws-calendar .calendar-grid .day-name { font-size: var(--ws-fs-label); color: var(--muted); text-align: center; font-weight: 600; }
 

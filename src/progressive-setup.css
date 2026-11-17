@@ -6,24 +6,8 @@
   box-shadow:0 18px 52px rgba(25,32,44,.09);
 }
 .progressive-setup .wimm-setup-emblem {background:var(--soft-canvas);color:var(--ink);border:1px solid var(--border);}
-.progressive-setup .wimm-setup-heading .eyebrow,
-.progressive-setup .wimm-setup-progress strong {color:var(--muted);}
-.progressive-setup .wimm-setup-track {background:var(--border);}
-.progressive-setup .wimm-setup-track span {background:var(--ink);}
-.progressive-setup .wimm-setup-fields input:focus,
-.progressive-setup .wimm-setup-fields select:focus,
-.progressive-setup .wimm-setup-budget-row input:focus {outline:2px solid color-mix(in srgb,var(--ink) 20%,transparent);border-color:var(--ink);}
-.progressive-setup .wimm-setup-add,
-.progressive-setup .wimm-setup-chips button {color:var(--ink);background:var(--surface);border:1px solid var(--border);}
-.progressive-setup .wimm-setup-entry,.progressive-setup .wimm-setup-review {background:var(--soft-canvas);border:1px solid var(--border);}
-.progressive-setup .wimm-setup-ready {background:var(--soft-canvas);border:1px solid var(--border);color:var(--ink);}
+.progressive-setup .wimm-setup-heading .eyebrow {color:var(--muted);}
 .progressive-setup .wimm-setup-hint svg {color:var(--muted);}
-.progressive-setup .wimm-setup-checks label {background:var(--soft-canvas);}
-.progressive-setup .wimm-setup-checks input {accent-color:var(--ink);}
-.progressive-setup .wimm-setup-budget-row {grid-template-columns:minmax(0,1.45fr) minmax(0,1fr) 28px;}
-@media(max-width:620px){
- .progressive-setup .wimm-setup-budget-row{grid-template-columns:minmax(0,1.45fr) minmax(0,1fr) 24px;}
-}
 
 
 /* Edition Aurora : styles ajoutés uniquement au parcours de configuration. */
@@ -33,5 +17,4 @@
 .progressive-profile small{color:var(--muted);line-height:1.55;font-size:.78rem}
 .progressive-profile.chosen{border-color:var(--ink);background:var(--soft-canvas)}
 .progressive-profile.chosen>svg:last-child{position:absolute;top:18px;right:16px}
-.progressive-setup .wimm-setup-budget-row .wimm-setup-remove{min-width:28px}
 @media(max-width:620px){.progressive-profiles{grid-template-columns:minmax(0,1fr)}.progressive-profile{min-height:0;gap:8px}}

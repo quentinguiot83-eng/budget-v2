@@ -15,7 +15,7 @@
   border: 1px solid var(--ws-card-edge); border-radius: 20px; padding: 16px 18px; background: var(--surface); color: var(--ink);
   box-shadow: 0 16px 40px rgba(15, 22, 34, .25); overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch;
 }
-.wimm-journey-flyout.auto-placed { bottom: auto !important; top: 12px; visibility: hidden; max-height: 260px; }
+.wimm-journey-flyout.auto-placed { bottom: auto !important; }
 .wimm-journey-flyout.auto-placed.ready { visibility: visible; }
 .wimm-journey-flyout > header { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
 .wimm-journey-dots { display: flex; gap: 4px; align-items: center; }

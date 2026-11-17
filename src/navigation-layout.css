@@ -14,35 +14,29 @@
  .app .sidebar{overflow:hidden}
 }
 @media(max-width:850px){
- .app .bottom-nav{display:grid!important;width:auto;gap:0;border-radius:22px;z-index:55}
+ .app .bottom-nav{display:grid!important;gap:0;z-index:55}
  .app .bottom-nav button{display:flex;width:100%;align-items:center;justify-content:center;flex-direction:column;font-size:.62rem;border-radius:12px;white-space:nowrap}
- .app .bottom-nav button.active{background:color-mix(in srgb,var(--wimm-mint) 14%,transparent);color:var(--wimm-green)}
- .app .bottom-nav button svg{width:21px;height:21px;stroke-width:1.9}
- .app .mobile-brand-row{gap:0}
+ .app .bottom-nav button svg{stroke-width:1.9}
  .app .soft-topbar .flex .desktop-settings-trigger{display:none!important}
- .app .soft-topbar .flex .mobile-profile-trigger{display:grid!important;place-items:center;flex-shrink:0}
- .app .soft-topbar>div:first-child>.eyebrow{margin-left:0;max-width:155px}
- .app .floating-add-button{position:fixed;display:grid;place-items:center;width:55px;height:55px;border-radius:50%;background:var(--action);color:#fff;box-shadow:0 10px 24px color-mix(in srgb,var(--action) 27%,transparent),0 2px 6px rgba(0,0,0,.12);z-index:77;transition:transform .16s}
+ .app .soft-topbar .flex .mobile-profile-trigger{display:grid!important;place-items:center}
+ .app .floating-add-button{position:fixed;display:grid;place-items:center;border-radius:50%;z-index:77}
  .app .floating-add-button:active{transform:scale(.94)}
  .app .quick-add-layer{display:block;position:fixed;inset:0;z-index:76}
- .app .quick-add-backdrop{position:absolute;inset:0;width:100%;height:100%;border:0;background:rgba(11,26,30,.33)}
- .app .quick-add-menu{position:absolute;right:16px;width:min(355px,calc(100vw - 32px));background:var(--surface);color:var(--ink);border:1px solid var(--border);border-radius:20px;box-shadow:0 14px 42px rgba(0,0,0,.20);padding:12px;display:grid;gap:2px}
+ .app .quick-add-backdrop{position:absolute;inset:0;width:100%;height:100%;border:0}
+ .app .quick-add-menu{position:absolute;color:var(--ink)}
  .app .quick-add-menu>strong{font-size:.86rem;padding:9px 10px 10px}
- .app .quick-add-menu>button{display:flex;align-items:center;gap:11px;text-align:left;width:100%;min-height:59px;padding:8px;border-radius:12px}
  .app .quick-add-menu>button:hover{background:var(--wimm-mint-wash)}
  .app .quick-add-menu>button>span:nth-child(2){display:grid;gap:2px;flex:1}
  .app .quick-add-menu b{font-size:.8rem}
  .app .quick-add-menu small{font-size:.69rem;color:var(--muted)}
  .app .quick-add-menu>button>svg{color:var(--muted)}
- .app .quick-add-item-icon{width:39px;height:39px;display:grid;place-items:center;border-radius:12px;background:var(--wimm-mint-wash);color:var(--wimm-green)}
+ .app .quick-add-item-icon{background:var(--wimm-mint-wash);color:var(--wimm-green)}
  .app .quick-add-item-icon.expense{background:var(--wimm-coral-wash);color:var(--wimm-coral)}
  .app .quick-add-item-icon.transfer{background:var(--wimm-blue-wash);color:var(--wimm-blue)}
  .app .quick-add-item-icon.other{background:var(--wimm-lavender-wash);color:var(--wimm-lavender)}
 }
 @media(max-width:390px){
  .app .bottom-nav button{font-size:.57rem}
- .app .soft-topbar>.flex{gap:3px}
- .app .soft-topbar .icon{width:32px;height:32px}
  .app .wimm-pro-shortcut{height:31px;min-width:31px;font-size:.56rem;padding:0 5px}
 }
 
@@ -85,13 +79,12 @@
     right:max(calc(17px + env(safe-area-inset-right,0px)), calc((100vw - 540px)/2 + 17px));
     bottom:calc(92px + env(safe-area-inset-bottom,0px));
   }
-  .app .quick-add-menu {bottom:calc(157px + env(safe-area-inset-bottom,0px))}
   .app .page-footer {padding-bottom:calc(137px + env(safe-area-inset-bottom,0px))}
 }
 @media (max-width:370px) {
   .app .bottom-nav {width:calc(100% - 16px);padding-inline:3px!important}
   .app .bottom-nav button span {font-size:.53rem}
-  .app .floating-add-button {width:49px;height:49px;bottom:calc(91px + env(safe-area-inset-bottom,0px))}
+  .app .floating-add-button {bottom:calc(91px + env(safe-area-inset-bottom,0px))}
 }
 .loans-credits-card .rule-row {gap:12px;align-items:center}
 .loans-credits-card .rule-row .grow {min-width:0}
@@ -114,7 +107,6 @@
 .swipe-actions-rail {display:none}
 .account-swipe-row {margin-bottom:9px}
 .account-swipe-row .swipe-actions-content {padding-right:34px}
-.transaction-swipe-row {margin-bottom:1px}
 .transaction-swipe-row .swipe-actions-content {padding-right:35px}
 .confirm-action-content {display:grid;gap:9px}
 .confirm-action-content p {margin:0;line-height:1.5}
@@ -131,12 +123,10 @@
   /* Hidden until a deliberate left swipe: never bleed through transparent rows. */
   .swipe-actions-rail {position:absolute;inset:0 0 0 auto;z-index:0;display:flex;width:var(--swipe-distance);align-items:stretch;justify-content:flex-end;background:var(--surface);visibility:hidden}
   .swipe-actions.is-open>.swipe-actions-rail {visibility:visible}
-  .swipe-actions>.swipe-actions-content {background:var(--surface)!important;isolation:isolate}
+  .swipe-actions>.swipe-actions-content {isolation:isolate}
   .swipe-actions-rail .swipe-action {display:flex;flex:0 0 80px;flex-direction:column;justify-content:center;align-items:center;gap:6px;text-align:center;background:var(--wimm-mint-wash);color:var(--wimm-green);font-size:.68rem;font-weight:770}
   .swipe-actions-rail .swipe-action.danger-action {background:color-mix(in srgb,var(--wimm-coral) 10%,var(--surface));color:var(--wimm-coral)}
   .swipe-actions-desktop-menu {display:none}
-  .account-swipe-row .swipe-actions-content {padding-right:0}
-  .transaction-swipe-row .swipe-actions-content {padding-right:0}
 }
 @media(prefers-reduced-motion:reduce){.swipe-actions-content {transition:none!important}}
 
@@ -147,12 +137,6 @@
   .personal-budget-swipe-row>.swipe-actions-content,
   .project-swipe-row>.swipe-actions-content {padding-right:36px}
   .swipe-actions-desktop-menu {display:block}
-}
-@media(max-width:850px) and (pointer:coarse) {
-  .fixed-swipe-row>.swipe-actions-content,
-  .credit-swipe-row>.swipe-actions-content,
-  .personal-budget-swipe-row>.swipe-actions-content,
-  .project-swipe-row>.swipe-actions-content {padding-right:0}
 }
 
 
@@ -280,12 +264,6 @@
 .app .content { gap: 18px; }
 .app .content > .card,
 .app .content > .two-col > .card { border-radius: 19px; }
-.app .projection-dashboard-v2 { gap: 16px; }
-.app .projection-main-card { border-radius: 20px; }
-.app .projection-kpi { border-radius: 16px; }
-.app .projection-chart-card,
-.app .projection-projects-card,
-.app .projection-annual-card { border-radius: 19px; }
 .app .settings-v2,
 .app .wimm-settings-nav { gap: 15px; }
 
@@ -296,27 +274,6 @@
 }
 
 @media (max-width: 850px) {
-  .app .soft-topbar {
-    box-sizing: border-box;
-    height: auto;
-    border-bottom: 1px solid color-mix(in srgb, var(--border) 65%, transparent);
-  }
-  .app .soft-topbar > div:first-child { gap: 1px; }
-  .app .topbar .mobile-brand.mobile-brand-row { margin-bottom: 0; }
-  .app .soft-topbar > div:first-child > .eyebrow {
-    font-size: .59rem;
-    line-height: 1.3;
-    margin-left: 0;
-    max-width: 138px;
-  }
-  .app .soft-topbar > .flex { gap: 4px; }
-  .app .soft-topbar .icon,
-  .app .soft-topbar .mobile-profile-trigger {
-    width: 38px;
-    height: 38px;
-    flex: 0 0 38px;
-  }
-  .app .soft-topbar .icon svg { width: 19px; height: 19px; }
   .app .soft-topbar .wimm-pro-shortcut {
     width: 38px;
     height: 38px;
@@ -326,12 +283,6 @@
   }
   .app .page-heading { gap: 10px; }
   .app .content { gap: 15px; }
-  .app .projection-dashboard-v2 { gap: 13px; }
-  .app .projection-main-card { padding: 17px; border-radius: 19px; }
-  .app .projection-kpi { padding: 12px; border-radius: 15px; }
-  .app .projection-chart-card,
-  .app .projection-projects-card,
-  .app .projection-annual-card { padding: 16px 14px; border-radius: 18px; }
   .app .settings-v2,
   .app .wimm-settings-nav { gap: 13px; }
   .app .wimm-settings-entry { min-height: 69px; gap: 12px; padding: 12px 15px; }
@@ -339,11 +290,7 @@
 }
 
 @media (max-width: 390px) {
-  .app .soft-topbar > .flex { gap: 3px; }
-  .app .soft-topbar .icon,
-  .app .soft-topbar .mobile-profile-trigger { width: 35px; height: 35px; flex-basis: 35px; }
   .app .soft-topbar .wimm-pro-shortcut { width: 35px; height: 35px; min-width: 35px; font-size: .56rem; }
-  .app .soft-topbar > div:first-child > .eyebrow { max-width: 115px; }
 }
 
 
@@ -456,13 +403,11 @@
 
 
 /* Feature preview: finance actions consolidated without changing existing themes. */
-.transaction-reconcile-entry { display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin:12px 0 16px; }
-.transaction-reconcile-entry button { display:inline-flex; align-items:center; gap:8px; }
+.transaction-reconcile-entry { align-items:center; flex-wrap:wrap; }
 .transaction-reconcile-entry small { font-size:.78rem; }
 .transaction-reconcile-panel { margin:12px 0 18px; }
 @media (max-width:560px) {
-  .transaction-reconcile-entry { flex-direction:column; align-items:stretch; gap:6px; }
-  .transaction-reconcile-entry button { width:100%; justify-content:center; }
+  .transaction-reconcile-entry { align-items:stretch; }
   .transaction-reconcile-entry small { padding-inline:5px; }
 }
 

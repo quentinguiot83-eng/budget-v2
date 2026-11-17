@@ -28,7 +28,7 @@
 .wob-big > span:first-child, .wob-field > span:first-child:not(.wob-question) { font-size: .875rem; color: var(--muted); }
 .wob-big-input { display: flex; align-items: baseline; gap: 6px; border-bottom: 2px solid var(--action, var(--accent-deep)); padding-bottom: 6px; }
 .wob-big-input input {
-  flex: 1; min-width: 0; border: 0; outline: none; background: transparent; padding: 0; color: var(--ink);
+  flex: 1; min-width: 0; background: transparent; padding: 0; color: var(--ink);
   font: 800 2.125rem/1.15 Manrope, -apple-system, sans-serif;
 }
 .wob-big-input b { font: 800 1.625rem Manrope, sans-serif; color: var(--muted); }
