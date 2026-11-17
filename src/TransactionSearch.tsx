@@ -66,7 +66,7 @@ export default function TransactionSearch({ state, month, setMonth, rows, initia
       <button type="button" className="ws-row" aria-expanded={reconciliationOpen} onClick={toggleReconciliation}>
         <span className="ws-icon-tile" aria-hidden="true"><ArrowLeftRight size={18}/></span>
         <span className="ws-row-main"><span className="ws-row-title">{reconciliationOpen ? "Fermer le rapprochement" : "Rapprochement bancaire"}</span>
-          <span className="ws-row-sub">Comparer un relevé CSV à vos opérations, sans créer de doublons</span></span>
+          <span className="ws-row-sub">Comparer un relevé CSV à tes opérations, sans créer de doublons</span></span>
         <ChevronRight size={18} className="ws-chevron" aria-hidden="true"/>
       </button>
     </section>

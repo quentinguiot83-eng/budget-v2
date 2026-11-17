@@ -63,13 +63,13 @@ export default function LoansPage({
         </div>
       </section>
 
-      <section className="ws-card ws-list ws-budget-list loans-credits-card" aria-label="Crédits et achats en plusieurs fois">
+      <section className="ws-card ws-list ws-budget-list loans-credits-card" aria-label="Crédits et paiements en plusieurs fois">
         <div className="ws-head" style={{ paddingTop: 8 }}>
           <span className="ws-head-title">
             <h2 className="ws-card-title">Crédits</h2>
-            <BlockInfo title="Paiements des crédits"><p>Ces achats ne débitent le compte qu’à validation des mensualités. Les alertes apparaissent dans le calendrier. Glissez une ligne pour la modifier ou la supprimer.</p></BlockInfo>
+            <BlockInfo title="Paiements des crédits"><p>Ces achats ne débitent le compte qu’à validation des échéances. Les alertes apparaissent dans le calendrier. Glisse une ligne pour la modifier ou la supprimer.</p></BlockInfo>
           </span>
-          <button type="button" className="ws-link" onClick={() => editRule(undefined, "credit")}><Plus size={16} aria-hidden="true"/>Achat en plusieurs fois</button>
+          <button type="button" className="ws-link" onClick={() => editRule(undefined, "credit")}><Plus size={16} aria-hidden="true"/>Paiement en plusieurs fois</button>
         </div>
         {credits.map(r => {
           const { remaining, count } = remainingOf(r);

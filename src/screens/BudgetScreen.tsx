@@ -46,7 +46,7 @@ export default function BudgetScreen({ view }: { view: WimmView }) {
         <div className="ws-head" style={{ paddingTop: 8 }}>
           <span className="ws-head-title">
             <h2 className="ws-card-title">Catégories</h2>
-            <BlockInfo title="Comprendre vos budgets"><p>Toutes vos catégories sont réunies dans cette liste : budgets variables, fixes ou mixtes. Les charges fixes ne sont prises en compte que dans leur mois d’échéance. Touchez une catégorie pour voir ses dépenses, glissez-la pour la modifier.</p></BlockInfo>
+            <BlockInfo title="Comprendre tes budgets"><p>Toutes tes catégories sont réunies dans cette liste : budgets variables, fixes ou mixtes. Les charges fixes ne sont prises en compte que dans leur mois d’échéance. Touche une catégorie pour voir ses dépenses, glisse-la pour la modifier.</p></BlockInfo>
           </span>
           <button type="button" className="ws-link" data-tour="budget-add-category" onClick={() => editCategory()} aria-label="Ajouter une catégorie">
             <Plus size={16} aria-hidden="true"/>Catégorie
@@ -55,8 +55,8 @@ export default function BudgetScreen({ view }: { view: WimmView }) {
         {categoryCards(false)}
         {!s.categories.length && (
           <div className="ws-empty">
-            <p className="ws-text"><strong>Un budget à votre mesure</strong></p>
-            <p className="ws-muted">Maison, courses, sorties… Choisissez vos enveloppes.</p>
+            <p className="ws-text"><strong>Un budget à ta mesure</strong></p>
+            <p className="ws-muted">Maison, courses, sorties… Choisis tes budgets.</p>
             <button type="button" className="ws-pill is-solid" onClick={() => editCategory()}>Créer ma première catégorie</button>
           </div>
         )}
@@ -66,7 +66,7 @@ export default function BudgetScreen({ view }: { view: WimmView }) {
         <button type="button" className="ws-row" data-tour="month-analysis-button" onClick={() => navigate("analysis")}>
           <span className="ws-icon-tile" aria-hidden="true"><Wallet size={20}/></span>
           <span className="ws-row-main"><span className="ws-row-title">Analyse financière</span>
-            <span className="ws-row-sub">Répartition, tendances et bilan de vos dépenses</span></span>
+            <span className="ws-row-sub">Répartition, tendances et bilan de tes dépenses</span></span>
           <ChevronRight size={18} className="ws-chevron" aria-hidden="true"/>
         </button>
       </section>

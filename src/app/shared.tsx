@@ -60,6 +60,14 @@ export const choice = (
   value = "",
   hint = "",
 ): Field => ({ name, label, options, value, hint });
+// Deux ou trois choix courts (Oui / Non, fréquence…) : boutons côte à côte.
+export const toggle = (
+  name: string,
+  label: string,
+  options: [string, string][],
+  value = "",
+  hint = "",
+): Field => ({ ...choice(name, label, options, value, hint), segmented: true });
 export const amountField = (
   name: string,
   label: string,

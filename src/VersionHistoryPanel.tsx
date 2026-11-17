@@ -78,7 +78,7 @@ export default function VersionHistoryPanel({
 
   const blocks: { scope: Scope; name: string; explanation: string }[] = [
     { scope: "household", name: "Historique du foyer", explanation: "Versions communes · restauration réservée au propriétaire" },
-    { scope: "personal", name: "Historique privé", explanation: "Vos données personnelles uniquement" },
+    { scope: "personal", name: "Historique privé", explanation: "Tes données personnelles uniquement" },
   ];
 
   return (
@@ -87,7 +87,7 @@ export default function VersionHistoryPanel({
         <span className="wimm-security-symbol"><History size={22}/></span>
         <div>
           <h3>Historique et restauration</h3>
-          <p>Les versions sont enregistrées automatiquement après chaque modification, sans action de votre part.</p>
+          <p>Les versions sont enregistrées automatiquement après chaque modification, sans action de ta part.</p>
         </div>
       </div>
       {blocks.map(({ scope, name, explanation }) => {
@@ -139,7 +139,7 @@ export default function VersionHistoryPanel({
         <div className="wimm-history-confirm" role="group" aria-label="Confirmation de restauration">
           <strong>Restaurer la version {choice.version.revision} ?</strong>
           <p>
-            {choice.scope === "household" ? "Tout le budget partagé du foyer" : "Votre compte personnel"}
+            {choice.scope === "household" ? "Tout le budget partagé du foyer" : "Ton compte personnel"}
             {" "}sera remplacé par son état du {new Date(choice.version.savedAt).toLocaleString("fr-FR")}.
             Les modifications effectuées depuis seront annulées dans cet espace.
             L’état actuel restera récupérable depuis l’historique.
@@ -147,7 +147,7 @@ export default function VersionHistoryPanel({
           <p>Cette restauration concerne <strong>{choice.version.transactions} opération(s)</strong>.
             {choice.scope === "household" ? " Elle peut modifier des virements liés à l’espace professionnel." : ""}
           </p>
-          <label htmlFor="wimm-history-confirmation">Saisissez <strong>RESTAURER</strong> pour confirmer</label>
+          <label htmlFor="wimm-history-confirmation">Saisis <strong>RESTAURER</strong> pour confirmer</label>
           <input id="wimm-history-confirmation" type="text" autoComplete="off"
             value={confirmation} onChange={e => setConfirmation(e.target.value)}
             placeholder="RESTAURER" disabled={restoring}/>

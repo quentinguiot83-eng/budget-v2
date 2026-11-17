@@ -34,7 +34,7 @@ export default function RecurringIncomeManager({sources,legacyIncome,onSave}:Pro
  }
  return <section className="recurring-incomes card" aria-label="Mes revenus récurrents">
    <div className="section-head">
-     <div><h2>Revenus habituels</h2><p className="muted">Suivez chaque revenu, sa date et sa réception, sans créer d’opération fictive.</p></div>
+     <div><h2>Revenus habituels</h2><p className="muted">Suis chaque revenu, sa date et sa réception, sans créer d’opération fictive.</p></div>
      {!editing&&<button type="button" className="secondary" onClick={()=>{setEntries(sources);setEditing(true);setError("");}}><Pencil size={16}/> Modifier</button>}
    </div>
    {!editing&&<>
@@ -46,7 +46,7 @@ export default function RecurringIncomeManager({sources,legacyIncome,onSave}:Pro
      <div className="recurring-incomes-footer"><span>Moyenne mensuelle prévisionnelle</span><strong>{euro(sources.length?Math.round(sources.reduce((n,x)=>n+estimate(x),0)):legacyIncome)}</strong></div>
    </>}
    {editing&&<>
-     {!entries.length&&<p className="muted">Ajoutez au moins un revenu, ou enregistrez une liste vide.</p>}
+     {!entries.length&&<p className="muted">Ajoute au moins un revenu, ou enregistre une liste vide.</p>}
      {entries.map(x=><div className="recurring-incomes-edit" key={x.id}>
        <label>Nom<input value={x.name} onChange={e=>patch(x.id,{name:e.target.value})}/></label>
        <label>Montant par versement (€)<MoneyInput min={0} step=".01" value={x.amount} onChange={amount=>patch(x.id,{amount})}/></label>

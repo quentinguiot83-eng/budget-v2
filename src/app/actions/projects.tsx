@@ -4,7 +4,7 @@ import { api } from "../../api";
 import { type Trip, today, uid, euro, money, type Project } from "../../engine";
 import TripCoverEditor from "../../TripCoverEditor";
 import { uploadTripCover, deleteTripCover, TRIP_COVERS_BUCKET } from "../../tripCovers";
-import { demoEnabled, field, amountField, choice } from "../shared";
+import { demoEnabled, field, amountField, choice, toggle } from "../shared";
 import type { WimmCore } from "../useWimmApp";
 import type { BaseActions } from "./base";
 import type { AccountActions } from "./accounts";
@@ -190,7 +190,7 @@ export function createProjectActions(ctx: WimmCore & BaseActions & AccountAction
         ([id]) => s.accounts.find((a) => a.id === id)?.group !== "current",
       )
     ) {
-      setNotice("Ajoutez d’abord un compte d’épargne.");
+      setNotice("Ajoute d’abord un compte d’épargne.");
       return;
     }
     openForm(
@@ -222,23 +222,24 @@ export function createProjectActions(ctx: WimmCore & BaseActions & AccountAction
                 s.accounts.find((a) => a.id === id)?.group !== "current",
             )?.[0],
         ),
-        choice(
+        toggle(
           "active",
-          "Inclure dans la simulation",
+          "Inclure dans les projections ?",
           [
             ["yes", "Oui"],
             ["no", "Non"],
           ],
           p?.active === false ? "no" : "yes",
         ),
-        choice(
+        toggle(
           "settled",
-          "Projet déjà financé entièrement",
+          "Déjà entièrement financé ?",
           [
+            ["yes", "Oui"],
             ["no", "Non"],
-            ["yes", "Oui — ne plus simuler le retrait"],
           ],
           p?.settled ? "yes" : "no",
+          "Si oui, le retrait n’est plus simulé.",
         ),
       ],
       async (v) =>

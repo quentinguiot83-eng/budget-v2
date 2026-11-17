@@ -183,7 +183,7 @@ export default function ProWorkspace({
       });
       const filename = "Wimm-pro-" + new Date().toISOString().slice(0, 10) + ".json";
       const completed = await sendFile(filename, payload, "application/json;charset=utf-8");
-      if (completed) setNotice("Fichier Pro préparé. Enregistrez-le dans un espace protégé. Cet export n'est pas une restauration automatique.");
+      if (completed) setNotice("Fichier Pro préparé. Enregistre-le dans un espace protégé. Cet export n’est pas une restauration automatique.");
     } catch (e) {
       setError(e instanceof Error ? e.message : "Export Pro impossible");
     } finally {
@@ -203,20 +203,20 @@ export default function ProWorkspace({
     setBusy(true);setError("");
     try{
       const fresh=await rpc("budget_pro_suite_load") as Suite;
-      if(fresh.activeBusinessId!==suite.activeBusinessId)throw Error("L'entreprise active a changé. Ouvre à nouveau les paramètres du compte.");
+      if(fresh.activeBusinessId!==suite.activeBusinessId)throw Error("L’entreprise active a changé. Ouvre à nouveau les paramètres du compte.");
       let opening=fresh.account.openingBalance;
       if(values.balanceEdited){
         if(values.mode==="opening")opening=values.amount;
         else {
           const profile=fresh.profile.legalStatus==="micro"?microEffectiveRates(fresh.profile,microSettings):fresh.profile;
           const cash=calculateProReserve(fresh.transactions,fresh.account.openingBalance,profile,currentProMonth()).cashBalance;
-          if(cash===null)throw Error("Le solde actuel n'est pas disponible pour le rapprochement.");
+          if(cash===null)throw Error("Le solde actuel n’est pas disponible pour le rapprochement.");
           opening=proOpeningForTargetBalance(fresh.account.openingBalance,cash,values.amount);
         }
       }
       const next=await rpc("budget_pro_account_save",{p_account:{name:values.name,openingBalance:opening}}) as Suite;
       setSuite(next);setModal({type:"none"});
-      setNotice(values.balanceEdited?"Solde professionnel réajusté. L'historique des soldes est recalculé depuis l'ouverture du compte.":"Compte professionnel mis à jour.");
+      setNotice(values.balanceEdited?"Solde professionnel réajusté. L’historique des soldes est recalculé depuis l’ouverture du compte.":"Compte professionnel mis à jour.");
       return true;
     }catch(e){setError(e instanceof Error?e.message:String(e));return false;}
     finally{setBusy(false);}
@@ -228,7 +228,7 @@ export default function ProWorkspace({
     try{
       const next=await rpc("budget_pro_client_save",{p_client:draft}) as Suite;
       const added=next.clients.find(c=>!suite.clients.some(old=>old.id===c.id));
-      if(!added)throw Error("Client enregistré, mais sélection impossible. Actualisez l’espace Pro.");
+      if(!added)throw Error("Client enregistré, mais sélection impossible. Actualise l’espace Pro.");
       setSuite(next);
       setNotice("Client créé et sélectionné");
       return added;
@@ -334,7 +334,7 @@ export default function ProWorkspace({
         ><Plus size={18}/> Ajouter</button>}
         {suite&&<button type="button" className="prosuite-icon" title="Réglages Pro" aria-label="Réglages Pro"
           onClick={()=>setSection("settings")}><SlidersHorizontal size={20}/></button>}
-        {suite&&<button type="button" className="prosuite-icon" title="Exporter les données de l'entreprise active (JSON)"
+        {suite&&<button type="button" className="prosuite-icon" title="Exporter les données de l’entreprise active (JSON)"
           aria-label="Exporter les données Pro" disabled={busy} onClick={()=>void exportCurrentBusiness()}>
           <Download size={20}/>
         </button>}
@@ -486,7 +486,7 @@ function Empty({text}:{text:string}){return <p className="prosuite-empty">{text}
 
 function ClientsPage({clients,add,edit,remove}:{clients:Client[];add:()=>void;edit:(c:Client)=>void;remove:(c:Client)=>void}){const [q,setQ]=useState("");const rows=clients.filter(c=>(c.name+" "+c.companyName+" "+c.email).toLowerCase().includes(q.toLowerCase()));return <><PageHead eyebrow="CLIENTS" title="Clients" text="Toutes les informations utiles à la facturation et aux rendez-vous." actions={<Btn onClick={add}><Plus size={16}/> Nouveau client</Btn>}/><input className="prosuite-search" placeholder="Rechercher un client…" value={q} onChange={e=>setQ(e.target.value)}/><div className="prosuite-clientgrid">{rows.map(c=><article className="prosuite-client" key={c.id}><div className="prosuite-avatar">{c.name.slice(0,1).toUpperCase()}</div><div><h3>{c.name}</h3>{c.companyName&&<p>{c.companyName}</p>}<small>{[c.email,c.phone].filter(Boolean).join(" · ")||"Aucune coordonnée"}</small><small>{[c.address,c.postalCode,c.city].filter(Boolean).join(" ")}</small></div><div className="prosuite-rowactions"><button onClick={()=>edit(c)}><Pencil size={15}/></button><button onClick={()=>remove(c)}><Trash2 size={15}/></button></div></article>)}</div>{!rows.length&&<Empty text="Aucun client correspondant."/>}</>}
 
-function CatalogPage({products,add,edit,remove}:{products:Product[];add:()=>void;edit:(p:Product)=>void;remove:(p:Product)=>void}){return <><PageHead eyebrow="CATALOGUE" title="Catalogue" text="Enregistrez ce que vous vendez pour accélérer les encaissements et la facturation." actions={<Btn onClick={add}><Plus size={16}/> Ajouter</Btn>}/><div className="prosuite-productgrid">{products.map(p=><article className="prosuite-product" key={p.id}><span>{p.kind==="product"?"Produit":"Service"}</span><h3>{p.name}</h3><p>{p.description||"Aucune description"}</p><strong>{euro(p.unitPrice)} HT</strong><small>TVA {p.vatRate}% {p.active?"· Actif":"· Archivé"}</small><div className="prosuite-rowactions"><button onClick={()=>edit(p)}><Pencil size={15}/></button><button onClick={()=>remove(p)}><Trash2 size={15}/></button></div></article>)}</div>{!products.length&&<Empty text="Votre catalogue est vide."/>}</>}
+function CatalogPage({products,add,edit,remove}:{products:Product[];add:()=>void;edit:(p:Product)=>void;remove:(p:Product)=>void}){return <><PageHead eyebrow="CATALOGUE" title="Catalogue" text="Enregistre ce que tu vends pour accélérer les encaissements et la facturation." actions={<Btn onClick={add}><Plus size={16}/> Ajouter</Btn>}/><div className="prosuite-productgrid">{products.map(p=><article className="prosuite-product" key={p.id}><span>{p.kind==="product"?"Produit":"Service"}</span><h3>{p.name}</h3><p>{p.description||"Aucune description"}</p><strong>{euro(p.unitPrice)} HT</strong><small>TVA {p.vatRate}% {p.active?"· Actif":"· Archivé"}</small><div className="prosuite-rowactions"><button onClick={()=>edit(p)}><Pencil size={15}/></button><button onClick={()=>remove(p)}><Trash2 size={15}/></button></div></article>)}</div>{!products.length&&<Empty text="Ton catalogue est vide."/>}</>}
 
 function AgendaPage({month,events,clients,add,edit,remove,connect}:{month:string;connect?:()=>void;events:EventItem[];clients:Client[];add:(date?:string)=>void;edit:(e:EventItem)=>void;remove:(e:EventItem)=>void}){
   const cursor=new Date(month+"-15T12:00:00");
@@ -586,7 +586,7 @@ function TreasuryPage({
 
     {adjustablePayments.length>0&&<section className="pro-v4-finances-payments">
       <div className="pro-v4-finances-section-title"><div><h2>Paiements sociaux et fiscaux enregistrés</h2>
-        <p>Corrige le montant, la date ou la période d'un paiement existant sans le comptabiliser deux fois.</p></div></div>
+        <p>Corrige le montant, la date ou la période d’un paiement existant sans le comptabiliser deux fois.</p></div></div>
       <div className="pro-v4-payment-list">
         {adjustablePayments.map(t=><div className="pro-v4-payment-item" key={t.id}>
           <span><strong>{t.kind==="contribution_payment"?"Cotisations Urssaf":"Impôt"}</strong>
@@ -903,8 +903,8 @@ function ReservePaymentForm({type,estimated,periodKey,value,submit}:{
     setError("");setSending(true);
     try{
       const success=await submit({id:value?.id,amount:amountValue,paidDate:date,periodKey:period,notes:notes.trim()});
-      if(!success)setError("Modification non enregistrée : consulte le message d'erreur affiché.");
-    }catch(err){setError(err instanceof Error?err.message:"Erreur d'enregistrement.");}
+      if(!success)setError("Modification non enregistrée : consulte le message d’erreur affiché.");
+    }catch(err){setError(err instanceof Error?err.message:"Erreur d’enregistrement.");}
     finally{setSending(false);}
   }
   return <form className="prosuite-form" onSubmit={e=>void save(e)}>
@@ -952,7 +952,7 @@ function AccountForm({value,currentBalance,submit}:{
     setError("");setSaving(true);
     try{
       const success=await submit({name:name.trim(),mode,amount:cents(input),balanceEdited:edited});
-      if(!success)setError("La mise à jour n'a pas été enregistrée.");
+      if(!success)setError("La mise à jour n’a pas été enregistrée.");
     }catch(err){setError(err instanceof Error?err.message:"Mise à jour impossible.");}
     finally{setSaving(false);}
   };

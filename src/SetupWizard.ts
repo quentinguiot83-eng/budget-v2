@@ -28,7 +28,7 @@ const parseEuros = (value: string, label: string, negative = false) => {
 export function applyInitialSetup(state: State, draft: InitialSetupDraft) {
   if (state.accounts.some(a => a.group === "current" && !a.archived))
     throw Error("Le compte courant est déjà configuré.");
-  if (!draft.accountName.trim()) throw Error("Indiquez le nom du compte courant.");
+  if (!draft.accountName.trim()) throw Error("Indique le nom du compte courant.");
   if (!draft.asOf || draft.asOf > today()) throw Error("La date du solde doit être actuelle ou passée.");
 
   const startMonth = month();
@@ -67,7 +67,7 @@ export function applyInitialSetup(state: State, draft: InitialSetupDraft) {
     state.income = parseEuros(draft.income || "0", "revenus mensuels");
   }
   const salaryDay = Number(draft.salaryDay);
-  if (!Number.isInteger(salaryDay) || salaryDay < 1 || salaryDay > 31) throw Error("Choisissez un jour de salaire entre 1 et 31.");
+  if (!Number.isInteger(salaryDay) || salaryDay < 1 || salaryDay > 31) throw Error("Choisis un jour de salaire entre 1 et 31.");
   state.salaryDay = salaryDay;
   state.salaryBudget = draft.salaryBudget;
   state.salaryReminder = draft.salaryReminder;
@@ -95,12 +95,12 @@ export function applyInitialSetup(state: State, draft: InitialSetupDraft) {
     }
   }
   for (const row of draft.fixed) {
-    if (!row.name.trim()) throw Error("Donnez un nom à chaque dépense fixe.");
+    if (!row.name.trim()) throw Error("Donne un nom à chaque dépense fixe.");
     if (!row.first || row.first.length !== 10) throw Error("Date d’échéance invalide pour " + row.name + ".");
     const amount = parseEuros(row.amount, row.name);
     if (amount === 0) throw Error("Le montant de " + row.name + " doit être supérieur à zéro.");
     const category = categoryIds.get(row.category);
-    if (!category) throw Error("Choisissez une catégorie pour " + row.name + ".");
+    if (!category) throw Error("Choisis une catégorie pour " + row.name + ".");
     state.rules.push({
       id: uid(), name: row.name.trim(), amount, account: state.accounts.find(a => a.group === "current" && !a.archived)!.id,
       category, start: row.first, interval: row.interval, count: 0, kind: "fixed"

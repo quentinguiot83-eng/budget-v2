@@ -15,7 +15,7 @@ export default function CalendarScreen({ view }: { view: WimmView }) {
         {alerts.length ? (
           dueList(alerts)
         ) : (
-          <p className="ws-muted">Vous êtes à jour : aucun paiement en attente de validation.</p>
+          <p className="ws-muted">Tu es à jour : aucun paiement en attente de validation.</p>
         )}
       </section>
       <section className="ws-card ws-calendar">

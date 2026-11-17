@@ -29,7 +29,7 @@ export async function inspectRestoreCandidate(
   if (verified.scope === "household" && !context.isOwner)
     throw Error("Seul le propriétaire peut restaurer une sauvegarde du foyer.");
   if (verified.scope === "personal" && context.personalRevision === null)
-    throw Error("Votre compte personnel doit être chargé avant la restauration.");
+    throw Error("Ton compte personnel doit être chargé avant la restauration.");
 
   // verifyIntegrityExport has already checked the entire envelope and schema.
   const backup = JSON.parse(json) as Record<string, unknown>;

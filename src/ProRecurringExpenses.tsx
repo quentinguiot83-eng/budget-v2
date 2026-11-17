@@ -104,7 +104,7 @@ export default function ProRecurringExpenses({
     const vatAmount = cents(draft.vatAmount);
     if (!Number.isSafeInteger(amount) || amount <= 0 ||
         !Number.isSafeInteger(vatAmount) || vatAmount < 0 || vatAmount > amount) {
-      setError("Indiquez un montant TTC et une TVA valides.");
+      setError("Indique un montant TTC et une TVA valides.");
       return;
     }
     if (draft.endDate && draft.endDate < draft.startDate) {
@@ -165,7 +165,7 @@ export default function ProRecurringExpenses({
       <div>
         <span className="pro-rexp-eyebrow"><CalendarClock size={15} /> CHARGES RÉCURRENTES</span>
         <h2>Abonnements et dépenses fixes</h2>
-        <p>Assurance professionnelle, logiciel, loyer… Programmez vos échéances, puis confirmez leur paiement avant qu’elles soient déduites du compte.</p>
+        <p>Assurance professionnelle, logiciel, loyer… Programme tes échéances, puis confirme leur paiement avant qu’elles soient déduites du compte.</p>
       </div>
       <button className="prosuite-btn" type="button" onClick={() => { setDraft(fresh()); setError(""); setNotice(""); }}><Plus size={16}/> Ajouter une charge</button>
     </div>
@@ -175,7 +175,7 @@ export default function ProRecurringExpenses({
       <div className="pro-rexp-month"><span>Échéances de {monthName}</span><strong>{pendingCount} à confirmer</strong>
         <button title="Actualiser" aria-label="Actualiser les charges" type="button" disabled={busy} onClick={() => void invoke("budget_pro_recurring_expense_list", {}, "Liste actualisée")}><RefreshCw size={16}/></button>
       </div>
-      {result.rules.length === 0 ? <div className="pro-rexp-empty">Aucune charge récurrente. Ajoutez par exemple une assurance Pro mensuelle ou annuelle.</div> :
+      {result.rules.length === 0 ? <div className="pro-rexp-empty">Aucune charge récurrente. Ajoute par exemple une assurance Pro mensuelle ou annuelle.</div> :
         <div className="pro-rexp-list">
           {result.rules.map(rule => {
             const dueDate = recurringExpenseDueDate(rule.startDate, rule.frequency, month, rule.endDate);
@@ -199,7 +199,7 @@ export default function ProRecurringExpenses({
             </article>;
           })}
         </div>}
-      <p className="pro-rexp-help">Les échéances ne débitent jamais automatiquement la trésorerie. Vous pouvez consulter un mois précédent pour confirmer une charge oubliée. Les paiements déjà saisis restent dans l’historique après modification ou suppression de la récurrence.</p>
+      <p className="pro-rexp-help">Les échéances ne débitent jamais automatiquement la trésorerie. Tu peux consulter un mois précédent pour confirmer une charge oubliée. Les paiements déjà saisis restent dans l’historique après modification ou suppression de la récurrence.</p>
     </>}
     {draft && <form className="prosuite-form pro-rexp-form" onSubmit={save}>
       <div className="pro-rexp-formhead"><h3>{draft.id ? "Modifier la charge récurrente" : "Nouvelle charge récurrente"}</h3><button type="button" aria-label="Fermer" onClick={() => setDraft(null)}><X size={20}/></button></div>
@@ -218,7 +218,7 @@ export default function ProRecurringExpenses({
         <label>Première échéance<ProDateTimeInput type="date" required value={draft.startDate} onChange={e => setDraft({ ...draft, startDate: e.target.value })}/></label>
         <label>Fin (facultatif)<ProDateTimeInput type="date" min={draft.startDate} value={draft.endDate} onChange={e => setDraft({ ...draft, endDate: e.target.value })}/></label>
       </div>
-      <p>La charge ne sera comptabilisée que lorsque vous confirmerez le paiement.</p>
+      <p>La charge ne sera comptabilisée que lorsque tu confirmeras le paiement.</p>
       <div className="pro-rexp-formbuttons">
         <button className="prosuite-btn secondary" type="button" onClick={() => setDraft(null)}>Annuler</button>
         <button className="prosuite-btn" disabled={busy} type="submit">{busy ? "Enregistrement…" : "Enregistrer la charge"}</button>

@@ -4,7 +4,7 @@ import { uid, euro, today, month, balance, addMonths, previousDate, type Account
 import type { InlineChoiceCreator, QuickCategoryDraft } from "../../InlineCategoryCreator";
 import { type PersonalTransaction, personalCashBalance, personalBalance, type PersonalRule, type PersonalDue, type PersonalBudget, type PersonalState } from "../../personal";
 import { Pencil, Trash2 } from "lucide-react";
-import { field, choice, amountField } from "../shared";
+import { field, choice, toggle, amountField } from "../shared";
 import type { WimmCore } from "../useWimmApp";
 import type { BaseActions } from "./base";
 import type { AccountActions } from "./accounts";
@@ -61,7 +61,7 @@ export function createPersonalActions(ctx: WimmCore & BaseActions & AccountActio
     if (!options.length) {
 
       setNotice(
-        "Créez d’abord une catégorie de budget dédiée à votre compte perso.",
+        "Crée d’abord une catégorie de budget dédiée à ton compte perso.",
       );
 
       navigate("budget");
@@ -72,7 +72,7 @@ export function createPersonalActions(ctx: WimmCore & BaseActions & AccountActio
 
     openForm(
       account
-        ? "Paramétrer mon compte perso"
+        ? "Modifier mon compte perso"
         : "Créer mon compte perso",
       [
         field(
@@ -269,10 +269,9 @@ export function createPersonalActions(ctx: WimmCore & BaseActions & AccountActio
             "none",
         ),
 
-        choice("paymentMethod","Moyen de paiement",[
-          ["bank","Compte bancaire"],
-          ...(personalCashBalance(ps)>0||existing?.paymentMethod==="cash" ? [["cash","Espèces"] as [string,string]] : []),
-        ],existing?.paymentMethod||"bank"),
+        ...(personalCashBalance(ps)>0||existing?.paymentMethod==="cash"
+          ? [toggle("paymentMethod","Payé avec",[["bank","Compte"],["cash","Espèces"]],existing?.paymentMethod||"bank")]
+          : []),
         field(
           "date",
           "Date",
@@ -357,7 +356,7 @@ export function createPersonalActions(ctx: WimmCore & BaseActions & AccountActio
             "Ajustement (€)",
             t.amount / 100,
             "number",
-            "Positif = ajoute au solde · négatif = retire du solde.",
+            "Positif pour ajouter au solde, négatif pour retirer.",
           ),
           step: "0.01",
         },
@@ -428,12 +427,13 @@ export function createPersonalActions(ctx: WimmCore & BaseActions & AccountActio
       [
         amountField(
           "balance",
-          "Solde réel constaté (€)",
+          "Solde réel (€)",
           currentBalance,
+          "Le solde affiché par ta banque aujourd’hui.",
         ),
         field(
           "reason",
-          "Motif",
+          "Description",
           "Correction du solde",
         ),
       ],
@@ -477,25 +477,25 @@ export function createPersonalActions(ctx: WimmCore & BaseActions & AccountActio
 
     const sources = s.accounts.filter(a => a.group === "current" && !a.archived);
     openForm(
-      "Ajouter de l'argent à mon compte perso",
+      "Ajouter de l’argent à mon compte perso",
       [
-        choice("origin", "Origine de l'argent", [
-          ["external", "Revenu ou versement personnel"],
-          ...(sources.length ? [["shared", "Virement supplémentaire depuis le foyer"] as [string, string]] : []),
+        (sources.length ? toggle : choice)("origin", "D’où vient l’argent ?", [
+          ["external", "Extérieur"],
+          ...(sources.length ? [["shared", "Foyer"] as [string, string]] : []),
         ], "external",
-          "Un versement personnel n'affecte pas le budget du foyer. Un virement du foyer débite le compte commun mais ne consomme pas votre enveloppe mensuelle."),
+          sources.length ? "Extérieur : un revenu à toi, sans effet sur le foyer. Foyer : un virement en plus depuis le compte commun, hors de ton budget perso du mois." : ""),
         {
           ...choice("sourceAccount", "Compte commun à débiter",
             sources.map(a => [a.id, a.name] as [string, string]),
             current?.id || sources[0]?.id || ""),
           showWhen: { field: "origin", values: ["shared"] },
         },
-        amountField("amount", "Montant à ajouter (€)", 0),
+        amountField("amount", "Montant (€)", 0),
         field("date", "Date de réception", today(), "date"),
-        field("description", "Motif", "Versement ponctuel"),
+        field("description", "Description", "Versement ponctuel"),
         {
-          ...choice("overdraft", "Autoriser un découvert du compte commun",
-            [["no", "Non"], ["yes", "Oui, je confirme"]], "no"),
+          ...toggle("overdraft", "Autoriser un découvert ?",
+            [["no", "Non"], ["yes", "Oui"]], "no", "Sur le compte commun, si le virement le fait passer sous zéro."),
           showWhen: { field: "origin", values: ["shared"] },
         },
       ],
@@ -503,16 +503,16 @@ export function createPersonalActions(ctx: WimmCore & BaseActions & AccountActio
         if (!personalOwnerId || !ps.account) throw Error("Compte personnel indisponible.");
         const amount = euro(v.amount);
         if (amount <= 0 || !Number.isSafeInteger(amount))
-          throw Error("Saisissez un montant strictement positif.");
+          throw Error("Le montant doit être supérieur à zéro.");
         if (!v.date || v.date > today() || v.date < ps.account.date)
           throw Error("La date doit être réelle et postérieure à la création du compte perso.");
 
         if (v.origin === "shared") {
           const source = s.accounts.find(a => a.id === v.sourceAccount && a.group === "current" && !a.archived);
           if (!source) throw Error("Compte courant commun introuvable.");
-          if (v.date < source.date) throw Error("Cette date précède l'ouverture du compte courant.");
+          if (v.date < source.date) throw Error("Cette date précède l’ouverture du compte courant.");
           if (balance(s, source.id, v.date) < amount && v.overdraft !== "yes")
-            throw Error("Le compte commun serait négatif après ce virement.");
+            throw Error("Le compte serait à découvert. Réduis le montant ou autorise le découvert.");
           const targetName = s.categories.find(cat => cat.id === ps.account!.category)?.name || "Compte perso";
           await change(d => {
             d.transactions.push({
@@ -540,25 +540,25 @@ export function createPersonalActions(ctx: WimmCore & BaseActions & AccountActio
           }, "Argent ajouté au compte perso");
         }
       },
-      "Ajouter l'argent",
+      "Ajouter l’argent",
     );
   }
 
   function editPersonalCash() {
     if(!ps.account)return;
     openForm("Espèces personnelles",[
-      amountField("cash","Montant disponible en espèces (€)",personalCashBalance(ps)),
-      choice("origin","Origine de la variation",[
-        ["external","Espèces déjà détenues / ajustement"],
-        ["bank","Retrait ou dépôt depuis le compte personnel"],
-      ],"external"),
+      amountField("cash","Espèces disponibles (€)",personalCashBalance(ps)),
+      toggle("origin","D’où vient la différence ?",[
+        ["external","Ajustement"],
+        ["bank","Retrait ou dépôt"],
+      ],"external","Retrait ou dépôt : l’argent passe entre ton compte perso et tes espèces."),
     ],async v=>{
       const target=euro(v.cash);
       if(target<0)throw Error("Le solde des espèces ne peut pas être négatif.");
       const delta=target-personalCashBalance(ps);
       if(!delta)return;
       if(v.origin==="bank" && delta>personalBalance(ps,s,personalOwnerId)-personalCashBalance(ps))
-        throw Error("Le compte bancaire personnel ne contient pas assez d'argent pour ce retrait.");
+        throw Error("Ton compte perso ne contient pas assez d’argent pour ce retrait.");
       await changePersonal(d=>{
         d.transactions.push({id:uid(),type:"adjust",cashTransfer:v.origin==="bank",amount:delta,
           paymentMethod:"cash",date:today(),
@@ -633,7 +633,7 @@ export function createPersonalActions(ctx: WimmCore & BaseActions & AccountActio
 
     openForm(
       rule
-        ? "Modifier les prochaines mensualités"
+        ? "Modifier les prochaines échéances"
         : "Paiement en plusieurs fois",
       [
         field(
@@ -666,11 +666,11 @@ export function createPersonalActions(ctx: WimmCore & BaseActions & AccountActio
             : today(),
           "date",
           paid.length
-            ? "Les mensualités déjà validées sont conservées."
+            ? "Les paiements déjà validés sont conservés."
             : "",
         ),
 
-        choice(
+        toggle(
           "interval",
           "Fréquence",
           [
@@ -716,7 +716,7 @@ export function createPersonalActions(ctx: WimmCore & BaseActions & AccountActio
           count > 1200
         )
           throw Error(
-            "Vérifiez le montant et le nombre de paiements.",
+            "Vérifie le montant et le nombre de paiements.",
           );
 
         const latestPaid =
@@ -727,7 +727,7 @@ export function createPersonalActions(ctx: WimmCore & BaseActions & AccountActio
           v.start <= latestPaid
         )
           throw Error(
-            "La nouvelle première échéance doit être postérieure aux mensualités déjà validées.",
+            "La nouvelle première échéance doit suivre les paiements déjà validés.",
           );
 
         await changePersonal(
@@ -830,7 +830,7 @@ export function createPersonalActions(ctx: WimmCore & BaseActions & AccountActio
       [
         amountField(
           "amount",
-          "Montant réellement payé (€)",
+          "Montant payé (€)",
           due.rule.amount,
         ),
         field(
@@ -854,7 +854,7 @@ export function createPersonalActions(ctx: WimmCore & BaseActions & AccountActio
           )
         )
           throw Error(
-            "Cette mensualité a déjà été validée.",
+            "Ce paiement a déjà été validé.",
           );
 
         await changePersonal(
@@ -870,7 +870,7 @@ export function createPersonalActions(ctx: WimmCore & BaseActions & AccountActio
               budgetId:
                 due.rule.budgetId,
             }),
-          "Mensualité perso validée",
+          "Paiement perso validé",
         );
 
       },
@@ -902,7 +902,7 @@ export function createPersonalActions(ctx: WimmCore & BaseActions & AccountActio
 
         amountField(
           "amount",
-          "Budget mensuel (€) — facultatif",
+          "Budget mensuel (€, facultatif)",
           item?.amount || 0,
         ),
 
@@ -917,7 +917,7 @@ export function createPersonalActions(ctx: WimmCore & BaseActions & AccountActio
         {
           ...field(
             "end",
-            "Jusqu’au mois (optionnel)",
+            "Jusqu’au mois (facultatif)",
             item?.end || "",
             "month",
           ),
@@ -1006,15 +1006,15 @@ export function createPersonalActions(ctx: WimmCore & BaseActions & AccountActio
           "amount",
           "Montant versé immédiatement (€)",
           50000,
-          "Cette somme quittera immédiatement le compte courant et sera ajoutée à votre compte perso.",
+          "Cette somme quittera immédiatement le compte courant et sera ajoutée à ton compte perso.",
         ),
         {
           ...field(
             "months",
-            "Nombre de mois pour l’imputer au budget",
+            "Sur combien de mois la déduire du budget",
             10,
             "number",
-            "Exemple : 500 € sur 10 mois = environ 50 € déduits chaque mois de votre enveloppe perso.",
+            "Exemple : 500 € sur 10 mois, soit environ 50 € déduits chaque mois de ton budget perso.",
           ),
           min: 1,
           max: 120,
@@ -1028,7 +1028,7 @@ export function createPersonalActions(ctx: WimmCore & BaseActions & AccountActio
         ),
         field(
           "startMonth",
-          "Première mensualité budgétaire",
+          "Premier mois déduit",
           month(),
           "month",
         ),
@@ -1065,7 +1065,7 @@ export function createPersonalActions(ctx: WimmCore & BaseActions & AccountActio
           months > 120
         )
           throw Error(
-            "Vérifiez le montant et le nombre de mois.",
+            "Vérifie le montant et le nombre de mois.",
           );
 
         if (
@@ -1073,7 +1073,7 @@ export function createPersonalActions(ctx: WimmCore & BaseActions & AccountActio
           month(v.date)
         )
           throw Error(
-            "La première mensualité ne peut pas être antérieure au mois du virement.",
+            "Le premier mois déduit ne peut pas précéder le mois du virement.",
           );
 
         if (
@@ -1085,7 +1085,7 @@ export function createPersonalActions(ctx: WimmCore & BaseActions & AccountActio
           v.overdraft !== "yes"
         )
           throw Error(
-            "Le compte courant serait négatif après cette avance.",
+            "Le compte serait à découvert. Réduis le montant ou autorise le découvert.",
           );
 
         await change(
@@ -1132,7 +1132,7 @@ export function createPersonalActions(ctx: WimmCore & BaseActions & AccountActio
 
     if (ps.account)
       throw Error(
-        "Vous avez déjà un compte perso privé.",
+        "Tu as déjà un compte perso privé.",
       );
 
     if (!a.personalCategory)
@@ -1173,7 +1173,7 @@ export function createPersonalActions(ctx: WimmCore & BaseActions & AccountActio
 
     if (unsupportedRule)
       throw Error(
-        `L’ancien compte contient l’échéancier « ${unsupportedRule.name} ». Supprimez ou modifiez-le avant la migration.`,
+        `L’ancien compte contient l’échéancier « ${unsupportedRule.name} ». Supprime ou modifie-le avant la migration.`,
       );
 
     const privateTx:
@@ -1384,7 +1384,7 @@ export function createPersonalActions(ctx: WimmCore & BaseActions & AccountActio
     confirmAction(
       "Supprimer ce mouvement ?",
       t.dueKey
-        ? "Cette mensualité sera retirée du compte perso et redeviendra à valider."
+        ? "Ce paiement sera retiré du compte perso et redeviendra à valider."
         : "Cette opération sera retirée de l’historique et son effet sur le solde sera annulé.",
       async () =>
         changePersonal(
@@ -1403,10 +1403,10 @@ export function createPersonalActions(ctx: WimmCore & BaseActions & AccountActio
       <div className="big-number">{positive ? "+" : "−"}{money(Math.abs(t.amount))}</div>
       <p>{dateLabel(t.date)}{t.date > today() ? " · À venir" : ""} · {budget?.name || "Sans catégorie"}</p>
       <p>{t.type === "expense"
-        ? "Dépense enregistrée sur votre compte personnel uniquement."
-        : "Ajustement de votre solde personnel."}</p>
+        ? "Dépense enregistrée sur ton compte personnel uniquement."
+        : "Ajustement de ton solde personnel."}</p>
       <details className="transaction-detail-options">
-        <summary>Actions sur l'opération</summary>
+        <summary>Actions sur l’opération</summary>
         <div className="transaction-detail-options-body">
           <button className="secondary compact" onClick={() => editPersonalHistoryTransaction(t)}>
             <Pencil size={15}/> Modifier

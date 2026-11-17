@@ -10,7 +10,7 @@ import SwipeActions from "../../SwipeActions";
 import TransactionQuickAssist from "../../TransactionQuickAssist";
 import { type Field, Row } from "../../ui";
 import { Pencil, CalendarDays, Plus, Trash2, ArrowLeftRight, ArrowDownLeft, ArrowUpRight, Check } from "lucide-react";
-import { amountField, field, choice } from "../shared";
+import { amountField, field, choice, toggle } from "../shared";
 import type { WimmCore } from "../useWimmApp";
 import type { BaseActions } from "./base";
 import type { AccountActions } from "./accounts";
@@ -54,7 +54,7 @@ export function createTransactionActions(ctx: WimmCore & BaseActions & AccountAc
       const used=new Set<string>();
       for(const draft of drafts){
         const key=draft.bankImportKey;
-        if(!key||used.has(key)||!eligible.has(key))throw Error("Une opération existe déjà dans Wimm. Actualisez la comparaison.");
+        if(!key||used.has(key)||!eligible.has(key))throw Error("Une opération existe déjà dans Wimm. Actualise la comparaison.");
         used.add(key);
         const row=eligible.get(key)!;
         if(draft.date!==row.date||draft.amount!==row.amount||draft.type!==row.type||
@@ -77,7 +77,7 @@ export function createTransactionActions(ctx: WimmCore & BaseActions & AccountAc
     openForm("Dupliquer une opération",[
       amountField("amount","Montant (€)",t.amount),
       field("date","Date",today(),"date"),
-      field("description","Libellé",t.description),
+      field("description","Description",t.description),
       choice("account","Compte",isExpense?expenseAccountOptions(t):accountOptions(),t.account),
       ...(isExpense?[choice("category","Catégorie",categories,t.category||categories[0]?.[0])]:[
         choice("incomeType","Type de revenu",[
@@ -87,7 +87,7 @@ export function createTransactionActions(ctx: WimmCore & BaseActions & AccountAc
       ]),
     ],async v=>{
       const amount=euro(v.amount);
-      if(amount<=0)throw Error("Montant invalide.");
+      if(amount<=0)throw Error("Le montant doit être supérieur à zéro.");
       if(isExpense)ensureCashPayment(v.account,amount);
       await change(d=>{
         const duplicate:Tx={
@@ -107,7 +107,7 @@ export function createTransactionActions(ctx: WimmCore & BaseActions & AccountAc
     const nextDate = pending[0] || today();
     const openingThisMonth = s.accounts.some(a => !a.archived && a.group === "current" && month(a.date) === month());
     if (!current || !categoryOptions.length) {
-      setNotice("Ajoutez d’abord un compte courant et une catégorie.");
+      setNotice("Ajoute d’abord un compte courant et une catégorie.");
       return;
     }
 
@@ -115,7 +115,7 @@ export function createTransactionActions(ctx: WimmCore & BaseActions & AccountAc
       rule
         ? "Modifier les prochaines échéances"
         : kind === "credit"
-          ? "Achat en plusieurs fois"
+          ? "Paiement en plusieurs fois"
           : "Nouvelle dépense fixe",
       [
         field("name", "Description", rule?.name),
@@ -143,7 +143,7 @@ export function createTransactionActions(ctx: WimmCore & BaseActions & AccountAc
           "date",
           "Les paiements déjà validés sont conservés.",
         ),
-        choice(
+        toggle(
           "interval",
           "Fréquence",
           [
@@ -156,16 +156,16 @@ export function createTransactionActions(ctx: WimmCore & BaseActions & AccountAc
         // Première installation : la banque ne suit pas toujours la date prévue.
         ...(!rule && kind !== "credit" && openingThisMonth
   ? [
-      choice(
+      toggle(
         "openingPaid",
         "Déjà prélevé en " + monthLabel(month()).split(" ")[0] + " ?",
         [
-          ["auto", "Selon la date d’échéance"],
-          ["yes", "Oui, déjà passé sur le compte"],
+          ["auto", "Selon la date"],
+          ["yes", "Oui"],
           ["no", "Pas encore"],
         ],
         "auto",
-        "Concerne l’échéance de ce mois : si elle est déjà passée, elle est comprise dans ton solde de départ.",
+        "Pour l’échéance de ce mois. Si elle est déjà passée sur ton compte, elle est comprise dans ton solde de départ.",
       ),
     ]
   : []),
@@ -174,7 +174,7 @@ export function createTransactionActions(ctx: WimmCore & BaseActions & AccountAc
       {
         ...field(
           "count",
-          "Nombre de mensualités",
+          "Nombre de paiements",
           rule ? (rule.count ? pending.length : 0) : 3,
           "number",
         ),
@@ -216,7 +216,7 @@ export function createTransactionActions(ctx: WimmCore & BaseActions & AccountAc
   function deleteCreditPlan(rule: Rule) {
     confirmAction(
       "Supprimer « " + rule.name + " » ?",
-      "Cet échéancier et ses prochaines mensualités seront supprimés. Les paiements déjà validés restent dans l’historique et ne seront pas recrédités.",
+      "Cet échéancier et ses prochaines échéances seront supprimés. Les paiements déjà validés restent dans l’historique et ne seront pas recrédités.",
       async () => change(d => {
         removeCreditPlan(d, rule.id);
       }, "Échéancier supprimé"),
@@ -237,7 +237,7 @@ export function createTransactionActions(ctx: WimmCore & BaseActions & AccountAc
           "amount",
           isFuture
             ? "Montant prévu (€)"
-            : "Montant réellement payé (€)",
+            : "Montant payé (€)",
           due.rule.amount,
         ),
         field(
@@ -248,7 +248,7 @@ export function createTransactionActions(ctx: WimmCore & BaseActions & AccountAc
           due.date,
           "date",
           isFuture
-            ? "Le montant ne sera déduit du solde qu'à cette date."
+            ? "Le montant ne sera déduit du solde qu’à cette date."
             : "",
         ),
         field(
@@ -634,7 +634,7 @@ export function createTransactionActions(ctx: WimmCore & BaseActions & AccountAc
 
     const fields: Field[] = [
 
-      choice(
+      toggle(
         "expenseKind",
         "Type de dépense",
         [
@@ -644,11 +644,11 @@ export function createTransactionActions(ctx: WimmCore & BaseActions & AccountAc
           ],
           [
             "fixed",
-            "Fixe / récurrente",
+            "Fixe",
           ],
           [
             "credit",
-            "En plusieurs fois",
+            "Plusieurs fois",
           ],
         ],
         "once",
@@ -757,7 +757,7 @@ export function createTransactionActions(ctx: WimmCore & BaseActions & AccountAc
        * Fréquence
        */
       {
-        ...choice(
+        ...toggle(
           "interval",
           "Fréquence",
           [
@@ -966,13 +966,13 @@ export function createTransactionActions(ctx: WimmCore & BaseActions & AccountAc
       [
         amountField(
           "amount",
-          "Montant réellement reçu (€)",
+          "Montant reçu (€)",
           s.income,
-          "Vous pouvez remplacer l'estimation par le montant exact reçu.",
+          "Tu peux remplacer l’estimation par le montant exact reçu.",
         ),
         field(
           "date",
-          "Date réelle de réception",
+          "Date de réception",
           plannedDate,
           "date",
         ),
@@ -1019,16 +1019,17 @@ export function createTransactionActions(ctx: WimmCore & BaseActions & AccountAc
     openForm(
       "Prêter de l’argent",
       [
-        field("name", "Personne / description"),
+        field("name", "Description", "", "text", "Par exemple le nom de la personne."),
         amountField("amount", "Montant prêté (€)"),
         field("date", "Date du prêt", today(), "date"),
         choice("account", "Compte débité", accountOptions(), current.id),
         {
           ...field(
             "count",
-            "Nombre de remboursements — 0 = sans échéancier",
+            "Nombre de remboursements (facultatif)",
             0,
             "number",
+            "Laisse vide si la personne te rembourse librement.",
           ),
           step: "1",
           min: 0,
@@ -1123,7 +1124,7 @@ export function createTransactionActions(ctx: WimmCore & BaseActions & AccountAc
       async () => change(d => {
         if (t.type === "loan") {
           if (d.transactions.some(x => x.type === "repay" && x.loanId === t.loanId))
-            throw Error("Supprimez d'abord les remboursements de ce prêt.");
+            throw Error("Supprime d’abord les remboursements de ce prêt.");
           d.loans = d.loans.filter(l => l.id !== t.loanId);
           d.rules = d.rules.filter(r => r.loanId !== t.loanId);
         }
@@ -1154,7 +1155,7 @@ export function createTransactionActions(ctx: WimmCore & BaseActions & AccountAc
           : t.type === "repay" ? "Ajouté au compte et déduit du restant à récupérer."
           : "Ajouté au compte."}</p>
       <details className="transaction-detail-options">
-        <summary>Actions sur l'opération</summary>
+        <summary>Actions sur l’opération</summary>
         <div className="transaction-detail-options-body">
           {isEditable && (
             <button className="secondary compact" onClick={() => operation(t.type, t.trip ? s.trips.find(v => v.id === t.trip) : undefined, t)}>
@@ -1163,18 +1164,18 @@ export function createTransactionActions(ctx: WimmCore & BaseActions & AccountAc
           )}
           {isPersonalBudgetExpense(t) && (
             <button className="secondary compact" onClick={() =>
-              openForm("Mois budgétaire du virement perso", [
-                field("budgetMonth", "Imputer ce virement au budget du mois",
+              openForm("Mois du virement perso", [
+                field("budgetMonth", "Mois du budget concerné",
                   t.personalStartMonth || month(t.date), "month",
                   "Ne change pas la date bancaire ni le solde actuel du compte."),
               ], async v => {
                 if (!/^\d{4}-\d{2}$/.test(v.budgetMonth))
-                  throw Error("Mois budgétaire invalide.");
+                  throw Error("Choisis un mois valide.");
                 await change(d => {
                   const transaction = d.transactions.find(x => x.id === t.id);
                   if (!transaction) throw Error("Virement introuvable.");
                   transaction.personalStartMonth = v.budgetMonth;
-                }, "Mois budgétaire du virement personnel modifié");
+                }, "Mois du virement perso modifié");
               }, "Changer le mois")
             }>
               <CalendarDays size={15}/> Changer le mois budgétaire

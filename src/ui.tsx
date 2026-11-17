@@ -8,6 +8,8 @@ export type Field = {
   type?: string;
   value?: string | number;
   options?: [string, string][];
+  // Deux ou trois choix courts affichés en boutons côte à côte.
+  segmented?: boolean;
   hint?: string;
   required?: boolean;
   min?: number;
@@ -170,7 +172,7 @@ export function Form({
           setError(
             e instanceof Error
               ? e.message
-              : "Impossible d’enregistrer. Réessayez.",
+              : "Impossible d’enregistrer. Réessaie.",
           );
         } finally {
           setBusy(false);
@@ -189,6 +191,18 @@ export function Form({
                 onClick={() => setValues(current => ({ ...current, [f.name]: value }))}>
                 <span className="emoji-picker-glyph" aria-hidden="true"><CategoryGlyph icon={value} size={22} /></span>
               </button>)}
+            </div>
+            {f.hint && <small>{f.hint}</small>}
+          </div>
+        ) : f.options && f.segmented ? (
+          // Deux ou trois choix courts : boutons côte à côte, comme à l'installation.
+          <div className="field">
+            <span id={"seg-" + f.name}>{f.label}</span>
+            <input type="hidden" name={f.name} value={f.options.some(([v]) => v === values[f.name]) ? values[f.name] : f.options[0][0]} />
+            <div className="field-segmented" role="group" aria-labelledby={"seg-" + f.name}>
+              {f.options.map(([v, l], i) => <button key={v} type="button"
+                aria-pressed={f.options!.some(([x]) => x === values[f.name]) ? values[f.name] === v : i === 0}
+                onClick={() => updateValue(f.name, v)}>{l}</button>)}
             </div>
             {f.hint && <small>{f.hint}</small>}
           </div>

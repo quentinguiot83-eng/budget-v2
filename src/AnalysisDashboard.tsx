@@ -112,16 +112,16 @@ export default function AnalysisDashboard({ state, selectedMonth }: { state: Sta
     <section className="card analysis-range-card">
       <div className="section-head">
         <div className="block-title">
-          <h2>Votre période d’analyse</h2>
+          <h2>Ta période d’analyse</h2>
           <BlockInfo title="Comment fonctionne l’analyse ?">
             <p>Les montants analysés suivent la date réelle des opérations. Les dépenses personnelles réalisées depuis un compte privé sont exclues ; les virements de financement depuis le compte commun sont pris en compte une seule fois.</p>
-            <p>Les voyages sont séparés par défaut. Activez « Inclure les voyages » pour les faire entrer dans les graphiques et les dépenses analysées.</p>
+            <p>Les voyages sont séparés par défaut. Active « Inclure les voyages » pour les faire entrer dans les graphiques et les dépenses analysées.</p>
             <p>Les prévisions budgétaires restent mensuelles. Leur tableau est accessible pour les périodes couvrant des mois complets (ou le mois en cours à date), mais jamais proratisé artificiellement pour une sélection de quelques jours.</p>
           </BlockInfo>
         </div>
         <CalendarDays size={19} className="analysis-range-icon" />
       </div>
-      <div className="analysis-period-options" role="group" aria-label="Période d'analyse">
+      <div className="analysis-period-options" role="group" aria-label="Période d’analyse">
         {modes.map(option => <button type="button" key={option.id}
           className={mode === option.id ? "active" : ""}
           aria-pressed={mode === option.id}
@@ -161,7 +161,7 @@ export default function AnalysisDashboard({ state, selectedMonth }: { state: Sta
           <div className="block-title"><h2>En un coup d’œil</h2>
             <BlockInfo title="Montants analysés">
               <p>Ce bilan regroupe les opérations du foyer datées dans la période. Les dépenses fixes sont distinguées des variables, et les transferts d’épargne ne sont pas comptés comme des achats.</p>
-              <p>Les virements finançant un budget personnel sont comptés comme une utilisation de l’enveloppe du foyer. Les achats privés restent confidentiels.</p>
+              <p>Les virements finançant un budget personnel sont comptés comme une utilisation du budget du foyer. Les achats privés restent confidentiels.</p>
             </BlockInfo></div>
         </div>
         <div className="analysis-primary-metric">
@@ -341,7 +341,7 @@ export default function AnalysisDashboard({ state, selectedMonth }: { state: Sta
           </div>
         </details>
       </section>
-      <p className="analysis-footer-note muted">Analyse basée sur les opérations renseignées dans Wimm. Aucun accès automatique à vos relevés bancaires.</p>
+      <p className="analysis-footer-note muted">Analyse basée sur les opérations renseignées dans Wimm. Aucun accès automatique à tes relevés bancaires.</p>
     </>}
   </div>;
 }

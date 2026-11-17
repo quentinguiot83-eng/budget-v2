@@ -200,7 +200,7 @@ export default function GuidedJourney({
       setStepId(candidate.id);
       setPracticing(false);setPaused(false);
       if(route!==candidate.route)navigate(candidate.route);
-    }catch(e){setError(e instanceof Error?e.message:"Impossible d'enregistrer votre progression.");}
+    }catch(e){setError(e instanceof Error?e.message:"Impossible d’enregistrer ta progression.");}
     finally{setBusy(false);}
   }
   if(!active)return null;
@@ -212,7 +212,7 @@ export default function GuidedJourney({
         setPaused(false);setPracticing(false);
         if(route!==stage.route)navigate(stage.route);
       }}><Play size={15}/> Reprendre</button>
-      {practicing&&<button type="button" onClick={()=>void setStep(index+1)}>J'ai compris <ArrowRight size={15}/></button>}
+      {practicing&&<button type="button" onClick={()=>void setStep(index+1)}>J’ai compris <ArrowRight size={15}/></button>}
     </div>;
   }
   const nav=geometry.nav,focus=geometry.focus;

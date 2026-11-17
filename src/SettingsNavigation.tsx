@@ -29,9 +29,9 @@ const groups: SettingsGroup[] = [
     ],
   },
   {
-    id: "personnalisation", title: "Personnalisation", description: "Adapter Wimm à vos préférences", icon: Palette,
+    id: "personnalisation", title: "Personnalisation", description: "Adapter Wimm à tes préférences", icon: Palette,
     items: [
-      { id: "apparence", title: "Apparence", description: "Mode d'affichage et couleur", icon: Palette },
+      { id: "apparence", title: "Apparence", description: "Mode d’affichage et couleur", icon: Palette },
       { id: "notifications", title: "Notifications", description: "Alertes, préférences et tests", icon: Bell },
       { id: "rubriques", title: "Rubriques affichées", description: "Choisir les espaces visibles", icon: LayoutGrid },
     ],
@@ -50,15 +50,15 @@ const groups: SettingsGroup[] = [
     items: [
       { id: "sauvegardes", title: "Protection et sauvegardes", description: "Exporter les données JSON et CSV", icon: Download },
       { id: "historique", title: "Historique et restauration", description: "Versions du foyer et privées", icon: History },
-      { id: "confidentialite", title: "Confidentialité et sécurité", description: "Comprendre l'accès à vos données", icon: LockKeyhole },
+      { id: "confidentialite", title: "Confidentialité et sécurité", description: "Comprendre l’accès à tes données", icon: LockKeyhole },
       { id: "reset", title: "Réinitialisation", description: "Actions de remise à zéro", icon: RotateCcw },
     ],
   },
   {
     id: "aide", title: "Aide et informations", description: "Découvrir et comprendre Wimm", icon: CircleHelp,
     items: [
-      { id: "tutoriel", title: "Centre d'apprentissage", description: "13 chapitres et découverte rapide", icon: BookOpen },
-      { id: "apropos", title: "À propos de Wimm", description: "Version et informations sur l'application", icon: Info },
+      { id: "tutoriel", title: "Centre d’apprentissage", description: "13 chapitres et découverte rapide", icon: BookOpen },
+      { id: "apropos", title: "À propos de Wimm", description: "Version et informations sur l’application", icon: Info },
     ],
   },
 ];

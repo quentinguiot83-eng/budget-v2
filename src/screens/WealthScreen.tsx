@@ -62,8 +62,8 @@ export default function WealthScreen({ view }: { view: WimmView }) {
               }>Historique</button>
               <button type="button" className="ws-pill" onClick={() =>
                 openForm("Ajuster le solde", [
-                  field("balance", "Solde réel constaté (€)", balance(s, a.id) / 100, "number"),
-                  field("reason", "Motif de l’ajustement"),
+                  field("balance", "Solde réel (€)", balance(s, a.id) / 100, "number"),
+                  field("reason", "Description", "Correction du solde"),
                 ], async (v) => change((d) => d.transactions.push({
                   id: uid(),
                   type: "adjust",
@@ -94,7 +94,7 @@ export default function WealthScreen({ view }: { view: WimmView }) {
           <span className="ws-muted">Patrimoine</span>
           <button type="button" className="ws-info" aria-label="Comprendre le patrimoine hors voyages"
             onClick={() => explain("Patrimoine hors voyage", <>
-              <p>Vos comptes courants et vos placements, sans les comptes réservés aux voyages. Chaque compte est compté une seule fois.</p>
+              <p>Tes comptes courants et tes placements, sans les comptes réservés aux voyages. Chaque compte est compté une seule fois.</p>
               <Row title="Épargne et placements" value={money(wealth)}/>
               <Row title="Comptes courants" value={money(currentBalance)}/>
               <Row title="Épargne voyage exclue" value={money(travelBalance)}/>
@@ -129,7 +129,7 @@ export default function WealthScreen({ view }: { view: WimmView }) {
             </div>
           );
         })}
-        {!activeHouseholdAccounts.length && <p className="ws-muted ws-empty">Aucun compte disponible. Ajoutez votre premier compte.</p>}
+        {!activeHouseholdAccounts.length && <p className="ws-muted ws-empty">Aucun compte disponible. Ajoute ton premier compte.</p>}
         <div className="ws-account-tools">
           <button type="button" className="ws-link" data-tour="wealth-reconcile" onClick={reconcileHouseholdAccounts}>
             <RefreshCw size={16} aria-hidden="true"/>Mettre à jour mes soldes
@@ -161,7 +161,7 @@ export default function WealthScreen({ view }: { view: WimmView }) {
         <button type="button" className="ws-row" data-tour="wealth-projection" onClick={() => navigate("projection")}>
           <span className="ws-icon-tile" aria-hidden="true"><Target size={20}/></span>
           <span className="ws-row-main"><span className="ws-row-title">Voir les projections</span>
-            <span className="ws-row-sub">L’évolution de votre patrimoine et vos projets</span></span>
+            <span className="ws-row-sub">L’évolution de ton patrimoine et tes projets</span></span>
           <ChevronRight size={18} className="ws-chevron" aria-hidden="true"/>
         </button>
       </section>
