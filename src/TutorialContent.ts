@@ -37,9 +37,9 @@ export const TUTORIAL_CHAPTERS: TourChapter[] = [
   ] },
   { id: "budget", title: "Budget", description: "Catégories, dépenses et analyses", steps: [
     s("budget", "[data-tour='budget-summary']", "Ton budget mensuel", "Les dépenses fixes et variables sont regroupées ici."),
-    s("budget", ".budget-add-category", "Créer une catégorie", "Touche ce bouton pour créer une catégorie et fixer son budget.", true, "category"),
-    s("budget", "[data-tour='budget-categories'] .budget-clickable", "Voir ses dépenses", "Touche un budget pour afficher ses dépenses du mois sélectionné.", true),
-    s("budget", ".budget-quick-links button:nth-child(1)", "Tes charges fixes", "Touche Fixes pour accéder aux dépenses et abonnements programmés.", true),
+    s("budget", "[data-tour='budget-add-category']", "Créer une catégorie", "Touche ce bouton pour créer une catégorie et fixer son budget.", true, "category"),
+    s("budget", "[data-tour='budget-categories'] [data-budget-category]", "Voir ses dépenses", "Touche un budget pour afficher ses dépenses du mois sélectionné.", true),
+    s("budget", "[data-tour='budget-tools'] button:nth-child(1)", "Tes charges fixes", "Touche Fixes pour accéder aux dépenses et abonnements programmés.", true),
     s("fixed", ".page-remaining-summary-fixed", "Prévoir les dépenses fixes", "Les échéances trimestrielles et annuelles ne comptent que dans leur mois prévu."),
     s("calendar", ".calendar-grid", "Ton calendrier", "Retrouve les échéances à venir et valide-les lorsqu'elles sont réellement débitées."),
     s("transactions", ".transaction-search-top", "Tes transactions", "Cherche une opération et filtre-la par catégorie, date ou montant."),
