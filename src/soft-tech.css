@@ -455,51 +455,6 @@ button.block-info:focus-visible { outline: 2px solid currentColor; outline-offse
 }
 
 /* Résumés déplacés depuis l'accueil vers les pages auxquelles ils appartiennent. */
-.page-remaining-summary {
-  padding: 24px;
-  border: 1px solid color-mix(in srgb, var(--accent-deep) 22%, var(--border));
-  border-radius: 24px;
-  background: linear-gradient(115deg, var(--accent-soft), var(--surface) 78%);
-  box-shadow: var(--soft-shadow);
-  min-width: 0;
-}
-.page-remaining-heading,
-.page-remaining-main,
-.page-remaining-foot {
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
-}
-.page-remaining-heading { align-items: center; }
-.page-remaining-heading .block-title {
-  font-size: .98rem;
-  font-weight: 750;
-  color: var(--ink);
-}
-.page-remaining-period {
-  color: var(--muted);
-  font-size: .77rem;
-  white-space: nowrap;
-}
-.page-remaining-main { align-items: baseline; flex-wrap: wrap; margin-top: 13px; }
-.page-remaining-main strong {
-  font: 850 clamp(1.75rem, 3.2vw, 2.2rem)/1.15 Manrope, sans-serif;
-  color: var(--ink);
-  letter-spacing: -.05em;
-  font-variant-numeric: tabular-nums;
-}
-.page-remaining-main strong.negative { color: #b25c55; }
-.page-remaining-main .muted { font-size: .8rem; }
-.page-remaining-summary .progress { margin: 17px 0 9px; height: 8px; }
-.page-remaining-foot { color: var(--muted); font-size: .75rem; }
-.page-remaining-foot span:last-child { font-weight: 750; color: var(--accent-deep); }
-:root[data-mode="dark"] .page-remaining-main strong.negative { color: #ffb6a9; }
-@media (max-width: 560px) {
-  .page-remaining-summary { padding: 20px; }
-  .page-remaining-heading { align-items: flex-start; }
-  .page-remaining-heading .block-title { min-width: 0; }
-  .page-remaining-period { font-size: .72rem; }
-}
 
 
 /* Cartes des enveloppes personnelles : l'essentiel d'abord, détails à la demande. */
@@ -625,9 +580,6 @@ button.block-info:focus-visible { outline: 2px solid currentColor; outline-offse
 }
 
 /* Point d'entrée Analyse : présent, mais sans quatrième grosse tuile. */
-.transaction-period-simple { display: flex; align-items: end; gap: 12px; flex-wrap: wrap; }
-.transaction-period-simple > .field { flex: 1 1 190px; min-width: 0; }
-.transaction-period-simple > .text { margin-inline-start: auto; }
 
 /* Wimm 2026 • Soft Fintech Pastel — identité harmonisée.
    Couleurs fonctionnelles constantes; le thème utilisateur continue à piloter les actions. */
@@ -693,9 +645,7 @@ body, #root { background: var(--soft-canvas); }
 .transaction-search-results .row-icon {
   background: var(--wimm-blue-wash); color: var(--wimm-blue);
 }
-.transaction-search-period select { background: var(--wimm-mint-wash); }
 .rule-row, .due, .transaction-search-results .row { border-color: color-mix(in srgb, var(--border) 86%, var(--wimm-blue) 5%); }
-.page-remaining-summary-fixed { background: linear-gradient(117deg, var(--wimm-mint-wash), var(--surface)); }
 .add-card { box-shadow: var(--wimm-card-shadow); }
 .add-card:nth-of-type(3n+1) { background: var(--wimm-blue-wash); }
 .add-card:nth-of-type(3n+2) { background: var(--wimm-mint-wash); }

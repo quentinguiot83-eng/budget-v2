@@ -1950,16 +1950,6 @@ html:root body #root {
 :root[data-mode="dark"] .app .tutorial-learning-hub .tutorial-learning-icon {
   background: color-mix(in srgb,var(--aurora-tone) 20%,#374044) !important;
 }
-:root:not([data-mode="dark"]) .app .transaction-search-period select {
-  background: color-mix(in srgb,var(--aurora-tone) 9%,#fff) !important;
-  color: var(--ink) !important;
-  border-color: var(--border) !important;
-}
-:root[data-mode="dark"] .app .transaction-search-period select {
-  background: color-mix(in srgb,var(--aurora-tone) 13%,#333c41) !important;
-  color: var(--ink) !important;
-  border-color: rgba(224,234,229,.17) !important;
-}
 /* The current date belongs to the selected theme (not permanent green).
    Other date states and payment/alert colors stay intact. */
 :root:not([data-mode="dark"]) .app .calendar-grid .day.today {
@@ -2057,16 +2047,6 @@ html:root body #root {
 }
 
 /* Fixed charges are informational, not income: remove permanent green glass. */
-:root:not([data-mode="dark"]) .app .page-remaining-summary-fixed {
-  background: linear-gradient(133deg,rgba(255,255,255,.91),rgba(255,255,255,.73)) !important;
-  border: 1px solid rgba(255,255,255,.88) !important;
-  box-shadow: 0 12px 29px rgba(41,55,63,.08),inset 0 1px 0 rgba(255,255,255,.94) !important;
-}
-:root[data-mode="dark"] .app .page-remaining-summary-fixed {
-  background: linear-gradient(134deg,#323b40,#2c353a) !important;
-  border: 1px solid rgba(221,232,228,.15) !important;
-  box-shadow: 0 12px 29px rgba(0,0,0,.14),inset 0 1px 0 rgba(255,255,255,.09) !important;
-}
 /* Montant disponible : vert s'il est positif, rouge s'il est négatif.
    Cette information financière reste indépendante de la couleur du thème. */
 :root { --wimm-available-positive: #287c55; }

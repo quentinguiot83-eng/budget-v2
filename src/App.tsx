@@ -545,7 +545,7 @@ export default function App() {
           )}
           {route === "trips" && <ProjectsScreen view={view} />}
           {route === "transactions" && (
-            <TransactionSearch initialType={txFilter} initialCategory={txCategoryFilter} state={s} month={selectedMonth} setMonth={setMonth} add={() => navigate("add")} rows={txRows}
+            <TransactionSearch initialType={txFilter} initialCategory={txCategoryFilter} state={s} month={selectedMonth} setMonth={setMonth} rows={txRows}
               reconciliationOpen={showTransactionReconciliation}
               toggleReconciliation={() => setShowTransactionReconciliation(open => !open)}
               reconciliation={<BankReconciliation state={s} onImport={importBankDrafts}/>}
