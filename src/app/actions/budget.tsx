@@ -539,24 +539,6 @@ export function createBudgetActions(ctx: WimmCore & BaseActions & AccountActions
             ? envelope.available
             : fixed + variable;
 
-        const fixedPaid =
-          totals.tx
-            .filter(
-              (t) =>
-                t.type ===
-                  "expense" &&
-                t.category ===
-                  c.id &&
-                t.fixed &&
-                !t.trip,
-            )
-            .reduce(
-              (n, t) =>
-                n +
-                t.amount,
-              0,
-            );
-
         const displaySpent =
           (variableOnly || historicalVariableOnly)
             ? categoryVariableSpent(c)
@@ -571,6 +553,8 @@ export function createBudgetActions(ctx: WimmCore & BaseActions & AccountActions
           ? Math.round(Math.max(0, displaySpent) / displayBudget * 100)
           : 0;
 
+        const over = displayBudget > 0 && displaySpent > displayBudget;
+        const expanded = !!expandedPersonalBudgets[c.id];
         return (
           <SwipeActions key={c.id} label={c.name} className="budget-swipe-row"
             actions={simple ? [] : [
@@ -579,7 +563,8 @@ export function createBudgetActions(ctx: WimmCore & BaseActions & AccountActions
                 tone: "danger" as const, onClick: () => archiveBudgetCategory(c) }] : []),
             ]}>
           <article
-            className={`category${simple ? " category-compact" : ""}${isPersonal && !simple ? " category-personal" : ""}${displayBudget > 0 && displaySpent >= displayBudget ? " category-limit" : ""}${!simple ? " budget-clickable" : ""}`}
+            data-budget-category={c.id}
+            className={`ws-budget-item${over ? " is-over" : ""}`}
             tabIndex={simple ? undefined : 0}
             aria-label={simple ? undefined : "Voir les dépenses de " + c.name + " en " + monthLabel(selectedMonth)}
             onClick={event => {
@@ -592,73 +577,51 @@ export function createBudgetActions(ctx: WimmCore & BaseActions & AccountActions
               }
             }}
           >
-
-            <div className="flex">
-
-              <span className="category-icon">
-                <CategoryGlyph icon={c.icon} />
-              </span>
-
-              <div className="grow">
-
-                <strong>
-                  {totals.forecast?.categories.find(x => x.id === c.id)?.name ?? c.name}
-                </strong>
-
-                {isPersonal && !simple ? (
-                  <p className="personal-budget-month">
-                    <span className="muted">Budget du mois</span>
-                    <strong>{money(envelope?.base ?? variable)}</strong>
-                  </p>
-                ) : (
-                  <>
-                    <p>
-                      {money(displaySpent)}{" "}
-                      <span className="muted">/ {money(displayBudget)}</span>
-                    </p>
-                    {totals.forecast && <small className="muted">{totals.forecast.fixedCategories ? "Budget prévu figé" : "Budget variable figé"}</small>}
-                    {isPersonal && (
-                      <small className="muted">
-                        {isMine ? "Votre budget personnel" :
-                          c.personalOwner ? "Budget personnel du foyer" : "Ancien compte perso à migrer"}
-                      </small>
-                    )}
-                  </>
+            <div className="ws-budget-item-head">
+              <span className="ws-icon-tile" aria-hidden="true"><CategoryGlyph icon={c.icon} /></span>
+              <span className="ws-row-main">
+                <span className="ws-row-title">{totals.forecast?.categories.find(x => x.id === c.id)?.name ?? c.name}</span>
+                {isPersonal && (
+                  <span className="ws-row-sub">
+                    {isMine ? "Votre budget personnel" : c.personalOwner ? "Budget personnel du foyer" : "Ancien compte perso à migrer"}
+                  </span>
                 )}
-
-              </div>
-
-              {simple && (
-                <span className={`category-percent${budgetProgress >= 100 ? " category-percent-limit" : ""}`} aria-label={`${budgetProgress} pour cent du budget utilisé`}>
-                  {budgetProgress} %
+                {totals.forecast && <span className="ws-row-sub">{totals.forecast.fixedCategories ? "Budget prévu figé" : "Budget variable figé"}</span>}
+              </span>
+              {simple ? (
+                <span className="ws-muted" aria-label={`${budgetProgress} pour cent du budget utilisé`}>{budgetProgress} %</span>
+              ) : isPersonal ? (
+                <span className="ws-row-end">
+                  <span className="ws-amount">{money(envelope?.base ?? variable)}</span>
+                  <button type="button" className="ws-icon-button"
+                    aria-label={expanded ? "Masquer les détails de " + c.name : "Afficher les détails de " + c.name}
+                    aria-expanded={expanded}
+                    aria-controls={"personal-budget-details-" + c.id}
+                    onClick={() => setExpandedPersonalBudgets(prev => ({ ...prev, [c.id]: !prev[c.id] }))}>
+                    {expanded ? <Minus size={18} /> : <Plus size={18} />}
+                  </button>
                 </span>
-              )}
-
-              {!simple && isPersonal && (
-                <div className="personal-budget-actions">
-                  {isPersonal && (
-                    <button type="button" className="icon personal-budget-toggle"
-                      aria-label={expandedPersonalBudgets[c.id]
-                        ? "Masquer les détails de " + c.name
-                        : "Afficher les détails de " + c.name}
-                      aria-expanded={!!expandedPersonalBudgets[c.id]}
-                      aria-controls={"personal-budget-details-" + c.id}
-                      onClick={() => setExpandedPersonalBudgets(prev => ({
-                        ...prev, [c.id]: !prev[c.id],
-                      }))}>
-                      {expandedPersonalBudgets[c.id] ? <Minus size={19} /> : <Plus size={19} />}
-                    </button>
-                  )}
-                </div>
-              )}
-
+              ) : null}
             </div>
 
-            {(!isPersonal || simple || expandedPersonalBudgets[c.id]) && (
-              <Progress value={displaySpent} max={Math.max(1, displayBudget)} />
+            {(!isPersonal || simple || expanded) && (
+              <span className={`ws-progress is-thin${over ? " is-over" : ""}`} aria-hidden="true">
+                <span style={{ width: Math.min(100, budgetProgress) + "%" }} />
+              </span>
             )}
 
-            {!simple && !totals.forecast && envelope && isPersonal && expandedPersonalBudgets[c.id] ? (
+            {!simple && !isPersonal && (
+              <span className="ws-budget-foot">
+                <span className={`ws-muted${over ? " ws-negative" : ""}`}>
+                  {over ? "Dépassé de " + money(displaySpent - displayBudget) : "Reste " + money(Math.max(0, displayBudget - displaySpent))}
+                </span>
+                <span className="ws-muted ws-budget-amount">
+                  <strong className="ws-amount">{money(displaySpent)}</strong> / {money(displayBudget)}
+                </span>
+              </span>
+            )}
+
+            {!simple && !totals.forecast && envelope && isPersonal && expanded ? (
               <div className="personal-budget-details" id={"personal-budget-details-" + c.id}>
                 <small className="muted">Budget personnel du foyer · {monthLabel(selectedMonth)}</small>
 
@@ -718,56 +681,7 @@ export function createBudgetActions(ctx: WimmCore & BaseActions & AccountActions
                   </small>
                 )}
               </div>
-            ) : !simple && !isPersonal ? (
-              <>
-
-                {(fixed > 0 || variable > 0) && (
-                  <div className="split meta">
-
-                    {fixed > 0 && (
-                      <span>
-                        Fixe :{" "}
-                        {money(
-                          fixedPaid,
-                        )}{" "}
-                        / {money(fixed)}
-                      </span>
-                    )}
-
-                    {variable > 0 && (
-                      <span>
-                        Variable :{" "}
-                        {money(
-                          Math.max(
-                            0,
-                            spent -
-                              fixedPaid,
-                          ),
-                        )}{" "}
-                        /{" "}
-                        {money(
-                          variable,
-                        )}
-                      </span>
-                    )}
-
-                  </div>
-                )}
-
-                <div className="split">
-                  <small className={displaySpent > displayBudget ? "negative" : ""}>
-                    {displaySpent > displayBudget
-                      ? "Dépassé de " + money(displaySpent - displayBudget)
-                      : money(displayBudget - displaySpent) + " restants"}
-                  </small>
-
-
-
-                </div>
-
-              </>
             ) : null}
-
           </article>
           </SwipeActions>
         );

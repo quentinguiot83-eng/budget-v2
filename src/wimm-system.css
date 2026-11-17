@@ -174,3 +174,34 @@
 }
 .app .ws-split > * + * { border-left: 1px solid var(--border); }
 .app .ws-split > button { cursor: pointer; }
+
+/* Rangée de raccourcis (outils d'un écran). */
+.app .ws-pill-row { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 8px; }
+.app .ws-pill-row > .ws-pill { justify-content: center; padding: 0 6px; }
+
+/* État vide d'une liste. */
+.app .ws-empty { display: flex; flex-direction: column; gap: 8px; align-items: flex-start; padding: 12px 0 16px; }
+
+/* Budget : résumé du mois et lignes de catégories. */
+.app .ws-budget-planned { color: var(--muted); }
+.app .ws-budget-split { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin-top: 8px; }
+.app .ws-budget-split > div { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.app .ws-budget-split .ws-amount, .app .ws-budget-amount .ws-amount { color: var(--ink); }
+.app .ws-budget-list > .swipe-actions { border-bottom: 1px solid var(--border); min-width: 0; }
+.app .ws-budget-list > .swipe-actions:last-of-type { border-bottom: 0; }
+.app .ws-budget-list > .swipe-actions > .swipe-actions-content { background: transparent; }
+.app .ws-budget-item {
+  display: flex; flex-direction: column; gap: 8px; padding: 14px 0;
+  cursor: pointer; color: var(--ink); min-width: 0; outline-offset: 2px;
+}
+.app .ws-budget-item-head { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.app .ws-budget-item .ws-icon-tile { width: 36px; height: 36px; }
+.app .ws-budget-amount { white-space: nowrap; flex: 0 0 auto; }
+.app .ws-budget-foot { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+.app .ws-budget-foot > * { white-space: nowrap; }
+@media (max-width: 850px) and (pointer: coarse) {
+  .app .ws-budget-list > .swipe-actions > .swipe-actions-content { background: var(--surface) !important; }
+}
+@media (min-width: 851px), (pointer: fine) {
+  .app .ws-budget-list .ws-budget-item { padding-right: 40px; }
+}
