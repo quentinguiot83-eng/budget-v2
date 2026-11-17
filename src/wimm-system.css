@@ -229,3 +229,12 @@
 @media (max-width: 850px) and (pointer: coarse) {
   .app .ws-account-group > .swipe-actions > .swipe-actions-content { background: var(--surface) !important; }
 }
+
+/* Carte repliable : l'en-tête reste visible, le détail s'ouvre au toucher. */
+.app details.ws-collapsible { display: block; }
+.app details.ws-collapsible > :not(summary) { margin-top: 12px; }
+.app details.ws-collapsible > summary { list-style: none; cursor: pointer; display: flex; flex-direction: column; gap: 12px; }
+.app details.ws-collapsible > summary::-webkit-details-marker { display: none; }
+.app details.ws-collapsible .ws-collapse-icon { color: var(--muted); transition: transform .2s; }
+.app details.ws-collapsible[open] .ws-collapse-icon { transform: rotate(180deg); }
+.app details.ws-collapsible[open] > summary { padding-bottom: 4px; border-bottom: 1px solid var(--border); }

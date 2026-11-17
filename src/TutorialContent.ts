@@ -58,7 +58,7 @@ export const TUTORIAL_CHAPTERS: TourChapter[] = [
     s("wealth", "[data-tour='wealth-add']", "Ajouter un compte", "Crée un compte courant, un livret ou un placement.", true, "account"),
     s("wealth", "[data-tour='wealth-accounts'] .ws-account > summary", "Paramétrer un compte", "Définis son solde et, si nécessaire, son rendement, sa fiscalité et son plafond.", true, "account"),
     s("wealth", "[data-tour='wealth-savings']", "Ton épargne disponible", "Wimm estime l'épargne à répartir selon les revenus et les budgets."),
-    s("wealth", "[data-tour='wealth-allocations']", "Répartir ton épargne", "Attribue un pourcentage de l'épargne disponible à chacun de tes comptes.", true, "saving")
+    s("wealth", "[data-tour='wealth-allocations'], [data-tour='wealth-savings'] > summary", "Répartir ton épargne", "Attribue un pourcentage de l'épargne disponible à chacun de tes comptes.", true, "saving")
   ] },
   { id: "trips", title: "Projets", description: "Préparer un voyage et son financement", steps: [
     s("trips", ".projects-type-switch", "Tes projets", "Les voyages disposent déjà d'un budget et de catégories dédiées."),

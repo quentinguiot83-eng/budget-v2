@@ -7,7 +7,7 @@ import type { InlineChoiceCreator, QuickCategoryDraft } from "../../InlineCatego
 import { projectionMoney } from "../../projectionMoney";
 import SwipeActions from "../../SwipeActions";
 import { Row } from "../../ui";
-import { Info, ChevronRight, Pencil, Trash2, Minus, Plus, ArrowLeftRight, Check, SlidersHorizontal } from "lucide-react";
+import { Info, ChevronRight, Pencil, Trash2, Minus, Plus, ArrowLeftRight, Check, SlidersHorizontal, ChevronDown } from "lucide-react";
 import { choice, field, amountField } from "../shared";
 import type { WimmCore } from "../useWimmApp";
 import type { BaseActions } from "./base";
@@ -750,11 +750,23 @@ export function createBudgetActions(ctx: WimmCore & BaseActions & AccountActions
     }
 
     return (
-      <section className="ws-card" data-tour="wealth-savings" aria-label="Épargne du mois">
-        {head}
-        <div><span className="ws-figure">{money(totals.saved)}</span> <span className="ws-muted">sur {money(goal)}</span></div>
-        <span className="ws-progress" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={pct} aria-label="Épargne versée"><span style={{ width: pct + "%" }} /></span>
-        <p className="ws-muted">{monthLabel(selectedMonth)} · {done ? "Épargne effectuée" : !hasIncome ? "En attente des revenus" : money(toSave) + " à verser"}</p>
+      <details className="ws-card ws-collapsible" data-tour="wealth-savings" aria-label="Épargne du mois">
+        <summary>
+          <div className="ws-head">
+            <span className="ws-head-title">
+              <h2 className="ws-card-title">Épargne du mois</h2>
+              <button type="button" className="ws-info" aria-label="Détail du calcul de l'épargne"
+                onClick={(e) => { e.preventDefault(); e.stopPropagation(); calc(); }}><Info size={16}/></button>
+            </span>
+            <span className="ws-row-end">
+              {done && <span className="ws-label ws-positive"><Check size={14} aria-hidden="true" /> Fait</span>}
+              <ChevronDown size={20} className="ws-chevron ws-collapse-icon" aria-hidden="true"/>
+            </span>
+          </div>
+          <div><span className="ws-figure">{money(totals.saved)}</span> <span className="ws-muted">sur {money(goal)}</span></div>
+          <span className="ws-progress" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={pct} aria-label="Épargne versée"><span style={{ width: pct + "%" }} /></span>
+          <p className="ws-muted">{monthLabel(selectedMonth)} · {done ? "Épargne effectuée" : !hasIncome ? "En attente des revenus" : money(toSave) + " à verser"}</p>
+        </summary>
         {totals.forecast ? (
           <div>
             <div className="ws-row"><span className="ws-row-main"><span className="ws-row-title">Objectif prévu</span></span><span className="ws-amount">{money(goal)}</span></div>
@@ -792,7 +804,7 @@ export function createBudgetActions(ctx: WimmCore & BaseActions & AccountActions
         )}
         {savingMonthMarkedDone && <p className="ws-muted">Mois marqué comme déjà effectué avant Wimm.</p>}
         {allocationLink("Modifier la répartition")}
-      </section>
+      </details>
     );
   }
 
