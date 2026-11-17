@@ -2,7 +2,7 @@ import { useState } from "react";
 import { money, balance, deposits, uid, today, euro, type Account } from "../engine";
 import SwipeActions from "../SwipeActions";
 import { Row } from "../ui";
-import { Info, Wallet, Plane, ChevronRight, RefreshCw, Plus, Pencil, SlidersHorizontal, Trash2, Coins, Target, Banknote } from "lucide-react";
+import { Info, Wallet, Plane, ChevronRight, RefreshCw, Plus, Pencil, Trash2, Coins, Target, Banknote } from "lucide-react";
 import { field } from "../app/shared";
 import type { WimmView } from "../app/buildView";
 
@@ -16,7 +16,7 @@ export default function WealthScreen({ view }: { view: WimmView }) {
   const {
     activeHouseholdAccounts, availableDate, change, currentBalance, deleteAccount, editAccount,
     editSharedCash, explain, householdPatrimony, interestReviewYear, navigate, openForm,
-    reconcileHouseholdAccounts, renameAccount, restoreArchivedAccount, reviewAccountInterest,
+    reconcileHouseholdAccounts, restoreArchivedAccount, reviewAccountInterest,
     s, savingsPanel, sortedTx, transfer, travelBalance, txRows, wealth,
   } = view;
   const [openAccount, setOpenAccount] = useState("");
@@ -30,8 +30,7 @@ export default function WealthScreen({ view }: { view: WimmView }) {
     return (
       <SwipeActions key={a.id} label={a.name} className="account-swipe-row"
         actions={[
-          { label: "Renommer", icon: <Pencil size={17}/>, onClick: () => renameAccount(a) },
-          { label: "Modifier", icon: <SlidersHorizontal size={17}/>, onClick: () => editAccount(a) },
+          { label: "Modifier", icon: <Pencil size={17}/>, onClick: () => editAccount(a) },
           { label: "Supprimer", icon: <Trash2 size={17}/>, tone: "danger" as const, onClick: () => deleteAccount(a) },
         ]}>
         <div className={"ws-account" + (openAccount === a.id ? " is-open" : "")} data-account={a.id}>
@@ -63,21 +62,20 @@ export default function WealthScreen({ view }: { view: WimmView }) {
               <button type="button" className="ws-pill" onClick={() =>
                 openForm("Ajuster le solde", [
                   field("balance", "Solde réel (€)", balance(s, a.id) / 100, "number"),
-                  field("reason", "Description", "Correction du solde"),
+                  field("reason", "Description", "Mise à jour du solde"),
                 ], async (v) => change((d) => d.transactions.push({
                   id: uid(),
                   type: "adjust",
                   account: a.id,
                   date: today(),
                   amount: euro(v.balance) - balance(d, a.id),
-                  description: "Ajustement : " + v.reason,
+                  description: v.reason || "Mise à jour du solde",
                 }), "Solde ajusté"))
               }>Ajuster le solde</button>
               {a.group !== "current" && a.rate > 0 && a.date <= String(interestReviewYear) + "-12-31" && availableDate.slice(5) >= "01-02" &&
                 <button type="button" className="ws-pill" onClick={() => reviewAccountInterest(a, interestReviewYear)}>
                   {a.interestReviews?.[String(interestReviewYear)] ? "Réviser" : "Vérifier"} les intérêts {interestReviewYear}
                 </button>}
-              <button type="button" className="ws-pill" onClick={() => renameAccount(a)}>Renommer</button>
               <button type="button" className="ws-pill" onClick={() => editAccount(a)}>Modifier</button>
               <button type="button" className="ws-pill is-danger" onClick={() => deleteAccount(a)}>Supprimer</button>
             </div>

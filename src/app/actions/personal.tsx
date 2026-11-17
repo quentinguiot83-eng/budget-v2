@@ -410,68 +410,6 @@ export function createPersonalActions(ctx: WimmCore & BaseActions & AccountActio
   }
 
 
-  function adjustPersonalBalance() {
-
-    if (!ps.account)
-      return;
-
-    const currentBalance =
-      personalBalance(
-        ps,
-        s,
-        personalOwnerId,
-      );
-
-    openForm(
-      "Ajuster le solde",
-      [
-        amountField(
-          "balance",
-          "Solde réel (€)",
-          currentBalance,
-          "Le solde affiché par ta banque aujourd’hui.",
-        ),
-        field(
-          "reason",
-          "Description",
-          "Correction du solde",
-        ),
-      ],
-      async (v) => {
-
-        const difference =
-          euro(v.balance) -
-          personalBalance(
-            ps,
-            s,
-            personalOwnerId,
-          );
-
-        if (!difference)
-          return;
-
-        await changePersonal(
-          (d) =>
-            d.transactions.push({
-              id: uid(),
-              type: "adjust",
-              amount:
-                difference,
-              date: today(),
-              description:
-                "Ajustement : " +
-                v.reason,
-            }),
-          "Solde perso ajusté",
-        );
-
-      },
-    );
-
-  }
-
-
-
   function addPersonalMoney() {
     if (!ps.account) return;
 
@@ -1421,7 +1359,7 @@ export function createPersonalActions(ctx: WimmCore & BaseActions & AccountActio
 
   return {
     personalCategoryCreator, editPersonalAccount, personalCategoryChoices, personalExpense,
-    editPersonalHistoryTransaction, adjustPersonalBalance, addPersonalMoney, editPersonalCash,
+    editPersonalHistoryTransaction, addPersonalMoney, editPersonalCash,
     editPersonalRule, payPersonalDue, editPersonalBudget, personalAdvance,
     migrateLegacyPersonal, deletePersonalTransaction, personalTransactionDetails,
   };

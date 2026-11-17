@@ -10,18 +10,19 @@ import RecurringIncomeManager from "../RecurringIncomeManager";
 import SettingsNavigation from "../SettingsNavigation";
 import { BlockInfo, Row } from "../ui";
 import VersionHistoryPanel from "../VersionHistoryPanel";
-import { Check, LogOut, Users, ArrowUpRight, RefreshCw, Pencil } from "lucide-react";
-import { choice, toggle, demoEnabled, field, themes } from "../app/shared";
+import { Check, LogOut, Users, ArrowUpRight, Pencil } from "lucide-react";
+import { toggle, demoEnabled, field, themes } from "../app/shared";
 import type { WimmView } from "../app/buildView";
 
 export default function SettingsScreen({ view }: { view: WimmView }) {
   const {
     appearanceMode, change, commit, confirmAction, displayName, doc, invite, isOwner, load,
-    navigate, openForm, personalDoc, proEnabled, reconcileHouseholdAccounts,
-    removeArchivedCategory, s, salaryBudget, salaryDay, salaryReminder, selectedMonth, session,
+    navigate, openForm, personalDoc, proEnabled,
+    removeArchivedCategory, s, salaryBudget, salaryDay, salaryReminder, session,
     setAppearanceMode, setDoc, setInvite, setNotice, setPreviewName, setProEnabled, setSession,
     setSettingsCategory, setSettingsDetail, setTheme, replayTour, settingsCategory, settingsDetail, showError, theme,
   } = view;
+  const hasIncomeSources = (s.incomeSources?.length ?? 0) > 0;
   return (
     <div className="settings-v2">
       <SettingsNavigation
@@ -257,28 +258,6 @@ export default function SettingsScreen({ view }: { view: WimmView }) {
         )}
       </section>
 )}
-      {settingsDetail === "mise-a-jour-comptes" && (
-        <section className="card wimm-settings-account-refresh">
-          <div className="section-head">
-            <div className="block-title"><h2>Tes comptes ne sont plus à jour ?</h2></div>
-            <RefreshCw size={20} aria-hidden="true" />
-          </div>
-          <p>
-            Tu as oublié de saisir des transactions depuis quelque temps et
-            tes soldes ne correspondent plus à ceux de ta banque ?
-            Tu peux les mettre à jour ici.
-          </p>
-          <p className="muted">
-            Wimm enregistre seulement la différence pour retrouver le bon solde.
-            Tes anciennes transactions restent conservées, mais les dépenses
-            oubliées ne sont pas recréées automatiquement.
-          </p>
-          <button type="button" className="primary"
-            onClick={reconcileHouseholdAccounts}>
-            <RefreshCw size={17} /> Mettre à jour mes comptes
-          </button>
-        </section>
-      )}
       {settingsDetail === "salaire" && (
         <RecurringIncomeManager
           sources={s.incomeSources || []}
@@ -301,14 +280,15 @@ export default function SettingsScreen({ view }: { view: WimmView }) {
           }}
         />
       )}
-      {settingsDetail === "salaire" && !(s.incomeSources && s.incomeSources.length>0) && (
+      {settingsDetail === "salaire" && (
 <section className="card settings-salary-card">
         <div className="section-head">
           <div>
-            <h2>Salaire</h2>
+            <h2>Salaire dans le budget</h2>
             <p className="muted">
-              Choisis la date prévue et le mois auquel ton salaire
-              doit être affecté dans le budget.
+              {hasIncomeSources
+                ? "Le mois que ton salaire finance et le rappel le jour prévu."
+                : "La date prévue, le mois que ton salaire finance et le rappel."}
             </p>
           </div>
 
@@ -317,9 +297,9 @@ export default function SettingsScreen({ view }: { view: WimmView }) {
             className="text settings-edit"
             onClick={() =>
               openForm(
-                "Réglages du salaire",
+                "Salaire dans le budget",
                 [
-                  {
+                  ...(hasIncomeSources ? [] : [{
                     ...field(
                       "day",
                       "Jour prévu de réception",
@@ -330,7 +310,7 @@ export default function SettingsScreen({ view }: { view: WimmView }) {
                     min: 1,
                     max: 31,
                     step: "1",
-                  },
+                  }]),
                   toggle(
                     "budget",
                     "Le salaire finance",
@@ -351,7 +331,7 @@ export default function SettingsScreen({ view }: { view: WimmView }) {
                   ),
                 ],
                 async (v) => {
-                  const day = Number(v.day);
+                  const day = hasIncomeSources ? salaryDay : Number(v.day);
 
                   if (!Number.isInteger(day) || day < 1 || day > 31) {
                     throw Error("Le jour doit être compris entre 1 et 31.");
@@ -372,17 +352,17 @@ export default function SettingsScreen({ view }: { view: WimmView }) {
           </button>
         </div>
 
-        <Row
+        {!hasIncomeSources && <Row
           title="Date prévue"
           value={`Le ${salaryDay} de chaque mois`}
-        />
+        />}
 
         <Row
-          title="Affectation budgétaire"
+          title="Le salaire finance"
           value={
             salaryBudget === "next"
-              ? "Mois suivant"
-              : "Mois de réception"
+              ? "Le mois suivant"
+              : "Ce mois-ci"
           }
         />
 
@@ -514,38 +494,8 @@ export default function SettingsScreen({ view }: { view: WimmView }) {
 <section className="card danger-zone">
         <h2>Réinitialisation</h2>
         <p>
-          Remettre un budget à zéro conserve les dépenses. Archiver
-          une catégorie conserve tout son historique.
+          Archiver une catégorie conserve tout son historique.
         </p>
-        <button
-          className="secondary"
-          onClick={() =>
-            openForm(
-              "Remettre un budget à zéro",
-              [
-                choice(
-                  "category",
-                  "Catégorie",
-                  s.categories.map((c) => [c.id, c.name]),
-                ),
-                field(
-                  "month",
-                  "À partir du mois",
-                  selectedMonth,
-                  "month",
-                ),
-              ],
-              async (v) =>
-                change((d) => {
-                  d.categories.find(
-                    (c) => c.id === v.category,
-                  )!.budgets[v.month] = 0;
-                }, "Budget remis à zéro"),
-            )
-          }
-        >
-          Remettre un budget à zéro
-        </button>
         {isOwner && (
           <button
             className="danger"
