@@ -472,9 +472,6 @@
 
 
 /* Feature preview: finance actions consolidated without changing existing themes. */
-.fixed-credits-overview .rule-row { display:flex; gap:12px; align-items:center; padding:11px 0; border-top:1px solid var(--border); }
-.fixed-credits-overview .rule-row:first-of-type { border-top:0; }
-.fixed-credits-overview .rule-row .grow { min-width:0; display:grid; gap:4px; }
 .transaction-reconcile-entry { display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin:12px 0 16px; }
 .transaction-reconcile-entry button { display:inline-flex; align-items:center; gap:8px; }
 .transaction-reconcile-entry small { font-size:.78rem; }

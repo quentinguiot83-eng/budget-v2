@@ -1,9 +1,9 @@
 import { useMemo, useState, type ReactNode } from "react";
-import { Search, SlidersHorizontal, Plus, ArrowLeftRight, ChevronRight } from "lucide-react";
+import { Search, SlidersHorizontal, ArrowLeftRight, ChevronRight } from "lucide-react";
 import { month as currentMonth, type State, type Tx } from "./engine";
 import { amountInCents, filterTransactions, type TransactionFilters } from "./transactionSearch";
 
-export default function TransactionSearch({ state, month, setMonth, add, rows, initialType, initialCategory = "", reconciliation, reconciliationOpen, toggleReconciliation }: { initialType: string; initialCategory?: string; state: State; month: string; setMonth: (month: string) => void; add: () => void; rows: (transactions: Tx[]) => ReactNode; reconciliation: ReactNode; reconciliationOpen: boolean; toggleReconciliation: () => void }) {
+export default function TransactionSearch({ state, month, setMonth, rows, initialType, initialCategory = "", reconciliation, reconciliationOpen, toggleReconciliation }: { initialType: string; initialCategory?: string; state: State; month: string; setMonth: (month: string) => void; rows: (transactions: Tx[]) => ReactNode; reconciliation: ReactNode; reconciliationOpen: boolean; toggleReconciliation: () => void }) {
   const defaults: TransactionFilters = { query: "", type: initialType, category: initialCategory, account: "", period: "month", month, from: "", to: "", min: "", max: "" };
   const [filters, setFilters] = useState(defaults);
   const [expanded, setExpanded] = useState(false);
@@ -17,36 +17,38 @@ export default function TransactionSearch({ state, month, setMonth, add, rows, i
   const error = invalidAmounts ? "Saisis un montant positif avec deux décimales maximum." : min !== null && max !== null && min > max ? "Le montant minimum doit être inférieur ou égal au maximum." : filters.period === "custom" && filters.from && filters.to && filters.from > filters.to ? "La date de début doit précéder la date de fin." : "";
   const activeCount = [filters.type, filters.category, filters.account, filters.min, filters.max].filter(Boolean).length;
   const hasFilters = filters.query || activeCount || filters.period !== "all";
-  return <>
-    <section className="card transaction-search" aria-label="Recherche dans les opérations">
-      <div className="transaction-search-top">
-        <label className="transaction-search-input"><Search size={19} aria-hidden="true"/><span className="sr-only">Rechercher une opération</span><input type="search" value={filters.query} onChange={e => update("query", e.target.value)} placeholder="Nom, catégorie ou montant…"/></label>
-        <button type="button" className="secondary" onClick={() => setExpanded(value => !value)} aria-expanded={expanded} aria-controls="transaction-filters"><SlidersHorizontal size={17}/> Filtres{activeCount ? ` (${activeCount})` : ""}</button>
-        <button type="button" className="primary" onClick={add}><Plus size={17}/> Opération</button>
+  const setPeriod = (choice: "current" | "all" | "pick") => {
+    setPeriodChoice(choice);
+    if (choice === "current") { setMonth(currentMonth()); update("period", "month"); }
+    else if (choice === "all") update("period", "all");
+    else update("period", "month");
+  };
+  return <div className="ws-stack wimm-operations">
+    <label className="ws-search"><Search size={18} aria-hidden="true"/><span className="sr-only">Rechercher une opération</span><input type="search" value={filters.query} onChange={e => update("query", e.target.value)} placeholder="Nom, catégorie ou montant…"/></label>
+
+    <div className="ws-segmented" role="tablist" aria-label="Période affichée">
+      <button type="button" role="tab" aria-selected={periodChoice === "current"} onClick={() => setPeriod("current")}>Ce mois</button>
+      <button type="button" role="tab" aria-selected={periodChoice === "pick"} onClick={() => setPeriod("pick")}>Autre mois</button>
+      <button type="button" role="tab" aria-selected={periodChoice === "all"} onClick={() => setPeriod("all")}>Tout</button>
+    </div>
+    {periodChoice === "pick" && <label className="field"><span>Mois affiché</span>
+      <input type="month" value={month} onChange={e => e.target.value && setMonth(e.target.value)} />
+    </label>}
+
+    <section className="ws-card ws-list transaction-search-results" aria-label="Résultats">
+      <div className="ws-head" style={{ paddingTop: 8 }}>
+        <span className="ws-muted" role="status">{results.length} opération{results.length !== 1 ? "s" : ""}</span>
+        <span className="ws-row-end">
+          {hasFilters && <button type="button" className="ws-link" onClick={() => {
+            setFilters({ ...defaults, type: "", period: "month" });
+            setMonth(currentMonth()); setPeriodChoice("current");
+          }}>Effacer</button>}
+          <button type="button" className="ws-link" onClick={() => setExpanded(value => !value)} aria-expanded={expanded} aria-controls="transaction-filters">
+            <SlidersHorizontal size={16} aria-hidden="true"/>Filtres{activeCount ? ` (${activeCount})` : ""}
+          </button>
+        </span>
       </div>
-      <div className="transaction-search-period transaction-period-simple">
-        <label className="field"><span>Afficher les opérations</span>
-          <select value={periodChoice} onChange={e => {
-            const choice = e.target.value as "current" | "all" | "pick";
-            setPeriodChoice(choice);
-            if (choice === "current") { setMonth(currentMonth()); update("period", "month"); }
-            else if (choice === "all") update("period", "all");
-            else update("period", "month");
-          }}>
-            <option value="current">Mois en cours</option>
-            <option value="all">Depuis toujours</option>
-            <option value="pick">Choisir un mois</option>
-          </select>
-        </label>
-        {periodChoice === "pick" && <label className="field"><span>Mois sélectionné</span>
-          <input type="month" value={month} onChange={e => e.target.value && setMonth(e.target.value)} />
-        </label>}
-        {hasFilters && <button type="button" className="text" onClick={() => {
-          setFilters({ ...defaults, type: "", period: "month" });
-          setMonth(currentMonth()); setPeriodChoice("current");
-        }}>Effacer les filtres</button>}
-      </div>
-      {expanded && <div id="transaction-filters" className="transaction-search-filters">
+      {expanded && <div id="transaction-filters" className="transaction-search-filters ws-filters">
         <label className="field"><span>Type</span><select value={filters.type} onChange={e => update("type", e.target.value)}><option value="">Tous les types</option><option value="expense">Dépenses</option><option value="income">Revenus</option><option value="transfer">Virements</option><option value="personal_transfer">Virements perso</option><option value="interest">Intérêts reçus</option><option value="loan">Prêts accordés</option><option value="repay">Remboursements de prêts</option><option value="adjust">Ajustements</option></select></label>
         <label className="field"><span>Catégorie</span><select value={filters.category} onChange={e => update("category", e.target.value)}><option value="">Toutes les catégories</option>{state.categories.map(c => <option key={c.id} value={c.id}>{c.name}{c.archived ? " (archivée)" : ""}</option>)}</select></label>
         <label className="field"><span>Compte</span><select value={filters.account} onChange={e => update("account", e.target.value)}><option value="">Tous les comptes</option>{state.accounts.map(a => <option key={a.id} value={a.id}>{a.name}{a.archived ? " (archivé)" : ""}</option>)}</select></label>
@@ -54,20 +56,20 @@ export default function TransactionSearch({ state, month, setMonth, add, rows, i
         <label className="field"><span>Montant maximum (€)</span><input type="text" inputMode="decimal" value={filters.max} placeholder="Sans limite" onChange={e => update("max", e.target.value)}/></label>
       </div>}
       {error && <p className="error" role="alert">{error}</p>}
-      {current.period === "custom" && <p className="muted">La période suit la date de l’opération.</p>}
-      {current.period === "month" && current.type === "income" && <p className="muted">Les revenus suivent leur mois budgétaire.</p>}
-       {current.period === "month" && current.type === "expense" && <p className="muted">Les virements de budget personnel apparaissent au mois budgétaire choisi, même si leur date bancaire est antérieure.</p>}
+      {current.period === "custom" && <p className="ws-muted">La période suit la date de l’opération.</p>}
+      {current.period === "month" && current.type === "income" && <p className="ws-muted">Les revenus suivent leur mois budgétaire.</p>}
+      {current.period === "month" && current.type === "expense" && <p className="ws-muted">Les virements de budget personnel apparaissent au mois budgétaire choisi, même si leur date bancaire est antérieure.</p>}
+      {results.length ? rows(results) : <p className="ws-muted" style={{ padding: "8px 0 12px" }}>{error ? "Corrige les filtres pour afficher les opérations." : "Aucune opération ne correspond à ta recherche."}</p>}
     </section>
-    <div className="transaction-reconcile-entry">
-      <button type="button" className="secondary" aria-expanded={reconciliationOpen} onClick={toggleReconciliation}>
-        <ArrowLeftRight size={17}/> {reconciliationOpen ? "Fermer le rapprochement" : "Rapprochement bancaire"} <ChevronRight size={16} aria-hidden="true"/>
+
+    <section className="ws-card ws-list transaction-reconcile-entry">
+      <button type="button" className="ws-row" aria-expanded={reconciliationOpen} onClick={toggleReconciliation}>
+        <span className="ws-icon-tile" aria-hidden="true"><ArrowLeftRight size={18}/></span>
+        <span className="ws-row-main"><span className="ws-row-title">{reconciliationOpen ? "Fermer le rapprochement" : "Rapprochement bancaire"}</span>
+          <span className="ws-row-sub">Comparer un relevé CSV à vos opérations, sans créer de doublons</span></span>
+        <ChevronRight size={18} className="ws-chevron" aria-hidden="true"/>
       </button>
-      <small className="muted">Comparer un relevé CSV à vos opérations, sans créer de doublons.</small>
-    </div>
-    {reconciliationOpen && <div className="transaction-reconcile-panel">{reconciliation}</div>}
-    <section className="card transaction-search-results">
-      <p className="muted" role="status">{results.length} opération{results.length !== 1 ? "s" : ""}</p>
-      {results.length ? rows(results) : <p className="muted padded">{error ? "Corrige les filtres pour afficher les opérations." : "Aucune opération ne correspond à ta recherche."}</p>}
     </section>
-  </>;
+    {reconciliationOpen && <div className="transaction-reconcile-panel">{reconciliation}</div>}
+  </div>;
 }

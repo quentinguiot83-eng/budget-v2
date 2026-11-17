@@ -436,3 +436,12 @@
   background: none !important; color: var(--muted) !important;
 }
 :root:not(#ws) .app .block-info svg { width: 16px !important; height: 16px !important; }
+
+/* Opérations : champ de recherche seul, filtres repliés dans la liste. */
+.app .ws-search {
+  display: flex; align-items: center; gap: 8px; min-height: 46px; padding: 0 14px;
+  background: var(--surface); border: 1px solid var(--ws-card-edge); border-radius: var(--ws-radius-field); color: var(--muted);
+}
+.app .ws-search input { border: 0 !important; background: none !important; flex: 1; min-width: 0; font-size: var(--ws-fs-body); padding: 0; min-height: 44px; box-shadow: none !important; outline: none; }
+.app .ws-filters { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; padding: 4px 0 12px; border-bottom: 1px solid var(--border); }
+.app .ws-filters > .field:first-child { grid-column: 1 / -1; }
