@@ -35,7 +35,7 @@ export default function ProAnalysis({month,transactions,invoices,clients,opening
   const toggle=(key:Key)=>setSelected(s=>s.includes(key)?s.length===1?s:s.filter(x=>x!==key):[...s,key]);
   const formatMoney=(v:unknown)=>proEuro(Math.round(Number(v||0)*100));
   return <div className="pro-an pro-v3-analysis">
-    <div className="pro-an-heading"><h1>Analyse mon entreprise</h1><p>Choisissez les données à comparer.</p></div>
+    <div className="pro-an-heading"><h1>Analyse</h1><p>Choisissez les données à comparer.</p></div>
     <section className="pro-an-period">
       <div className="pro-an-period-pills">{([["3","3 mois"],["6","6 mois"],["12","12 mois"],["year","Année"],["custom","Personnalisé"]] as const).map(([k,label])=><button type="button" key={k} className={period===k?"active":""} aria-pressed={period===k} onClick={()=>setPeriod(k)}>{label}</button>)}</div>
       {period==="custom"&&<div className="pro-an-custom"><label>Du<input type="month" value={startCustom} onChange={e=>setStartCustom(e.target.value)}/></label><label>Au<input type="month" value={endCustom} onChange={e=>setEndCustom(e.target.value)}/></label></div>}

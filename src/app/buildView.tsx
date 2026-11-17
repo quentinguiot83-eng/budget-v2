@@ -79,19 +79,19 @@ export function buildView(app: ReadyApp) {
     .reduce((sum, a) => sum + balance(s, a.id), 0);
   const finalProjection = projectionData.at(-1);
   const titles: Record<string, string> = {
-    home: "Un regard sur votre mois",
-    budget: "Votre budget",
+    home: "Accueil",
+    budget: "Budget",
     personal: "Compte perso",
-    wealth: "Votre patrimoine",
-    trips: "Vos projets",
+    wealth: "Patrimoine",
+    trips: "Projets",
     pro: "Professionnel",
-    projection: "Demain se prépare ici",
+    projection: "Projections",
     add: "Ajouter une opération",
     settings: "Réglages",
     fixed: "Dépenses fixes",
-    calendar: "Calendrier des paiements",
-    transactions: "Toutes les opérations",
-    analysis: "Analyse financière",
+    calendar: "Calendrier",
+    transactions: "Opérations",
+    analysis: "Analyse",
     bank: "Rapprochement bancaire",
     loans: "Crédits et prêts",
   };
