@@ -267,6 +267,10 @@ export type State = {
 
   savingDoneMonths?: string[];
 
+  // Épargne versée ce mois-là avant le premier lancement, en attente d'un
+  // compte d'épargne pour être enregistrée (premiers pas).
+  onboardingSaved?: { month: string; amount: number };
+
   hidden: string[];
 
   cancelled: string[];
@@ -898,7 +902,7 @@ export function monthEndAvailable(s: State) {
   while (cursor <= m) {
     pending.push(...dues(s, cursor).filter(
       (d) => ids.has(d.rule.account) && d.rule.kind !== "repay" &&
-        !d.cancelled && (!d.paid || d.paid.date > end),
+        !d.cancelled && (!d.paid || d.paid.date > end) && !dueBeforeOpening(s, d),
     ));
     cursor = shiftMonth(cursor, 1);
   }
@@ -1039,6 +1043,33 @@ export function dues(s: State, m: string): Due[] {
 
 }
 
+// Une échéance antérieure à l'ouverture du compte dans Wimm est déjà comprise
+// dans le solde de départ : elle n'est ni à valider ni à retirer du disponible.
+export function dueBeforeOpening(s: State, d: Due) {
+  const a = s.accounts.find((a) => a.id === d.rule.account);
+  return !!a && d.date < a.date;
+}
+
+// Enregistre comme payées les échéances du mois d'ouverture déjà passées avant
+// l'ouverture du compte (« déjà prélevé avant Wimm »). Datées avant l'ouverture,
+// elles ne modifient pas le solde mais comptent dans les charges payées du mois.
+export function settleDuesBeforeOpening(s: State, ruleId?: string) {
+  for (const rule of s.rules) {
+    if (ruleId && rule.id !== ruleId) continue;
+    if (rule.kind === "repay") continue;
+    const a = s.accounts.find((a) => a.id === rule.account);
+    if (!a) continue;
+    for (const d of dues(s, month(a.date))) {
+      if (d.rule.id !== rule.id || d.date >= a.date || d.paid || d.cancelled) continue;
+      s.transactions.push({
+        id: uid(), type: "expense", amount: rule.amount, date: d.date,
+        description: rule.name, account: rule.account,
+        category: rule.category || undefined, fixed: true, dueKey: d.key,
+      });
+    }
+  }
+}
+
 export function overdue(s: State) {
 
   const starts = s.rules.map((r) => month(r.start)).sort();
@@ -1053,7 +1084,8 @@ export function overdue(s: State) {
 
     out.push(
 
-      ...dues(s, m).filter((d) => d.date <= today() && !d.paid && !d.cancelled),
+      ...dues(s, m).filter((d) => d.date <= today() && !d.paid && !d.cancelled &&
+        !dueBeforeOpening(s, d)),
 
     );
 

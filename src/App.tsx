@@ -4,7 +4,6 @@
 import "./SettingsNavigation.css";
 import "./inline-category-creator.css";
 import "./progressive-setup.css";
-import "./getting-started.css";
 import "./recurring-income-manager.css";
 import "./quickEntry.css";
 
@@ -19,8 +18,10 @@ import { applyInitialSetup } from "./SetupWizard";
 import TransactionSearch from "./TransactionSearch";
 import { Form, BlockInfo, Modal } from "./ui";
 import { WimmWordmark } from "./WimmWordmark";
-import { SlidersHorizontal, Wallet, Users, House, Plus, Settings, Info, Bell, ChevronLeft, ChevronsLeft, ChevronRight, ChevronsRight, CalendarDays, ArrowUpRight, ArrowDownLeft, ArrowLeftRight, Check } from "lucide-react";
-import { AnalysisDashboard, BankReconciliation, GuidedJourney, OnboardingTutorial, ProWorkspace, demoEnabled, field, forgetPendingInvitation, onboardingJourneyPreviewEnabled, onboardingPreviewEnabled, pendingHouseholdInvitation, themes } from "./app/shared";
+import WelcomeHousehold from "./WelcomeHousehold";
+import { PAGE_HELP, PageHelp } from "./pageHelp";
+import { SlidersHorizontal, Wallet, Plus, Settings, Info, Bell, ChevronLeft, ChevronsLeft, ChevronRight, ChevronsRight, CalendarDays, ArrowUpRight, ArrowDownLeft, ArrowLeftRight, Check } from "lucide-react";
+import { AnalysisDashboard, BankReconciliation, GuidedJourney, ProWorkspace, demoEnabled, field, forgetPendingInvitation, onboardingJourneyPreviewEnabled, onboardingPreviewEnabled, welcomePreviewEnabled, pendingHouseholdInvitation, themes } from "./app/shared";
 import { useWimmApp } from "./app/useWimmApp";
 import { buildView } from "./app/buildView";
 import HomeScreen from "./screens/HomeScreen";
@@ -37,7 +38,7 @@ export default function App() {
   const app = useWimmApp();
   const {
     authMode, change, current, doc, error, loading, notice, session, setAuthMode, setDoc,
-    setError, setNotice, setProEnabled, setSession, setSignupEmail, signupEmail, tutorialAutoOpened,
+    setError, setNotice, setProEnabled, setSession, setSignupEmail, signupEmail,
   } = app;
 
   if (!demoEnabled && (!session || authMode === "new-password"))
@@ -213,60 +214,33 @@ export default function App() {
         <p>Ouverture de votre foyer…</p>
       </div>
     );
-  if (!doc?.household)
+  if (!doc?.household || welcomePreviewEnabled)
     return (
-      <main className="onboarding">
-        <div className="brand">
-          <WimmWordmark />
-        </div>
-        <h1>Bienvenue dans votre budget.</h1>
-        <p className="muted">
-          Créez votre foyer ou rejoignez celui de votre partenaire.
-        </p>
-        {error && <p className="error">{error}</p>}
-        <div className="two-col">
-          <section className="card">
-            <Users />
-            <h2>Créer mon foyer</h2>
-            <Form
-              fields={[field("name", "Nom du foyer", "Notre foyer")]}
-              label="Créer le foyer"
-              submit={async (v) => {
-                const d = await rpc("budget_create", { p_name: v.name });
-                setDoc(d);
-                setError("");
-              }}
-            />
-          </section>
-          <section className="card">
-            <House />
-            <h2>Rejoindre un foyer</h2>
-            <p className="muted">
-              Le propriétaire doit vous transmettre un code. Vous partagerez les
-              comptes et les opérations de ce foyer.
-            </p>
-            <Form
-              fields={[field("code", "Code d’invitation", pendingHouseholdInvitation())]}
-              label="Rejoindre"
-              submit={async (v) => {
-                const joined = await rpc("budget_join", { p_code: v.code });
-                if (joined?.error) throw Error(joined.error);
-                setDoc(joined);
-                forgetPendingInvitation();
-                const {error: onboardingError} = await api.auth.updateUser({
-                  data: {wimm_progressive_onboarding:true,wimm_journey_step:"welcome",wimm_journey_done:false,
-                    wimm_tutorial_started:true,wimm_tutorial_seen:true,wimm_requires_profile:true}
-                });
-                if(onboardingError)setNotice("Foyer rejoint. Le parcours de découverte est accessible dans l'aide.");
-                setError("");
-              }}
-            />
-          </section>
-        </div>
-        <button className="text" onClick={() => api.auth.signOut()}>
-          Se déconnecter
-        </button>
-      </main>
+      <WelcomeHousehold
+        error={error}
+        initialCode={pendingHouseholdInvitation()}
+        signOut={() => api.auth.signOut()}
+        create={async (name) => {
+          if (welcomePreviewEnabled) return;
+          const d = await rpc("budget_create", { p_name: name });
+          setDoc(d);
+          setError("");
+        }}
+        join={async (code) => {
+          if (welcomePreviewEnabled) return;
+          const joined = await rpc("budget_join", { p_code: code });
+          if (joined?.error) throw Error(joined.error);
+          setDoc(joined);
+          forgetPendingInvitation();
+          // Le foyer rejoint est déjà configuré : accueil puis visite courte.
+          const { error: onboardingError } = await api.auth.updateUser({
+            data: { wimm_progressive_onboarding: true, wimm_journey_step: "welcome", wimm_journey_done: false,
+              wimm_tutorial_started: true, wimm_tutorial_seen: true, wimm_requires_profile: false, wimm_profile_selected: true },
+          });
+          if (onboardingError) setNotice("Foyer rejoint. La visite reste accessible depuis l’aide.");
+          setError("");
+        }}
+      />
     );
   if (!onboardingPreviewEnabled && current && session?.user.user_metadata?.wimm_requires_profile === true) {
     return <JoinedFoyerProfile onComplete={async professional=>{
@@ -290,7 +264,6 @@ export default function App() {
         storageKey={`wimm-setup-v2-${session?.user.id || "demo"}-${doc.household.id}`}
         preview={onboardingPreviewEnabled}
         onComplete={async (draft) => {
-          tutorialAutoOpened.current = true;
           // First persist the household balances and budgets. The professional
           // preference lives separately and must not invalidate the setup if
           // the optional Pro service is temporarily unavailable.
@@ -319,16 +292,16 @@ export default function App() {
     : undefined;
   const tripForAdd = shownTrip && !shownTrip.closedAt ? shownTrip : undefined;
   const {
-    addPersonalMoney, alerts, closeTutorial, currentAccounts, deleteCreditPlan,
+    addPersonalMoney, alerts, currentAccounts, deleteCreditPlan,
     desktopNavGroups, desktopQuickAddButtonRef, displayName, editPersonalAccount,
     editPersonalBudget, editPersonalRule, editRule, goBack, importBankDrafts,
     initialCurrentAccount, load, mobileNav, mobileQuickAddOpen, moveViewingMonth, navigate,
     newLoan, operation, personalExpense, personalTab, previousRecordedMonth, proEnabled, ps,
     quickAddButtonRef, recordedMonths, repay, route, s, saving, selectedMonth,
     setMobileQuickAddOpen, setMonth, setSheet, setShowTransactionReconciliation,
-    setTutorialMode, setTutorialOpen, setTutorialPage, settingsCategory, sheet, showError,
-    showTransactionReconciliation, subRoutes, titles, transfer, transferPersonal, tutorialMode,
-    tutorialOpen, tutorialPage, txCategoryFilter, txFilter, txRows,
+    settingsCategory, sheet, showError, explain, replayTour, journeyReplay, setJourneyReplay,
+    showTransactionReconciliation, subRoutes, titles, transfer, transferPersonal,
+    txCategoryFilter, txFilter, txRows,
   } = view;
 
   return (
@@ -382,7 +355,7 @@ export default function App() {
             <span className="eyebrow">{doc.household.name}</span>
           </div>
           <div className="flex">
-            <button type="button" className="icon page-info" aria-label="Tutoriel de cette page" onClick={() => { setTutorialMode("page"); setTutorialPage(route); setTutorialOpen(true); }}><Info size={21}/></button>
+            <button type="button" className="icon page-info" aria-label="Découvrir cet écran" onClick={() => explain(PAGE_HELP[route]?.title ?? PAGE_HELP.home.title, <PageHelp route={route} onReplay={() => void replayTour()} onClose={() => setSheet(null)}/>)}><Info size={21}/></button>
             <button
               className="icon bell"
               aria-label={`${alerts.length} échéances à valider`}
@@ -489,18 +462,17 @@ export default function App() {
           )}
         </div>
         <main className={"content" + (["home", "budget", "wealth", "trips", "projection", "pro"].includes(route) ? "" : " ws-classic")} data-screen={route}>
-          {(onboardingJourneyPreviewEnabled || (session?.user.user_metadata?.wimm_progressive_onboarding === true &&
+          {(onboardingJourneyPreviewEnabled || journeyReplay || (session?.user.user_metadata?.wimm_progressive_onboarding === true &&
             session?.user.user_metadata?.wimm_journey_done !== true && !demoEnabled)) && (
               <GuidedJourney
+                key={journeyReplay ? "replay" : "first"}
                 route={route}
                 navigate={navigate}
                 state={s}
                 enabled={true}
-                preview={onboardingJourneyPreviewEnabled}
+                preview={onboardingJourneyPreviewEnabled || (journeyReplay && demoEnabled)}
                 proEnabled={onboardingJourneyPreviewEnabled ? true : proEnabled}
-                completed={() => setNotice(onboardingJourneyPreviewEnabled
-                  ? "Démonstration terminée, aucune donnée enregistrée."
-                  : "Votre compte est configuré ! Retrouvez le tutoriel dans Réglages.")}
+                completed={() => { setJourneyReplay(false); setNotice("C’est parti ! Le bouton i en haut explique chaque écran."); }}
               />
             )}
           {!current && !["settings", "wealth", "pro"].includes(route) && (
@@ -674,19 +646,6 @@ export default function App() {
       >
         <Plus size={30} strokeWidth={2.2} className="floating-add-symbol" aria-hidden="true"/>
       </button>
-      <OnboardingTutorial
-        mode={tutorialMode}
-        storageKey={`wimm-guide-${session?.user.id || "demo"}`}
-        pageRoute={tutorialPage}
-        open={tutorialOpen}
-        hasCurrent={!!current}
-        proEnabled={proEnabled}
-        route={route}
-        navigate={navigate}
-        onConfigure={() => initialCurrentAccount()}
-        onSkip={() => tutorialMode === "quick" ? void closeTutorial() : setTutorialOpen(false)}
-        onComplete={() => tutorialMode === "quick" ? void closeTutorial() : setTutorialOpen(false)}
-      />
       {sheet && (
         <Modal title={sheet.title} close={() => !saving && setSheet(null)}>
           {sheet.body}

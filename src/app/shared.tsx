@@ -10,7 +10,6 @@ import { lazy, type ReactNode } from "react";
 export const ProWorkspace = deferred(() => import("../ProWorkspace"), <div className="chart-loading" />);
 export const BankReconciliation = deferred(() => import("../BankReconciliation"));
 export const AnalysisDashboard = deferred(() => import("../AnalysisDashboard"), <div className="chart-loading" />);
-export const OnboardingTutorial = deferred(() => import("../OnboardingTutorial"));
 export const GuidedJourney = deferred(() => import("../GuidedJourney"));
 
 export const LazyChart = lazy(
@@ -70,6 +69,7 @@ export const amountField = (
 export const demoEnabled = new URLSearchParams(location.search).get("demo") === "1";
 export const onboardingPreviewEnabled = new URLSearchParams(location.search).get("onboarding_preview") === "1";
 export const onboardingChecklistPreviewEnabled = new URLSearchParams(location.search).get("onboarding_checklist") === "1";
+export const welcomePreviewEnabled = new URLSearchParams(location.search).get("welcome_preview") === "1";
 export const onboardingJourneyPreviewEnabled = demoEnabled && new URLSearchParams(location.search).get("onboarding_journey") === "1";
 export const PENDING_INVITE_KEY = "wimm-pending-invite-v1";
 export function pendingHouseholdInvitation() {

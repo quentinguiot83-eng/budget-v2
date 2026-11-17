@@ -10,7 +10,7 @@ import RecurringIncomeManager from "../RecurringIncomeManager";
 import SettingsNavigation from "../SettingsNavigation";
 import { BlockInfo, Row } from "../ui";
 import VersionHistoryPanel from "../VersionHistoryPanel";
-import { CircleHelp, ChevronRight, Check, LogOut, Users, ArrowUpRight, RefreshCw, Pencil } from "lucide-react";
+import { Check, LogOut, Users, ArrowUpRight, RefreshCw, Pencil } from "lucide-react";
 import { choice, demoEnabled, field, themes } from "../app/shared";
 import type { WimmView } from "../app/buildView";
 
@@ -20,8 +20,7 @@ export default function SettingsScreen({ view }: { view: WimmView }) {
     navigate, openForm, personalDoc, proEnabled, reconcileHouseholdAccounts,
     removeArchivedCategory, s, salaryBudget, salaryDay, salaryReminder, selectedMonth, session,
     setAppearanceMode, setDoc, setInvite, setNotice, setPreviewName, setProEnabled, setSession,
-    setSettingsCategory, setSettingsDetail, setTheme, setTutorialMode, setTutorialOpen,
-    setTutorialPage, settingsCategory, settingsDetail, showError, theme,
+    setSettingsCategory, setSettingsDetail, setTheme, replayTour, settingsCategory, settingsDetail, showError, theme,
   } = view;
   return (
     <div className="settings-v2">
@@ -48,22 +47,9 @@ export default function SettingsScreen({ view }: { view: WimmView }) {
 )}
       {settingsDetail === "tutoriel" && (
 <section className="card tutorial-settings-card tutorial-learning-hub" data-tour="tutorial-settings">
-        <div className="tutorial-learning-head">
-          <span className="tutorial-learning-icon"><CircleHelp size={25}/></span>
-          <div>
-            <span className="eyebrow">CENTRE D’APPRENTISSAGE</span>
-            <h2>Découvre Wimm à ton rythme</h2>
-            <p className="muted">Un écran figé, une zone entourée et une explication courte. Les exemples ne modifient jamais tes données. Le mode Pro est facultatif.</p>
-          </div>
-        </div>
-        <div className="tutorial-learning-actions">
-          <button type="button" className="primary" onClick={() => { setSettingsCategory(null); setSettingsDetail(null); setTutorialMode("library"); setTutorialPage(null); setTutorialOpen(true); }}>
-            <CircleHelp size={17}/> Découvrir les 8 chapitres
-          </button>
-          <button type="button" className="secondary" onClick={() => { setSettingsCategory(null); setSettingsDetail(null); setTutorialMode("quick"); setTutorialPage(null); setTutorialOpen(true); }}>
-            <ChevronRight size={17}/> Découverte rapide · 6 étapes
-          </button>
-        </div>
+        <div className="ws-head"><h2 className="ws-card-title">Aide</h2></div>
+        <p className="ws-muted">Le bouton i en haut de chaque écran l’explique en trois points. La visite de 5 étapes présente l’essentiel de Wimm.</p>
+        <button type="button" className="secondary" onClick={() => void replayTour()}>Revoir la visite</button>
       </section>
 )}
       {settingsDetail === "apparence" && (

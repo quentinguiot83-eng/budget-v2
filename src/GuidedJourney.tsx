@@ -1,10 +1,10 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { ArrowLeft, ArrowRight, Check, Compass, MousePointerClick, Pause, Play } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, Compass, Play } from "lucide-react";
 import { api } from "./api";
 import type { State } from "./engine";
 import { findVisibleTourTarget } from "./tutorialTargeting";
-import { JOURNEY_BRIEF, journeySteps, type JourneyStep } from "./GuidedJourneyContent";
+import { JOURNEY_BRIEF, journeySteps } from "./GuidedJourneyContent";
 import { chooseTourPlacement, clipTourBounds, type TourPlacement } from "./guidedJourneyLayout";
 import "./guided-journey.css";
 
@@ -32,24 +32,21 @@ function makeRect(rect:Rect|null) {
  if(!rect)return null;
  return {left:rect.left,top:rect.top,width:rect.width,height:rect.height};
 }
-const chapterCount=(steps:JourneyStep[],name:string)=>steps.filter(x=>x.chapter===name).length;
-const chapterNumber=(steps:JourneyStep[],step:JourneyStep)=>steps.filter(x=>x.chapter===step.chapter).findIndex(x=>x.id===step.id)+1;
 
 export default function GuidedJourney({
-  route,navigate,state,enabled,proEnabled,completed,preview=false
+  route,navigate,enabled,proEnabled,completed,preview=false
 }:{
   route:string;navigate:(route:string)=>void;state:State;enabled:boolean;proEnabled:boolean;
   completed:()=>void;preview?:boolean;
 }){
   const steps=useMemo(()=>journeySteps(proEnabled),[proEnabled]);
-  const [stepId,setStepId]=useState("welcome");
+  const [stepId,setStepId]=useState("home-balance");
   const [loaded,setLoaded]=useState(false);
   const [finished,setFinished]=useState(false);
   const [paused,setPaused]=useState(false);
   const [practicing,setPracticing]=useState(false);
   const [busy,setBusy]=useState(false);
   const [error,setError]=useState("");
-  const [defer,setDefer]=useState(false);
   const [geometry,setGeometry]=useState<Geometry>(emptyGeometry);
   const [placement,setPlacement]=useState<TourPlacement|null>(null);
   const panelRef=useRef<HTMLDivElement|null>(null);
@@ -61,17 +58,8 @@ export default function GuidedJourney({
   const stage=steps[index];
   const located=route===stage.route;
   const total=steps.length;
-  const chapterAt=chapterNumber(steps,stage);
-  const chapterSize=chapterCount(steps,stage.chapter);
   const active=enabled&&loaded&&!finished;
   const working=active&&!paused&&!practicing&&located;
-  const budgetSet=state.categories.some(c=>Object.values(c.budgets).some(v=>v>0));
-  const fixedSet=state.rules.some(r=>r.kind==="fixed");
-  const wealthSet=state.accounts.some(a=>a.group!=="current"&&!a.archived&&a.allocation>0);
-  const mustConfigure=(stage.id==="budget-category-list"&&!budgetSet)
-    ||(stage.id==="fixed-list"&&!fixedSet&&!defer)
-    ||(stage.id==="wealth-savings"&&!wealthSet&&!defer);
-  const progress=(index+1)/Math.max(1,total)*100;
 
   useEffect(()=>{
     if(!enabled)return;
@@ -80,17 +68,8 @@ export default function GuidedJourney({
     api.auth.getUser().then(({data})=>{
       if(!mounted)return;
       const saved=data.user?.user_metadata?.wimm_journey_step;
-      let found=steps.find(s=>s.id===saved);
-      // Migrate the previous one-step-per-chapter guide without losing progress.
-      if(!found&&typeof saved==="string"){
-        const old:Record<string,string>={
-          budget:"budget-total",fixed:"fixed-summary",wealth:"wealth-overview",
-          trips:"trips-selector",projection:"projection-horizon",add:"add-button",
-          pro:"pro-overview",settings:"settings-profile",menu:"menu"
-        };
-        found=steps.find(s=>s.id===old[saved]);
-      }
-      setStepId(found?.id??"welcome");
+      const found=steps.find(s=>s.id===saved);
+      setStepId(found?.id??steps[0].id);
       setLoaded(true);
     }).catch(()=>{if(mounted)setLoaded(true);});
     return()=>{mounted=false;};
@@ -219,7 +198,7 @@ export default function GuidedJourney({
         if(error)throw error;
       }
       setStepId(candidate.id);
-      setDefer(false);setPracticing(false);setPaused(false);
+      setPracticing(false);setPaused(false);
       if(route!==candidate.route)navigate(candidate.route);
     }catch(e){setError(e instanceof Error?e.message:"Impossible d'enregistrer votre progression.");}
     finally{setBusy(false);}
@@ -249,32 +228,25 @@ export default function GuidedJourney({
             {nav&&<rect x={nav.left} y={nav.top} width={nav.width} height={nav.height} rx="10" fill="black"/>}
           </mask>
         </defs>
-        <rect x="0" y="0" width="100%" height="100%" fill="rgba(13,17,30,.70)" mask="url(#wimm-journey-window)"/>
+        <rect x="0" y="0" width="100%" height="100%" fill="rgba(15,22,34,.55)" mask="url(#wimm-journey-window)"/>
       </svg>
       {focus&&<div className="wimm-journey-ring" style={makeRect(focus)??undefined} aria-hidden="true"/>}
       {nav&&<div className="wimm-journey-ring wimm-journey-ring-nav" style={makeRect(nav)??undefined} aria-hidden="true"/>}
       <div ref={panelRef} className={"wimm-journey-flyout auto-placed"+(placement?.compact?" compact":"")+(placement?" ready":"")}
         style={placement?{top:placement.panelTop,maxHeight:placement.panelHeight}:undefined}>
         <header>
-          <span>{stage.chapter} · {chapterAt}/{chapterSize}</span>
-          <button type="button" onClick={()=>setPaused(true)} title="Reprendre plus tard" aria-label="Mettre en pause le tutoriel"><Pause size={17}/></button>
+          <span className="wimm-journey-dots" aria-label={"Étape "+(index+1)+" sur "+total}>
+            {steps.map((x,i)=><i key={x.id} className={i===index?"is-current":i<index?"is-done":""}/>)}
+          </span>
+          <button type="button" className="wimm-journey-skip" disabled={busy} onClick={()=>void setStep(total)}>Passer</button>
         </header>
-        <div className="wimm-journey-progress"><span style={{width:progress+"%"}}/></div>
-        <div className="wimm-journey-flyout-title"><h2>{stage.title}</h2><span>{index+1}/{total}</span></div>
+        <div className="wimm-journey-flyout-title"><h2>{stage.title}</h2></div>
         <p>{JOURNEY_BRIEF[stage.id]??stage.description}</p>
-        {!geometry.found&&<small className="wimm-journey-conditional">Ce bloc apparaîtra une fois configuré.</small>}
-        {(stage.id==="fixed-list"&&!fixedSet||stage.id==="wealth-savings"&&!wealthSet)&&
-          <label className="wimm-journey-optional">
-            <input type="checkbox" checked={defer} onChange={e=>setDefer(e.target.checked)}/>
-            Je le configurerai plus tard.
-          </label>}
-        {stage.id==="budget-category-list"&&!budgetSet&&<small className="wimm-journey-conditional">Créez une enveloppe pour continuer.</small>}
         {!!error&&<p className="wimm-setup-error" role="alert">{error}</p>}
         <footer>
-          <button type="button" className="wimm-journey-back" disabled={index===0||busy} onClick={()=>void setStep(index-1)}><ArrowLeft size={16}/><span>Retour</span></button>
-          <button type="button" className="wimm-journey-try" onClick={()=>setPracticing(true)}><MousePointerClick size={15}/> Essayer</button>
-          <button type="button" className="wimm-journey-next" disabled={busy||mustConfigure} onClick={()=>void setStep(index+1)}>
-            {busy?"Patientez…":index===total-1?"Terminer":"Suivant"}
+          {index>0&&<button type="button" className="wimm-journey-back" disabled={busy} onClick={()=>void setStep(index-1)}><ArrowLeft size={16}/><span>Retour</span></button>}
+          <button type="button" className="wimm-journey-next" disabled={busy} onClick={()=>void setStep(index+1)}>
+            {busy?"Un instant…":index===total-1?"Terminer":"Suivant"}
             {index===total-1?<Check size={16}/>:<ArrowRight size={16}/>}
           </button>
         </footer>

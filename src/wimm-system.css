@@ -479,3 +479,28 @@
 :root:not(#ws) .app .analysis-local-filters button.active,
 :root:not(#ws) .app .analysis-local-filters button[aria-pressed="true"] { background: var(--ink) !important; color: var(--surface) !important; }
 :root:not(#ws) .app .analysis-range-icon { color: var(--muted) !important; }
+
+/* Accueil : premiers pas après la configuration minimale. */
+.app .ws-first-step { display: flex; flex-direction: column; border-bottom: 1px solid var(--border); }
+.app .ws-first-step:last-child { border-bottom: 0; }
+.app .ws-first-step > .ws-row { border-bottom: 0; }
+.app .ws-first-step > .ws-row:disabled { cursor: default; opacity: 1; }
+.app .ws-first-tick {
+  width: 28px; height: 28px; border-radius: 999px; flex: 0 0 auto; display: grid; place-items: center;
+  background: var(--accent-soft); color: var(--action, var(--accent-deep));
+}
+.app .ws-first-tick.is-done { background: var(--ws-positive); color: var(--surface); }
+.app .ws-row-title.is-done { color: var(--muted); text-decoration: line-through; }
+.app .ws-first-skip { margin: -8px 0 6px 40px; min-height: 32px; color: var(--muted); }
+
+/* « Découvrir cet écran » : trois points numérotés. */
+.app .ws-page-help { display: flex; flex-direction: column; gap: 14px; }
+.app .ws-page-help-point { display: flex; gap: 12px; align-items: flex-start; }
+.app .ws-page-help-point > span:last-child { display: flex; flex-direction: column; gap: 2px; }
+.app .ws-page-help-point strong { font-size: var(--ws-fs-body); }
+.app .ws-page-help-point span span { font-size: var(--ws-fs-small); color: var(--muted); line-height: 1.45; }
+.app .ws-page-help-num {
+  width: 28px; height: 28px; border-radius: 999px; flex: 0 0 auto; display: grid; place-items: center;
+  background: var(--accent-soft); color: var(--action, var(--accent-deep)); font-weight: 600; font-size: var(--ws-fs-small);
+}
+.app .ws-page-help-foot { display: flex; justify-content: space-between; align-items: center; gap: 12px; border-top: 1px solid var(--border); padding-top: 12px; }
