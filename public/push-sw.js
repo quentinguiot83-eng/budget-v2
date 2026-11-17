@@ -1,7 +1,7 @@
 // Hors connexion : seule une page « Pas de connexion » est gardée en cache.
 // Les pages et les données passent toujours par le réseau (jamais de version périmée).
-const OFFLINE_CACHE = 'wimm-offline-v1';
-const OFFLINE_FILES = ['/offline.html', '/favicon.svg'];
+const OFFLINE_CACHE = 'wimm-offline-v2';
+const OFFLINE_FILES = ['/offline.html', '/wimm-icon-192.png'];
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(OFFLINE_CACHE).then(cache => cache.addAll(OFFLINE_FILES)).then(() => self.skipWaiting()));
 });
@@ -15,8 +15,8 @@ self.addEventListener('fetch', event => {
   if (request.mode === 'navigate') {
     event.respondWith(fetch(request).catch(async () =>
       (await caches.match('/offline.html')) || Response.error()));
-  } else if (new URL(request.url).pathname === '/favicon.svg') {
-    event.respondWith(fetch(request).catch(async () => (await caches.match('/favicon.svg')) || Response.error()));
+  } else if (new URL(request.url).pathname === '/wimm-icon-192.png') {
+    event.respondWith(fetch(request).catch(async () => (await caches.match('/wimm-icon-192.png')) || Response.error()));
   }
 });
 self.addEventListener('push', event => {
