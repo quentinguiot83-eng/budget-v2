@@ -1,0 +1,207 @@
+{
+ "budget_pro_suite_load": {
+  "enabled": true,
+  "activeBusinessId": "b1",
+  "businesses": [
+   {
+    "id": "b1",
+    "name": "Quentin Photo"
+   }
+  ],
+  "profile": {
+   "businessName": "Quentin Photo",
+   "legalStatus": "micro",
+   "activityType": "services",
+   "siret": "",
+   "contributionRate": 21.2,
+   "taxRate": 0,
+   "vatEnabled": false,
+   "vatRate": 20
+  },
+  "account": {
+   "id": "a1",
+   "name": "Compte pro",
+   "openingBalance": 150000
+  },
+  "billing": {
+   "address": "",
+   "postalCode": "",
+   "city": "Marseille",
+   "email": "",
+   "phone": "",
+   "iban": "",
+   "invoicePrefix": "F",
+   "footerNote": ""
+  },
+  "clients": [
+   {
+    "id": "c1",
+    "name": "Marie Durand",
+    "companyName": "",
+    "email": "marie@example.com",
+    "phone": "",
+    "address": "",
+    "postalCode": "13004",
+    "city": "Marseille",
+    "siret": "",
+    "notes": "",
+    "clientType": "individual"
+   },
+   {
+    "id": "c2",
+    "name": "Studio Lumière",
+    "companyName": "Studio Lumière",
+    "email": "contact@example.com",
+    "phone": "",
+    "address": "",
+    "postalCode": "13001",
+    "city": "Marseille",
+    "siret": "",
+    "notes": "",
+    "clientType": "professional"
+   }
+  ],
+  "products": [
+   {
+    "id": "p1",
+    "kind": "service",
+    "name": "Séance photo",
+    "description": "2 h",
+    "unitPrice": 25000,
+    "vatRate": 0,
+    "active": true
+   },
+   {
+    "id": "p2",
+    "kind": "service",
+    "name": "Retouches",
+    "description": "",
+    "unitPrice": 6000,
+    "vatRate": 0,
+    "active": true
+   }
+  ],
+  "transactions": [
+   {
+    "id": "t1",
+    "kind": "income",
+    "label": "Séance photo Durand",
+    "amount": 25000,
+    "date": "2026-11-03",
+    "category": "Prestation",
+    "clientId": "c1",
+    "vatAmount": 0,
+    "paid": true,
+    "notes": "",
+    "paymentMethod": "transfer"
+   },
+   {
+    "id": "t2",
+    "kind": "income",
+    "label": "Reportage Studio Lumière",
+    "amount": 80000,
+    "date": "2026-11-10",
+    "category": "Prestation",
+    "clientId": "c2",
+    "vatAmount": 0,
+    "paid": true,
+    "notes": "",
+    "paymentMethod": "transfer"
+   },
+   {
+    "id": "t3",
+    "kind": "expense",
+    "label": "Abonnement Lightroom",
+    "amount": 1199,
+    "date": "2026-11-05",
+    "category": "Logiciels",
+    "clientId": null,
+    "vatAmount": 0,
+    "paid": true,
+    "notes": "",
+    "paymentMethod": "transfer"
+   },
+   {
+    "id": "t4",
+    "kind": "expense",
+    "label": "Carte SD",
+    "amount": 3490,
+    "date": "2026-11-12",
+    "category": "Matériel",
+    "clientId": null,
+    "vatAmount": 0,
+    "paid": true,
+    "notes": "",
+    "paymentMethod": "transfer"
+   },
+   {
+    "id": "t5",
+    "kind": "income",
+    "label": "Retouches",
+    "amount": 12000,
+    "date": "2026-10-20",
+    "category": "Prestation",
+    "clientId": "c1",
+    "vatAmount": 0,
+    "paid": true,
+    "notes": "",
+    "paymentMethod": "transfer"
+   }
+  ],
+  "invoices": [
+   {
+    "archivedAt": null,
+    "id": "i1",
+    "number": "F-2026-012",
+    "clientId": "c2",
+    "clientSnapshot": {
+     "name": "Studio Lumière"
+    },
+    "sellerSnapshot": {},
+    "issueDate": "2026-11-10",
+    "dueDate": "2026-12-10",
+    "status": "sent",
+    "paymentMethod": "transfer",
+    "paidDate": null,
+    "notes": "",
+    "totalHt": 80000,
+    "totalVat": 0,
+    "totalTtc": 80000,
+    "paidAmount": 0,
+    "items": [
+     {
+      "description": "Reportage",
+      "quantity": 1,
+      "unitPrice": 80000,
+      "vatRate": 0
+     }
+    ]
+   }
+  ],
+  "events": [
+   {
+    "id": "e1",
+    "clientId": "c1",
+    "title": "Séance famille",
+    "eventType": "session",
+    "startsAt": "2026-11-20T10:00:00+01:00",
+    "endsAt": "2026-11-20T12:00:00+01:00",
+    "location": "Parc Borély",
+    "notes": ""
+   }
+  ]
+ },
+ "budget_pro_status": {
+  "enabled": true
+ },
+ "budget_pro_personal_accounts": [
+  {
+   "id": "pa1",
+   "name": "Compte perso"
+  }
+ ],
+ "budget_pro_recurring_expense_list": {
+  "rules": [],
+  "payments": []
+ }
+}
