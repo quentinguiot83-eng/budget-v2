@@ -249,7 +249,6 @@
 .app .ws-trip-manage { display: flex; flex-direction: column; border: 1px solid var(--border); border-radius: var(--ws-radius-field); padding: 0 14px; margin-top: 4px; }
 .app .ws-trip-manage > .ws-row { justify-content: flex-start; min-height: 48px; padding: 10px 0; cursor: pointer; }
 .app .ws-trip-manage > .ws-row.ws-negative { color: var(--ws-negative); }
-.app .ws-trip-add { align-self: flex-start; margin-top: 8px; }
 .app .ws-trip-funding { border-top: 1px solid var(--border); border-bottom: 0; margin-top: 8px; padding-bottom: 0; }
 .app .ws-budget-list > .ws-row:last-child { border-top: 1px solid var(--border); }
 

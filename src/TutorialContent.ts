@@ -64,7 +64,7 @@ export const TUTORIAL_CHAPTERS: TourChapter[] = [
     s("trips", "[data-tour='trips-selector']", "Tes projets", "Les voyages disposent déjà d'un budget et de catégories dédiées."),
     s("trips", "[data-tour='trips-create']", "Créer un voyage", "Choisis son nom, ses dates et son budget global.", true, "trip"),
     s("trips", "[data-tour='trips-add-envelope'], [data-tour='trips-envelopes']", "Les catégories du voyage", "Prévois un montant pour le transport, le logement, les repas…", true, "tripCategory"),
-    s("trips", "[data-tour='trips-budget'] .ws-trip-add", "Ses dépenses", "Chaque achat du voyage est enregistré à part du budget courant.", true, "tripExpense"),
+    s("trips", ".floating-add-button, .desktop-quick-add", "Ses dépenses", "Sur un voyage, le bouton + enregistre directement un achat du voyage, à part du budget courant.", true, "tripExpense"),
     s("trips", "[data-tour='trips-funding'] button", "Financer le voyage", "Transfère de l'argent depuis un compte de ton patrimoine.", true, "tripFunding"),
     s("trips", "[data-tour='trips-selector'] button:nth-child(2)", "Autres projets", "Cette partie est encore en développement. Les projets ponctuels peuvent déjà être simulés dans Projections.")
   ] },

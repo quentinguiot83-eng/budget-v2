@@ -9,7 +9,7 @@ const percent = (value: number, max: number) => max > 0 ? Math.min(100, Math.rou
 
 export default function ProjectsScreen({ view }: { view: WimmView }) {
   const {
-    activeTrip, change, confirmAction, editTrip, explain, operation, projectsSection,
+    activeTrip, change, confirmAction, editTrip, explain, projectsSection,
     retryFailedImage, s, setActiveTrip, setProjectsSection, setShowArchivedTrip,
     showArchivedTrip, transfer, tripCategory, tripCoverUrls, txDetails, txRows,
   } = view;
@@ -116,11 +116,6 @@ export default function ProjectsScreen({ view }: { view: WimmView }) {
           <span className={`ws-progress${spent > t.budget && t.budget > 0 ? " is-over" : ""}`} aria-hidden="true">
             <span style={{ width: percent(spent, t.budget) + "%" }}/>
           </span>
-          {!t.closedAt && (
-            <button type="button" className="ws-pill is-solid ws-trip-add" onClick={() => operation("expense", t)}>
-              <Plus size={16} aria-hidden="true"/>Ajouter une dépense
-            </button>
-          )}
           <div className="ws-row ws-trip-funding" data-tour="trips-funding">
             <span className="ws-icon-tile" aria-hidden="true"><Wallet size={20}/></span>
             <span className="ws-row-main">
@@ -184,7 +179,7 @@ export default function ProjectsScreen({ view }: { view: WimmView }) {
               </span>
               <span className="ws-amount ws-negative">−{money(x.amount)}</span>
             </button>
-          )) : <p className="ws-muted" style={{ padding: "8px 0 12px" }}>Aucune dépense pour ce voyage.</p>}
+          )) : <p className="ws-muted" style={{ padding: "8px 0 12px" }}>{t.closedAt ? "Aucune dépense pour ce voyage." : "Aucune dépense pour l’instant. Le bouton + les ajoute directement à ce voyage."}</p>}
         </section>
       </>
     );
