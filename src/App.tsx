@@ -313,6 +313,11 @@ export default function App() {
   }
 
   const view = buildView({ ...app, doc, current });
+  // Sur Projets, le + ajoute directement une dépense au voyage affiché.
+  const shownTrip = view.route === "trips" && view.projectsSection === "trips"
+    ? view.s.trips.find(t => t.id === view.activeTrip && (!t.closedAt || view.showArchivedTrip)) || view.s.trips.find(t => !t.closedAt)
+    : undefined;
+  const tripForAdd = shownTrip && !shownTrip.closedAt ? shownTrip : undefined;
   const {
     addPersonalMoney, alerts, closeTutorial, currentAccounts, deleteCreditPlan,
     desktopNavGroups, desktopQuickAddButtonRef, displayName, editPersonalAccount,
@@ -341,9 +346,9 @@ export default function App() {
           aria-haspopup={route==="pro"||route==="personal"?"dialog":undefined}
           aria-controls={route==="pro"||route==="personal"?"wimm-quick-add-actions":undefined}
           aria-expanded={route==="pro"||route==="personal"?mobileQuickAddOpen:undefined}
-          onClick={()=>route==="pro"||route==="personal"?setMobileQuickAddOpen(v=>!v):navigate("add")}
+          onClick={()=>tripForAdd?operation("expense", tripForAdd):route==="pro"||route==="personal"?setMobileQuickAddOpen(v=>!v):navigate("add")}
         >
-          <Plus size={19}/> {route==="pro"?"Ajouter dans Wimm Pro":route==="personal"?"Ajouter au compte perso":"Ajouter une opération"}
+          <Plus size={19}/> {tripForAdd?"Dépense de voyage":route==="pro"?"Ajouter dans Wimm Pro":route==="personal"?"Ajouter au compte perso":"Ajouter une opération"}
         </button>
         <nav data-tour="desktop-nav" className="desktop-sidebar-nav" aria-label="Navigation ordinateur">
           {desktopNavGroups.map(group=>(
@@ -661,11 +666,11 @@ export default function App() {
         type="button"
         className={mobileQuickAddOpen ? "floating-add-button open" : "floating-add-button"}
         data-tour="add-button" data-tour-route={route==="personal"?undefined:"add"}
-        aria-label={mobileQuickAddOpen ? "Fermer l’ajout rapide" : route==="pro"?"Ajouter dans le mode Pro":route==="personal"?"Ajouter au compte perso":"Ajouter une opération"}
-        aria-haspopup="dialog"
+        aria-label={mobileQuickAddOpen ? "Fermer l’ajout rapide" : tripForAdd ? "Ajouter une dépense au voyage " + tripForAdd.name : route==="pro"?"Ajouter dans le mode Pro":route==="personal"?"Ajouter au compte perso":"Ajouter une opération"}
+        aria-haspopup={tripForAdd && !mobileQuickAddOpen ? undefined : "dialog"}
         aria-controls="wimm-quick-add-actions"
         aria-expanded={mobileQuickAddOpen}
-        onClick={() => setMobileQuickAddOpen(v => !v)}
+        onClick={() => { if (tripForAdd && !mobileQuickAddOpen) operation("expense", tripForAdd); else setMobileQuickAddOpen(v => !v); }}
       >
         <Plus size={30} strokeWidth={2.2} className="floating-add-symbol" aria-hidden="true"/>
       </button>
