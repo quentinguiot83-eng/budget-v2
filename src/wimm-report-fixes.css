@@ -56,7 +56,7 @@
    le tiroir de menu qu'il modifiait n'existe plus). Gardées en fin de
    feuille pour conserver leur priorité d'origine. */
 @media (max-width: 850px) {
-  .topbar { position: sticky; top: 0; z-index: 45; background: color-mix(in srgb, var(--surface) 94%, transparent); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); }
+  .topbar { -webkit-backdrop-filter: blur(14px); }
 }
 .sidebar-bottom { display: flex; flex-direction: column; }
 .sidebar-bottom .user-dot { order: 1; }

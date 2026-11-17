@@ -1,8 +1,8 @@
 .pro-recurring-expenses{margin-top:18px}
 .pro-rexp-header{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:18px}
-.pro-rexp-header h2{font-size:19px;margin:6px 0}
+.pro-rexp-header h2{margin:6px 0}
 .pro-rexp-header p{color:var(--text-secondary,#667085);line-height:1.55;margin:0;max-width:670px;font-size:13px}
-.pro-rexp-eyebrow{display:inline-flex;align-items:center;gap:6px;letter-spacing:.1em;font-size:10px;font-weight:800;opacity:.75}
+.pro-rexp-eyebrow{align-items:center;gap:6px;letter-spacing:.1em;font-size:10px;font-weight:800;opacity:.75}
 .pro-rexp-header .prosuite-btn{white-space:nowrap}
 .pro-rexp-month{display:flex;align-items:center;gap:10px;border-block:1px solid var(--border-color,#e9ebef);padding:12px 0;font-size:13px}
 .pro-rexp-month>strong{margin-left:auto;font-size:12px}

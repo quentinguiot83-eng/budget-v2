@@ -25,7 +25,6 @@ button {
 }
 button:disabled,
 fieldset:disabled {
-  opacity: 0.6;
   cursor: wait;
 }
 button {
@@ -58,10 +57,6 @@ h3,
     Manrope,
     -apple-system,
     sans-serif;
-}
-h1 {
-  font-size: 2rem;
-  margin-bottom: 0;
 }
 h2 {
   line-height: 1.4;
@@ -134,21 +129,12 @@ fieldset {
   margin-bottom: 9px;
 }
 .sidebar nav {
-  display: grid;
   gap: 5px;
 }
 .sidebar nav button {
-  display: flex;
-  gap: 14px;
-  align-items: center;
-  padding: 14px 16px;
   text-align: left;
   color: #778391;
   font-size: 0.92rem;
-}
-.sidebar nav button svg {
-  width: 20px;
-  height: 20px;
 }
 .sidebar nav button.active {
   font-weight: 650;
@@ -186,8 +172,6 @@ fieldset {
   max-width: 1520px;
 }
 .topbar {
-  height: 92px;
-  border-bottom: 1px solid var(--border);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -205,9 +189,6 @@ fieldset {
   align-items: center;
   border-radius: 10px;
   flex-shrink: 0;
-}
-.icon:hover {
-  background: var(--accent-soft);
 }
 .bell {
   position: relative;
@@ -228,19 +209,9 @@ fieldset {
   justify-content: space-between;
 }
 .month-picker {
-  display: flex;
-  align-items: center;
   border: 1px solid var(--border);
   border-radius: 12px;
   background: white;
-  padding: 3px;
-}
-.month-picker input {
-  border: 0;
-  padding: 8px 3px;
-  background: none;
-  color: var(--ink);
-  font-size: 0.875rem;
 }
 .card {
   min-width: 0;
@@ -264,7 +235,6 @@ fieldset {
 }
 .two-col {
   display: grid;
-  grid-template-columns: 1fr 1fr;
 }
 .section-head {
   display: flex;
@@ -280,7 +250,6 @@ fieldset {
 .flex {
   display: flex;
   align-items: center;
-  gap: 12px;
 }
 .grow {
   flex: 1;
@@ -345,11 +314,6 @@ fieldset {
   color: #9c4248;
   background: #faeeee;
   margin: 8px;
-}
-.compact {
-  padding: 8px 12px;
-  min-height: 36px;
-  font-size: 0.8125rem;
 }
 .wide {
   width: 100%;
@@ -446,12 +410,6 @@ fieldset {
   flex-wrap: wrap;
   margin-top: 18px;
 }
-.footnote {
-  font-size: 0.8125rem;
-  color: var(--muted);
-  line-height: 1.6;
-  margin: 0;
-}
 .page-footer {
   font-size: 0.75rem;
   color: #8d98a5;
@@ -470,10 +428,7 @@ fieldset {
 }
 .empty {
   text-align: center;
-  background: white;
-  border: 1px dashed #dbe3ec;
   padding: 40px;
-  border-radius: 18px;
 }
 .empty > p {
   color: var(--muted);
@@ -562,7 +517,6 @@ fieldset {
 }
 .chart {
   height: 310px;
-  width: 100%;
   margin: 15px 0;
   min-width: 0;
 }
@@ -714,32 +668,21 @@ th:first-child {
   margin: 15px 0;
   font-size: 1rem;
 }
-.danger-zone {
-  border-color: #ebd8d9;
-}
 .danger-zone > p {
   font-size: 0.875rem;
   color: var(--muted);
 }
 dialog {
-  border: 0;
-  background: white;
-  color: var(--ink);
   width: min(560px, calc(100% - 30px));
   max-height: 90dvh;
   padding: 0;
-  box-shadow: 0 25px 100px #20324722;
 }
 .sheet > header {
   display: flex;
   justify-content: space-between;
-  gap: 20px;
-  align-items: center;
-  margin-bottom: 22px;
 }
 .sheet h2 {
   margin: 0;
-  font-size: 1.3rem;
 }
 .field {
   display: flex;
@@ -756,9 +699,6 @@ dialog {
 .toolbar select {
   padding: 13px;
   border: 1px solid #dce3eb;
-  border-radius: 11px;
-  background: #fcfdfe;
-  color: var(--ink);
   width: 100%;
   font-size: 1rem;
 }
@@ -767,10 +707,6 @@ dialog {
 }
 .toolbar select {
   width: auto;
-}
-.field input:focus,
-.field select:focus {
-  border-color: var(--chart);
 }
 .error {
   background: #fceeee;
@@ -975,11 +911,6 @@ dialog {
 @media (max-width: 1200px) {
   .sidebar {
     width: 210px;
-    padding: 30px 14px;
-  }
-  .main {
-    margin-left: 210px;
-    padding: 0 25px;
   }
   .add-grid {
     grid-template-columns: repeat(2, 1fr);
@@ -1003,9 +934,6 @@ dialog {
   .auth-story h1 {
     font-size: 2.5rem;
   }
-  .auth-panel {
-    padding: 60px 10%;
-  }
 }
 @media (max-width: 850px) {
   .sidebar {
@@ -1017,48 +945,14 @@ dialog {
   }
   .bottom-nav {
     position: fixed;
-    bottom: 0;
-    border-top: 1px solid var(--border);
-    z-index: 20;
-  }
-  .bottom-nav button {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-  }
-  .bottom-nav svg {
-    width: 22px;
-    height: 22px;
-    stroke-width: 1.8;
   }
   .bottom-nav button.active {
     font-weight: 700;
   }
-  .page-footer {
-    padding-bottom: 90px;
-  }
-  .topbar {
-    height: 77px;
-  }
   .topbar .mobile-brand {
-    display: block;
     font-family: Manrope, sans-serif;
     font-size: 1rem;
     font-weight: 750;
-    margin-bottom: 3px;
-  }
-  .topbar .eyebrow {
-    font-size: 0.75rem;
-  }
-  .topbar > .flex {
-    gap: 8px;
-  }
-  .page-heading {
-    margin: 25px 0 23px;
-  }
-  .page-heading h1 {
-    font-size: 1.6rem;
   }
   .page-heading .eyebrow {
     font-size: 0.65rem;
@@ -1099,21 +993,11 @@ dialog {
     display: block;
   }
   .page-heading > .month-picker {
-    display: flex;
     justify-content: space-between;
     max-width: none;
-    background: transparent;
-    border: 0;
-    padding: 0;
   }
   .month-picker input {
-    text-align: center;
     flex: 1;
-    max-width: 200px;
-  }
-  .month-picker .icon {
-    background: white;
-    border: 1px solid var(--border);
   }
   .overview {
     grid-template-columns: 1fr 1fr;
@@ -1138,18 +1022,11 @@ dialog {
   .metric .text {
     font-size: 0.8125rem;
   }
-  .two-col {
-    grid-template-columns: 1fr;
-  }
-  .section-head {
-    gap: 10px;
-  }
   .text {
     font-size: 0.8125rem;
   }
   .row {
     gap: 10px;
-    padding: 15px 0;
   }
   .row-value {
     max-width: 43%;
@@ -1170,9 +1047,6 @@ dialog {
   }
   .overview.wealth-overview .metric:last-child strong {
     font-size: 1.05rem;
-  }
-  .chart {
-    height: 260px;
   }
   .pills {
     gap: 3px;
@@ -1224,15 +1098,8 @@ dialog {
     min-width: 55px;
     font-size: 0.65rem;
   }
-  .due .compact {
-    font-size: 0.75rem;
-    padding: 7px 9px;
-  }
   .due .icon {
     width: 23px;
-  }
-  .day {
-    min-height: 54px;
   }
   .rule-row {
     gap: 9px;
@@ -1261,13 +1128,7 @@ dialog {
   }
   dialog {
     width: 100%;
-    max-height: 92dvh;
-    max-width: 100%;
     margin: auto 0 0;
-    border-radius: 24px 24px 0 0;
-  }
-  .sheet > header {
-    margin-bottom: 25px;
   }
   .onboarding {
     padding: 30px 20px;
@@ -1280,9 +1141,6 @@ dialog {
   }
   .invite code {
     font-size: 0.85rem;
-  }
-  .footnote {
-    font-size: 0.75rem;
   }
   .page-footer {
     font-size: 0.7rem;
@@ -1314,19 +1172,10 @@ dialog {
     display: flex;
     align-items: center;
     gap: 10px;
-    margin-bottom: 3px;
   }
 
   .bottom-nav {
-    display: grid;
-    grid-template-columns: repeat(5, minmax(0, 1fr));
     justify-content: initial;
-    backdrop-filter: none;
-  }
-
-  .bottom-nav button {
-    width: 100%;
-    min-width: 0;
   }
 
   .mobile-drawer {
@@ -1420,7 +1269,6 @@ dialog {
   .page-footer {
     flex-direction: column;
     gap: 6px;
-    padding-bottom: 115px;
   }
 
   .back-to-top {
@@ -1578,44 +1426,10 @@ dialog {
     width: 100%;
   }
 
-  .personal-installments-card .section-head > button,
-  .personal-budgets-card .section-head > button {
-    width: 100%;
-    min-height: 44px;
-    justify-content: center;
-  }
-
 }
 
 
 /* Compte perso — historique mobile */
-@media (max-width: 560px) {
-
-  .personal-history-card .row {
-    align-items: flex-start;
-    flex-wrap: wrap;
-  }
-
-  .personal-history-card .row-label {
-    flex: 1 1 calc(100% - 32px);
-  }
-
-  .personal-history-card .row-value {
-    flex: 0 0 calc(100% - 31px);
-    width: auto;
-    max-width: none;
-    margin-left: 31px;
-    text-align: left;
-  }
-
-  .personal-history-card .row-value > .flex {
-    width: 100%;
-    flex-wrap: wrap;
-    justify-content: flex-start;
-    gap: 10px;
-  }
-
-}
 
 
 /* Voyages — actions des cartes sur mobile */
@@ -1630,7 +1444,6 @@ dialog {
   .calendar-grid {
     grid-template-columns: repeat(7, minmax(0, 1fr));
     width: 100%;
-    gap: 4px;
   }
 
   .calendar-grid > * {
@@ -1640,20 +1453,14 @@ dialog {
   .day {
     width: 100%;
     min-width: 0;
-    padding: 6px 3px;
     overflow: hidden;
   }
 
   .day small {
     width: 100%;
-    font-size: 0.58rem;
     line-height: 1.2;
     text-align: center;
     overflow-wrap: anywhere;
-  }
-
-  .day strong {
-    font-size: 0.78rem;
   }
 }
 
@@ -1692,7 +1499,6 @@ dialog {
 
 
 /* Night mode */
-:root[data-mode="dark"]{color-scheme:dark;color:#e5edf5;background:#0e151c}
 :root[data-mode="dark"] body,:root[data-mode="dark"] #root{color:var(--ink)}
 :root[data-mode="dark"] .sidebar,:root[data-mode="dark"] .metric,:root[data-mode="dark"] .category,:root[data-mode="dark"] .month-picker,:root[data-mode="dark"] dialog,:root[data-mode="dark"] .auth-page,:root[data-mode="dark"] .auth-visual,:root[data-mode="dark"] .bottom-nav{background:var(--surface)!important;color:var(--ink)}
 :root[data-mode="dark"] .sidebar nav button{color:#9aa9b8}:root[data-mode="dark"] .sidebar nav button.active{color:var(--accent-deep)}
@@ -1722,11 +1528,11 @@ dialog {
 .transaction-search-input{display:flex;align-items:center;gap:10px;flex:1;min-width:220px;border:1px solid var(--border);border-radius:11px;padding:0 13px;background:var(--surface,#fff);color:var(--muted)}
 .transaction-search-input input{border:0;outline:none;width:100%;min-width:0;padding:13px 0;background:transparent;color:var(--ink);font:inherit}
 .transaction-search-input:focus-within{outline:2px solid var(--chart);outline-offset:2px}
-.transaction-search-filters{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-top:18px}
+.transaction-search-filters{margin-top:18px}
 .transaction-search-filters .field{margin:0;min-width:0}
 .transaction-search-results>p:first-child{padding:0 18px}
 .transaction-search-results>.secondary{margin:16px}
-@media(max-width:640px){.transaction-search-top{gap:8px}.transaction-search-input{flex-basis:100%;min-width:0}.transaction-search-top>button{flex:1;justify-content:center}.transaction-search-filters{grid-template-columns:repeat(2,minmax(0,1fr))}.transaction-search{padding:16px!important}}
+@media(max-width:640px){.transaction-search-top{gap:8px}.transaction-search-input{flex-basis:100%;min-width:0}.transaction-search-top>button{flex:1;justify-content:center}.transaction-search{padding:16px!important}}
 .transaction-search .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 .spending-analysis-tooltip i{display:inline-block;width:9px;height:9px;border-radius:50%;flex-shrink:0}
 .spending-analysis-tooltip{background:var(--surface);color:var(--ink);border:1px solid var(--border);border-radius:12px;box-shadow:0 6px 20px #0001;padding:10px;width:230px;max-width:calc(100vw - 150px);font-size:11px}
@@ -1735,16 +1541,13 @@ dialog {
 .spending-analysis-tooltip span{display:flex;align-items:center;gap:5px;min-width:0;overflow-wrap:anywhere}
 .spending-analysis-tooltip b{white-space:nowrap;font-weight:600}
 .spending-analysis-tooltip p{margin:0}
-.archived-category-settings{padding:22px}
 .archived-category-row{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px 0;border-top:1px solid var(--border)}
 .archived-category-row>div{display:flex;flex-direction:column;gap:5px}
 .archived-category-row small{font-size:.75rem;line-height:1.5}
 .archived-category-row>button{flex-shrink:0}
-@media(max-width:640px){.archived-category-settings{padding:16px}}
 
 
 /* Tutoriel de première utilisation */
-.tutorial-settings-card{padding:22px}
 .tutorial-settings-card .section-head{align-items:flex-start}
 .tutorial-settings-card h2{
   display:flex;
@@ -1752,12 +1555,9 @@ dialog {
   gap:8px;
 }
 .tutorial-settings-card p{
-  margin:7px 0 0;
   max-width:580px;
-  line-height:1.55;
 }
 @media(max-width:640px){
-  .tutorial-settings-card{padding:16px}
   .tutorial-settings-card .section-head{
     display:grid;
     gap:14px;
@@ -1770,30 +1570,25 @@ dialog {
 
 /* Compact, readable contextual tour and consistent mobile surfaces. */
 .add-page-layout{display:grid;gap:24px}
-.add-page-layout>.section-head,.add-page-layout>.footnote{margin:0}
+.add-page-layout>.section-head{margin:0}
 .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 .check-row{display:flex;align-items:flex-start;gap:10px;margin:12px 0;line-height:1.4}
 .check-row input{flex:0 0 auto;margin-top:3px}
 :root[data-mode="dark"] .mobile-drawer,
-:root[data-mode="dark"] .day{background:var(--surface);color:var(--ink)}
+:root[data-mode="dark"] .day{color:var(--ink)}
 @media(max-width:850px){
-  .topbar:before{content:"";position:absolute;bottom:100%;left:-24px;right:-24px;height:env(safe-area-inset-top);background:var(--surface)}
+  .topbar:before{position:absolute;bottom:100%;left:-24px;right:-24px;height:env(safe-area-inset-top);background:var(--surface)}
   .add-page-layout{gap:18px}
 }
 
 /* Paint the iOS safe area on initial launch and span the full mobile header. */
 html{min-height:100%}
 body{min-height:100dvh}
-.topbar{background:var(--surface);color:var(--ink)}
+.topbar{color:var(--ink)}
 .page-info:focus-visible{outline:2px solid var(--accent-deep);outline-offset:3px}
 @media(max-width:850px){
  body{padding-top:0}
  .main{--mobile-gutter:24px}
- .topbar{position:sticky;top:0!important;z-index:35;margin-inline:calc(-1 * var(--mobile-gutter));padding:calc(10px + env(safe-area-inset-top)) var(--mobile-gutter) 10px;height:auto;min-height:77px;box-sizing:border-box}
- .topbar:before{display:none}
- .topbar>div:first-child{min-width:0}
- .topbar .eyebrow{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:calc(100vw - 180px)}
- .topbar>.flex{flex-shrink:0;gap:4px}
 }
 @media(max-width:560px){.main{--mobile-gutter:18px}}
 
@@ -1804,9 +1599,6 @@ body{min-height:100dvh}
 .content>[data-tour]>.card{margin-block:0}
 .pills button{border:1px solid var(--border)}
 .pills button.selected{border-color:var(--accent)}
-:root[data-mode="dark"] .month-picker .icon{background:var(--surface);color:var(--ink)}
-:root[data-mode="dark"] .recharts-tooltip-label,:root[data-mode="dark"] .recharts-tooltip-item{color:var(--ink)!important}
-:root[data-mode="dark"] .recharts-cartesian-axis-tick-value{fill:var(--muted)}
 :root[data-mode="dark"] .pills input{background:var(--surface);color:var(--ink);border-color:var(--border)}
 @media(max-width:560px){:root{--block-gap:18px}}
 

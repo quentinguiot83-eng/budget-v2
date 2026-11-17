@@ -146,7 +146,9 @@ EXTRAS = [
     ("perso-budgets", "?demo=1", ["nav:Compte perso", "text:Créer mon compte perso",
      "fill:Solde actuel (€)=420", "click:.sheet button.primary, [role=dialog] button.primary, dialog button.primary",
      "click:.personal-ws-tabs button:nth-child(3)"], True),
-] + [("pro-" + slug, "?demo=1&screen=pro", [] if label == "Accueil" else ["click:.pro-v4-nav button >> text=" + label], True)
+] + [("reglages-" + ("menu" if k < 0 else str(k + 1)), "?demo=1", ["click:button.mobile-profile-trigger"] + ([] if k < 0 else [f"click:.wimm-settings-entry >> nth={k}"]), True)
+     for k in range(-1, 5)] + [("ordi-reglages-" + ("menu" if k < 0 else str(k + 1)), "?demo=1", ["click:.sidebar-bottom button"] + ([] if k < 0 else [f"click:.wimm-settings-entry >> nth={k}"]), True)
+     for k in range(-1, 5)] + [("ordi-ajouter", "?demo=1", ["click:.desktop-quick-add"], True)] + [("pro-" + slug, "?demo=1&screen=pro", [] if label == "Accueil" else ["click:.pro-v4-nav button >> text=" + label], True)
      for slug, label in [("accueil", "Accueil"), ("facturation", "Facturation"), ("clients", "Clients"),
                          ("agenda", "Agenda"), ("catalogue", "Catalogue"), ("finances", "Finances"), ("analyse", "Analyse")]]
 
@@ -154,8 +156,10 @@ EXTRAS = [
 def capture_extras(browser, url: str, out: Path):
     problems = []
     for name, query, steps, full_page in EXTRAS:
-        ctx = browser.new_context(viewport={"width": 390, "height": 844}, device_scale_factor=2,
-                                  is_mobile=True, has_touch=True, locale="fr-FR", timezone_id="Europe/Paris")
+        desktop = name.startswith("ordi-")
+        ctx = browser.new_context(viewport={"width": 1280, "height": 900} if desktop else {"width": 390, "height": 844},
+                                  device_scale_factor=1 if desktop else 2,
+                                  is_mobile=not desktop, has_touch=not desktop, locale="fr-FR", timezone_id="Europe/Paris")
         ctx.route("**/*", route_requests(url, pro=name.startswith("pro-")))
         ctx.add_init_script("localStorage.setItem('wimm-appearance-mode', 'light');")
         page = ctx.new_page()

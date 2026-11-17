@@ -1,11 +1,9 @@
 /* Wimm Pro v4 — unified Liquid Glass workspace, 22 October 2026. */
 .prosuite-native .pro-v4-nav{min-width:0;gap:5px}
-.prosuite-native .pro-v4-nav button{border-radius:12px;min-height:44px;font-size:.79rem;white-space:nowrap}
-.prosuite-native .pro-v4-nav button.active{background:var(--wimm-mint-wash);color:var(--wimm-green)}
+.prosuite-native .pro-v4-nav button{border-radius:12px;white-space:nowrap}
 .pro-v4-config-warning{display:flex;gap:9px;align-items:center;text-align:left;border:1px solid color-mix(in srgb,var(--wimm-amber,#bf842c) 40%,var(--border));color:var(--ink);background:color-mix(in srgb,var(--wimm-mint-wash) 18%,var(--surface));padding:12px;border-radius:12px;font-size:.75rem;font-weight:770;cursor:pointer}
 .pro-v4-config-warning svg:last-child{margin-left:auto}
 .pro-v4-treasury{min-width:0}
-.pro-v4-treasury-available strong{color:var(--wimm-green)}
 .pro-v4-form-note{font-size:.73rem;line-height:1.5;color:var(--muted);margin:0}
 .pro-v4-show-more{border:1px solid var(--border);border-radius:11px;padding:10px 16px;color:var(--ink);background:var(--surface);font-size:.76rem;font-weight:770;margin-top:10px}
 .pro-v4-receipt-preview{display:grid;gap:8px;padding:14px;border-radius:15px;border:1px solid color-mix(in srgb,var(--wimm-green) 20%,var(--border));background:color-mix(in srgb,var(--wimm-mint-wash) 42%,var(--surface))}
@@ -25,28 +23,19 @@
 :root[data-mode="dark"] .pro-v4-receipt-preview{background:#1c2a33;border-color:#344251}
 :root[data-mode="dark"] .pro-v4-receipt-net b{color:#8be0b6}
 @media(min-width:801px){
-  .prosuite-native .prosuite-shell{grid-template-columns:170px minmax(0,1fr)}
-  .prosuite-native .pro-v4-nav{padding:11px 7px}
-  .prosuite-native .pro-v4-nav button{font-size:.75rem;padding:11px 10px;gap:9px}
+  .prosuite-native .pro-v4-nav button{font-size:.75rem;gap:9px}
 }
 @media(max-width:800px){
-  .prosuite-native .prosuite-v3-nav.pro-v4-nav{
-    display:flex!important;grid-template-columns:none!important;flex-direction:row!important;
-    gap:6px!important;overflow-x:auto!important;overflow-y:hidden!important;
-    width:100%!important;min-width:0!important;height:auto!important;
-    min-height:68px!important;max-height:none!important;
-    padding:7px!important;scrollbar-width:thin;scroll-snap-type:x proximity;
+  .prosuite-native .prosuite-v3-nav.pro-v4-nav{grid-template-columns:none!important;flex-direction:row!important;overflow-y:hidden!important;
+    width:100%!important;min-width:0!important;max-height:none!important;scroll-snap-type:x proximity;
     -webkit-overflow-scrolling:touch;box-sizing:border-box!important
   }
   .prosuite-native .prosuite-v3-nav.pro-v4-nav button,
   .prosuite-native .prosuite-v3-nav.pro-v4-nav button.active{
-    display:flex!important;flex-direction:column!important;flex:0 0 84px!important;
-    min-width:84px!important;max-width:84px!important;width:84px!important;
-    height:55px!important;min-height:55px!important;max-height:none!important;
-    align-items:center!important;justify-content:center!important;
-    padding:6px 3px!important;font-size:.68rem!important;scroll-snap-align:start
+    display:flex!important;max-height:none!important;
+    align-items:center!important;justify-content:center!important;font-size:.68rem!important;scroll-snap-align:start
   }
-  .prosuite-native .prosuite-v3-nav.pro-v4-nav button span{display:block!important;white-space:nowrap!important;font-size:.66rem!important}
+  .prosuite-native .prosuite-v3-nav.pro-v4-nav button span{display:block!important;white-space:nowrap!important}
   .prosuite-native .prosuite-v3-nav.pro-v4-nav button svg{width:19px!important;height:19px!important}
 }
 @media(max-width:540px){
@@ -81,12 +70,12 @@
 /* V4.1 — lightweight Home and a complete, directly navigable Pro sidebar */
 .pro-v4-nav .pro-v4-menu-caption{display:block;padding:15px 10px 5px;font-size:.62rem;font-weight:800;letter-spacing:.1em;color:var(--muted);white-space:nowrap}
 .pro-v4-nav .pro-v4-menu-caption:first-child{padding-top:5px}
-.pro-v4-subpage{display:grid;gap:16px;min-width:0}
+.pro-v4-subpage{display:grid;gap:16px}
 .pro-v4-subpage-header{padding:4px 2px 0}
 .pro-v4-subpage-header>span{font-size:.68rem;letter-spacing:.12em;font-weight:850;color:var(--muted)}
 .pro-v4-subpage-header h1{font-size:clamp(1.3rem,3vw,1.7rem);margin:5px 0}
 .pro-v4-subpage-header p{font-size:.83rem;color:var(--muted);margin:0;line-height:1.5}
-.pro-v4-settings-links{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.pro-v4-settings-links{display:grid;gap:10px}
 .pro-v4-settings-links>button{display:flex;align-items:center;gap:12px;padding:16px;text-align:left;color:var(--ink);border:1px solid var(--border);background:var(--surface);border-radius:16px;cursor:pointer;min-width:0}
 .pro-v4-settings-links>button>svg:first-child{color:var(--wimm-green);flex-shrink:0}
 .pro-v4-settings-links>button>svg:last-child{margin-left:auto;color:var(--muted);flex-shrink:0}
@@ -96,11 +85,11 @@
 .pro-v4-settings-links button:hover:not(:disabled){border-color:color-mix(in srgb,var(--wimm-green) 38%,var(--border))}
 :root[data-mode="dark"] .pro-v4-settings-links>button{background:#17212b;border-color:#2a3744;color:#e5edf5}
 @media(min-width:801px){.prosuite-native .prosuite-shell{grid-template-columns:190px minmax(0,1fr)}.prosuite-native .pro-v4-nav{padding:12px 9px}.prosuite-native .pro-v4-nav button{min-height:38px!important;padding:8px 11px!important}}
-@media(max-width:800px){.prosuite-native .prosuite-v3-nav.pro-v4-nav>.pro-v4-menu-caption{display:none!important}.pro-v4-settings-links{grid-template-columns:1fr}}
+@media(max-width:800px){.pro-v4-settings-links{grid-template-columns:1fr}}
 
 
 /* Unified Pro Finance page: treasury, Urssaf and payments in one destination. */
-.pro-v4-finances{display:grid;gap:16px;min-width:0}
+.pro-v4-finances{display:grid;gap:16px}
 .pro-v4-finances-title{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;flex-wrap:wrap}
 .pro-v4-finances-title>div{min-width:0}
 .pro-v4-finances-title span{color:var(--muted);font-size:.65rem;font-weight:800;letter-spacing:.11em}
@@ -112,7 +101,7 @@
   background:var(--surface);color:var(--ink);font-size:.74rem;font-weight:760;cursor:pointer
 }
 .pro-v4-finances-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
-.pro-v4-finances-summary>div{display:grid;align-content:center;gap:8px;min-width:0;padding:18px;
+.pro-v4-finances-summary>div{display:grid;align-content:center;gap:8px;padding:18px;
   border:1px solid var(--border);border-radius:16px;background:var(--surface);box-shadow:var(--wimm-card-shadow)}
 .pro-v4-finances-summary>div:first-child{background:color-mix(in srgb,var(--wimm-mint-wash) 45%,var(--surface))}
 .pro-v4-finances-summary>div>span{font-size:.73rem;color:var(--muted);font-weight:700}
@@ -200,16 +189,12 @@
 }
 .prosuite-native .prosuite-main > * {min-width:0;max-width:100%;box-sizing:border-box}
 .prosuite-native .pro-v4-finances-summary > * {min-width:0;max-width:100%;box-sizing:border-box}
-.prosuite-native .pro-month-navigator {width:100%;max-width:100%;min-width:0;box-sizing:border-box}
+.prosuite-native .pro-month-navigator {width:100%}
 .prosuite-native .pro-month-navigator > strong {min-width:0;flex:1;text-align:center}
 @media(max-width:800px) {
-  .prosuite-native .prosuite-main {padding-left:14px!important;padding-right:14px!important}
-  .prosuite-native .pro-v4-nav {max-width:100%;box-sizing:border-box}
+  .prosuite-native .pro-v4-nav {max-width:100%}
   .prosuite-native .pro-v4-finances-fiscal,
 .prosuite-native .pro-v4-finances-actions {margin-left:0;margin-right:0}
-}
-@media(max-width:420px){
-  .prosuite-native .prosuite-main {padding-left:10px!important;padding-right:10px!important}
 }
 
 
