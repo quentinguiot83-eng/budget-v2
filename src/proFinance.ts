@@ -23,7 +23,6 @@ export const formatProMonth=(ym:string)=>new Date(ym+"-15T12:00:00").toLocaleDat
 export const proEuro=(cents:number)=>new Intl.NumberFormat("fr-FR",{style:"currency",currency:"EUR",maximumFractionDigits:0}).format(cents/100);
 export const proFullEuro=(cents:number)=>new Intl.NumberFormat("fr-FR",{style:"currency",currency:"EUR"}).format(cents/100);
 const cashDirection=(k:string)=>k==="income"?1:-1;
-export const paidProTransactions=(items:ProCashEntry[])=>items.filter(t=>t.paid);
 export function proCashAtMonth(items:ProCashEntry[],opening:number,ym:string,todayDate=new Date()){
   const end=moveProMonth(ym,1)+"-01";
   const todayString=todayDate.getFullYear()+"-"+String(todayDate.getMonth()+1).padStart(2,"0")+"-"+String(todayDate.getDate()).padStart(2,"0");
@@ -45,12 +44,6 @@ export const unpaidProInvoices=(invoices:ProInvoiceSummary[])=>invoices.filter(i
 );
 export const proInvoiceRemaining=(i:ProInvoiceSummary)=>
   Math.max(0,i.remainingAmount??(i.totalTtc-(i.paidAmount??0)));
-export const monthlyProSeries=(items:ProCashEntry[],invoices:ProInvoiceSummary[],ym:string,count:number,opening:number)=>{
-  return Array.from({length:count},(_,i)=>{
-    const month=moveProMonth(ym,i-count+1);
-    return {...proMonthStats(items,invoices,month),treasury:proCashAtMonth(items,opening,month)};
-  });
-};
 export const monthRangeProSeries=(items:ProCashEntry[],invoices:ProInvoiceSummary[],start:string,end:string,opening:number)=>{
   let count=0,month=start;
   while(month<=end&&count<60){count++;month=moveProMonth(month,1);}

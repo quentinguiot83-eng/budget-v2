@@ -3,7 +3,7 @@
   "outputDirectory": "dist",
   "rewrites": [
     {
-      "source": "/((?!api/|assets/|favicon.svg|manifest.webmanifest|push-sw.js|offline.html).*)",
+      "source": "/((?!api/|assets/|manifest.webmanifest|push-sw.js|offline.html|wimm-icon.png|wimm-icon-192.png).*)",
       "destination": "/index.html"
     }
   ],
