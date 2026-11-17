@@ -30,9 +30,9 @@ export const TUTORIAL_CHAPTERS: TourChapter[] = [
   ] },
   { id: "home", title: "Accueil", description: "Comprendre ton tableau de bord", steps: [
     s("home", "[data-tour='home-overview']", "Ton solde", "C'est le montant actuellement présent sur ton compte commun."),
-    s("home", ".home-balance-available", "Ton disponible", "Wimm estime ce qu'il restera en fin de mois après les dépenses prévues."),
-    s("home", ".home-income-expenses", "Le mois en un coup d'œil", "Retrouve tes revenus, tes dépenses et ton épargne."),
-    s("home", ".savings-home-summary", "Ton épargne", "Retrouve les versements du mois et ce qu'il reste à épargner."),
+    s("home", "[data-tour='home-available']", "Ton disponible", "Wimm estime ce qu'il restera en fin de mois après les dépenses prévues."),
+    s("home", "[data-tour='home-income']", "Le mois en un coup d'œil", "Retrouve tes revenus, tes dépenses et ton épargne."),
+    s("home", "[data-tour='home-savings']", "Ton épargne", "Retrouve les versements du mois et ce qu'il reste à épargner."),
     s("home", ".topbar .bell", "Tes notifications", "Ce bouton te signale les échéances à valider. Les alertes apparaissent également sur l'accueil si nécessaire.")
   ] },
   { id: "budget", title: "Budget", description: "Catégories, dépenses et analyses", steps: [

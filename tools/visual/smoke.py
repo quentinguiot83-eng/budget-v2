@@ -77,7 +77,10 @@ def calendar(page):
 
 def income(page):
     go(page, "Accueil")
-    click_button(page, "Voir les revenus")
+    try:
+        click_button(page, "Revenus")
+    except AssertionError:  # ancien accueil (avant l'allègement)
+        click_button(page, "Voir les revenus")
     assert "Toutes les transactions" in page.locator("h1").first.inner_text(), "revenus non ouverts"
 
 

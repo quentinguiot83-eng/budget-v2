@@ -318,7 +318,7 @@ export function createBudgetActions(ctx: WimmCore & BaseActions & AccountActions
   }
   function availableInfoButton() {
     const a = availableThisMonth;
-    return (<button type="button" className="block-info" aria-label="Informations : Disponible jusqu’à la fin du mois" onClick={() => explain(
+    return (<button type="button" className="ws-info" aria-label="Informations : Disponible jusqu’à la fin du mois" onClick={() => explain(
             "Calcul du disponible jusqu’à la fin du mois",
             <>
               <p>Après les paiements à venir, les projets du mois et l’épargne à effectuer.</p>
@@ -781,25 +781,27 @@ export function createBudgetActions(ctx: WimmCore & BaseActions & AccountActions
     const toSave = Math.max(0, goal - totals.saved);
 
     if (location === "home") {
+      const pct = goal > 0 ? Math.min(100, Math.round(((done ? goal : totals.saved) / goal) * 100)) : 0;
       return (
-        <section className="card savings-home-summary" aria-label="Votre épargne du mois">
-          <div className="section-head">
-            <div className="block-title">
-              <h2>Votre épargne du mois</h2>
-              <button type="button" className="block-info" aria-label="Informations : Épargne du mois" onClick={calc}><Info size={17} /></button>
-            </div>
-            {done && <span className="savings-done-tag"><Check size={14} /> Fait</span>}
+        <section className="ws-card" data-tour="home-savings" aria-label="Votre épargne du mois">
+          <div className="ws-head">
+            <span className="ws-head-title">
+              <span className="ws-label">Épargne du mois</span>
+              <button type="button" className="ws-info" aria-label="Informations : Épargne du mois" onClick={calc}><Info size={16} /></button>
+            </span>
+            {done && <span className="ws-label ws-positive"><Check size={14} aria-hidden="true" /> Fait</span>}
           </div>
-          <div className="savings-home-amount">
-            <strong>{money(totals.saved)}</strong>
-            <span className="muted">sur {money(goal)} prévus</span>
+          {goal > 0 && <div><span className="ws-figure">{money(totals.saved)}</span> <span className="ws-muted">sur {money(goal)}</span></div>}
+          {hasIncome && goal > 0 && <span className="ws-progress" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={pct} aria-label="Épargne versée"><span style={{ width: pct + "%" }} /></span>}
+          <div className="ws-head">
+            <span className="ws-muted">{!hasIncome
+              ? "À calculer après réception des revenus du mois"
+              : done ? money(totals.saved) + " versés ce mois-ci"
+              : goal > 0 ? money(toSave) + " à verser" : "Aucun versement prévu ce mois-ci"}</span>
+            <button type="button" className="ws-link" onClick={() => navigate("wealth")}>
+              {done ? "Voir" : "Verser"} <ChevronRight size={16} aria-hidden="true" />
+            </button>
           </div>
-          {hasIncome && goal > 0 && <Progress value={done ? goal : totals.saved} max={goal} />}
-          {!hasIncome && <small className="muted">À calculer après réception des revenus du mois</small>}
-          {!done && hasIncome && goal > 0 && <small className="muted">{money(toSave)} restent à verser</small>}
-          <button type="button" className="text savings-home-link" onClick={() => navigate("wealth")}>
-            {done ? "Voir mon épargne" : "Gérer mon épargne"} <ChevronRight size={16} />
-          </button>
         </section>
       );
     }
