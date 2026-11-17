@@ -379,3 +379,24 @@
     background: var(--surface) !important; color: var(--ink) !important; box-shadow: 0 2px 8px rgba(27, 36, 51, .08) !important;
   }
 }
+
+/*
+ * Compte perso et Wimm Pro : une seule couleur d'accent, celle du thème.
+ * Les couleurs décoratives (lavande, bleu, menthe) suivent le thème ;
+ * le rouge (négatif) et l'ambre (alerte) gardent leur sens.
+ */
+.app .personal-page-v2,
+.app .prosuite-native {
+  --wimm-lavender: var(--action, var(--accent-deep));
+  --wimm-blue: var(--action, var(--accent-deep));
+  --wimm-mint: var(--action, var(--accent-deep));
+  --wimm-lavender-wash: var(--accent-soft);
+  --wimm-blue-wash: var(--accent-soft);
+  --wimm-mint-wash: var(--accent-soft);
+}
+.app .prosuite-native .prosuite-avatar { background: var(--accent-soft); color: var(--action, var(--accent-deep)); }
+.app .prosuite-native .prosuite-product > span { color: var(--muted); }
+.app .prosuite-native .pro-an-period-pills button { background: transparent; border-color: var(--border); color: var(--muted); border-radius: var(--ws-radius-pill); }
+.app .prosuite-native .pro-an-period-pills button.active { background: var(--ink); border-color: var(--ink); color: var(--surface); }
+.app .prosuite-native .billing-v2-status.sent { background: var(--accent-soft); color: var(--action, var(--accent-deep)); }
+.app .personal-page-v2 .personal-v2-panel-icon { background: var(--accent-soft); color: var(--action, var(--accent-deep)); }

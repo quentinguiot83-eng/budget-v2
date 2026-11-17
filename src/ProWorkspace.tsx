@@ -549,7 +549,7 @@ function TreasuryPage({
   const adjustablePayments=proPaymentsForPeriod(suite.transactions,periodFrom,periodTo);
   return <div className="pro-v4-finances">
     <div className="pro-v4-finances-title">
-      <div><span>MON ENTREPRISE</span><h1>Finances</h1>
+      <div><h1>Finances</h1>
         <p>Ton argent, les montants à réserver et les échéances au même endroit.</p></div>
       <button type="button" className="pro-v4-finances-account" onClick={account}><Settings2 size={16}/> Compte Pro</button>
     </div>

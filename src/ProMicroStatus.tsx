@@ -26,7 +26,7 @@ export default function ProMicroStatus({
   };
   return <section className="pro-v4-micro" aria-label="Déclaration et réserves micro-entreprise">
     <div className="pro-v4-micro-head">
-      <div><small>MICRO-ENTREPRISE · URSSAF</small><h2>Ma prochaine déclaration</h2>
+      <div><h2>Ma prochaine déclaration Urssaf</h2>
         <p>{s.period.label} · Échéance indicative : <strong>{dateLabel}</strong></p></div>
       <button type="button" aria-expanded={expanded} onClick={()=>setExpanded(value=>!value)}>
         <Settings2 size={15}/> Réglages {expanded?<ChevronUp size={15}/>:<ChevronDown size={15}/>}
