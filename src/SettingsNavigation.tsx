@@ -118,7 +118,7 @@ export default function SettingsNavigation({
         </div>
       </div>
       {!activeItem && (
-        <div className="wimm-settings-menu" role="list">
+        <div className="wimm-settings-menu">
           {activeGroup.items.map((item) => {
             const Icon = item.icon;
             return (

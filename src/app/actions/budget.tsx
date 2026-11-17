@@ -715,8 +715,6 @@ export function createBudgetActions(ctx: WimmCore & BaseActions & AccountActions
           <div className="ws-head">
             <span className="ws-head-title">
               <h2 className="ws-card-title">Épargne du mois</h2>
-              <button type="button" className="ws-info" aria-label="Détail du calcul de l’épargne"
-                onClick={(e) => { e.preventDefault(); e.stopPropagation(); calc(); }}><Info size={16}/></button>
             </span>
             <span className="ws-row-end">
               {done && <span className="ws-label ws-positive"><Check size={14} aria-hidden="true" /> Fait</span>}
@@ -763,6 +761,8 @@ export function createBudgetActions(ctx: WimmCore & BaseActions & AccountActions
           </div>
         )}
         {savingMonthMarkedDone && <p className="ws-muted">Mois marqué comme déjà effectué avant Wimm.</p>}
+        {/* Hors du résumé : un bouton dans <summary> gêne les lecteurs d'écran. */}
+        <button type="button" className="ws-link" onClick={calc}><Info size={16} aria-hidden="true"/>Comprendre le calcul</button>
         {allocationLink("Modifier la répartition")}
       </details>
     );

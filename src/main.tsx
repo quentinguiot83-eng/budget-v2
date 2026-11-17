@@ -14,6 +14,12 @@ import "./wimm-system.css";
 // Position fixed can drift after the iPhone PWA resumes from keyboard/background.
 installStandaloneIphoneDock();
 
+// Page « Pas de connexion » quand l'app installée s'ouvre hors ligne.
+// Même fichier que les notifications : un seul service worker pour tout le site.
+if (import.meta.env.PROD && "serviceWorker" in navigator && !navigator.webdriver) {
+  addEventListener("load", () => { void navigator.serviceWorker.register("/push-sw.js", { scope: "/" }).catch(() => {}); });
+}
+
 createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <App />
