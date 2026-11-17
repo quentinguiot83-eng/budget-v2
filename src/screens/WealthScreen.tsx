@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { money, balance, deposits, uid, today, euro, type Account } from "../engine";
 import SwipeActions from "../SwipeActions";
 import { Row } from "../ui";
@@ -18,6 +19,7 @@ export default function WealthScreen({ view }: { view: WimmView }) {
     reconcileHouseholdAccounts, renameAccount, restoreArchivedAccount, reviewAccountInterest,
     s, savingsPanel, sortedTx, transfer, travelBalance, txRows, wealth,
   } = view;
+  const [openAccount, setOpenAccount] = useState("");
   const archived = s.accounts.filter(a => a.archived && a.group !== "personal");
   const groupOf = (a: Account) => a.group === "current" || a.group === "travel" ? a.group : "wealth";
 
@@ -32,16 +34,17 @@ export default function WealthScreen({ view }: { view: WimmView }) {
           { label: "Modifier", icon: <SlidersHorizontal size={17}/>, onClick: () => editAccount(a) },
           { label: "Supprimer", icon: <Trash2 size={17}/>, tone: "danger" as const, onClick: () => deleteAccount(a) },
         ]}>
-        <details className="ws-account" data-account={a.id}>
-          <summary className="ws-row">
+        <div className={"ws-account" + (openAccount === a.id ? " is-open" : "")} data-account={a.id}>
+          <button type="button" className="ws-row" aria-expanded={openAccount === a.id}
+            onClick={() => setOpenAccount(id => id === a.id ? "" : a.id)}>
             <span className="ws-icon-tile" aria-hidden="true"><Icon size={20}/></span>
             <span className="ws-row-main">
               <span className="ws-row-title">{a.name}</span>
               {a.group !== "current" && a.rate > 0 && <span className="ws-row-sub">{a.rate} % par an</span>}
             </span>
             <span className={`ws-amount${value < 0 ? " ws-negative" : ""}`}>{money(value)}</span>
-          </summary>
-          <div className="ws-account-body">
+          </button>
+          {openAccount === a.id && <div className="ws-account-body">
             {a.group === "wealth" && a.taxMode && a.taxMode !== "none" && (
               <p className="ws-muted">Fiscalité projetée : {a.taxRate ?? 0} % · {a.taxMode === "yield" ? "sur les intérêts" : "à la sortie"}</p>
             )}
@@ -74,14 +77,12 @@ export default function WealthScreen({ view }: { view: WimmView }) {
                 <button type="button" className="ws-pill" onClick={() => reviewAccountInterest(a, interestReviewYear)}>
                   {a.interestReviews?.[String(interestReviewYear)] ? "Réviser" : "Vérifier"} les intérêts {interestReviewYear}
                 </button>}
+              <button type="button" className="ws-pill" onClick={() => renameAccount(a)}>Renommer</button>
+              <button type="button" className="ws-pill" onClick={() => editAccount(a)}>Modifier</button>
+              <button type="button" className="ws-pill is-danger" onClick={() => deleteAccount(a)}>Supprimer</button>
             </div>
-            <div className="ws-account-links">
-              <button type="button" className="ws-link" onClick={() => renameAccount(a)}><Pencil size={15} aria-hidden="true"/>Renommer</button>
-              <button type="button" className="ws-link" onClick={() => editAccount(a)}><SlidersHorizontal size={15} aria-hidden="true"/>Modifier</button>
-              <button type="button" className="ws-link ws-negative" onClick={() => deleteAccount(a)}><Trash2 size={15} aria-hidden="true"/>Supprimer</button>
-            </div>
-          </div>
-        </details>
+          </div>}
+        </div>
       </SwipeActions>
     );
   };

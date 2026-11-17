@@ -56,7 +56,7 @@ export const TUTORIAL_CHAPTERS: TourChapter[] = [
   { id: "wealth", title: "Patrimoine", description: "Comptes et répartition de l'épargne", steps: [
     s("wealth", "[data-tour='wealth-overview']", "Ton patrimoine", "Suis le total de tes comptes courants, livrets et placements."),
     s("wealth", "[data-tour='wealth-add']", "Ajouter un compte", "Crée un compte courant, un livret ou un placement.", true, "account"),
-    s("wealth", "[data-tour='wealth-accounts'] .ws-account > summary", "Paramétrer un compte", "Définis son solde et, si nécessaire, son rendement, sa fiscalité et son plafond.", true, "account"),
+    s("wealth", "[data-tour='wealth-accounts'] .ws-account > .ws-row", "Paramétrer un compte", "Définis son solde et, si nécessaire, son rendement, sa fiscalité et son plafond.", true, "account"),
     s("wealth", "[data-tour='wealth-savings']", "Ton épargne disponible", "Wimm estime l'épargne à répartir selon les revenus et les budgets."),
     s("wealth", "[data-tour='wealth-allocations'], [data-tour='wealth-savings'] > summary", "Répartir ton épargne", "Attribue un pourcentage de l'épargne disponible à chacun de tes comptes.", true, "saving")
   ] },

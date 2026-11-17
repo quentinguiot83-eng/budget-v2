@@ -334,9 +334,6 @@
 .prosuite-native .prosuite-client p,.prosuite-native .prosuite-product p{font-size:12px;margin:4px 0}
 .prosuite-native .prosuite-client button,.prosuite-native .prosuite-product button{min-height:33px}
 .prosuite-native .pro-new-dashboard{gap:11px}
-.prosuite-native .pro-db-heading{padding-bottom:1px}
-.prosuite-native .pro-db-heading h1{font-size:23px}
-.prosuite-native .pro-db-heading p{font-size:12px}
 :root[data-mode="dark"] .prosuite-native .prosuite-topbar,:root[data-mode="dark"] .pro-v3-management-grid>button{background:rgba(24,32,43,.94)!important;color:#e5edf5;border-color:#2a3744!important}
 :root[data-mode="dark"] .pro-v3-management-grid strong{color:#e5edf5}
 @media(max-width:800px){
@@ -360,4 +357,4 @@
   .prosuite-native .prosuite-shell{min-height:0!important}
   .prosuite-native .prosuite-main{padding-top:12px!important}
 }
-@media(max-width:540px){.pro-v3-management-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.prosuite-native .prosuite-main{padding-left:10px!important;padding-right:10px!important}.prosuite-native .prosuite-topbar{margin:0 4px 11px}.prosuite-native .pro-db-heading{padding-top:0}}
+@media(max-width:540px){.pro-v3-management-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.prosuite-native .prosuite-main{padding-left:10px!important;padding-right:10px!important}.prosuite-native .prosuite-topbar{margin:0 4px 11px}}
