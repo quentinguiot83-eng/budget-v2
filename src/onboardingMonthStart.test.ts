@@ -56,3 +56,30 @@ test("une charge fixe déjà passée avant l'ouverture est marquée prélevée, 
   settleDuesBeforeOpening(s);
   assert.equal(s.transactions.filter(t => t.dueKey).length, 1, "idempotent");
 });
+
+function withRule(day: number) {
+  const s = emptyState();
+  applyInitialSetup(s, draft());
+  const current = s.accounts.find(a => a.group === "current")!;
+  const category = { id: uid(), name: "Maison", icon: "home", budgets: {} };
+  s.categories.push(category);
+  const id = uid();
+  s.rules.push({ id, name: "Charge", amount: 5000, account: current.id, category: category.id, start: dateAt(m, day), interval: 1, count: 0, kind: "fixed" });
+  return { s, id, current };
+}
+
+test("déjà prélevé : une échéance datée plus tard ce mois est réglée sans toucher au solde", { skip: day >= 28 }, () => {
+  const { s, id, current } = withRule(28);
+  settleDuesBeforeOpening(s, id, true);
+  assert.equal(balance(s, current.id), 125000);
+  assert.equal(monthEndAvailable(s).fixed, 0, "plus rien à venir pour cette charge");
+  assert.equal(overdue(s).length, 0);
+});
+
+test("pas encore prélevé : une échéance datée avant l'ouverture reste à valider", { skip: !midMonth }, () => {
+  const { s, id, current } = withRule(1);
+  settleDuesBeforeOpening(s, id, false);
+  assert.equal(balance(s, current.id), 125000);
+  assert.equal(s.transactions.filter(t => t.dueKey).length, 0, "rien n'est enregistré comme payé");
+  assert.equal(overdue(s).length, 1, "l'échéance apparaît à valider");
+});
