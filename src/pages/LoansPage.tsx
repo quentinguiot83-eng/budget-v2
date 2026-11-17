@@ -1,5 +1,5 @@
-import { Row, BlockInfo } from "../ui";
-import { Trash2, Pencil } from "lucide-react";
+import { BlockInfo } from "../ui";
+import { Trash2, Pencil, Plus } from "lucide-react";
 import SwipeActions from "../SwipeActions";
 
 import {
@@ -37,211 +37,82 @@ export default function LoansPage({
   repay,
 }: LoansPageProps) {
 
+  const credits = state.rules.filter(r => r.kind === "credit" && (!r.end || r.end >= today()));
+  const remainingOf = (r: Rule) => {
+    let remaining = 0, count = 0;
+    for (let i = 0; i < (r.count || 0); i++) {
+      const date = addMonths(r.start, i * r.interval);
+      const key = r.id + ":" + date;
+      if ((!r.end || date <= r.end) && !state.transactions.some(t => t.dueKey === key) && !state.cancelled.includes(key)) {
+        remaining += r.amount; count++;
+      }
+    }
+    return { remaining, count };
+  };
+  const totalCredits = credits.reduce((n, r) => n + remainingOf(r).remaining, 0);
+  const totalLent = state.loans.reduce((n, l) => n + loanRemaining(state, l.id), 0);
+
   return (
-    <div className="loans-soft-page">
-      <div className="toolbar loans-soft-actions">
-
-        <button
-          className="secondary"
-          onClick={() =>
-            editRule(
-              undefined,
-              "credit",
-            )
-          }
-        >
-          Achat en plusieurs fois
-        </button>
-
-        <button
-          className="secondary"
-          onClick={newLoan}
-        >
-          Prêter de l’argent
-        </button>
-
-      </div>
-
-
-      <section className="card loans-credits-card">
-
-        <div className="block-title"><h2>Mensualités de crédits</h2><BlockInfo title="Paiements des crédits"><p>
-          Ces achats ne débitent le
-          compte qu’à validation des
-          mensualités. Les alertes
-          apparaissent dans le
-          calendrier.
-        </p></BlockInfo></div>
-
-        {state.rules
-          .filter(
-            (r) =>
-              r.kind ===
-                "credit" &&
-              (
-                !r.end ||
-                r.end >= today()
-              ),
-          )
-          .map((r) => {
-
-            let remaining = 0;
-            let count = 0;
-
-            for (
-              let i = 0;
-              i <
-              (r.count || 0);
-              i++
-            ) {
-
-              const date =
-                addMonths(
-                  r.start,
-                  i *
-                    r.interval,
-                );
-
-              const key =
-                r.id +
-                ":" +
-                date;
-
-              if (
-                (
-                  !r.end ||
-                  date <= r.end
-                ) &&
-                !state.transactions.some(
-                  (t) =>
-                    t.dueKey ===
-                    key,
-                ) &&
-                !state.cancelled.includes(
-                  key,
-                )
-              ) {
-
-                remaining +=
-                  r.amount;
-
-                count++;
-
-              }
-
-            }
-
-            return (
-              <SwipeActions key={r.id} label={r.name} className="credit-swipe-row" actions={[
-                { label: "Modifier", icon: <Pencil size={17}/>, onClick: () => editRule(r, "credit") },
-                { label: "Supprimer", icon: <Trash2 size={17}/>, tone: "danger",
-                  onClick: () => deleteCreditPlan(r) },
-              ]}>
-              <div className="rule-row">
-
-                <div className="grow">
-
-                  <strong>
-                    {r.name}
-                  </strong>
-
-                  <small>
-                    {money(
-                      r.amount,
-                    )}{" "}
-                    par mensualité ·{" "}
-                    {count} restantes
-                  </small>
-
-                  <small>
-                    Restant prévu :{" "}
-                    {money(
-                      remaining,
-                    )}
-                  </small>
-
-                </div>
-
-
-
-              </div>
-              </SwipeActions>
-            );
-
-          })}
-
-  
-
+    <div className="ws-stack wimm-loans">
+      <section className="ws-card ws-hero" aria-label="Résumé des crédits et prêts">
+        <div className="ws-budget-split" style={{ marginTop: 0 }}>
+          <div><span className="ws-muted">Reste à rembourser</span><strong className="ws-figure">{money(totalCredits)}</strong>
+            <span className="ws-muted">{credits.length} crédit{credits.length > 1 ? "s" : ""} en cours</span></div>
+          <div><span className="ws-muted">À récupérer</span><strong className="ws-figure">{money(totalLent)}</strong>
+            <span className="ws-muted">{state.loans.length} prêt{state.loans.length > 1 ? "s" : ""}</span></div>
+        </div>
       </section>
 
+      <section className="ws-card ws-list ws-budget-list loans-credits-card" aria-label="Crédits et achats en plusieurs fois">
+        <div className="ws-head" style={{ paddingTop: 8 }}>
+          <span className="ws-head-title">
+            <h2 className="ws-card-title">Crédits</h2>
+            <BlockInfo title="Paiements des crédits"><p>Ces achats ne débitent le compte qu’à validation des mensualités. Les alertes apparaissent dans le calendrier. Glissez une ligne pour la modifier ou la supprimer.</p></BlockInfo>
+          </span>
+          <button type="button" className="ws-link" onClick={() => editRule(undefined, "credit")}><Plus size={16} aria-hidden="true"/>Achat en plusieurs fois</button>
+        </div>
+        {credits.map(r => {
+          const { remaining, count } = remainingOf(r);
+          return (
+            <SwipeActions key={r.id} label={r.name} className="credit-swipe-row" actions={[
+              { label: "Modifier", icon: <Pencil size={17}/>, onClick: () => editRule(r, "credit") },
+              { label: "Supprimer", icon: <Trash2 size={17}/>, tone: "danger", onClick: () => deleteCreditPlan(r) },
+            ]}>
+              <button type="button" className="ws-row" onClick={() => editRule(r, "credit")}>
+                <span className="ws-row-main">
+                  <span className="ws-row-title">{r.name}</span>
+                  <span className="ws-row-sub">{money(r.amount)} / mois · {count} restante{count > 1 ? "s" : ""}</span>
+                </span>
+                <span className="ws-amount">{money(remaining)}</span>
+              </button>
+            </SwipeActions>
+          );
+        })}
+        {!credits.length && <p className="ws-muted ws-empty">Aucun crédit en cours.</p>}
+      </section>
 
-      <section className="card loans-lent-card">
-
-        <h2>
-          Argent prêté
-        </h2>
-
-        {state.loans.map(
-          (loan) => {
-
-            const remaining =
-              loanRemaining(
-                state,
-                loan.id,
-              );
-
-            return (
-              <Row
-                key={loan.id}
-                title={loan.name}
-                sub={
-                  `Prêt initial ${money(
-                    loan.amount,
-                  )} · ${dateLabel(
-                    loan.date,
-                  )}`
-                }
-                value={
-                  <>
-                    <strong>
-                      {money(
-                        remaining,
-                      )}
-                    </strong>
-
-                    <small>
-                      à récupérer
-                    </small>
-
-                    {remaining >
-                      0 && (
-                      <button
-                        className="text"
-                        onClick={() =>
-                          repay(
-                            loan.id,
-                          )
-                        }
-                      >
-                        Remboursement reçu
-                      </button>
-                    )}
-                  </>
-                }
-              />
-            );
-
-          },
-        )}
-
-        {!state.loans.length && (
-          <p className="muted">
-            Aucun prêt en cours.
-          </p>
-        )}
-
+      <section className="ws-card ws-list loans-lent-card" aria-label="Argent prêté">
+        <div className="ws-head" style={{ paddingTop: 8 }}>
+          <h2 className="ws-card-title">Argent prêté</h2>
+          <button type="button" className="ws-link" onClick={newLoan}><Plus size={16} aria-hidden="true"/>Prêt</button>
+        </div>
+        {state.loans.map(loan => {
+          const remaining = loanRemaining(state, loan.id);
+          return (
+            <div className="ws-row" key={loan.id}>
+              <span className="ws-row-main">
+                <span className="ws-row-title">{loan.name}</span>
+                <span className="ws-row-sub">Prêt de {money(loan.amount)} · {dateLabel(loan.date)}</span>
+              </span>
+              <span className="ws-row-end">
+                <span className="ws-amount">{money(remaining)}</span>
+                {remaining > 0 && <button type="button" className="ws-pill" onClick={() => repay(loan.id)}>Remboursé</button>}
+              </span>
+            </div>
+          );
+        })}
+        {!state.loans.length && <p className="ws-muted ws-empty">Aucun prêt en cours.</p>}
       </section>
     </div>
   );
-
 }

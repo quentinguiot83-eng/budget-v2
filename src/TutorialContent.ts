@@ -50,7 +50,7 @@ export const TUTORIAL_CHAPTERS: TourChapter[] = [
     s("add", ".add-grid .add-card:nth-child(1)", "Ajouter une dépense", "Indique le montant, la catégorie et le compte concerné.", true, "expense"),
     s("add", ".add-grid .add-card:nth-child(2)", "Ajouter un revenu", "Salaire, prime, vente ou remboursement : choisis son type.", true, "income"),
     s("add", ".add-grid .add-card:nth-child(3)", "Faire un virement", "Déplace de l'argent d'un compte à un autre sans créer de dépense.", true, "transfer"),
-    s("loans", ".loans-soft-actions .primary", "Suivre tes crédits", "Enregistre tes paiements en plusieurs fois et suis les mensualités restantes.", true, "credit"),
+    s("loans", ".loans-credits-card .ws-link", "Suivre tes crédits", "Enregistre tes paiements en plusieurs fois et suis les mensualités restantes.", true, "credit"),
     s("add", ".add-page-layout .card:last-child button", "Importer un relevé", "Compare un relevé CSV à tes opérations pour repérer ce qui manque, sans doublon.", true, "bank")
   ] },
   { id: "wealth", title: "Patrimoine", description: "Comptes et répartition de l'épargne", steps: [

@@ -6,22 +6,19 @@ export default function CalendarScreen({ view }: { view: WimmView }) {
     alerts, dueList, explain, s, selectedMonth,
   } = view;
   return (
-    <>
-      <section className="card">
-        <div className="section-head">
-          <h2>À valider</h2>
-          <span className="badge">{alerts.length}</span>
+    <div className="ws-stack wimm-calendar">
+      <section className="ws-card">
+        <div className="ws-head">
+          <h2 className="ws-card-title">À valider</h2>
+          <span className="ws-muted">{alerts.length}</span>
         </div>
         {alerts.length ? (
           dueList(alerts)
         ) : (
-          <p className="muted">
-            Vous êtes à jour : aucun paiement en attente de validation.
-          </p>
+          <p className="ws-muted">Vous êtes à jour : aucun paiement en attente de validation.</p>
         )}
       </section>
-      <section className="card">
-        <h2>{monthLabel(selectedMonth)}</h2>
+      <section className="ws-card ws-calendar">
         <div className="calendar-grid">
           {["L", "M", "M", "J", "V", "S", "D"].map((n, i) => (
             <span className="day-name" key={"n" + i}>
@@ -74,8 +71,11 @@ export default function CalendarScreen({ view }: { view: WimmView }) {
             },
           )}
         </div>
+      </section>
+      <section className="ws-card">
+        <h2 className="ws-card-title">Échéances de {monthLabel(selectedMonth)}</h2>
         <div>{dueList(dues(s, selectedMonth))}</div>
       </section>
-    </>
+    </div>
   );
 }
