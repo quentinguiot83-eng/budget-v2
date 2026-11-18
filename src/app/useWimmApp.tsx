@@ -10,7 +10,8 @@ import { emptyPersonalState } from "../personal";
 import { useTripCoverUrls } from "../tripCovers";
 import type { Session } from "@supabase/supabase-js";
 import { Home, ChartNoAxesCombined, ArrowLeftRight, Wallet, CalendarDays, Coins, UserRound, Target, TrendingUp } from "lucide-react";
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useRef, useMemo, useCallback } from "react";
+import { withTripProjects } from "../projectGoals";
 import { Doc, demoEnabled, demo, PersonalDoc, Sheet } from "./shared";
 import { createBaseActions } from "./actions/base";
 import { createAccountActions } from "./actions/accounts";
@@ -19,9 +20,15 @@ import { createPersonalActions } from "./actions/personal";
 import { createProjectActions } from "./actions/projects";
 import { createTransactionActions } from "./actions/transactions";
 
+const withDocTripProjects = (d: Doc | null) => {
+  if (!d?.state) return d;
+  const state = withTripProjects(d.state);
+  return state === d.state ? d : { ...d, state };
+};
+
 function useWimmCore() {
   const [session, setSession] = useState<Session | null>(null),
-    [doc, setDoc] = useState<Doc | null>(demoEnabled ? demo() : null),
+    [doc, setDocState] = useState<Doc | null>(() => withDocTripProjects(demoEnabled ? demo() : null)),
     [personalDoc, setPersonalDoc] = useState<PersonalDoc | null>(
       demoEnabled
         ? { state: emptyPersonalState(), revision: 0 }
@@ -61,7 +68,6 @@ function useWimmCore() {
     [showTransactionReconciliation, setShowTransactionReconciliation] = useState(false),
     [proEnabled, setProEnabled] = useState(false),
     [mobileQuickAddOpen, setMobileQuickAddOpen] = useState(false),
-    [projectsSection, setProjectsSection] = useState<"trips" | "other">("trips"),
     [journeyReplay, setJourneyReplay] = useState(false),
     [expandedPersonalBudgets, setExpandedPersonalBudgets] = useState<Record<string, boolean>>({}),
     [selectedPersonalBudget, setSelectedPersonalBudget] = useState<string | null>(null),
@@ -88,6 +94,9 @@ function useWimmCore() {
     sheetRef = useRef(sheet),
     sessionRef = useRef(session);
   docRef.current = doc;
+  // Chaque voyage a son projet : la reprise s'applique à tout chargement du foyer.
+  const setDoc = useCallback((next: Doc | null | ((d: Doc | null) => Doc | null)) =>
+    setDocState((d) => withDocTripProjects(typeof next === "function" ? next(d) : next)), []);
   personalDocRef.current = personalDoc;
   sheetRef.current = sheet;
   sessionRef.current = session;
@@ -309,14 +318,14 @@ function useWimmCore() {
     mobileNav, mobileQuickAddOpen, notice, personalDoc, personalDocRef,
     personalFiltersExpanded, personalOwnerId, personalProjectionMonths, personalTab,
     personalTransactionCategory, personalTransactionQuery, personalTransactionType, proEnabled,
-    projectionData, projectsSection, ps, quickAddButtonRef, recentExpenses,
+    projectionData, ps, quickAddButtonRef, recentExpenses,
     repeatedBudgetAlerts, retryFailedImage, route, s, saving, savingMonthMarkedDone, savings,
     savingsRemaining, savingsTarget, selectedMonth, selectedPersonalBudget, session,
     setActiveTrip, setAppearanceMode, setAuthMode, setBackRoute, setSignupEmail, signupEmail, setCoverUploading, setDoc,
     setError, setExpandedPersonalBudgets, setInvite, setMobileQuickAddOpen, setMonth,
     setNotice, setPersonalDoc, setPersonalFiltersExpanded, setPersonalProjectionMonths,
     setPersonalTab, setPersonalTransactionCategory, setPersonalTransactionQuery,
-    setPersonalTransactionType, setPreviewName, setProEnabled, setProjectsSection, setRoute,
+    setPersonalTransactionType, setPreviewName, setProEnabled, setRoute,
     setSaving, setSelectedPersonalBudget, setSession, setSettingsCategory, setSettingsDetail,
     setSheet, setShowArchivedTrip, setShowTransactionReconciliation, setTheme, setJourneyReplay, setTxCategoryFilter, setTxFilter, setYears,
     settingsCategory, settingsDetail, sheet, showArchivedTrip, showTransactionReconciliation,

@@ -117,7 +117,7 @@ export type Tx = {
 
   trip?: string;
 
-  /** Versement fait depuis un projet (« Verser ») : compte dans sa part réservée. */
+  /** Versement « Verser en plus » d'un projet : compte entièrement pour lui. */
   project?: string;
 
   tripCategory?: string;
@@ -201,8 +201,14 @@ export type Project = {
 
   settled: boolean;
 
-  /** Part du solde du compte déjà réservée au projet, hors versements « Verser » (centimes). */
+  /** Part du solde du compte réservée au projet à la date reservedAt (centimes). */
   reserved?: number;
+
+  /** Date à laquelle « reserved » a été saisi ; la croissance du compte après cette date est partagée. */
+  reservedAt?: string;
+
+  /** Part du versement mensuel prévu sur le compte attribuée au projet (centimes). */
+  monthly?: number;
 
   /** Budget d'un achat immobilier ; l'apport devient l'objectif (amount). */
   realEstate?: RealEstatePlan;
@@ -1514,31 +1520,38 @@ export function monthlyPlan(s: State, m: string) {
 }
 
 export function projectRemaining(s: State, p: Project) {
-
   const trip = s.trips.find((t) => t.projectId === p.id);
-
   if (!trip) return p.amount;
+  // Ce qui a déjà servi au voyage n'est plus à retirer au départ.
+  // (Anciennes données : tout virement rattaché au voyage compte aussi comme déjà mis à part.)
+  const transfers = s.transactions
+    .filter((t) => t.type === "transfer" && t.trip === trip.id && t.date <= today())
+    .reduce((n, t) => n + t.amount, 0);
+  return Math.max(0, p.amount - Math.max(tripUsed(s, trip), transfers));
+}
 
-  return Math.max(
+/** Dépenses du voyage déjà passées, quel que soit le compte. */
+export function tripSpent(s: State, trip: Trip, asOf = today()) {
+  return s.transactions
+    .filter((t) => t.type === "expense" && t.trip === trip.id && t.date <= asOf)
+    .reduce((n, t) => n + t.amount, 0);
+}
 
-    0,
-
-    p.amount -
-
-      s.transactions
-
-        .filter(
-
-          (t) =>
-
-            t.type === "transfer" && t.trip === trip.id && t.date <= today(),
-
-        )
-
-        .reduce((n, t) => n + t.amount, 0),
-
-  );
-
+/**
+ * Argent déjà consacré au voyage : ses dépenses, ou ce qui est sorti de
+ * l'épargne pour lui (virements « Financer » et dépenses payées depuis
+ * l'épargne) si c'est plus. Un virement suivi de la dépense n'est compté qu'une fois.
+ */
+export function tripUsed(s: State, trip: Trip, asOf = today()) {
+  const group = (id?: string) => s.accounts.find((a) => a.id === id)?.group;
+  const saving = (id?: string) => group(id) === "wealth" || group(id) === "travel";
+  const out = s.transactions
+    .filter((t) => t.trip === trip.id && t.date <= asOf)
+    .reduce((n, t) =>
+      t.type === "transfer"
+        ? n + (saving(t.account) && !saving(t.to) ? t.amount : !saving(t.account) && saving(t.to) ? -t.amount : 0)
+        : t.type === "expense" && saving(t.account) ? n + t.amount : n, 0);
+  return Math.max(tripSpent(s, trip, asOf), out);
 }
 
 export function project(s: State, years: number) {

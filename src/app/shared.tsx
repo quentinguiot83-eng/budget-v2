@@ -229,6 +229,11 @@ export function demo(): Doc {
       savingMonth: m,
     },
   ];
+  // Vol déjà réservé pour le voyage, payé avec le compte courant.
+  s.transactions.push({
+    id: "flight", type: "expense", amount: 64000, date: m + "-03", account: "current",
+    description: "Vols Paris – Santorin", trip: "cyclades", tripCategory: "transport",
+  });
   s.trips = [
     {
       id: "cyclades",
@@ -238,20 +243,22 @@ export function demo(): Doc {
       budget: 250000,
       categories: [
         { id: "transport", name: "Transport", budget: 80000 },
-        { id: "lodging", name: "Hébergement", budget: 120000 },
-        { id: "food", name: "Restaurants", budget: 50000 },
+        { id: "lodging", name: "Logement", budget: 100000 },
+        { id: "food", name: "Repas", budget: 40000 },
+        { id: "bar", name: "Café/Bar", budget: 10000 },
+        { id: "activities", name: "Activités", budget: 20000 },
       ],
     },
   ];
   s.projects = [
     {
       id: "appartement", name: "Appartement", type: "Immobilier", date: shiftMonth(m, 19) + "-15",
-      amount: 1400000, account: "livret", active: true, settled: false, reserved: 350000,
+      amount: 1400000, account: "livret", active: true, settled: false, reserved: 350000, reservedAt: m + "-01",
       realEstate: { price: 20000000, newBuild: false, works: 800000, rate: 3.4, years: 25 },
     },
     {
       id: "voiture", name: "Voiture", type: "Véhicule", date: shiftMonth(m, 5) + "-01",
-      amount: 600000, account: "livret", active: true, settled: false, reserved: 600000,
+      amount: 600000, account: "livret", active: true, settled: false, reserved: 600000, reservedAt: m + "-01",
     },
   ];
   return {

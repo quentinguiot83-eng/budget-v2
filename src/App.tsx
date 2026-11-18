@@ -1,6 +1,7 @@
 // Ordre des feuilles de style des composants, figé pour garder la cascade
 // d'avant le découpage d'App.tsx (Vite les applique dans l'ordre de première
 // importation ; les modules ci-dessous les importent aussi).
+import { tripPhase } from "./projectGoals";
 import "./SettingsNavigation.css";
 import "./inline-category-creator.css";
 import "./progressive-setup.css";
@@ -287,8 +288,10 @@ export default function App() {
 
   const view = buildView({ ...app, doc, current });
   // Sur Projets, le + ajoute directement une dépense au voyage affiché.
-  const shownTrip = view.route === "trips" && view.projectsSection === "trips"
-    ? view.s.trips.find(t => t.id === view.activeTrip && (!t.closedAt || view.showArchivedTrip)) || view.s.trips.find(t => !t.closedAt)
+  // Page d'un voyage : ce voyage. Liste des projets : le voyage en cours, s'il y en a un.
+  const shownTrip = view.route === "trips"
+    ? view.s.trips.find(t => t.id === view.activeTrip && (!t.closedAt || view.showArchivedTrip))
+      || view.s.trips.find(t => !t.closedAt && tripPhase(t) === "during")
     : undefined;
   const tripForAdd = shownTrip && !shownTrip.closedAt ? shownTrip : undefined;
   const {

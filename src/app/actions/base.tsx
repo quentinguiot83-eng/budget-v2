@@ -3,7 +3,7 @@
 import { api, rpc } from "../../api";
 import { isConflict } from "../../dbMessages";
 import ConfirmActionContent from "../../ConfirmActionContent";
-import { month, type State, validate, budgetOverruns, money, type Tx, balance } from "../../engine";
+import { month, uid, type State, validate, budgetOverruns, money, type Tx, balance } from "../../engine";
 import type { InlineChoiceCreator } from "../../InlineCategoryCreator";
 import { freezePastForecasts } from "../../monthlyComparison";
 import { type PersonalState, validatePersonal } from "../../personal";
@@ -247,7 +247,9 @@ export function createBaseActions(ctx: WimmCore) {
     setSheet({
       title,
       body: (
+        // Une clé neuve à chaque ouverture : un formulaire qui en remplace un autre repart de ses propres valeurs.
         <Form
+          key={uid()}
           fields={fields}
           label={label}
           extra={extra}
