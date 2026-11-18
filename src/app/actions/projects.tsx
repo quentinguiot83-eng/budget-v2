@@ -13,6 +13,8 @@ import type { AccountActions } from "./accounts";
 import type { BudgetActions } from "./budget";
 import type { PersonalActions } from "./personal";
 
+export const TRIP_CATEGORIES = ["Transport", "Logement", "Repas", "Café/Bar", "Activités"];
+
 export function createProjectActions(ctx: WimmCore & BaseActions & AccountActions & BudgetActions & PersonalActions) {
   const {
     accountOptions, busy, change, confirmAction, coverUploading, docRef, openForm, s, setActiveTrip,
@@ -122,11 +124,8 @@ export function createProjectActions(ctx: WimmCore & BaseActions & AccountAction
             start: v.start,
             end: v.end,
             budget: euro(v.budget),
-            categories: previous?.categories || [
-              { id: uid(), name: "Transport", budget: 0 },
-              { id: uid(), name: "Hébergement", budget: 0 },
-              { id: uid(), name: "Sur place", budget: 0 },
-            ],
+            // Budgets proposés pour tout nouveau voyage, modifiables ensuite.
+            categories: previous?.categories || TRIP_CATEGORIES.map((name) => ({ id: uid(), name, budget: 0 })),
             projectId,
             closedAt: previous?.closedAt,
             coverPath: previous?.coverPath,

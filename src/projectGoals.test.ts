@@ -111,3 +111,28 @@ test("un nouveau projet sur un compte déjà utilisé partage le solde non rése
   s.projects[1].reserved = 300000; s.projects[1].reservedAt = "2026-11-17";
   assert.equal(projectSaved(s, s.projects[0]), 1500000);
 });
+
+test("voyage : ce qui est déjà payé avant le départ compte dans la progression", () => {
+  const s = emptyState();
+  accounts(s);
+  s.trips.push({ id: "t", name: "Cyclades", start: "2026-12-24", end: "2027-01-01", budget: 250000, categories: [], projectId: "trip-t" });
+  s.projects.push({ id: "trip-t", name: "Cyclades", type: "Voyage", date: "2026-12-24", amount: 250000, account: "ev", active: true, settled: false });
+  const p = s.projects[0];
+  // Vol payé avec le compte courant : 1 800 € de côté + 900 € payés.
+  s.transactions.push({ id: uid(), type: "expense", account: "cc", amount: 90000, date: "2026-11-02", description: "Vol", trip: "t" });
+  let g = projectGoal(s, p, "2026-11-18");
+  assert.equal(g.used, 90000);
+  assert.equal(g.saved, 160000, "le mis de côté s'arrête à ce qu'il reste à couvrir");
+  assert.equal(g.status, "done");
+  // Le compte voyage rembourse le vol (« Financer ») : rien ne change.
+  s.transactions.push({ id: uid(), type: "transfer", account: "ev", to: "cc", amount: 90000, date: "2026-11-03", description: "Financement", trip: "t" });
+  g = projectGoal(s, p, "2026-11-18");
+  assert.equal(g.covered, 180000);
+  assert.equal(g.used, 90000);
+  // Un hôtel payé directement depuis l'épargne voyage : toujours compté une fois.
+  s.transactions.push({ id: uid(), type: "expense", account: "ev", amount: 40000, date: "2026-11-04", description: "Hôtel", trip: "t" });
+  g = projectGoal(s, p, "2026-11-18");
+  assert.equal(g.used, 130000);
+  assert.equal(g.covered, 180000);
+  assert.equal(g.remaining, 70000);
+});

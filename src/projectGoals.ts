@@ -1,4 +1,4 @@
-import { balance, month, monthlyPlan, today, type Project, type RealEstatePlan, type State, type Trip } from "./engine";
+import { balance, month, monthlyPlan, today, tripSpent, tripUsed, type Project, type RealEstatePlan, type State, type Trip } from "./engine";
 
 /** Montant arrondi à l'euro, pour des objectifs de plusieurs milliers d'euros. */
 export const wholeEuro = (cents: number) =>
@@ -132,18 +132,27 @@ export const monthsLeft = (p: Project, asOf = today()) =>
 export type GoalStatus = "done" | "ahead" | "onTrack" | "late";
 
 export function projectGoal(s: State, p: Project, asOf = today()) {
-  const saved = projectSaved(s, p);
-  const remaining = Math.max(0, p.amount - saved);
+  // Un voyage compte aussi ce qui est déjà payé (réservations, vols…) :
+  // cet argent a servi au voyage, il n'est plus à mettre de côté.
+  const trip = tripOf(s, p);
+  const used = trip ? tripUsed(s, trip, asOf) : 0;
+  const spent = trip ? tripSpent(s, trip, asOf) : 0;
+  const saved = Math.min(projectSaved(s, p), Math.max(0, p.amount - used));
+  const covered = saved + used;
+  const remaining = Math.max(0, p.amount - covered);
   const left = monthsLeft(p, asOf);
   const perMonth = Math.ceil(remaining / left / 100) * 100;
   const pace = projectMonthly(s, p);
-  const projected = saved + pace * left;
+  const projected = covered + pace * left;
   const missing = Math.max(0, p.amount - projected);
   const status: GoalStatus = remaining === 0 ? "done"
     : projected >= p.amount * 1.1 ? "ahead"
     : projected >= p.amount ? "onTrack" : "late";
-  const percent = p.amount > 0 ? Math.min(100, Math.round(saved / p.amount * 100)) : 0;
-  return { saved, remaining, monthsLeft: left, perMonth, pace, projected, missing, status, percent };
+  const pct = (n: number) => p.amount > 0 ? Math.min(100, Math.round(n / p.amount * 100)) : 0;
+  return {
+    saved, used, spent, covered, remaining, monthsLeft: left, perMonth, pace, projected, missing, status,
+    percent: pct(covered), savedPercent: pct(saved), usedPercent: Math.max(0, pct(covered) - pct(saved)),
+  };
 }
 
 /** Phase d'un voyage : avant le départ, pendant, ou terminé à clôturer. */

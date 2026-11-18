@@ -35,6 +35,13 @@ export default function ProjectList({ view }: { view: WimmView }) {
   const savingNow = open.filter((p) => { const t = tripOf(s, p); return !t || tripPhase(t) === "before"; });
   const totalSaved = savingNow.reduce((n, p) => n + goals.get(p.id)!.saved, 0);
 
+  // « · Vol, Hôtel » : les premières réservations déjà payées.
+  const paidLabel = (t: Trip) => {
+    const names = [...new Set(s.transactions.filter((x) => x.trip === t.id && x.type === "expense" && x.date <= today())
+      .sort((a, b) => b.amount - a.amount).map((x) => x.description?.trim()).filter(Boolean))];
+    return names.length ? " · " + names.slice(0, 2).join(", ") + (names.length > 2 ? "…" : "") : "";
+  };
+
   const coverBlock = (t: Trip, chip: string, tone = "") => (
     <div className={"ws-project-cover" + (cover(t) ? "" : " is-empty")}>
       {cover(t) && <img src={cover(t)} alt="" onError={() => t.coverPath && retryFailedImage(t.coverPath)}
@@ -87,9 +94,18 @@ export default function ProjectList({ view }: { view: WimmView }) {
         {t && coverBlock(t, departure(days(today(), t.start)))}
         {head(p, label, p.realEstate ? "Apport visé, calculé sur un bien à " + money(p.realEstate.price) : undefined, t)}
         {manageMenu(p)}
-        <span className="ws-muted" style={{ marginTop: 8 }}>Mis de côté</span>
-        <span className="ws-key">{money(g.saved)} <span className="ws-key-of">sur {money(p.amount)}</span></span>
-        <span className="ws-progress" aria-hidden="true"><span style={{ width: g.percent + "%" }}/></span>
+        <span className="ws-muted" style={{ marginTop: 8 }}>{g.used ? "Mis de côté et déjà payé" : "Mis de côté"}</span>
+        <span className="ws-key">{money(g.covered)} <span className="ws-key-of">sur {money(p.amount)}</span></span>
+        <span className="ws-progress is-split" aria-hidden="true">
+          <span style={{ width: g.savedPercent + "%" }}/>
+          {g.usedPercent > 0 && <span className="is-paid" style={{ width: g.usedPercent + "%" }}/>}
+        </span>
+        {t && g.used > 0 && (
+          <span className="ws-muted ws-paid-line">
+            <span><i className="ws-dot" aria-hidden="true"/>{money(g.saved)} de côté</span>
+            <span><i className="ws-dot is-paid" aria-hidden="true"/>{money(g.used)} déjà payés{paidLabel(t)}</span>
+          </span>
+        )}
         <span className="ws-muted">
           {g.percent} % · sur {account?.name ?? "aucun compte"}
           {shared && <> · <button type="button" className="ws-link ws-inline-link" onClick={() => allocateAccount(p.account)}>Répartir</button></>}
@@ -107,6 +123,7 @@ export default function ProjectList({ view }: { view: WimmView }) {
         <div className="ws-project-actions">
           {g.status === "done" && !t && <button type="button" className="ws-pill is-solid" onClick={() => void settleProject(p)}>Marquer comme financé</button>}
           {g.status === "late" && <button type="button" className="ws-pill is-solid" onClick={() => shared ? allocateAccount(p.account) : allocations()}>Ajuster la répartition</button>}
+          {t && <button type="button" className={"ws-pill" + (g.status === "late" ? "" : " is-solid")} onClick={() => operation("expense", t)}>Ajouter une dépense</button>}
           {t && <button type="button" className="ws-link" onClick={() => openTrip(t)}>Voir le voyage <ChevronRight size={16} aria-hidden="true"/></button>}
           {p.type === "Immobilier" && <button type="button" className="ws-pill" onClick={() => realEstatePlan(p)}>
             <Calculator size={16} aria-hidden="true"/>Budget du bien</button>}

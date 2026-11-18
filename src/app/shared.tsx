@@ -229,6 +229,11 @@ export function demo(): Doc {
       savingMonth: m,
     },
   ];
+  // Vol déjà réservé pour le voyage, payé avec le compte courant.
+  s.transactions.push({
+    id: "flight", type: "expense", amount: 64000, date: m + "-03", account: "current",
+    description: "Vols Paris – Santorin", trip: "cyclades", tripCategory: "transport",
+  });
   s.trips = [
     {
       id: "cyclades",
@@ -238,8 +243,10 @@ export function demo(): Doc {
       budget: 250000,
       categories: [
         { id: "transport", name: "Transport", budget: 80000 },
-        { id: "lodging", name: "Hébergement", budget: 120000 },
-        { id: "food", name: "Restaurants", budget: 50000 },
+        { id: "lodging", name: "Logement", budget: 100000 },
+        { id: "food", name: "Repas", budget: 40000 },
+        { id: "bar", name: "Café/Bar", budget: 10000 },
+        { id: "activities", name: "Activités", budget: 20000 },
       ],
     },
   ];
