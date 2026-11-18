@@ -19,28 +19,55 @@ export function defaultTripAccount(s: State) {
   return (open.find((a) => a.group === "travel") ?? open.find((a) => a.group === "wealth"))?.id ?? "";
 }
 
+/** Un projet concret porte une trace de suivi ; sinon c'est une hypothèse des Projections. */
+const looksConcrete = (s: State, p: Project) =>
+  p.id.startsWith("trip-") || p.reserved !== undefined || p.reservedAt !== undefined
+  || p.monthly !== undefined || p.realEstate !== undefined;
+
 /**
- * Reprise des données : un voyage sans projet en reçoit un (identifiant stable,
- * donc le même à chaque chargement jusqu'au prochain enregistrement).
- * Renvoie le même objet quand il n'y a rien à faire.
+ * Reprise des données, appliquée à chaque chargement (identifiants stables,
+ * donc même résultat jusqu'au prochain enregistrement). Renvoie le même objet
+ * quand il n'y a rien à faire.
+ * - Chaque voyage a son projet concret « trip-<id> ».
+ * - Un voyage relié à un ancien projet des Projections garde ce projet comme
+ *   hypothèse, rattachée à son projet concret.
+ * - Tout projet est classé concret ou hypothétique (plan).
  */
 export function withTripProjects(s: State): State {
-  const missing = s.trips.filter((t) => !t.projectId || !s.projects.some((p) => p.id === t.projectId));
-  if (!missing.length) return s;
+  const todo = s.projects.some((p) => p.plan === undefined)
+    || s.trips.some((t) => !t.projectId || t.projectId !== tripProjectId(t.id) || !s.projects.some((p) => p.id === t.projectId));
+  if (!todo) return s;
   const account = defaultTripAccount(s);
-  const projects = [...s.projects];
+  let projects = s.projects.map((p) => p.plan === undefined ? { ...p, plan: !looksConcrete(s, p) } : p);
   const trips = s.trips.map((t) => {
-    if (!missing.includes(t)) return t;
     const id = tripProjectId(t.id);
-    if (!projects.some((p) => p.id === id))
-      projects.push({
-        id, name: t.name, type: "Voyage", date: t.start, amount: t.budget, account,
-        active: !!account, settled: !!t.closedAt,
-      });
+    if (t.projectId === id && projects.some((p) => p.id === id)) return t;
+    const old = projects.find((p) => p.id === t.projectId);
+    if (!projects.some((p) => p.id === id)) {
+      // Le suivi (part réservée, versement) passe au projet concret ; l'ancien redevient une hypothèse.
+      const concrete: Project = {
+        id, name: t.name, type: "Voyage", date: t.start, amount: t.budget,
+        account: old?.account || account, active: old ? old.active : !!account, settled: !!t.closedAt,
+        plan: false, linkedPlan: old ? old.id : undefined,
+        reserved: old?.reserved, reservedAt: old?.reservedAt, monthly: old?.monthly,
+      };
+      projects.push(concrete);
+      if (old) projects = projects.map((p) => p.id === old.id
+        ? { ...p, plan: true, reserved: undefined, reservedAt: undefined, monthly: undefined } : p);
+    }
     return { ...t, projectId: id };
   });
+  // Nettoie les clés vides laissées par la conversion.
+  projects = projects.map((p) => Object.fromEntries(Object.entries(p).filter(([, v]) => v !== undefined)) as Project);
   return { ...s, trips, projects };
 }
+
+/** Projets concrets (onglet Projets). */
+export const concreteProjects = (s: State) => s.projects.filter((p) => !p.plan);
+/** Hypothèses des Projections. */
+export const planProjects = (s: State) => s.projects.filter((p) => p.plan);
+/** Projet concret qui remplace une hypothèse. */
+export const linkedConcrete = (s: State, plan: Project) => s.projects.find((x) => !x.plan && x.linkedPlan === plan.id);
 
 /** Garde le projet d'un voyage aligné sur le voyage (nom, départ, budget, clôture). */
 export function syncTripProject(s: State, t: Trip) {
@@ -58,7 +85,7 @@ export function syncTripProject(s: State, t: Trip) {
 
 /** Projets en cours financés par un compte. */
 export const accountProjects = (s: State, accountId: string) =>
-  s.projects.filter((p) => !p.settled && !!accountId && p.account === accountId);
+  s.projects.filter((p) => !p.plan && !p.settled && !!accountId && p.account === accountId);
 
 /** Versement mensuel prévu sur le compte par la répartition d'épargne. */
 export const plannedMonthly = (s: State, accountId: string, m = month()) =>

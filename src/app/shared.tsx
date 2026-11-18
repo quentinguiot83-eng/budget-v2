@@ -251,13 +251,18 @@ export function demo(): Doc {
     },
   ];
   s.projects = [
+    // Hypothèse des Projections, sans projet concret pour l'instant.
     {
-      id: "appartement", name: "Appartement", type: "Immobilier", date: shiftMonth(m, 19) + "-15",
+      id: "ete", name: "Voyage d’été", type: "Voyage", plan: true, date: shiftMonth(m, 8) + "-01",
+      amount: 300000, account: "travel", active: true, settled: false,
+    },
+    {
+      id: "appartement", name: "Appartement", type: "Immobilier", plan: false, date: shiftMonth(m, 19) + "-15",
       amount: 1400000, account: "livret", active: true, settled: false, reserved: 350000, reservedAt: m + "-01",
       realEstate: { price: 20000000, newBuild: false, works: 800000, rate: 3.4, years: 25 },
     },
     {
-      id: "voiture", name: "Voiture", type: "Véhicule", date: shiftMonth(m, 5) + "-01",
+      id: "voiture", name: "Voiture", type: "Véhicule", plan: false, date: shiftMonth(m, 5) + "-01",
       amount: 600000, account: "livret", active: true, settled: false, reserved: 600000, reservedAt: m + "-01",
     },
   ];

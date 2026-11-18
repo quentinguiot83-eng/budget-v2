@@ -1,8 +1,8 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { emptyState, uid, type Project, type State } from "./engine";
+import { emptyState, isSimulatedProject, uid, type Project, type State } from "./engine";
 import {
-  accountFree, monthsLeft, projectGoal, projectMonthly, projectSaved, realEstateBudget,
+  accountFree, accountProjects, monthsLeft, projectGoal, projectMonthly, projectSaved, realEstateBudget,
   syncTripProject, tripPhase, tripProjectId, withTripProjects,
 } from "./projectGoals";
 
@@ -71,7 +71,12 @@ test("reprise des voyages : chaque voyage a un projet, toujours le même", () =>
   const a = withTripProjects(s);
   const b = withTripProjects(s);
   assert.deepEqual(a, b);
-  assert.equal(a.projects.length, 2, "le voyage déjà relié garde son projet");
+  assert.equal(a.projects.length, 3, "l'ancien projet des Projections reste une hypothèse");
+  const japon = a.projects.find((x) => x.id === tripProjectId("t2"))!;
+  assert.equal(japon.linkedPlan, "old");
+  assert.equal(japon.plan, false);
+  assert.equal(a.projects.find((x) => x.id === "old")!.plan, true);
+  assert.equal(a.trips[1].projectId, japon.id);
   const p = a.projects.find((x) => x.id === tripProjectId("t1"))!;
   assert.equal(p.account, "ev");
   assert.equal(p.amount, 250000);
@@ -135,4 +140,18 @@ test("voyage : ce qui est déjà payé avant le départ compte dans la progressi
   assert.equal(g.used, 130000);
   assert.equal(g.covered, 180000);
   assert.equal(g.remaining, 70000);
+});
+
+test("hypothèses et projets concrets dans la simulation", () => {
+  const s = emptyState();
+  accounts(s);
+  s.projects.push({ id: "h", name: "Voyage été", type: "Voyage", date: "2027-07-01", amount: 400000, account: "ev", active: true, settled: false, plan: true });
+  s.projects.push({ id: "c", name: "Féroé", type: "Voyage", date: "2027-07-10", amount: 350000, account: "ev", active: true, settled: false, plan: false });
+  s.projects.push({ id: "old", name: "Ancien", type: "Autre", date: "2026-01-01", amount: 1000, account: "la", active: true, settled: false, plan: true });
+  assert.equal(isSimulatedProject(s, s.projects[0], "2026-11-18"), true);
+  assert.equal(isSimulatedProject(s, s.projects[1], "2026-11-18"), true, "un projet concret non rattaché est simulé");
+  assert.equal(isSimulatedProject(s, s.projects[2], "2026-11-18"), false, "un projet passé n'est plus simulé");
+  s.projects[1].linkedPlan = "h";
+  assert.equal(isSimulatedProject(s, s.projects[0], "2026-11-18"), false, "l'hypothèse est remplacée par le concret");
+  assert.equal(accountProjects(s, "ev").map((p) => p.id).join(), "c", "une hypothèse ne réserve pas d'argent");
 });

@@ -1,8 +1,8 @@
 // Voyages et projets : création, catégories de voyage, photos de couverture.
 // Extrait de useWimmApp.tsx : fonctions recréées à chaque rendu, comme avant.
 import { api } from "../../api";
-import { type Trip, type State, today, uid, euro, money, type Project, balance, month, shiftMonth } from "../../engine";
-import { accountProjects, defaultTripAccount, MAX_DEBT_RATIO, plannedMonthly, projectMonthly, projectSaved, realEstateBudget, syncTripProject, tripOf, tripProjectId, unreservedPool, wholeEuro } from "../../projectGoals";
+import { type Trip, type State, today, uid, euro, money, type Project, balance, month, shiftMonth, monthLabel } from "../../engine";
+import { accountProjects, defaultTripAccount, linkedConcrete, MAX_DEBT_RATIO, plannedMonthly, projectMonthly, projectSaved, realEstateBudget, syncTripProject, tripOf, tripProjectId, unreservedPool, wholeEuro } from "../../projectGoals";
 import { Row } from "../../ui";
 import TripCoverEditor from "../../TripCoverEditor";
 import { uploadTripCover, deleteTripCover, TRIP_COVERS_BUCKET } from "../../tripCovers";
@@ -88,6 +88,16 @@ export function createProjectActions(ctx: WimmCore & BaseActions & AccountAction
     entry.reservedAt = today();
   }
 
+  // Projet concret : hypothèse des Projections qu'il remplace (facultatif).
+  const linkField = (current?: Project) => {
+    const plans = s.projects.filter((x) => x.plan && !s.projects.some((y) => y.id !== current?.id && !y.plan && y.linkedPlan === x.id));
+    return plans.length || current?.linkedPlan ? [choice("linkedPlan", "Rattacher à un projet des Projections", [
+      ["none", "Aucun"],
+      ...plans.map((x) => [x.id, x.name + " · " + monthLabel(x.date.slice(0, 7))] as [string, string]),
+    ], current?.linkedPlan || "none", "Le projet concret remplace alors l’hypothèse dans la simulation.")] : [];
+  };
+  const readLink = (v: Record<string, string>) => !v.linkedPlan || v.linkedPlan === "none" ? undefined : v.linkedPlan;
+
   function editTrip(t?: Trip) {
     const project = t ? s.projects.find((p) => p.id === t.projectId) : undefined;
     const accounts = savingsAccounts();
@@ -110,6 +120,7 @@ export function createProjectActions(ctx: WimmCore & BaseActions & AccountAction
           amountField("saved", "Déjà de côté (€)", project ? projectSaved(s, project) : 0,
             "Pris sur le solde du compte choisi."),
         ] : []),
+        ...linkField(project),
       ],
       async (v) => {
         if (v.end < v.start)
@@ -137,8 +148,10 @@ export function createProjectActions(ctx: WimmCore & BaseActions & AccountAction
           const old = d.projects.find((p) => p.id === projectId);
           const p: Project = old ? { ...old } : {
             id: projectId, name: entry.name, type: "Voyage", date: entry.start, amount: entry.budget,
-            account: v.account || "", active: !!v.account, settled: false,
+            account: v.account || "", active: !!v.account, settled: false, plan: false,
           };
+          p.linkedPlan = readLink(v);
+          if (!p.linkedPlan) delete p.linkedPlan;
           if (v.account) { p.account = v.account; p.active = old ? old.active : true; }
           if (v.account) applySaved(d, p, euro(v.saved || "0"), old);
           d.projects = old ? d.projects.map((x) => (x.id === projectId ? p : x)) : [...d.projects, p];
@@ -209,6 +222,7 @@ export function createProjectActions(ctx: WimmCore & BaseActions & AccountAction
 
   // Un seul formulaire pour tous les projets ; un voyage passe par le formulaire du voyage.
   function editProject(p?: Project, type = "Immobilier") {
+    if (p?.plan) return editPlan(p);
     const trip = p && tripOf(s, p);
     if (trip) return editTrip(trip);
     if (!p && type === "Voyage") return editTrip();
@@ -239,6 +253,7 @@ export function createProjectActions(ctx: WimmCore & BaseActions & AccountAction
           || savingsAccounts()[0]?.[0]) },
         { ...amountField("saved", "Déjà de côté (€)", p ? projectSaved(s, p) : 0,
           "Pris sur le solde du compte choisi.") },
+        ...linkField(p),
         ...(p ? [toggle(
           "active",
           "Inclure dans les projections ?",
@@ -265,7 +280,10 @@ export function createProjectActions(ctx: WimmCore & BaseActions & AccountAction
             account: v.account,
             active: p ? v.active !== "no" : true,
             settled: previous?.settled ?? false,
+            plan: false,
+            linkedPlan: readLink(v),
           };
+          if (!entry.linkedPlan) delete entry.linkedPlan;
           if (previous && previous.account !== entry.account) delete entry.monthly;
           if (entry.type !== "Immobilier") delete entry.realEstate;
           applySaved(d, entry, euro(v.saved || "0"), previous);
@@ -282,6 +300,55 @@ export function createProjectActions(ctx: WimmCore & BaseActions & AccountAction
         return undefined;
       },
     );
+  }
+
+  // Hypothèse des Projections : montant, date et compte, sans suivi ni onglet Projets.
+  function editPlan(p?: Project) {
+    if (!savingsAccounts().length) {
+      setNotice("Ajoute d’abord un compte d’épargne.");
+      return;
+    }
+    const concrete = p && linkedConcrete(s, p);
+    openForm(
+      p ? "Modifier le projet simulé" : "Projet simulé",
+      [
+        toggle("type", "Type", [
+          ["Voyage", "Voyage"],
+          ["Immobilier", "Immobilier"],
+          ["Véhicule", "Véhicule"],
+          ["Autre", "Autre"],
+        ], p?.type || "Voyage"),
+        field("name", "Nom", p?.name),
+        amountField("amount", "Montant (€)", p?.amount || 0),
+        field("date", "Date", p?.date || shiftMonth(month(), 12) + "-01", "date"),
+        choice("account", "Retiré de", savingsAccounts(), p?.account
+          || savingsAccounts().find(([id]) => s.accounts.find((a) => a.id === id)?.group === "wealth")?.[0]
+          || savingsAccounts()[0]?.[0]),
+        toggle("active", "Inclure dans la simulation ?", [["yes", "Oui"], ["no", "Non"]],
+          p?.active === false ? "no" : "yes",
+          concrete ? "Remplacé par le projet concret « " + concrete.name + " » tant qu’il lui est rattaché." : "Une hypothèse : elle n’apparaît pas dans l’onglet Projets."),
+      ],
+      async (v) =>
+        change((d) => {
+          const amount = euro(v.amount);
+          if (amount <= 0) throw Error("Le montant doit être supérieur à zéro.");
+          const entry: Project = {
+            id: p?.id || uid(), name: v.name.trim() || "Projet", type: v.type, date: v.date, amount,
+            account: v.account, active: v.active !== "no", settled: false, plan: true,
+          };
+          if (p) d.projects = d.projects.map((x) => (x.id === p.id ? entry : x));
+          else d.projects.push(entry);
+        }, "Projet simulé enregistré"),
+    );
+  }
+
+  function deletePlan(p: Project) {
+    confirmAction("Supprimer ce projet simulé ?",
+      "Il disparaît de la simulation. Un projet concret qui lui était rattaché est conservé.",
+      async () => change((d) => {
+        d.projects = d.projects.filter((x) => x.id !== p.id);
+        for (const x of d.projects) if (x.linkedPlan === p.id) delete x.linkedPlan;
+      }, "Projet simulé supprimé"));
   }
 
   // « Verser en plus » : un virement ponctuel qui compte entièrement pour ce projet.
@@ -416,7 +483,7 @@ export function createProjectActions(ctx: WimmCore & BaseActions & AccountAction
   function deleteProject(p: Project) {
     if (tripOf(s, p)) return setNotice("Ce projet est un voyage : supprime-le depuis la page du voyage.");
     confirmAction("Supprimer le projet ?",
-      "Le projet disparaît aussi des Projections. Les virements déjà faits restent dans l’historique, sans lien avec lui.",
+      "Les virements déjà faits restent dans l’historique, sans lien avec lui. Un projet simulé rattaché reste dans les Projections.",
       async () => change((d) => {
         d.projects = d.projects.filter((x) => x.id !== p.id);
         for (const t of d.transactions) if (t.project === p.id) delete t.project;
@@ -425,7 +492,7 @@ export function createProjectActions(ctx: WimmCore & BaseActions & AccountAction
 
   return {
     saveTripCover, removeTripCover, saveTripCoverPosition, editTrip, tripCategory, editProject,
-    saveToProject, allocateAccount, realEstatePlan, settleProject, deleteProject,
+    saveToProject, allocateAccount, realEstatePlan, settleProject, deleteProject, editPlan, deletePlan,
   };
 }
 

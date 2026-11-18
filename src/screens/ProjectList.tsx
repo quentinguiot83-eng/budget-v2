@@ -29,8 +29,9 @@ export default function ProjectList({ view }: { view: WimmView }) {
   const openTrip = (t: Trip) => { setActiveTrip(t.id); setShowArchivedTrip(!!t.closedAt); window.scrollTo({ top: 0 }); };
   const cover = (t: Trip) => t.coverPath && tripCoverUrls[t.coverPath] ? tripCoverUrls[t.coverPath] : "";
 
-  const open = s.projects.filter((p) => !p.settled).sort((a, b) => a.date.localeCompare(b.date));
-  const done = s.projects.filter((p) => p.settled).sort((a, b) => b.date.localeCompare(a.date));
+  // Seulement les projets concrets ; les hypothèses restent dans les Projections.
+  const open = s.projects.filter((p) => !p.plan && !p.settled).sort((a, b) => a.date.localeCompare(b.date));
+  const done = s.projects.filter((p) => !p.plan && p.settled).sort((a, b) => b.date.localeCompare(a.date));
   const goals = new Map(open.map((p) => [p.id, projectGoal(s, p)]));
   const savingNow = open.filter((p) => { const t = tripOf(s, p); return !t || tripPhase(t) === "before"; });
   const totalSaved = savingNow.reduce((n, p) => n + goals.get(p.id)!.saved, 0);
