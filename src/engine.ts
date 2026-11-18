@@ -210,6 +210,12 @@ export type Project = {
   /** Part du versement mensuel prévu sur le compte attribuée au projet (centimes). */
   monthly?: number;
 
+  /** Projet hypothétique, saisi dans les Projections (absent de l'onglet Projets). */
+  plan?: boolean;
+
+  /** Projet concret : projet hypothétique des Projections qu'il remplace dans la simulation. */
+  linkedPlan?: string;
+
   /** Budget d'un achat immobilier ; l'apport devient l'objectif (amount). */
   realEstate?: RealEstatePlan;
 
@@ -972,7 +978,7 @@ export function monthEndAvailable(s: State) {
 
   const projects = s.projects.filter((p) => {
     const trip = s.trips.find((t) => t.projectId === p.id);
-    return p.active && !p.settled && ids.has(p.account) && month(p.date) === m && !trip?.closedAt;
+    return isSimulatedProject(s, p) && ids.has(p.account) && month(p.date) === m && !trip?.closedAt;
   }).map((p) => {
     const trip = s.trips.find((t) => t.projectId === p.id);
     const fundingAlreadyReserved = trip ? future.filter(
@@ -1519,6 +1525,15 @@ export function monthlyPlan(s: State, m: string) {
 
 }
 
+/**
+ * Projet compté dans la simulation : actif, pas encore financé, à venir, et
+ * pas une hypothèse déjà remplacée par un projet concret rattaché.
+ */
+export function isSimulatedProject(s: State, p: Project, asOf = today()) {
+  if (!p.active || p.settled || p.date < asOf) return false;
+  return !(p.plan && s.projects.some((x) => !x.plan && x.linkedPlan === p.id));
+}
+
 export function projectRemaining(s: State, p: Project) {
   const trip = s.trips.find((t) => t.projectId === p.id);
   if (!trip) return p.amount;
@@ -2059,15 +2074,7 @@ export function project(s: State, years: number) {
 
     for (const p of s.projects.filter(
 
-      (p) =>
-
-        p.active &&
-
-        !p.settled &&
-
-        (month(p.date) === m ||
-
-          (i === 1 && month(p.date) <= month())),
+      (p) => isSimulatedProject(s, p) && month(p.date) === m,
 
     )) {
 

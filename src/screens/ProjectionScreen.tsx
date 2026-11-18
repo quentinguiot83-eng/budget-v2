@@ -1,4 +1,5 @@
-import { monthLabel, dateLabel } from "../engine";
+import { monthLabel, dateLabel, today } from "../engine";
+import { linkedConcrete } from "../projectGoals";
 import { projectionMoney } from "../projectionMoney";
 import ProjectionPageStyles from "../ProjectionPageStyles";
 import SwipeActions from "../SwipeActions";
@@ -9,10 +10,15 @@ import { LazyProjectionInteractive } from "../app/shared";
 import type { WimmView } from "../app/buildView";
 
 export default function ProjectionScreen({ view }: { view: WimmView }) {
+  // Projets à venir : hypothèses, et projets concrets non rattachés à une hypothèse.
+  const upcoming = (p: { date: string; settled: boolean }) => !p.settled && p.date >= today();
   const {
-    allocations, calc, change, confirmAction, editProject, finalProjection, projectionData, s,
+    allocations, calc, editProject, editPlan, deletePlan, finalProjection, projectionData, s,
     setYears, totals, years,
   } = view;
+  const simulated = s.projects
+    .filter((p) => upcoming(linkedConcrete(s, p) ?? p) && (p.plan || !p.linkedPlan))
+    .sort((a, b) => a.date.localeCompare(b.date));
   const horizon = finalProjection ? monthLabel(finalProjection.date) : "";
   return (
     <div className="ws-stack wimm-projection projection-dashboard-v2">
@@ -91,33 +97,36 @@ export default function ProjectionScreen({ view }: { view: WimmView }) {
         <details className="ws-disclosure" data-tour="projection-projects">
           <summary className="ws-row">
             <span className="ws-icon-tile" aria-hidden="true"><Target size={20}/></span>
-            <span className="ws-row-main"><span className="ws-row-title">Projets simulés{s.projects.length ? " (" + s.projects.length + ")" : ""}</span>
+            <span className="ws-row-main"><span className="ws-row-title">Projets simulés{simulated.length ? " (" + simulated.length + ")" : ""}</span>
               <span className="ws-row-sub">Un voyage, un apport immobilier, un achat…</span></span>
             <ChevronRight size={18} className="ws-chevron" aria-hidden="true"/>
           </summary>
           <div className="ws-disclosure-body">
-        {s.projects.slice().sort((a,b) => a.date.localeCompare(b.date)).map(p => (
+        {simulated.map(p => {
+          // Une hypothèse rattachée est remplacée par son projet concret ; un concret non rattaché est simulé tel quel.
+          const concrete = p.plan ? linkedConcrete(s, p) : undefined;
+          const shown = concrete ?? p;
+          return (
           <SwipeActions key={p.id} label={p.name} className="project-swipe-row"
             actions={[
               { label: "Modifier", icon: <Pencil size={17}/>, onClick: () => editProject(p) },
-              { label: "Supprimer", icon: <Trash2 size={17}/>, tone: "danger" as const,
-                onClick: () => confirmAction("Supprimer ce projet ?", "Aucune transaction réelle ne sera supprimée.",
-                  async () => change(d => {
-                    d.projects = d.projects.filter(x => x.id !== p.id);
-                    d.trips.forEach(t => { if (t.projectId === p.id) t.projectId = undefined; });
-                  }, "Projet supprimé")) },
+              ...(p.plan ? [{ label: "Supprimer", icon: <Trash2 size={17}/>, tone: "danger" as const, onClick: () => deletePlan(p) }] : []),
             ]}>
             <div className="ws-row ws-project-row">
               <span className="ws-row-main">
                 <span className="ws-row-title">{p.name}</span>
-                <span className="ws-row-sub">{dateLabel(p.date)} · {p.settled ? "Financé" : p.active ? "Inclus" : "Exclu de la simulation"}</span>
+                <span className="ws-row-sub">{dateLabel(shown.date)} · {
+                  concrete ? "Remplacé par « " + concrete.name + " »"
+                  : !p.plan ? "Projet concret"
+                  : p.active ? "Hypothèse" : "Hypothèse exclue de la simulation"}</span>
               </span>
-              <span className="ws-amount">{projectionMoney(p.amount)}</span>
+              <span className="ws-amount">{projectionMoney(shown.amount)}</span>
             </div>
           </SwipeActions>
-        ))}
-            {!s.projects.length && <p className="ws-muted">Ajoute un projet daté pour voir son effet sur ton patrimoine.</p>}
-            <button type="button" className="ws-link" data-tour="projection-add" onClick={() => editProject(undefined, "Voyage")}><Plus size={16} aria-hidden="true"/>Ajouter un projet</button>
+          );
+        })}
+            {!simulated.length && <p className="ws-muted">Ajoute un projet daté pour voir son effet sur ton patrimoine. Il reste une hypothèse : il n’apparaît pas dans l’onglet Projets.</p>}
+            <button type="button" className="ws-link" data-tour="projection-add" onClick={() => editPlan()}><Plus size={16} aria-hidden="true"/>Ajouter un projet simulé</button>
           </div>
         </details>
 
