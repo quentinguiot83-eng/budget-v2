@@ -978,7 +978,8 @@ export function monthEndAvailable(s: State) {
 
   const projects = s.projects.filter((p) => {
     const trip = s.trips.find((t) => t.projectId === p.id);
-    return isSimulatedProject(s, p) && ids.has(p.account) && month(p.date) === m && !trip?.closedAt;
+    // Une hypothèse des Projections ne réserve pas d'argent réel.
+    return !p.plan && isSimulatedProject(s, p) && ids.has(p.account) && month(p.date) === m && !trip?.closedAt;
   }).map((p) => {
     const trip = s.trips.find((t) => t.projectId === p.id);
     const fundingAlreadyReserved = trip ? future.filter(
