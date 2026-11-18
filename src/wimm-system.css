@@ -535,3 +535,21 @@
     transition-duration: .01ms !important; scroll-behavior: auto !important;
   }
 }
+
+/* Autres projets */
+.app .ws-projects-head { padding: 0 4px; }
+.app .ws-project { gap: 6px; }
+.app .ws-key-of { font-size: 1rem; font-weight: 600; color: var(--muted); }
+.app .ws-status { align-self: flex-start; font-size: .8125rem; font-weight: 600; border-radius: 999px; padding: 4px 10px; margin-top: 4px; }
+.app .ws-status.is-positive { color: var(--ws-positive); background: var(--ws-positive-soft); }
+.app .ws-status.is-warning { color: var(--ws-warning); background: var(--ws-warning-soft); }
+.app .ws-project-pace { border-top: 1px solid var(--border); margin-top: 6px; }
+.app .ws-inline-link { display: inline; min-height: 0; padding: 0; font-size: inherit; text-decoration: underline; }
+.app .ws-loan-summary { display: grid; gap: 2px; margin: 4px 0 8px; }
+.app .ws-loan-payment { display: grid; gap: 6px; margin-top: 8px; padding: 14px; border-radius: 16px; background: color-mix(in srgb, var(--border) 45%, transparent); }
+.app .ws-loan-payment .ws-figure { font-size: 1.5rem; }
+.app .ws-debt-gauge { position: relative; overflow: visible; }
+.app .ws-debt-gauge > i { position: absolute; top: -4px; width: 2px; height: 14px; border-radius: 1px; background: var(--ink); }
+.app .ws-project .ws-head { align-items: flex-start; }
+.app .ws-project-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+.app .ws-project-actions .ws-pill { display: inline-flex; align-items: center; gap: 6px; }

@@ -117,6 +117,9 @@ export type Tx = {
 
   trip?: string;
 
+  /** Versement fait depuis un projet (« Verser ») : compte dans sa part réservée. */
+  project?: string;
+
   tripCategory?: string;
 
   dueKey?: string;
@@ -198,6 +201,21 @@ export type Project = {
 
   settled: boolean;
 
+  /** Part du solde du compte déjà réservée au projet, hors versements « Verser » (centimes). */
+  reserved?: number;
+
+  /** Budget d'un achat immobilier ; l'apport devient l'objectif (amount). */
+  realEstate?: RealEstatePlan;
+
+};
+
+export type RealEstatePlan = {
+  price: number;
+  newBuild: boolean;
+  works: number;
+  /** Taux annuel en pourcentage (3.4 pour 3,4 %). */
+  rate: number;
+  years: number;
 };
 
 export type Loan = {

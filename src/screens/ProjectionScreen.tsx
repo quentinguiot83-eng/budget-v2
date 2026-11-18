@@ -117,7 +117,7 @@ export default function ProjectionScreen({ view }: { view: WimmView }) {
           </SwipeActions>
         ))}
             {!s.projects.length && <p className="ws-muted">Ajoute un projet daté pour voir son effet sur ton patrimoine.</p>}
-            <button type="button" className="ws-link" data-tour="projection-add" onClick={() => editProject()}><Plus size={16} aria-hidden="true"/>Ajouter un projet</button>
+            <button type="button" className="ws-link" data-tour="projection-add" onClick={() => editProject(undefined, "Voyage")}><Plus size={16} aria-hidden="true"/>Ajouter un projet</button>
           </div>
         </details>
 

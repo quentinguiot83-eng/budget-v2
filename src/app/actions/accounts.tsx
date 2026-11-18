@@ -2,7 +2,7 @@
 // Extrait de useWimmApp.tsx : fonctions recréées à chaque rendu, comme avant.
 import { validateAccountName } from "../../accountNames";
 import { accountLinks, canDeleteAccount, removeAccountSafely, canArchiveAccount, accountRemovalBlockers } from "../../accountRemoval";
-import { balance, euro, uid, today, month, type Account, money, estimatedAnnualInterest, type Category, personalBudgetEnvelope, personalEnvelope, monthLabel, type Trip, monthlyPlan, isSavingsTransfer, savingsBudgetMonth, type Tx, stats, deposits } from "../../engine";
+import { balance, euro, uid, today, month, type Account, money, estimatedAnnualInterest, type Category, personalBudgetEnvelope, personalEnvelope, monthLabel, type Trip, monthlyPlan, isSavingsTransfer, savingsBudgetMonth, type Tx, stats, deposits, type Project } from "../../engine";
 import { seedStarterCategories } from "../../starterCategories";
 import { amountField, field, choice, toggle } from "../shared";
 import type { WimmCore } from "../useWimmApp";
@@ -646,7 +646,8 @@ export function createAccountActions(ctx: WimmCore & BaseActions) {
     );
   }
 
-  function transfer(to?: Account, travel?: Trip, from?: Account) {
+  // project : versement « Verser » d'un projet, rattaché à sa part réservée.
+  function transfer(to?: Account, travel?: Trip, from?: Account, project?: Project, suggested?: number) {
     if (s.accounts.length < 2) {
       setNotice("Ajoute au moins deux comptes pour effectuer un virement.");
       return;
@@ -660,11 +661,11 @@ export function createAccountActions(ctx: WimmCore & BaseActions) {
     const accountRemaining = to
       ? Math.max(0, (plan.amounts[to.id] || 0) - paid)
       : 0;
-    const suggestedSaving = to
+    const suggestedSaving = suggested ?? (to
       ? Math.min(accountRemaining, savingsRemaining)
-      : 0;
+      : 0);
     openForm(
-      to ? "Épargner sur " + to.name : "Faire un virement",
+      project ? "Verser pour " + project.name : to ? "Épargner sur " + to.name : "Faire un virement",
       [
         choice(
           "account",
@@ -687,7 +688,9 @@ export function createAccountActions(ctx: WimmCore & BaseActions) {
         field(
           "description",
           "Description",
-          to
+          project
+            ? "Épargne " + project.name
+            : to
             ? "Épargne mensuelle"
             : travel
               ? "Financement " + travel.name
@@ -702,7 +705,7 @@ export function createAccountActions(ctx: WimmCore & BaseActions) {
           ],
           to ? selectedMonth : "none",
         ),
-        choice(
+        ...(project ? [] : [choice(
           "trip",
           "Voyage concerné",
           [
@@ -710,7 +713,7 @@ export function createAccountActions(ctx: WimmCore & BaseActions) {
             ...s.trips.map((t) => [t.id, t.name] as [string, string]),
           ],
           travel?.id || "none",
-        ),
+        )]),
         toggle(
           "overdraft",
           "Autoriser un découvert ?",
@@ -732,7 +735,8 @@ export function createAccountActions(ctx: WimmCore & BaseActions) {
           date: v.date,
           description: v.description,
           savingMonth: v.saving === "none" ? undefined : v.saving,
-          trip: v.trip === "none" ? undefined : v.trip,
+          trip: !v.trip || v.trip === "none" ? undefined : v.trip,
+          project: project && v.to === project.account ? project.id : undefined,
         };
         if (
           tx.savingMonth &&
