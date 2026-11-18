@@ -1,6 +1,7 @@
 // Navigation, sauvegarde, formulaires et confirmations communs.
 // Extrait de useWimmApp.tsx : fonctions recréées à chaque rendu, comme avant.
 import { api, rpc } from "../../api";
+import { isConflict } from "../../dbMessages";
 import ConfirmActionContent from "../../ConfirmActionContent";
 import { month, type State, validate, budgetOverruns, money, type Tx, balance } from "../../engine";
 import type { InlineChoiceCreator } from "../../InlineCategoryCreator";
@@ -129,7 +130,7 @@ export function createBaseActions(ctx: WimmCore) {
           : demoEnabled ? "Aperçu mis à jour, sans sauvegarde." : "Enregistré",
       );
     } catch (e) {
-      if (e instanceof Error && e.message.includes("CONFLICT")) await load();
+      if (isConflict(e)) await load();
       throw e;
     } finally {
       busy.current = false;
@@ -196,11 +197,7 @@ export function createBaseActions(ctx: WimmCore) {
 
     } catch (e) {
 
-      if (
-        e instanceof Error &&
-        e.message.includes("CONFLICT")
-      )
-        await load();
+      if (isConflict(e)) await load();
 
       throw e;
 
