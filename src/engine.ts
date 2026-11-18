@@ -117,7 +117,7 @@ export type Tx = {
 
   trip?: string;
 
-  /** Versement fait depuis un projet (« Verser ») : compte dans sa part réservée. */
+  /** Versement « Verser en plus » d'un projet : compte entièrement pour lui. */
   project?: string;
 
   tripCategory?: string;
@@ -201,8 +201,14 @@ export type Project = {
 
   settled: boolean;
 
-  /** Part du solde du compte déjà réservée au projet, hors versements « Verser » (centimes). */
+  /** Part du solde du compte réservée au projet à la date reservedAt (centimes). */
   reserved?: number;
+
+  /** Date à laquelle « reserved » a été saisi ; la croissance du compte après cette date est partagée. */
+  reservedAt?: string;
+
+  /** Part du versement mensuel prévu sur le compte attribuée au projet (centimes). */
+  monthly?: number;
 
   /** Budget d'un achat immobilier ; l'apport devient l'objectif (amount). */
   realEstate?: RealEstatePlan;

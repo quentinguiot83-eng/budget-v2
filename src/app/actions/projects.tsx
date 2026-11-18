@@ -1,8 +1,8 @@
 // Voyages et projets : création, catégories de voyage, photos de couverture.
 // Extrait de useWimmApp.tsx : fonctions recréées à chaque rendu, comme avant.
 import { api } from "../../api";
-import { type Trip, today, uid, euro, money, type Project, balance, month, shiftMonth } from "../../engine";
-import { accountFree, accountProjects, MAX_DEBT_RATIO, projectGoal, projectSaved, projectTagged, realEstateBudget, wholeEuro } from "../../projectGoals";
+import { type Trip, type State, today, uid, euro, money, type Project, balance, month, shiftMonth } from "../../engine";
+import { accountProjects, defaultTripAccount, MAX_DEBT_RATIO, plannedMonthly, projectMonthly, projectSaved, realEstateBudget, syncTripProject, tripOf, tripProjectId, unreservedPool, wholeEuro } from "../../projectGoals";
 import { Row } from "../../ui";
 import TripCoverEditor from "../../TripCoverEditor";
 import { uploadTripCover, deleteTripCover, TRIP_COVERS_BUCKET } from "../../tripCovers";
@@ -75,37 +75,50 @@ export function createProjectActions(ctx: WimmCore & BaseActions & AccountAction
       trip.coverPosition = Math.max(0, Math.min(100, position));
     }, "Cadrage de la photo modifié");
   }
+  // Saisie du « déjà de côté » : on garde le calcul automatique si rien ne change,
+  // sinon on repart de la valeur saisie à la date du jour.
+  function applySaved(d: State, entry: Project, saved: number, previous?: Project) {
+    if (saved < 0) throw Error("Le montant mis de côté ne peut pas être négatif.");
+    if (previous && previous.account === entry.account && projectSaved(d, previous) === saved) return;
+    const pool = Math.max(0, unreservedPool(d, entry.account, entry.id));
+    if (saved > pool) throw Error("Il n’y a que " + money(pool) + " de disponible pour ce projet sur ce compte.");
+    entry.reserved = saved;
+    entry.reservedAt = today();
+  }
+
   function editTrip(t?: Trip) {
+    const project = t ? s.projects.find((p) => p.id === t.projectId) : undefined;
+    const accounts = savingsAccounts();
     openForm(
-      t ? "Modifier le voyage" : "Nouveau voyage",
+      t ? "Modifier le voyage" : "Nouveau projet",
       [
-        field("name", "Nom du voyage", t?.name),
-        field("start", "Date de départ", t?.start || today(), "date"),
-        field("end", "Date de retour", t?.end || today(), "date"),
-        amountField("budget", "Budget total estimé (€)", t?.budget || 0),
-        choice(
-          "projectId",
-          "Projet de projection lié",
-          [
-            ["none", "Aucun"],
-            ...s.projects.map((p) => [p.id, p.name] as [string, string]),
-          ],
-          t?.projectId || "none",
-        ),
+        ...(t ? [] : [toggle("type", "Type", [
+          ["Voyage", "Voyage"],
+          ["Immobilier", "Immobilier"],
+          ["Véhicule", "Véhicule"],
+          ["Autre", "Autre"],
+        ], "Voyage")]),
+        field("name", t ? "Nom du voyage" : "Nom", t?.name),
+        field("start", "Départ", t?.start || shiftMonth(month(), 3) + "-01", "date"),
+        field("end", "Retour", t?.end || shiftMonth(month(), 3) + "-08", "date"),
+        amountField("budget", "Budget du voyage (€)", t?.budget || 0,
+          "C’est l’objectif à mettre de côté. Tu le répartis en catégories sur la page du voyage."),
+        ...(accounts.length ? [
+          choice("account", "Financé par", accounts, project?.account || defaultTripAccount(s) || accounts[0][0]),
+          amountField("saved", "Déjà de côté (€)", project ? projectSaved(s, project) : 0,
+            "Pris sur le solde du compte choisi."),
+        ] : []),
       ],
       async (v) => {
         if (v.end < v.start)
           throw Error("La date de retour précède le départ.");
-
         const id = t?.id || uid();
-        const projectId =
-          v.projectId === "none" ? undefined : v.projectId;
-
         await change((d) => {
           const previous = d.trips.find(x => x.id === id);
+          const projectId = previous?.projectId || tripProjectId(id);
           const entry: Trip = {
             id,
-            name: v.name,
+            name: v.name.trim() || "Voyage",
             start: v.start,
             end: v.end,
             budget: euro(v.budget),
@@ -119,29 +132,34 @@ export function createProjectActions(ctx: WimmCore & BaseActions & AccountAction
             coverPath: previous?.coverPath,
             coverPosition: previous?.coverPosition,
           };
-
-          if (
-            projectId &&
-            d.trips.some((x) => x.id !== id && x.projectId === projectId)
-          )
-            throw Error("Ce projet est déjà lié à un voyage.");
-
-          if (t)
-            d.trips = d.trips.map((x) => (x.id === id ? entry : x));
-          else
-            d.trips.push(entry);
+          if (t) d.trips = d.trips.map((x) => (x.id === id ? entry : x));
+          else d.trips.push(entry);
+          // Le voyage et son projet ne font qu'un.
+          const old = d.projects.find((p) => p.id === projectId);
+          const p: Project = old ? { ...old } : {
+            id: projectId, name: entry.name, type: "Voyage", date: entry.start, amount: entry.budget,
+            account: v.account || "", active: !!v.account, settled: false,
+          };
+          if (v.account) { p.account = v.account; p.active = old ? old.active : true; }
+          if (v.account) applySaved(d, p, euro(v.saved || "0"), old);
+          d.projects = old ? d.projects.map((x) => (x.id === projectId ? p : x)) : [...d.projects, p];
+          syncTripProject(d, entry);
         }, "Voyage enregistré");
-
         setActiveTrip(id);
       },
-      undefined,
-      <TripCoverEditor
+      t ? undefined : "Créer le voyage",
+      t ? <TripCoverEditor
         trip={t}
         initialUrl={t?.coverPath ? tripCoverUrls[t.coverPath] : undefined}
         onUpload={file => saveTripCover(t!, file)}
         onRemove={() => removeTripCover(t!)}
         onReposition={position => saveTripCoverPosition(t!, position)}
-      />,
+      /> : undefined,
+      undefined,
+      (name, value) => {
+        if (!t && name === "type" && value !== "Voyage") setTimeout(() => editProject(undefined, value), 0);
+        return undefined;
+      },
     );
   }
 
@@ -190,35 +208,38 @@ export function createProjectActions(ctx: WimmCore & BaseActions & AccountAction
     ([id]) => s.accounts.find((a) => a.id === id)?.group !== "current",
   );
 
-  // Même projet pour « Autres projets » et les Projections : un seul formulaire.
+  // Un seul formulaire pour tous les projets ; un voyage passe par le formulaire du voyage.
   function editProject(p?: Project, type = "Immobilier") {
+    const trip = p && tripOf(s, p);
+    if (trip) return editTrip(trip);
+    if (!p && type === "Voyage") return editTrip();
     if (!savingsAccounts().length) {
       setNotice("Ajoute d’abord un compte d’épargne.");
       return;
     }
-    const tagged = p ? projectTagged(s, p) : 0;
     openForm(
       p ? "Modifier le projet" : "Nouveau projet",
       [
-        toggle(
-          "type",
-          "Type",
-          [
-            ["Immobilier", "Immobilier"],
-            ["Véhicule", "Véhicule"],
-            ["Autre", "Autre"],
-            // Les projets de voyage se créent depuis les Projections et se relient à un voyage.
-            ...(p?.type === "Voyage" || type === "Voyage" ? [["Voyage", "Voyage"] as [string, string]] : []),
-          ],
-          p?.type || type,
-        ),
+        ...(p ? [] : [toggle("type", "Type", [
+          ["Voyage", "Voyage"],
+          ["Immobilier", "Immobilier"],
+          ["Véhicule", "Véhicule"],
+          ["Autre", "Autre"],
+        ], type)]),
+        ...(p ? [toggle("type", "Type", [
+          ["Immobilier", "Immobilier"],
+          ["Véhicule", "Véhicule"],
+          ["Autre", "Autre"],
+        ], p.type)] : []),
         field("name", "Nom", p?.name),
-        amountField("amount", "Objectif (€)", p?.amount || 0,
-          "Pour un achat immobilier, tu pourras le calculer dans «\u00a0Budget du bien\u00a0»."),
-        field("date", "Échéance", p?.date || shiftMonth(month(), 12) + "-01", "date"),
-        choice("account", "Financé par", savingsAccounts(), p?.account || savingsAccounts()[0]?.[0]),
-        amountField("saved", "Déjà mis de côté pour ce projet (€)", p ? projectSaved(s, p) : 0,
-          "Pris sur le solde du compte choisi."),
+        { ...amountField("amount", "Objectif (€)", p?.amount || 0,
+          "Pour un achat immobilier, tu pourras le calculer dans « Budget du bien ».") },
+        { ...field("date", "Échéance", p?.date || shiftMonth(month(), 12) + "-01", "date") },
+        { ...choice("account", "Financé par", savingsAccounts(), p?.account
+          || savingsAccounts().find(([id]) => s.accounts.find((a) => a.id === id)?.group === "wealth")?.[0]
+          || savingsAccounts()[0]?.[0]) },
+        { ...amountField("saved", "Déjà de côté (€)", p ? projectSaved(s, p) : 0,
+          "Pris sur le solde du compte choisi.") },
         ...(p ? [toggle(
           "active",
           "Inclure dans les projections ?",
@@ -230,73 +251,91 @@ export function createProjectActions(ctx: WimmCore & BaseActions & AccountAction
           "Le retrait est simulé à l’échéance.",
         )] : []),
       ],
-      async (v) =>
-        change((d) => {
+      async (v) => {
+        await change((d) => {
           const amount = euro(v.amount);
-          const saved = euro(v.saved || "0");
           if (amount <= 0) throw Error("L’objectif doit être supérieur à zéro.");
-          if (saved < 0) throw Error("Le montant mis de côté ne peut pas être négatif.");
-          const id = p?.id || uid();
-          const free = accountFree(d, v.account, id);
-          if (saved > Math.max(0, free))
-            throw Error("Il n’y a que " + money(Math.max(0, free)) + " de libre sur ce compte.");
+          const previous = p ? d.projects.find((x) => x.id === p.id) : undefined;
           const entry: Project = {
-            ...p,
-            id,
+            ...previous,
+            id: p?.id || uid(),
             name: v.name.trim() || "Projet",
             type: v.type,
             date: v.date,
             amount,
             account: v.account,
             active: p ? v.active !== "no" : true,
-            settled: p?.settled ?? false,
-            // Les versements « Verser » restent comptés en plus de la part saisie.
-            reserved: saved - (p && p.account === v.account ? tagged : 0),
+            settled: previous?.settled ?? false,
           };
+          if (previous && previous.account !== entry.account) delete entry.monthly;
           if (entry.type !== "Immobilier") delete entry.realEstate;
-          if (p) d.projects = d.projects.map((x) => (x.id === p.id ? entry : x));
+          applySaved(d, entry, euro(v.saved || "0"), previous);
+          if (previous) d.projects = d.projects.map((x) => (x.id === entry.id ? entry : x));
           else d.projects.push(entry);
-        }, "Projet enregistré"),
+        }, "Projet enregistré");
+      },
+      undefined,
+      undefined,
+      undefined,
+      // Choisir « Voyage » ouvre le formulaire du voyage (dates, budget).
+      (name, value) => {
+        if (!p && name === "type" && value === "Voyage") setTimeout(() => editTrip(), 0);
+        return undefined;
+      },
     );
   }
 
+  // « Verser en plus » : un virement ponctuel qui compte entièrement pour ce projet.
   function saveToProject(p: Project) {
     const account = s.accounts.find((a) => a.id === p.account);
     if (!account) return setNotice("Le compte de ce projet n’existe plus. Modifie le projet.");
-    transfer(account, undefined, undefined, p, projectGoal(s, p).perMonth);
+    transfer(account, undefined, undefined, p, 0);
   }
 
-  // Plusieurs projets sur un compte : l'utilisateur choisit la part de chacun.
+  // Plusieurs projets sur un compte : ce qu'il contient déjà et ce qu'il reçoit chaque mois.
   function allocateAccount(accountId: string) {
     const account = s.accounts.find((a) => a.id === accountId);
-    const list = accountProjects(s, accountId);
+    const list = accountProjects(s, accountId).sort((a, b) => a.date.localeCompare(b.date));
     if (!account || !list.length) return;
     const total = balance(s, accountId);
+    const planned = plannedMonthly(s, accountId);
+    const fields = list.flatMap((p, i) => [
+      amountField("p_" + p.id, p.name + " · déjà de côté (€)", projectSaved(s, p),
+        i === 0 ? "Solde du compte : " + money(total) + "." : ""),
+      { ...amountField("m_" + p.id, p.name + " · chaque mois (€)", projectMonthly(s, p),
+        i === 0 ? "Versement prévu sur le compte par ta répartition d’épargne : " + money(planned) + " par mois." : ""),
+        assistAfter: i === list.length - 1 },
+    ]);
     openForm(
       "Répartir " + account.name,
-      list.map((p, i) => ({
-        ...amountField("p_" + p.id, p.name + " (€)", projectSaved(s, p),
-          i === 0 ? "Solde du compte : " + money(total) + ". Ce qui n’est réservé à aucun projet reste libre." : ""),
-        assistAfter: i === list.length - 1,
-      })),
+      fields,
       async (v) =>
         change((d) => {
-          const sum = list.reduce((n, p) => n + euro(v["p_" + p.id] || "0"), 0);
-          if (list.some((p) => euro(v["p_" + p.id] || "0") < 0)) throw Error("Une part ne peut pas être négative.");
-          if (sum > total) throw Error("Les parts dépassent le solde du compte (" + money(total) + ").");
-          for (const p of list) {
+          const stock = list.map((p) => euro(v["p_" + p.id] || "0"));
+          const flow = list.map((p) => euro(v["m_" + p.id] || "0"));
+          if ([...stock, ...flow].some((n) => n < 0)) throw Error("Une part ne peut pas être négative.");
+          if (stock.reduce((n, x) => n + x, 0) > total) throw Error("Les parts dépassent le solde du compte (" + money(total) + ").");
+          list.forEach((p, i) => {
             const x = d.projects.find((y) => y.id === p.id);
-            if (x) x.reserved = euro(v["p_" + p.id] || "0") - projectTagged(d, x);
-          }
+            if (!x) return;
+            x.reserved = stock[i];
+            x.reservedAt = today();
+            x.monthly = flow[i];
+          });
         }, "Répartition enregistrée"),
-      "Enregistrer la répartition",
+      "Enregistrer",
       undefined,
       (values) => {
-        const sum = list.reduce((n, p) => n + euro(values["p_" + p.id] || "0"), 0);
-        return list.length && (
-          <p className={"ws-muted" + (sum > total ? " ws-negative" : "")} key="free">
-            Libre : {money(total - sum)}
-          </p>
+        const stock = list.reduce((n, p) => n + euro(values["p_" + p.id] || "0"), 0);
+        const flow = list.reduce((n, p) => n + euro(values["m_" + p.id] || "0"), 0);
+        return (
+          <div className="ws-alloc-free" key="free">
+            <p className={stock > total ? "ws-negative" : "ws-muted"}>Libre sur le compte : {money(total - stock)}</p>
+            <p className={flow > planned ? "ws-warning" : "ws-muted"}>
+              Libre chaque mois : {money(planned - flow)}
+              {flow > planned ? " · plus que le versement prévu : pense à changer ta répartition d’épargne." : ""}
+            </p>
+          </div>
         );
       },
     );
@@ -376,6 +415,7 @@ export function createProjectActions(ctx: WimmCore & BaseActions & AccountAction
   }
 
   function deleteProject(p: Project) {
+    if (tripOf(s, p)) return setNotice("Ce projet est un voyage : supprime-le depuis la page du voyage.");
     confirmAction("Supprimer le projet ?",
       "Le projet disparaît aussi des Projections. Les virements déjà faits restent dans l’historique, sans lien avec lui.",
       async () => change((d) => {

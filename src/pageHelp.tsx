@@ -17,9 +17,9 @@ export const PAGE_HELP: Record<string, { title: string; points: [string, string]
     ["Tes comptes", "Touche un compte pour épargner, faire un virement ou ajuster son solde."],
   ] },
   trips: { title: "Les Projets en 3 points", points: [
-    ["Un voyage à la fois", "Choisis le voyage en haut ; la carte montre ce qu’il reste à dépenser."],
-    ["Le bouton +", "Sur cet écran, il ajoute directement une dépense au voyage affiché."],
-    ["Le crayon", "Pour modifier, clôturer ou supprimer le voyage."],
+    ["Tous tes projets", "Voyages, immobilier, voiture… triés par échéance, avec ce qu’il faut mettre de côté chaque mois."],
+    ["Le versement prévu", "Il vient de ta répartition d’épargne ; « Répartir » partage un compte entre plusieurs projets."],
+    ["Pendant un voyage", "Sa carte devient ton budget sur place, et le bouton + y ajoute la dépense."],
   ] },
   projection: { title: "Les Projections en 3 points", points: [
     ["L’horizon", "Choisis 1, 5, 10 ou 30 ans : le chiffre et la courbe s’adaptent."],

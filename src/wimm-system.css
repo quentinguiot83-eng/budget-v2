@@ -543,7 +543,7 @@
 .app .ws-status { align-self: flex-start; font-size: .8125rem; font-weight: 600; border-radius: 999px; padding: 4px 10px; margin-top: 4px; }
 .app .ws-status.is-positive { color: var(--ws-positive); background: var(--ws-positive-soft); }
 .app .ws-status.is-warning { color: var(--ws-warning); background: var(--ws-warning-soft); }
-.app .ws-project-pace { border-top: 1px solid var(--border); margin-top: 6px; }
+.app .ws-project-pace { border-top: 1px solid var(--border); margin-top: 6px; padding-top: 10px; display: grid; gap: 6px; }
 .app .ws-inline-link { display: inline; min-height: 0; padding: 0; font-size: inherit; text-decoration: underline; }
 .app .ws-loan-summary { display: grid; gap: 2px; margin: 4px 0 8px; }
 .app .ws-loan-payment { display: grid; gap: 6px; margin-top: 8px; padding: 14px; border-radius: 16px; background: color-mix(in srgb, var(--border) 45%, transparent); }
@@ -553,3 +553,15 @@
 .app .ws-project .ws-head { align-items: flex-start; }
 .app .ws-project-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
 .app .ws-project-actions .ws-pill { display: inline-flex; align-items: center; gap: 6px; }
+.app .ws-project.has-cover { padding-top: 0; overflow: hidden; }
+.app .ws-project-cover { position: relative; height: 104px; margin: 0 -16px 10px; background: var(--ws-positive-soft); display: flex; align-items: flex-end; padding: 10px 16px; }
+.app .ws-project-cover.is-empty { background: color-mix(in srgb, var(--action) 14%, var(--surface)); }
+.app .ws-project-cover img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.app .ws-project-chip { position: relative; font-size: .75rem; font-weight: 600; color: var(--ink); background: color-mix(in srgb, var(--surface) 88%, transparent); border-radius: 999px; padding: 4px 10px; }
+.app .ws-project-chip.is-live { color: #fff; background: var(--ws-positive); }
+:root[data-mode="dark"] .app .ws-project-chip.is-live { color: #10161a; }
+.app .ws-project-note { margin: 4px 0 0; font-size: var(--ws-fs-small); }
+.app .ws-project-cats { display: grid; gap: 10px; margin-top: 8px; padding-top: 10px; border-top: 1px solid var(--border); }
+.app .ws-project-cat { display: grid; gap: 6px; }
+.app .ws-back-link { align-self: flex-start; }
+.app .ws-alloc-free p { margin: 4px 0; }

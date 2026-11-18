@@ -2,37 +2,28 @@ import { useState } from "react";
 import { money, today, dateLabel } from "../engine";
 import { deleteTripCover } from "../tripCovers";
 import SwipeActions from "../SwipeActions";
-import { Plane, Plus, ChevronRight, ChevronLeft, Pencil, Trash2, Lock, Unlock, Wallet } from "lucide-react";
-import OtherProjects from "./OtherProjects";
+import { Plus, ChevronRight, ChevronLeft, Pencil, Trash2, Lock, Unlock, Wallet } from "lucide-react";
+import ProjectList from "./ProjectList";
+import { syncTripProject } from "../projectGoals";
 import type { WimmView } from "../app/buildView";
 
 const percent = (value: number, max: number) => max > 0 ? Math.min(100, Math.round(Math.max(0, value) / max * 100)) : 0;
 
 export default function ProjectsScreen({ view }: { view: WimmView }) {
   const {
-    activeTrip, change, confirmAction, editTrip, explain, projectsSection,
-    retryFailedImage, s, setActiveTrip, setProjectsSection, setShowArchivedTrip,
+    activeTrip, change, confirmAction, editTrip, explain,
+    retryFailedImage, s, setActiveTrip, setShowArchivedTrip,
     showArchivedTrip, transfer, tripCategory, tripCoverUrls, txDetails, txRows,
   } = view;
   const [manageOpen, setManageOpen] = useState(false);
-  const activeTrips = s.trips.filter(t => !t.closedAt);
-  const closedTrips = s.trips.filter(t => !!t.closedAt);
-  const current = s.trips.find(t => t.id === activeTrip && (!t.closedAt || showArchivedTrip)) || activeTrips[0];
+  // Sans voyage ouvert : la liste de tous les projets. Avec : la page du voyage.
+  const current = s.trips.find(t => t.id === activeTrip && (!t.closedAt || showArchivedTrip));
   const cover = (path?: string) => path && tripCoverUrls[path] ? tripCoverUrls[path] : "";
+  const back = () => { setActiveTrip(""); setShowArchivedTrip(false); setManageOpen(false); };
 
-  const switcher = (
-    <div className="ws-segmented" role="tablist" aria-label="Types de projets" data-tour="trips-selector">
-      <button type="button" role="tab" aria-selected={projectsSection === "trips"} onClick={() => setProjectsSection("trips")}>Voyages</button>
-      <button type="button" role="tab" aria-selected={projectsSection === "other"} onClick={() => setProjectsSection("other")}>Autres projets</button>
-    </div>
-  );
-
-  if (projectsSection === "other") return <div className="ws-stack wimm-projects">{switcher}<OtherProjects view={view}/></div>;
+  if (!current) return <div className="ws-stack wimm-projects"><ProjectList view={view}/></div>;
 
   const trip = (() => {
-    if (!current) return s.trips.length
-      ? <p className="ws-muted">Aucun voyage actif. Ouvre « Voyages terminés » pour consulter tes anciens séjours.</p>
-      : null;
     const t = current;
     const tx = s.transactions.filter(x => x.trip === t.id);
     const expenses = tx.filter(x => x.type === "expense");
@@ -50,9 +41,9 @@ export default function ProjectsScreen({ view }: { view: WimmView }) {
 
     const closeOrReopen = () => t.closedAt
       ? confirmAction("Réouvrir ce voyage ?", "Tu pourras de nouveau ajouter des dépenses et modifier ses catégories.",
-          async () => change(d => { d.trips.find(x => x.id === t.id)!.closedAt = undefined; setShowArchivedTrip(false); }, "Voyage réouvert"))
-      : confirmAction("Clôturer ce voyage ?", "Il sera déplacé dans Voyages terminés. Son historique et son coût total resteront accessibles.",
-          async () => change(d => { d.trips.find(x => x.id === t.id)!.closedAt = today(); setActiveTrip(""); setShowArchivedTrip(false); }, "Voyage clôturé"));
+          async () => change(d => { const x = d.trips.find(y => y.id === t.id)!; x.closedAt = undefined; syncTripProject(d, x); setShowArchivedTrip(false); }, "Voyage réouvert"))
+      : confirmAction("Clôturer ce voyage ?", "Il passera dans « Projets terminés ». Son historique et son coût total resteront accessibles.",
+          async () => change(d => { const x = d.trips.find(y => y.id === t.id)!; x.closedAt = today(); syncTripProject(d, x); setActiveTrip(""); setShowArchivedTrip(false); }, "Voyage clôturé"));
     const remove = () => confirmAction("Supprimer le voyage ?",
       "La suppression est possible seulement sans opération liée. Sinon conserve-le pour garder son historique.",
       async () => {
@@ -60,6 +51,7 @@ export default function ProjectsScreen({ view }: { view: WimmView }) {
           if (d.transactions.some(x => x.trip === t.id))
             throw Error("Ce voyage possède des opérations. Il est conservé pour ton historique.");
           d.trips = d.trips.filter(x => x.id !== t.id);
+          d.projects = d.projects.filter(x => x.id !== t.projectId);
           setActiveTrip("");
         }, "Voyage supprimé");
         if (t.coverPath) {
@@ -69,11 +61,9 @@ export default function ProjectsScreen({ view }: { view: WimmView }) {
 
     return (
       <>
-        {t.closedAt && (
-          <button type="button" className="ws-link" onClick={() => { setActiveTrip(""); setShowArchivedTrip(false); }}>
-            <ChevronLeft size={16} aria-hidden="true"/>Retour aux voyages en cours
-          </button>
-        )}
+        <button type="button" className="ws-link ws-back-link" onClick={back}>
+          <ChevronLeft size={16} aria-hidden="true"/>Tous les projets
+        </button>
         <section className="ws-card ws-hero ws-trip" data-tour="trips-budget" aria-label={"Voyage " + t.name}>
           {image && <img className="ws-trip-cover" src={image} alt="" onError={() => t.coverPath && retryFailedImage(t.coverPath)}
             style={{ objectPosition: "50% " + (t.coverPosition ?? 50) + "%" }}/>}
@@ -173,58 +163,5 @@ export default function ProjectsScreen({ view }: { view: WimmView }) {
     );
   })();
 
-  return (
-    <div className="ws-stack wimm-projects">
-      {switcher}
-      <div className="ws-trip-picker" data-tour="trips-choose">
-        {activeTrips.map(t => {
-          const selected = !current?.closedAt && current?.id === t.id;
-          return (
-            <button type="button" key={t.id} className={"ws-pill" + (selected ? " is-solid" : "")} aria-pressed={selected}
-              onClick={() => { setActiveTrip(t.id); setShowArchivedTrip(false); setManageOpen(false); }}>
-              {cover(t.coverPath) ? <img src={cover(t.coverPath)} alt="" loading="lazy" onError={() => t.coverPath && retryFailedImage(t.coverPath)}/> : <Plane size={15} aria-hidden="true"/>}
-              {t.name}
-            </button>
-          );
-        })}
-        <button type="button" className="ws-pill" data-tour="trips-create" onClick={() => editTrip()}>
-          <Plus size={15} aria-hidden="true"/>Nouveau voyage
-        </button>
-      </div>
-
-      {!s.trips.length ? (
-        <section className="ws-card">
-          <span className="ws-icon-tile" aria-hidden="true"><Plane size={20}/></span>
-          <h2 className="ws-card-title">Quel sera ton prochain départ ?</h2>
-          <p className="ws-muted">Prévois le budget, suis les dépenses et son financement.</p>
-          <button type="button" className="ws-pill is-solid" style={{ alignSelf: "flex-start" }} onClick={() => editTrip()}>Préparer un voyage</button>
-        </section>
-      ) : trip}
-
-      {closedTrips.length > 0 && (
-        <details className="ws-card ws-list ws-archived" onToggle={e => {
-          if (!e.currentTarget.open) {
-            setShowArchivedTrip(false);
-            setActiveTrip(id => s.trips.some(x => x.id === id && !!x.closedAt) ? "" : id);
-          }
-        }}>
-          <summary className="ws-row">
-            <span className="ws-row-main"><span className="ws-row-title">Voyages terminés ({closedTrips.length})</span></span>
-            <ChevronRight size={18} className="ws-chevron" aria-hidden="true"/>
-          </summary>
-          {closedTrips.map(t => {
-            const total = s.transactions.filter(x => x.trip === t.id && x.type === "expense").reduce((n, x) => n + x.amount, 0);
-            return (
-              <button type="button" className="ws-row" key={t.id} aria-pressed={current?.id === t.id}
-                onClick={() => { setActiveTrip(t.id); setShowArchivedTrip(true); setManageOpen(false); window.scrollTo({ top: 0 }); }}>
-                <span className="ws-row-main"><span className="ws-row-title">{t.name}</span>
-                  <span className="ws-row-sub">{dateLabel(t.start)} – {dateLabel(t.end)}</span></span>
-                <span className="ws-amount">{money(total)}</span>
-              </button>
-            );
-          })}
-        </details>
-      )}
-    </div>
-  );
+  return <div className="ws-stack wimm-projects">{trip}</div>;
 }

@@ -246,12 +246,12 @@ export function demo(): Doc {
   s.projects = [
     {
       id: "appartement", name: "Appartement", type: "Immobilier", date: shiftMonth(m, 19) + "-15",
-      amount: 1400000, account: "livret", active: true, settled: false, reserved: 350000,
+      amount: 1400000, account: "livret", active: true, settled: false, reserved: 350000, reservedAt: m + "-01",
       realEstate: { price: 20000000, newBuild: false, works: 800000, rate: 3.4, years: 25 },
     },
     {
       id: "voiture", name: "Voiture", type: "Véhicule", date: shiftMonth(m, 5) + "-01",
-      amount: 600000, account: "livret", active: true, settled: false, reserved: 600000,
+      amount: 600000, account: "livret", active: true, settled: false, reserved: 600000, reservedAt: m + "-01",
     },
   ];
   return {

@@ -665,7 +665,7 @@ export function createAccountActions(ctx: WimmCore & BaseActions) {
       ? Math.min(accountRemaining, savingsRemaining)
       : 0);
     openForm(
-      project ? "Verser pour " + project.name : to ? "Épargner sur " + to.name : "Faire un virement",
+      project ? "Verser en plus · " + project.name : to ? "Épargner sur " + to.name : "Faire un virement",
       [
         choice(
           "account",
@@ -689,7 +689,7 @@ export function createAccountActions(ctx: WimmCore & BaseActions) {
           "description",
           "Description",
           project
-            ? "Épargne " + project.name
+            ? "Coup de pouce " + project.name
             : to
             ? "Épargne mensuelle"
             : travel
@@ -703,7 +703,7 @@ export function createAccountActions(ctx: WimmCore & BaseActions) {
             [selectedMonth, "Oui"],
             ["none", "Non"],
           ],
-          to ? selectedMonth : "none",
+          to && !project ? selectedMonth : "none",
         ),
         ...(project ? [] : [choice(
           "trip",
