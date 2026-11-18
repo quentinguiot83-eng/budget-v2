@@ -141,6 +141,8 @@ EXTRAS = [
     ("visite-etape-3", "?demo=1&onboarding_journey=1", ["click:.wimm-journey-next", "click:.wimm-journey-next"], False),
     ("accueil-premiers-pas", "?demo=1&onboarding_checklist=1", [], True),
     ("aide-budget", "?demo=1", ["nav:Budget", "click:.page-info"], False),
+    ("projets-autres", "?demo=1", ["nav:Projets", "text:Autres projets"], True),
+    ("projets-budget-du-bien", "?demo=1", ["nav:Projets", "text:Autres projets", "text:Budget du bien"], False),
     ("perso-accueil", "?demo=1", ["nav:Compte perso", "text:Créer mon compte perso",
      "fill:Solde actuel (€)=420", "click:.sheet button.primary, [role=dialog] button.primary, dialog button.primary"], True),
     ("perso-budgets", "?demo=1", ["nav:Compte perso", "text:Créer mon compte perso",

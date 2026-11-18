@@ -2,7 +2,8 @@ import { useState } from "react";
 import { money, today, dateLabel } from "../engine";
 import { deleteTripCover } from "../tripCovers";
 import SwipeActions from "../SwipeActions";
-import { Plane, Target, Plus, ChevronRight, ChevronLeft, Pencil, Trash2, Lock, Unlock, Wallet } from "lucide-react";
+import { Plane, Plus, ChevronRight, ChevronLeft, Pencil, Trash2, Lock, Unlock, Wallet } from "lucide-react";
+import OtherProjects from "./OtherProjects";
 import type { WimmView } from "../app/buildView";
 
 const percent = (value: number, max: number) => max > 0 ? Math.min(100, Math.round(Math.max(0, value) / max * 100)) : 0;
@@ -26,20 +27,7 @@ export default function ProjectsScreen({ view }: { view: WimmView }) {
     </div>
   );
 
-  if (projectsSection === "other") {
-    return (
-      <div className="ws-stack wimm-projects">
-        {switcher}
-        <section className="ws-card">
-          <span className="ws-icon-tile" aria-hidden="true"><Target size={20}/></span>
-          <span className="ws-label">Bientôt</span>
-          <h2 className="ws-card-title">Tes futurs projets, au même endroit</h2>
-          <p className="ws-muted">Tu pourras bientôt suivre d’autres projets : un achat immobilier, une voiture ou tout objectif d’épargne. Tes voyages restent inchangés.</p>
-          <button type="button" className="ws-link" onClick={() => setProjectsSection("trips")}>Voir mes voyages <ChevronRight size={15} aria-hidden="true"/></button>
-        </section>
-      </div>
-    );
-  }
+  if (projectsSection === "other") return <div className="ws-stack wimm-projects">{switcher}<OtherProjects view={view}/></div>;
 
   const trip = (() => {
     if (!current) return s.trips.length

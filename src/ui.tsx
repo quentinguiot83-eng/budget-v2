@@ -10,6 +10,8 @@ export type Field = {
   options?: [string, string][];
   // Deux ou trois choix courts affichés en boutons côte à côte.
   segmented?: boolean;
+  // Le panneau « assist » du formulaire s'affiche après ce champ.
+  assistAfter?: boolean;
   hint?: string;
   required?: boolean;
   min?: number;
@@ -248,7 +250,7 @@ export function Form({
           }}/>}
           </>
         )}
-          {f.name === "description" && assist?.(values, patchValues)}
+          {(f.assistAfter || f.name === "description") && assist?.(values, patchValues)}
         </Fragment>)}
         {extra}
         {error && (

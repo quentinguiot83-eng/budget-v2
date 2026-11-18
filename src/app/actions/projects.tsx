@@ -1,7 +1,9 @@
 // Voyages et projets : création, catégories de voyage, photos de couverture.
 // Extrait de useWimmApp.tsx : fonctions recréées à chaque rendu, comme avant.
 import { api } from "../../api";
-import { type Trip, today, uid, euro, money, type Project } from "../../engine";
+import { type Trip, today, uid, euro, money, type Project, balance, month, shiftMonth } from "../../engine";
+import { accountFree, accountProjects, MAX_DEBT_RATIO, projectGoal, projectSaved, projectTagged, realEstateBudget, wholeEuro } from "../../projectGoals";
+import { Row } from "../../ui";
 import TripCoverEditor from "../../TripCoverEditor";
 import { uploadTripCover, deleteTripCover, TRIP_COVERS_BUCKET } from "../../tripCovers";
 import { demoEnabled, field, amountField, choice, toggle } from "../shared";
@@ -13,8 +15,8 @@ import type { PersonalActions } from "./personal";
 
 export function createProjectActions(ctx: WimmCore & BaseActions & AccountActions & BudgetActions & PersonalActions) {
   const {
-    accountOptions, busy, change, coverUploading, docRef, openForm, s, setActiveTrip,
-    setCoverUploading, setNotice, tripCoverUrls,
+    accountOptions, busy, change, confirmAction, coverUploading, docRef, openForm, s, setActiveTrip,
+    setCoverUploading, setNotice, transfer, tripCoverUrls,
   } = ctx;
 
   async function saveTripCover(t: Trip, file: File): Promise<string> {
@@ -184,85 +186,207 @@ export function createProjectActions(ctx: WimmCore & BaseActions & AccountAction
     );
   }
 
-  function editProject(p?: Project) {
-    if (
-      !accountOptions().some(
-        ([id]) => s.accounts.find((a) => a.id === id)?.group !== "current",
-      )
-    ) {
+  const savingsAccounts = () => accountOptions().filter(
+    ([id]) => s.accounts.find((a) => a.id === id)?.group !== "current",
+  );
+
+  // Même projet pour « Autres projets » et les Projections : un seul formulaire.
+  function editProject(p?: Project, type = "Immobilier") {
+    if (!savingsAccounts().length) {
       setNotice("Ajoute d’abord un compte d’épargne.");
       return;
     }
+    const tagged = p ? projectTagged(s, p) : 0;
     openForm(
       p ? "Modifier le projet" : "Nouveau projet",
       [
-        field("name", "Nom", p?.name),
-        choice(
+        toggle(
           "type",
           "Type",
           [
-            ["Voyage", "Voyage"],
             ["Immobilier", "Immobilier"],
             ["Véhicule", "Véhicule"],
             ["Autre", "Autre"],
+            // Les projets de voyage se créent depuis les Projections et se relient à un voyage.
+            ...(p?.type === "Voyage" || type === "Voyage" ? [["Voyage", "Voyage"] as [string, string]] : []),
           ],
-          p?.type || "Voyage",
+          p?.type || type,
         ),
-        field("date", "Date du retrait prévu", p?.date || today(), "date"),
-        amountField("amount", "Montant total (€)", p?.amount || 0),
-        choice(
-          "account",
-          "Compte d’épargne concerné",
-          accountOptions().filter(
-            ([id]) => s.accounts.find((a) => a.id === id)?.group !== "current",
-          ),
-          p?.account ||
-            accountOptions().find(
-              ([id]) =>
-                s.accounts.find((a) => a.id === id)?.group !== "current",
-            )?.[0],
-        ),
-        toggle(
+        field("name", "Nom", p?.name),
+        amountField("amount", "Objectif (€)", p?.amount || 0,
+          "Pour un achat immobilier, tu pourras le calculer dans «\u00a0Budget du bien\u00a0»."),
+        field("date", "Échéance", p?.date || shiftMonth(month(), 12) + "-01", "date"),
+        choice("account", "Financé par", savingsAccounts(), p?.account || savingsAccounts()[0]?.[0]),
+        amountField("saved", "Déjà mis de côté pour ce projet (€)", p ? projectSaved(s, p) : 0,
+          "Pris sur le solde du compte choisi."),
+        ...(p ? [toggle(
           "active",
           "Inclure dans les projections ?",
           [
             ["yes", "Oui"],
             ["no", "Non"],
           ],
-          p?.active === false ? "no" : "yes",
-        ),
-        toggle(
-          "settled",
-          "Déjà entièrement financé ?",
-          [
-            ["yes", "Oui"],
-            ["no", "Non"],
-          ],
-          p?.settled ? "yes" : "no",
-          "Si oui, le retrait n’est plus simulé.",
-        ),
+          p.active === false ? "no" : "yes",
+          "Le retrait est simulé à l’échéance.",
+        )] : []),
       ],
       async (v) =>
         change((d) => {
+          const amount = euro(v.amount);
+          const saved = euro(v.saved || "0");
+          if (amount <= 0) throw Error("L’objectif doit être supérieur à zéro.");
+          if (saved < 0) throw Error("Le montant mis de côté ne peut pas être négatif.");
+          const id = p?.id || uid();
+          const free = accountFree(d, v.account, id);
+          if (saved > Math.max(0, free))
+            throw Error("Il n’y a que " + money(Math.max(0, free)) + " de libre sur ce compte.");
           const entry: Project = {
-            id: p?.id || uid(),
-            name: v.name,
+            ...p,
+            id,
+            name: v.name.trim() || "Projet",
             type: v.type,
             date: v.date,
-            amount: euro(v.amount),
+            amount,
             account: v.account,
-            active: v.active === "yes",
-            settled: v.settled === "yes",
+            active: p ? v.active !== "no" : true,
+            settled: p?.settled ?? false,
+            // Les versements « Verser » restent comptés en plus de la part saisie.
+            reserved: saved - (p && p.account === v.account ? tagged : 0),
           };
-          if (p)
-            d.projects = d.projects.map((x) => (x.id === p.id ? entry : x));
+          if (entry.type !== "Immobilier") delete entry.realEstate;
+          if (p) d.projects = d.projects.map((x) => (x.id === p.id ? entry : x));
           else d.projects.push(entry);
         }, "Projet enregistré"),
     );
   }
 
+  function saveToProject(p: Project) {
+    const account = s.accounts.find((a) => a.id === p.account);
+    if (!account) return setNotice("Le compte de ce projet n’existe plus. Modifie le projet.");
+    transfer(account, undefined, undefined, p, projectGoal(s, p).perMonth);
+  }
+
+  // Plusieurs projets sur un compte : l'utilisateur choisit la part de chacun.
+  function allocateAccount(accountId: string) {
+    const account = s.accounts.find((a) => a.id === accountId);
+    const list = accountProjects(s, accountId);
+    if (!account || !list.length) return;
+    const total = balance(s, accountId);
+    openForm(
+      "Répartir " + account.name,
+      list.map((p, i) => ({
+        ...amountField("p_" + p.id, p.name + " (€)", projectSaved(s, p),
+          i === 0 ? "Solde du compte : " + money(total) + ". Ce qui n’est réservé à aucun projet reste libre." : ""),
+        assistAfter: i === list.length - 1,
+      })),
+      async (v) =>
+        change((d) => {
+          const sum = list.reduce((n, p) => n + euro(v["p_" + p.id] || "0"), 0);
+          if (list.some((p) => euro(v["p_" + p.id] || "0") < 0)) throw Error("Une part ne peut pas être négative.");
+          if (sum > total) throw Error("Les parts dépassent le solde du compte (" + money(total) + ").");
+          for (const p of list) {
+            const x = d.projects.find((y) => y.id === p.id);
+            if (x) x.reserved = euro(v["p_" + p.id] || "0") - projectTagged(d, x);
+          }
+        }, "Répartition enregistrée"),
+      "Enregistrer la répartition",
+      undefined,
+      (values) => {
+        const sum = list.reduce((n, p) => n + euro(values["p_" + p.id] || "0"), 0);
+        return list.length && (
+          <p className={"ws-muted" + (sum > total ? " ws-negative" : "")} key="free">
+            Libre : {money(total - sum)}
+          </p>
+        );
+      },
+    );
+  }
+
+  function realEstatePlan(p: Project) {
+    const plan = p.realEstate ?? { price: 0, newBuild: false, works: 0, rate: 3.4, years: 25 };
+    const fields = [
+      amountField("price", "Prix du bien (€)", plan.price),
+      toggle("newBuild", "Type", [["old", "Ancien"], ["new", "Neuf"]], plan.newBuild ? "new" : "old",
+        "Frais de notaire estimés : 7,5 % dans l’ancien, 2,5 % dans le neuf."),
+      amountField("works", "Travaux et frais d’agence (€)", plan.works),
+      amountField("apport", "Apport (€)", p.amount, "Devient l’objectif du projet."),
+      { ...field("rate", "Taux du crédit (%)", plan.rate, "number"), step: "0.01", min: 0, max: 15 },
+      { ...toggle("years", "Durée", [["15", "15 ans"], ["20", "20 ans"], ["25", "25 ans"]], String(plan.years)), assistAfter: true },
+    ];
+    const read = (v: Record<string, string>) => ({
+      plan: {
+        price: euro(v.price || "0"), newBuild: v.newBuild === "new", works: euro(v.works || "0"),
+        rate: Number(String(v.rate || "0").replace(",", ".")) || 0, years: Number(v.years || plan.years),
+      },
+      apport: euro(v.apport || "0"),
+    });
+    openForm(
+      "Budget du bien",
+      fields,
+      async (v) =>
+        change((d) => {
+          const { plan: next, apport } = read(v);
+          if (next.price <= 0) throw Error("Indique le prix du bien.");
+          if (apport <= 0) throw Error("L’apport doit être supérieur à zéro.");
+          const x = d.projects.find((y) => y.id === p.id);
+          if (!x) throw Error("Projet introuvable.");
+          x.realEstate = next;
+          x.amount = apport;
+        }, "Budget du bien enregistré"),
+      "Enregistrer",
+      undefined,
+      (values) => {
+        const { plan: next, apport } = read(values);
+        const r = realEstateBudget(next, apport, s.income);
+        const ratio = r.debtRatio;
+        return (
+          <div className="ws-loan-summary" key="loan">
+            <Row title="Frais de notaire" value={wholeEuro(r.notary)}/>
+            <Row title="Coût total" value={wholeEuro(r.total)}/>
+            <Row title="Montant emprunté" value={wholeEuro(r.borrowed)}/>
+            <Row title="Coût des intérêts" value={wholeEuro(r.interest)}/>
+            <div className="ws-loan-payment">
+              <span className="ws-muted">Mensualité estimée, hors assurance</span>
+              <strong className="ws-figure">{wholeEuro(r.payment)} / mois</strong>
+              {ratio === null
+                ? <span className="ws-muted">Indique tes revenus dans Réglages → Revenus pour voir ton endettement.</span>
+                : <>
+                    <span className={ratio > MAX_DEBT_RATIO ? "ws-negative" : "ws-muted"}>
+                      Endettement : {Math.round(ratio * 100)} % de tes {wholeEuro(s.income)} de revenus par mois
+                      {ratio > MAX_DEBT_RATIO ? ", au-dessus des 35 % appliqués par les banques." : "."}
+                    </span>
+                    <span className="ws-progress is-thin ws-debt-gauge" aria-hidden="true">
+                      <span style={{ width: Math.min(100, ratio / 0.5 * 100) + "%" }}/>
+                      <i style={{ left: MAX_DEBT_RATIO / 0.5 * 100 + "%" }}/>
+                    </span>
+                  </>}
+              <span className="ws-muted">Estimation indicative, hors assurance emprunteur et garantie. La banque fera son propre calcul.</span>
+            </div>
+          </div>
+        );
+      },
+    );
+  }
+
+  function settleProject(p: Project, settled = true) {
+    return change((d) => {
+      const x = d.projects.find((y) => y.id === p.id);
+      if (x) x.settled = settled;
+    }, settled ? "Projet financé" : "Projet rouvert");
+  }
+
+  function deleteProject(p: Project) {
+    confirmAction("Supprimer le projet ?",
+      "Le projet disparaît aussi des Projections. Les virements déjà faits restent dans l’historique, sans lien avec lui.",
+      async () => change((d) => {
+        d.projects = d.projects.filter((x) => x.id !== p.id);
+        for (const t of d.transactions) if (t.project === p.id) delete t.project;
+      }, "Projet supprimé"));
+  }
+
   return {
     saveTripCover, removeTripCover, saveTripCoverPosition, editTrip, tripCategory, editProject,
+    saveToProject, allocateAccount, realEstatePlan, settleProject, deleteProject,
   };
 }
 
