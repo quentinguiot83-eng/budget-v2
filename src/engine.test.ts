@@ -906,3 +906,12 @@ test("renommer un compte bancaire conserve son ID, son solde et toutes ses opér
   assert.equal(s.transactions[0].account,"current");
   assert.equal(s.accounts.find(a=>a.id==="current")!.name,"Mon compte BoursoBank");
 });
+
+test("disponible : une hypothèse des Projections ne réserve rien", () => {
+  const s = fixture();
+  s.projects.push({ id: "h", name: "Hypothèse", type: "Autre", date: today(),
+    amount: 20000, account: "current", active: true, settled: false, plan: true });
+  assert.equal(monthEndAvailable(s).projectReserve, 0);
+  s.projects[0].plan = false;
+  assert.equal(monthEndAvailable(s).projectReserve, 20000);
+});
