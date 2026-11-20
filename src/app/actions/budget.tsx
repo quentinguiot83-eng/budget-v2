@@ -651,7 +651,7 @@ export function createBudgetActions(ctx: WimmCore & BaseActions & AccountActions
   function savingsPanel(location: "home" | "wealth") {
     const goal = totals.forecast?.savings ?? savingsTarget;
     const done = savingMonthMarkedDone || (goal > 0 && totals.saved >= goal);
-    const hasIncome = totals.income > 0 || !!totals.forecast;
+    const hasIncome = totals.salaryIncome > 0 || !!totals.forecast;
     const toSave = Math.max(0, goal - totals.saved);
 
     if (location === "home") {

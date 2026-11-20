@@ -15,6 +15,7 @@ import {
   today,
   month,
   monthEndAvailable,
+  monthlyPlan,
   monthlyReview,
   budgetOverruns,
   shiftMonth,
@@ -448,6 +449,37 @@ test("projet financé non déduit, projet impossible explicite", () => {
   assert.equal(project(s, 1).at(-1)!.wealth, 10000);
 });
 
+
+test("épargne du mois : seuls les salaires comptent comme revenu", () => {
+  const s = fixture();
+  const m = month();
+  s.transactions.push(
+    { id: "salary", type: "income", amount: 300000, date: today(),
+      budgetMonth: m, description: "Salaire", account: "current", incomeType: "Salaire" },
+    { id: "refund", type: "income", amount: 50000, date: today(),
+      description: "Remboursement", account: "current", incomeType: "Remboursement" },
+    { id: "bonus", type: "income", amount: 20000, date: today(),
+      description: "Prime", account: "current", incomeType: "Prime" },
+  );
+  const monthly = stats(s, m);
+  // Les revenus du mois restent complets ; seule l'épargne est limitée aux salaires.
+  assert.equal(monthly.income, 370000);
+  assert.equal(monthly.salaryIncome, 300000);
+  assert.equal(monthly.actualCapacity, 300000 - monthly.fixed - monthly.variable);
+  assert.equal(monthlyPlan(s, m).amounts.save, 300000 - monthly.fixed - monthly.variable);
+});
+
+test("épargne du mois : un remboursement seul ne déclenche pas le calcul réel", () => {
+  const s = fixture();
+  const m = month();
+  s.transactions.push({ id: "refund", type: "income", amount: 50000, date: today(),
+    description: "Remboursement", account: "current", incomeType: "Remboursement" });
+  const monthly = stats(s, m);
+  assert.equal(monthly.salaryIncome, 0);
+  // Sans salaire reçu, le plan reste basé sur l'estimation mensuelle.
+  assert.equal(monthlyPlan(s, m).amounts.save, Math.max(0, monthly.capacity));
+  assert.equal(monthEndAvailable(s).savings, 0);
+});
 
 test("mois budgétaire explicite du salaire", () => {
   const s = fixture();
