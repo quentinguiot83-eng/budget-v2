@@ -369,6 +369,13 @@ export function shiftMonth(m: string, n: number) {
 
 }
 
+// Revenu pris en compte pour l'épargne du mois. Un revenu sans type vient
+// d'une ancienne version (tous les revenus actuels sont typés) : il reste
+// compté comme salaire pour ne pas modifier l'épargne des mois existants.
+export function isSalaryIncome(t: Tx) {
+  return t.type === "income" && (!t.incomeType || t.incomeType === "Salaire");
+}
+
 // Mois utilisé pour le budget d'un revenu.
 // Un salaire reçu à partir du 27 finance le mois suivant.
 // Les autres revenus restent rattachés à leur mois réel de réception.
@@ -967,7 +974,7 @@ export function monthEndAvailable(s: State) {
   const futureIncome = Math.max(0, reservedIncome - prepaid);
 
   const monthly = stats(s, m);
-  const target = monthly.income > 0
+  const target = monthly.salaryIncome > 0
     ? Object.values(monthlyPlan(s, m).amounts).reduce((sum, n) => sum + n, 0)
     : 0;
   const plannedSavings = future.filter((t) => t.type === "transfer" &&
@@ -1280,6 +1287,19 @@ export function stats(
     )
     .reduce((n, t) => n + t.amount, 0);
 
+  // Seuls les salaires financent l'épargne du mois : primes, remboursements,
+  // ventes et autres revenus restent sur le compte sans gonfler l'objectif.
+  const salaryIncome = s.transactions
+    .filter(
+      (t) =>
+        t.type === "income" &&
+        isSalaryIncome(t) &&
+        t.date <= today() &&
+        incomeBudgetMonth(t) === m &&
+        s.accounts.find((a) => a.id === t.account)?.group !== "personal",
+    )
+    .reduce((n, t) => n + t.amount, 0);
+
   const fixedPaid = tx
     .filter((t) => t.type === "expense" && t.fixed && !t.trip)
     .reduce((n, t) => n + t.amount, 0);
@@ -1302,6 +1322,8 @@ export function stats(
 
     income,
 
+    salaryIncome,
+
     fixedPaid,
 
     spending,
@@ -1312,7 +1334,7 @@ export function stats(
 
     capacity: plannedIncome - fixed - variable,
 
-    actualCapacity: income - fixed - variable,
+    actualCapacity: salaryIncome - fixed - variable,
 
   };
 
@@ -1472,13 +1494,13 @@ export function allocation(
 
 export function monthlyPlan(s: State, m: string) {
 
-  const { capacity, actualCapacity, income } = stats(s, m);
+  const { capacity, actualCapacity, salaryIncome } = stats(s, m);
 
-  const hasRealIncome = income > 0;
+  const hasRealIncome = salaryIncome > 0;
 
-  // Pour un mois où des revenus réels ont déjà été saisis,
+  // Pour un mois où un salaire a déjà été saisi,
 
-  // le plan d'épargne se base sur ces revenus réels.
+  // le plan d'épargne se base sur les salaires réels uniquement.
 
   // Sinon, il utilise l'estimation mensuelle.
 

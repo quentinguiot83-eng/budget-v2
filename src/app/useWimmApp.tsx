@@ -146,7 +146,7 @@ function useWimmCore() {
     a.date <= String(interestReviewYear) + "-12-31" && !a.interestReviews?.[String(interestReviewYear)]),
   [s, availableDate, interestReviewYear]);
   const savingsCapacity =
-    totals.income > 0 ? totals.actualCapacity : totals.capacity;
+    totals.salaryIncome > 0 ? totals.actualCapacity : totals.capacity;
   const savingMonthMarkedDone =
     (s.savingDoneMonths ?? []).includes(selectedMonth);
 

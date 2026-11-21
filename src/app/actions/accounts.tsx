@@ -748,7 +748,7 @@ export function createAccountActions(ctx: WimmCore & BaseActions) {
         if (tx.savingMonth) {
           const monthStats = stats(s, tx.savingMonth);
           const monthCapacity =
-            monthStats.income > 0
+            monthStats.salaryIncome > 0
               ? monthStats.actualCapacity
               : monthStats.capacity;
           const remainingCapacity = Math.max(
