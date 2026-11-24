@@ -69,6 +69,33 @@ export type PersonalState = {
   budgets?: PersonalBudget[];
 };
 
+/**
+ * Dépense perso payée en plusieurs fois : crée l'échéancier, sans débit
+ * immédiat. Chaque paiement est validé ensuite comme les autres échéances.
+ */
+export function personalInstallmentRule(input: {
+  id: string; description: string; amount: number; start: string;
+  interval: number; count: number; budgetId?: string;
+}): PersonalRule {
+  if (!Number.isSafeInteger(input.amount) || input.amount <= 0)
+    throw Error("Le montant doit être supérieur à zéro.");
+  if (![1, 3, 12].includes(input.interval))
+    throw Error("Fréquence invalide.");
+  if (!Number.isInteger(input.count) || input.count < 2 || input.count > 1200)
+    throw Error("Le nombre de paiements doit être compris entre 2 et 1200.");
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(input.start))
+    throw Error("Date de première échéance invalide.");
+  return {
+    id: input.id,
+    name: input.description.trim() || "Paiement en plusieurs fois",
+    amount: input.amount,
+    start: input.start,
+    interval: input.interval,
+    count: input.count,
+    budgetId: input.budgetId,
+  };
+}
+
 export const emptyPersonalState = (): PersonalState => ({
   schema: 1,
   account: null,
