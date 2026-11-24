@@ -178,8 +178,8 @@ function useWimmCore() {
       setProEnabled(false);
     }
 
-    if (d.theme)
-      setTheme(d.theme);
+    // Le thème n'est plus réglable : Wimm reste en bleu, quel que soit
+    // le thème enregistré auparavant (aucune donnée modifiée).
 
     if (d.household) {
 

@@ -593,7 +593,6 @@ export default function App() {
                 <span className="quick-add-item-icon"><Plus size={17}/></span><span>{label}</span>
               </button>)}
             </> : route==="personal" ? (ps.account ? <>
-              <strong className="pro-v3-add-title">Ajouter au compte perso</strong>
               {personalTab==="budgets"&&<button type="button" className="quick-add-primary-action"
                 onClick={()=>{setMobileQuickAddOpen(false);editPersonalBudget();}}>
                 <span className="quick-add-item-icon"><Wallet size={19}/></span><span>Budget personnel</span>

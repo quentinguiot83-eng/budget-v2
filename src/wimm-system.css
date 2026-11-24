@@ -126,7 +126,7 @@
 .app .ws-progress.is-thin { height: 6px; }
 .app .ws-progress > span {
   display: block; height: 100%; border-radius: inherit;
-  background: var(--action, var(--accent-deep)); max-width: 100%;
+  background: var(--ws-positive); max-width: 100%;
 }
 .app .ws-progress.is-over > span { background: var(--ws-negative); }
 
@@ -566,9 +566,9 @@
 .app .ws-back-link { align-self: flex-start; }
 .app .ws-alloc-free p { margin: 4px 0; }
 .app .ws-progress.is-split { display: flex; }
-.app .ws-progress.is-split > span.is-paid { background: color-mix(in srgb, var(--action) 45%, #ffffff); border-radius: 0 999px 999px 0; }
+.app .ws-progress.is-split > span.is-paid { background: color-mix(in srgb, var(--ws-positive) 45%, #ffffff); border-radius: 0 999px 999px 0; }
 .app .ws-progress.is-split > span:first-child:not(:last-child) { border-radius: 999px 0 0 999px; }
 .app .ws-paid-line { display: flex; flex-direction: column; gap: 2px; }
 .app .ws-paid-line > span { display: flex; align-items: center; gap: 6px; }
-.app .ws-dot { display: inline-block; width: 8px; height: 8px; border-radius: 999px; background: var(--action); }
-.app .ws-dot.is-paid { background: color-mix(in srgb, var(--action) 45%, #ffffff); }
+.app .ws-dot { display: inline-block; width: 8px; height: 8px; border-radius: 999px; background: var(--ws-positive); }
+.app .ws-dot.is-paid { background: color-mix(in srgb, var(--ws-positive) 45%, #ffffff); }

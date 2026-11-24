@@ -10,8 +10,8 @@ import RecurringIncomeManager from "../RecurringIncomeManager";
 import SettingsNavigation from "../SettingsNavigation";
 import { BlockInfo, Row } from "../ui";
 import VersionHistoryPanel from "../VersionHistoryPanel";
-import { Check, LogOut, Users, ArrowUpRight, Pencil } from "lucide-react";
-import { toggle, demoEnabled, field, themes } from "../app/shared";
+import { LogOut, Users, ArrowUpRight, Pencil } from "lucide-react";
+import { toggle, demoEnabled, field } from "../app/shared";
 import type { WimmView } from "../app/buildView";
 
 export default function SettingsScreen({ view }: { view: WimmView }) {
@@ -20,7 +20,7 @@ export default function SettingsScreen({ view }: { view: WimmView }) {
     navigate, openForm, personalDoc, proEnabled,
     removeArchivedCategory, s, salaryBudget, salaryDay, salaryReminder, session,
     setAppearanceMode, setDoc, setInvite, setNotice, setPreviewName, setProEnabled, setSession,
-    setSettingsCategory, setSettingsDetail, setTheme, replayTour, settingsCategory, settingsDetail, showError, theme,
+    setSettingsCategory, setSettingsDetail, replayTour, settingsCategory, settingsDetail, showError,
   } = view;
   const hasIncomeSources = (s.incomeSources?.length ?? 0) > 0;
   return (
@@ -63,32 +63,6 @@ export default function SettingsScreen({ view }: { view: WimmView }) {
                 applyAppearance(mode);
                 setAppearanceMode(mode);
               }}>{label}</button>
-            ))}
-          </div>
-          <div className="section-head"><div className="block-title"><h2>Ta couleur</h2><BlockInfo title="Ta couleur"><p>Un thème personnel, même dans un foyer partagé.</p></BlockInfo></div></div>
-          <div className="theme-grid">
-            {themes.map(([id, label]) => (
-              <button
-                key={id}
-                className={
-                  "theme-option " + (theme === id ? "selected" : "")
-                }
-                onClick={async () => {
-                  try {
-                    if (!demoEnabled)
-                      await rpc("budget_theme", { p_theme: id });
-                    setTheme(id);
-                    setNotice(demoEnabled ? "Couleur appliquée à l’aperçu." : "Ton thème est enregistré.");
-                  } catch (e) {
-                    showError(e);
-                  }
-                }}
-              >
-                <span className={"swatch " + id}>
-                  {theme === id && <Check size={18} />}
-                </span>
-                {label}
-              </button>
             ))}
           </div>
         </section>
