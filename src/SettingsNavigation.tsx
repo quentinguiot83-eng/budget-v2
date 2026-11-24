@@ -31,6 +31,7 @@ const groups: SettingsGroup[] = [
   {
     id: "personnalisation", title: "Personnalisation", description: "Adapter Wimm à tes préférences", icon: Palette,
     items: [
+      { id: "apparence", title: "Apparence", description: "Mode clair, nuit ou automatique", icon: Palette },
       { id: "notifications", title: "Notifications", description: "Alertes, préférences et tests", icon: Bell },
       { id: "rubriques", title: "Rubriques affichées", description: "Choisir les espaces visibles", icon: LayoutGrid },
     ],

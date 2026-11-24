@@ -1,8 +1,10 @@
 export type AppearanceMode = "light" | "dark" | "auto";
 
-// L'apparence n'est plus réglable : Wimm reste en mode clair.
 export function readAppearanceMode(): AppearanceMode {
-  return "light";
+  const saved = localStorage.getItem("wimm-appearance-mode");
+  if (saved === "light" || saved === "dark" || saved === "auto") return saved;
+  const legacy = localStorage.getItem("wimm-night-mode");
+  return legacy === "1" ? "dark" : legacy === "0" ? "light" : "auto";
 }
 
 export function applyAppearance(mode: AppearanceMode) {

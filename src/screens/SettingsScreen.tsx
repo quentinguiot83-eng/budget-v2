@@ -1,4 +1,5 @@
 import { rpc, api } from "../api";
+import { applyAppearance } from "../appearance";
 import { APP_VERSION_LABEL, APP_BUILD_ID, APP_BUILD_DATE_LABEL } from "../appVersion";
 import { categoryUsage } from "../categoryDeletion";
 import DataProtectionPanel from "../DataProtectionPanel";
@@ -7,7 +8,7 @@ import { month, monthLabel, emptyState } from "../engine";
 import PhoneNotifications from "../PhoneNotifications";
 import RecurringIncomeManager from "../RecurringIncomeManager";
 import SettingsNavigation from "../SettingsNavigation";
-import { Row } from "../ui";
+import { BlockInfo, Row } from "../ui";
 import VersionHistoryPanel from "../VersionHistoryPanel";
 import { LogOut, Users, ArrowUpRight, Pencil } from "lucide-react";
 import { toggle, demoEnabled, field } from "../app/shared";
@@ -15,10 +16,10 @@ import type { WimmView } from "../app/buildView";
 
 export default function SettingsScreen({ view }: { view: WimmView }) {
   const {
-    change, commit, confirmAction, displayName, doc, invite, isOwner, load,
+    appearanceMode, change, commit, confirmAction, displayName, doc, invite, isOwner, load,
     navigate, openForm, personalDoc, proEnabled,
     removeArchivedCategory, s, salaryBudget, salaryDay, salaryReminder, session,
-    setDoc, setInvite, setNotice, setPreviewName, setProEnabled, setSession,
+    setAppearanceMode, setDoc, setInvite, setNotice, setPreviewName, setProEnabled, setSession,
     setSettingsCategory, setSettingsDetail, replayTour, settingsCategory, settingsDetail, showError,
   } = view;
   const hasIncomeSources = (s.incomeSources?.length ?? 0) > 0;
@@ -51,6 +52,21 @@ export default function SettingsScreen({ view }: { view: WimmView }) {
         <p className="ws-muted">Le bouton i en haut de chaque écran l’explique en trois points. La visite de 5 étapes présente l’essentiel de Wimm.</p>
         <button type="button" className="secondary" onClick={() => void replayTour()}>Revoir la visite</button>
       </section>
+)}
+      {settingsDetail === "apparence" && (
+<div className="two-col settings-appearance">
+<section className="card">
+          <div className="section-head"><div className="block-title"><h2>Apparence</h2><BlockInfo title="Apparence"><p>Automatique suit le mode clair ou sombre choisi dans les réglages de ton téléphone. Clair et Nuit gardent le même thème à tout moment.</p></BlockInfo></div></div>
+          <div className="appearance-choices" role="group" aria-label="Apparence">
+            {([["light", "Clair"], ["dark", "Nuit"], ["auto", "Automatique"]] as const).map(([mode, label]) => (
+              <button type="button" key={mode} aria-pressed={appearanceMode === mode} onClick={() => {
+                applyAppearance(mode);
+                setAppearanceMode(mode);
+              }}>{label}</button>
+            ))}
+          </div>
+        </section>
+</div>
 )}
       {["profil", "connexion"].includes(settingsDetail || "") && (
         <section className="card">
