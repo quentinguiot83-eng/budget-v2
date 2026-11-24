@@ -2,7 +2,7 @@
 // Extrait de useWimmApp.tsx : fonctions recréées à chaque rendu, comme avant.
 import { uid, euro, today, month, balance, addMonths, previousDate, type Account, money, dateLabel } from "../../engine";
 import type { InlineChoiceCreator, QuickCategoryDraft } from "../../InlineCategoryCreator";
-import { type PersonalTransaction, personalCashBalance, personalBalance, type PersonalRule, type PersonalDue, type PersonalBudget, type PersonalState } from "../../personal";
+import { type PersonalTransaction, personalCashBalance, personalInstallmentRule, personalBalance, type PersonalRule, type PersonalDue, type PersonalBudget, type PersonalState } from "../../personal";
 import { Pencil, Trash2 } from "lucide-react";
 import { field, choice, toggle, amountField } from "../shared";
 import type { WimmCore } from "../useWimmApp";
@@ -255,11 +255,22 @@ export function createPersonalActions(ctx: WimmCore & BaseActions & AccountActio
         ? "Modifier la dépense perso"
         : "Ajouter une dépense perso",
       [
-        amountField(
-          "amount",
-          "Montant (€)",
-          existing?.amount || 0,
-        ),
+        // Paiement en plusieurs fois : proposé uniquement à la création.
+        ...(existing ? [] : [toggle("paymentKind","Paiement",[["once","Une fois"],["installments","Plusieurs fois"]],"once")]),
+
+        {
+          ...amountField(
+            "amount",
+            "Montant (€)",
+            existing?.amount || 0,
+          ),
+          ...(existing ? {} : { showWhen: { field: "paymentKind", values: ["once"] } }),
+        },
+
+        ...(existing ? [] : [{
+          ...amountField("ruleAmount","Montant de chaque paiement (€)",0),
+          showWhen: { field: "paymentKind", values: ["installments"] },
+        }]),
 
         choice(
           "budgetId",
@@ -270,15 +281,38 @@ export function createPersonalActions(ctx: WimmCore & BaseActions & AccountActio
         ),
 
         ...(personalCashBalance(ps)>0||existing?.paymentMethod==="cash"
-          ? [toggle("paymentMethod","Payé avec",[["bank","Compte"],["cash","Espèces"]],existing?.paymentMethod||"bank")]
+          ? [{
+              ...toggle("paymentMethod","Payé avec",[["bank","Compte"],["cash","Espèces"]],existing?.paymentMethod||"bank"),
+              ...(existing ? {} : { showWhen: { field: "paymentKind", values: ["once"] } }),
+            }]
           : []),
-        field(
-          "date",
-          "Date",
-          existing?.date ||
-            today(),
-          "date",
-        ),
+        {
+          ...field(
+            "date",
+            "Date",
+            existing?.date ||
+              today(),
+            "date",
+          ),
+          ...(existing ? {} : { showWhen: { field: "paymentKind", values: ["once"] } }),
+        },
+        ...(existing ? [] : [
+          {
+            ...field("start","Première échéance",today(),"date"),
+            showWhen: { field: "paymentKind", values: ["installments"] },
+          },
+          {
+            ...toggle("interval","Fréquence",[["1","Mensuelle"],["3","Trimestrielle"],["12","Annuelle"]],"1"),
+            showWhen: { field: "paymentKind", values: ["installments"] },
+          },
+          {
+            ...field("count","Nombre de paiements",3,"number"),
+            min: 2,
+            max: 1200,
+            step: "1",
+            showWhen: { field: "paymentKind", values: ["installments"] },
+          },
+        ]),
         field(
           "description",
           "Description",
@@ -286,6 +320,24 @@ export function createPersonalActions(ctx: WimmCore & BaseActions & AccountActio
         ),
       ],
       async (v) => {
+
+        // Plusieurs fois : crée l'échéancier perso, sans débit immédiat.
+        if (!existing && v.paymentKind === "installments") {
+          const rule = personalInstallmentRule({
+            id: uid(),
+            description: v.description,
+            amount: euro(v.ruleAmount),
+            start: v.start,
+            interval: Number(v.interval),
+            count: Number(v.count),
+            budgetId: v.budgetId === "none" ? undefined : v.budgetId,
+          });
+          await changePersonal(
+            (d) => { d.rules.push(rule); },
+            "Paiement en plusieurs fois perso",
+          );
+          return;
+        }
 
         const tx:
           PersonalTransaction = {

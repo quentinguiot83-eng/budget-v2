@@ -2,8 +2,8 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { dateAt, emptyState, month, shiftMonth, today } from "./engine";
 import {
-  emptyPersonalState, personalBalance, personalCashBalance,
-  personalMonthOutgoings, personalProjection, validatePersonal,
+  emptyPersonalState, personalBalance, personalCashBalance, personalDues,
+  personalInstallmentRule, personalMonthOutgoings, personalProjection, validatePersonal,
 } from "./personal";
 
 const nextMonth = shiftMonth(month(), 1);
@@ -83,4 +83,34 @@ test("negative or non-integer personal budgets remain invalid", () => {
   assert.throws(() => validatePersonal(p), /Budget personnel invalide/);
   p.budgets[0].amount = 0.5;
   assert.throws(() => validatePersonal(p), /Budget personnel invalide/);
+});
+
+test("dépense perso en plusieurs fois : échéancier créé, rien débité avant validation", () => {
+  const p = emptyPersonalState();
+  p.account = account;
+  const start = dateAt(month(), 1);
+  p.rules.push(personalInstallmentRule({
+    id: "tv", description: "  Télé ", amount: 10000, start,
+    interval: 1, count: 3, budgetId: "clothes",
+  }));
+  assert.doesNotThrow(() => validatePersonal(p));
+  assert.deepEqual(p.rules[0], {
+    id: "tv", name: "Télé", amount: 10000, start, interval: 1, count: 3, budgetId: "clothes",
+  });
+  // Une échéance par mois, trois mois de suite, puis plus rien.
+  assert.equal(personalDues(p, month()).length, 1);
+  assert.equal(personalDues(p, shiftMonth(month(), 2)).length, 1);
+  assert.equal(personalDues(p, shiftMonth(month(), 3)).length, 0);
+  // Le solde ne bouge qu'à la validation d'une échéance.
+  assert.equal(personalBalance(p, emptyState(), "owner"), account.opening);
+});
+
+test("dépense perso en plusieurs fois : montants et nombres invalides refusés", () => {
+  const base = { id: "x", description: "", amount: 5000, start: today(), interval: 1, count: 3 };
+  assert.equal(personalInstallmentRule(base).name, "Paiement en plusieurs fois");
+  assert.throws(() => personalInstallmentRule({ ...base, amount: 0 }), /supérieur à zéro/);
+  assert.throws(() => personalInstallmentRule({ ...base, count: 1 }), /entre 2 et 1200/);
+  assert.throws(() => personalInstallmentRule({ ...base, count: 2.5 }), /entre 2 et 1200/);
+  assert.throws(() => personalInstallmentRule({ ...base, interval: 2 }), /Fréquence/);
+  assert.throws(() => personalInstallmentRule({ ...base, start: "" }), /Date/);
 });
