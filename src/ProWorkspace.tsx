@@ -58,8 +58,9 @@ type Invoice = { archivedAt?:string|null; id:string; number:string; clientId:str
 type EventItem = { id:string; clientId:string|null; title:string; eventType:string; startsAt:string; endsAt:string; location:string; notes:string };
 type Suite = { enabled:boolean; activeBusinessId?:string|null; businesses?:{id:string;name:string}[]; profile:Profile; account:Account; billing:BillingSettings; clients:Client[]; products:Product[]; transactions:Transaction[]; invoices:Invoice[]; events:EventItem[] };
 type PersonalAccount = { id:string; name:string; archived?:boolean };
-// Never invoke the new Pro → foyer write until the separately reviewed SQL migration is deployed.
-const PRO_TRANSFER_SERVER_ENABLED = false;
+// Salaire Pro → compte courant : nécessite la fonction SQL
+// supabase/migrations/20261022_pro_transfer_to_current.sql en production.
+const PRO_TRANSFER_SERVER_ENABLED = true;
 
 type Modal =
   | {type:"none"}
@@ -371,6 +372,7 @@ export default function ProWorkspace({
               onBilling={()=>setSection("billing")}
               onIncome={()=>setModal({type:"income"})}
               onExpense={()=>setModal({type:"expense"})}
+              onSalary={()=>setModal({type:"transfer"})}
               onTreasury={showFinances}
             />}
             {section==="settings"&&<div className="pro-v4-subpage">
@@ -431,7 +433,7 @@ export default function ProWorkspace({
           available={currentReserve?.availableForPay??0} ratesConfigured={currentReserve?.ratesConfigured??false}
           serverReady={PRO_TRANSFER_SERVER_ENABLED}
           submit={async v=>{
-            const ok=await call("budget_pro_transfer_to_current",{p_transfer:v},"Versement vers le compte courant enregistré");
+            const ok=await call("budget_pro_transfer_to_current",{p_transfer:v},"Salaire versé sur le compte courant");
             if(ok){await load();if(onHouseholdRefresh)await onHouseholdRefresh();}
             return ok;
           }}/>} 
@@ -813,20 +815,20 @@ function TransferForm({
     event.preventDefault();
     if(saving)return;
     if(!serverReady){setError("Le versement sera disponible après la mise à jour sécurisée du serveur Pro.");return;}
-    if(!ratesConfigured){setError("Renseigne d’abord tes taux de cotisations ou d’impôts dans Activité.");return;}
+    if(!ratesConfigured){setError("Renseigne d’abord tes taux de cotisations ou d’impôts dans Réglages Pro → Mon activité et mes taux.");return;}
     if(!accounts.length||!target||!accounts.some(a=>a.id===target)){setError("Ajoute ou choisis un compte courant dans Patrimoine.");return;}
     if(amountC<=0||amountC>max){setError("Le montant ne doit pas dépasser le disponible estimé, après réserves.");return;}
     if(!date||date>today()){setError("La date doit être actuelle ou passée.");return;}
     setError("");setSaving(true);
     try{
-      const success=await submit({amount:amountC,date,label:"Rémunération activité pro",syncToHousehold:true,targetAccountId:target});
+      const success=await submit({amount:amountC,date,label:"Salaire",syncToHousehold:true,targetAccountId:target});
       if(!success)setError("Le virement n’a pas été enregistré. Vérifie les messages de Wimm.");
     }catch(e){setError(e instanceof Error?e.message:"Virement impossible.");}
     finally{setSaving(false);}
   };
   return <form className="prosuite-form pro-v4-transfer-form" onSubmit={e=>void save(e)}>
-    <FormTitle eyebrow="PRO → COMPTE COURANT" title="Me verser une rémunération"
-      text="Enregistre un prélèvement dans l’entreprise et le même montant comme revenu sur ton compte courant Wimm."/>
+    <FormTitle eyebrow="PRO → COMPTE COURANT" title="Me verser un salaire"
+      text="Enregistre une sortie du compte Pro et le même montant comme salaire sur ton compte courant Wimm, pour le mois du versement."/>
     <div className="pro-v4-transfer-summary">
       <div><span>Trésorerie Pro</span><strong>{euro(balance)}</strong></div>
       <div><span>Disponible après réserves</span><strong>{euro(max)}</strong></div>
@@ -841,11 +843,11 @@ function TransferForm({
     <label>Date<ProDateTimeInput type="date" max={today()} required value={date} onChange={e=>setDate(e.target.value)}/></label>
     <p className="pro-v4-form-note">Wimm enregistre les deux écritures de façon liée via le module Pro. Réalise le véritable virement séparément dans ta banque. Il ne s’agit pas d’un salaire avec bulletin de paie.</p>
     {!serverReady&&<p className="prosuite-error" role="status">Cette fonction attend la validation et l’activation de sa mise à jour serveur. Aucun virement ne sera enregistré pour le moment.</p>}
-    {!ratesConfigured&&<p className="prosuite-error" role="status">Renseigne d’abord les taux estimés dans les paramètres de ton activité pour calculer le disponible.</p>}
+    {!ratesConfigured&&<p className="prosuite-error" role="status">Renseigne d’abord les taux estimés dans Réglages Pro → Mon activité et mes taux pour calculer le disponible.</p>}
     {!accounts.length&&<p className="prosuite-error" role="status">Crée un compte courant dans Patrimoine avant de poursuivre.</p>}
     {error&&<p role="alert" className="prosuite-error">{error}</p>}
     <button type="submit" className="prosuite-btn" disabled={saving||!serverReady||!ratesConfigured||!accounts.length||max<=0}>
-      {saving?"Enregistrement…":"Enregistrer le versement"}
+      {saving?"Enregistrement…":"Me verser ce salaire"}
     </button>
   </form>;
 }
