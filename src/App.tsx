@@ -585,7 +585,7 @@ export default function App() {
             {route==="pro" ? <>
               {/* Actions essentielles ; les autres restent dans leurs onglets. */}
               {([
-                ["income","Encaisser"],["expense","Dépense"],["invoice","Facture"],["quote","Devis"]
+                ["income","Encaisser"],["expense","Dépense"],["invoice","Facture"],["quote","Devis"],["transfer","Salaire"]
               ] as const).map(([id,label])=><button key={id} type="button" className="quick-add-primary-action"
                 onClick={()=>{setMobileQuickAddOpen(false);window.dispatchEvent(new CustomEvent("wimm:pro-action",{detail:id}));}}>
                 <span className="quick-add-item-icon"><Plus size={17}/></span><span>{label}</span>

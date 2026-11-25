@@ -17,12 +17,13 @@ type DashboardProps={
   onBilling:()=>void;
   onIncome:()=>void;
   onExpense:()=>void;
+  onSalary:()=>void;
   onTreasury:()=>void;
 };
 
 export default function ProDashboard({
   month,invoices,events,reserve,declaration,
-  onAgenda,onBilling,onIncome,onExpense,onTreasury,
+  onAgenda,onBilling,onIncome,onExpense,onSalary,onTreasury,
 }:DashboardProps){
   const isCurrent=month===currentProMonth();
   const alerts=unpaidProInvoices(invoices).sort((a,b)=>(a.dueDate??"9999").localeCompare(b.dueDate??"9999"));
@@ -55,6 +56,7 @@ export default function ProDashboard({
       <button type="button" className="ws-pill" onClick={onIncome}>Encaisser</button>
       <button type="button" className="ws-pill" onClick={onExpense}>Dépense</button>
       <button type="button" className="ws-pill" onClick={onBilling}>Facture</button>
+      <button type="button" className="ws-pill" onClick={onSalary}>Salaire</button>
     </nav>
 
     {(declaration||alerts.length>0)&&<section className="ws-card ws-list" aria-label="À faire">
