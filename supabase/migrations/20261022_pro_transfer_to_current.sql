@@ -111,5 +111,7 @@ begin
 end;
 $$;
 
-revoke all on function public.budget_pro_transfer_to_current(jsonb) from public;
+revoke all on function public.budget_pro_transfer_to_current(jsonb) from public, anon, authenticated;
 grant execute on function public.budget_pro_transfer_to_current(jsonb) to authenticated;
+
+notify pgrst, 'reload schema';

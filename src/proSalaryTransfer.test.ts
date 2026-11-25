@@ -33,6 +33,7 @@ async function setup() {
 create schema auth;
 create schema budget_private;
 create role authenticated;
+create role anon;
 create function auth.uid() returns uuid language sql stable as
   $$ select nullif(current_setting('app.test_uid',true),'')::uuid $$;
 create table budget_private.members(user_id uuid, household_id uuid);
