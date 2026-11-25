@@ -1,11 +1,9 @@
 import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import {
-  ArrowRightLeft,
   Briefcase,
   CalendarDays,
   CircleHelp,
-  CheckCircle2,
   ChevronLeft,
   ChevronRight,
   Download,
@@ -28,14 +26,14 @@ import {
 } from "lucide-react";
 import { api, rpc } from "./api";
 import { createIntegrityExport, sendFile } from "./secureExport";
-import ProBillingV2 from "./ProBillingV2";
+import ProBillingV2, {BillingSettingsFormV2} from "./ProBillingV2";
 import ProBusinessMenu from "./ProBusinessMenu";
 import ProCalendarSubscription from "./ProCalendarSubscription";
 import ProDateTimeInput from "./ProDateTimeInput";
 import MoneyInput from "./MoneyInput";
 import ProClientPicker, {type ProClientDraft, type ProClientChoice} from "./ProClientPicker";
 import ProDashboard from "./ProDashboard";
-import ProMicroStatus from "./ProMicroStatus";
+import ProMicroStatus, {ProMicroSettings} from "./ProMicroStatus";
 import {microEffectiveRates,microSummary,type MicroSettings} from "./proMicro";
 import ProAnalysis from "./ProAnalysis";
 import ProRecurringExpenses from "./ProRecurringExpenses";
@@ -317,6 +315,11 @@ export default function ProWorkspace({
   const transferTargets=native?householdCurrentAccounts:personalAccounts;
 
 
+  // Les finances sont sous l'Accueil : on y revient et on fait défiler jusqu'à elles.
+  const showFinances=()=>{
+    setSection("dashboard");
+    setTimeout(()=>document.getElementById("pro-finances")?.scrollIntoView({behavior:"smooth",block:"start"}),0);
+  };
   const nav=(mobile=false)=>enabled?<button type="button" className={open?"active":""} onClick={()=>void enter()}><Briefcase size={mobile?20:24}/><span>Professionnel</span></button>:null;
 
   return <>
@@ -347,16 +350,13 @@ export default function ProWorkspace({
           <ProNav active={section==="billing"} icon={<ReceiptText/>} label="Facturation" onClick={()=>setSection("billing")}/>
           <span className="pro-v4-menu-caption">MON ACTIVITÉ</span>
           <ProNav active={section==="clients"} icon={<Users/>} label="Clients" onClick={()=>setSection("clients")}/>
-          <ProNav active={section==="catalog"} icon={<Package/>} label="Catalogue" onClick={()=>setSection("catalog")}/>
           <ProNav active={section==="agenda"} icon={<CalendarDays/>} label="Agenda" onClick={()=>setSection("agenda")}/>
-          <span className="pro-v4-menu-caption">GESTION & SUIVI</span>
-          <ProNav active={section==="treasury"} icon={<Wallet/>} label="Finances" onClick={()=>setSection("treasury")}/>
+          <span className="pro-v4-menu-caption">SUIVI</span>
           <ProNav active={section==="analysis"} icon={<ChartNoAxesCombined/>} label="Analyse" onClick={()=>setSection("analysis")}/>
-          <ProNav active={section==="settings"} icon={<Settings2/>} label="Réglages Pro" onClick={()=>setSection("settings")}/>
         </nav>
         <main className="prosuite-main">
           {error&&<div className="prosuite-error">{error}</div>}{notice&&<div className="prosuite-notice">{notice}</div>}
-          {["dashboard","analysis","agenda","treasury"].includes(section)&&
+          {["dashboard","analysis","agenda"].includes(section)&&
             <ProMonthNavigator month={selectedProMonth} onChange={setSelectedProMonth} allowFuture={section==="agenda"}
                recordedMonths={[...(suite?.transactions.map(t=>t.date.slice(0,7))??[]),currentProMonth()]}/>}
           
@@ -371,8 +371,7 @@ export default function ProWorkspace({
               onBilling={()=>setSection("billing")}
               onIncome={()=>setModal({type:"income"})}
               onExpense={()=>setModal({type:"expense"})}
-              onTreasury={()=>setSection("treasury")}
-              
+              onTreasury={showFinances}
             />}
             {section==="settings"&&<div className="pro-v4-subpage">
               <div className="pro-v4-subpage-header"><span>PARAMÈTRES</span><h1>Réglages professionnels</h1>
@@ -380,10 +379,13 @@ export default function ProWorkspace({
               <div className="pro-v4-settings-links">
                 <button type="button" onClick={()=>setModal({type:"profile"})}><Briefcase size={19}/><span><strong>Mon activité et mes taux</strong><small>Statut, SIRET, cotisations, impôt, TVA</small></span><ChevronRight size={17}/></button>
                 <button type="button" onClick={()=>setModal({type:"account"})}><Wallet size={19}/><span><strong>Compte professionnel</strong><small>Nom du compte et solde de départ</small></span><ChevronRight size={17}/></button>
-                <button type="button" onClick={()=>setModal({type:"billing-settings"})}><ReceiptText size={19}/><span><strong>Coordonnées de facturation</strong><small>Adresse, IBAN, mentions des factures</small></span><ChevronRight size={17}/></button>
-                {suite.profile.legalStatus==="micro"&&<button type="button" onClick={()=>setSection("treasury")}><CheckCircle2 size={19}/><span><strong>Urssaf et impôts</strong><small>Déclarations, cotisations et prélèvements</small></span><ChevronRight size={17}/></button>}
+                <button type="button" onClick={()=>setModal({type:"billing-settings"})}><ReceiptText size={19}/><span><strong>Facturation</strong><small>Coordonnées, IBAN, numérotation, mentions et logo</small></span><ChevronRight size={17}/></button>
                 <button type="button" onClick={()=>void exportCurrentBusiness()} disabled={busy}><Download size={19}/><span><strong>Exporter mes données Pro</strong><small>Copie JSON de l’entreprise active</small></span><ChevronRight size={17}/></button>
               </div>
+              {suite.profile.legalStatus==="micro"&&<section className="pro-v4-settings-urssaf" aria-label="Urssaf et impôts">
+                <h2>Urssaf et impôts</h2>
+                <ProMicroSettings settings={microSettings} onSettingsChange={saveMicroSettings}/>
+              </section>}
             </div>}
             {section==="analysis"&&<ProAnalysis
               month={selectedProMonth}
@@ -400,23 +402,18 @@ export default function ProWorkspace({
             </section>}
             {section==="clients"&&<ClientsPage clients={suite.clients} add={()=>setModal({type:"client"})} edit={c=>setModal({type:"client",client:c})} remove={c=>void removeClient(c)}/>} 
             {section==="billing"&&<ProBillingV2 suite={suite} initialAction={billingQuickCreate} onSuite={next=>setSuite(next as Suite)} setError={setError} setNotice={setNotice}/>} 
-            {section==="catalog"&&<CatalogPage products={suite.products} add={()=>setModal({type:"product"})} edit={p=>setModal({type:"product",product:p})} remove={p=>void removeProduct(p)}/>} 
+            {section==="clients"&&<CatalogPage products={suite.products} add={()=>setModal({type:"product"})} edit={p=>setModal({type:"product",product:p})} remove={p=>void removeProduct(p)}/>} 
             {section==="agenda"&&<AgendaPage month={selectedProMonth} connect={suite.activeBusinessId?()=>setModal({type:"calendar",businessId:suite.activeBusinessId!}):undefined} events={suite.events} clients={suite.clients} add={date=>setModal({type:"event",initialDate:date})} edit={e=>setModal({type:"event",event:e})} remove={e=>void removeEvent(e)}/>}
-            {section==="treasury"&&reserves&&<TreasuryPage
+            {section==="dashboard"&&reserves&&<TreasuryPage
               month={selectedProMonth} suite={suite} reserves={reserves}
-              micro={micro} microSettings={microSettings} onMicroSettingsChange={saveMicroSettings}
-              transferReady={PRO_TRANSFER_SERVER_ENABLED} hasCheckingAccount={transferTargets.length>0}
-              income={()=>setModal({type:"income"})}
-              expense={()=>setModal({type:"expense"})}
-              transfer={()=>setModal({type:"transfer"})}
+              micro={micro} microSettings={microSettings}
               contributionPay={()=>setModal({type:"payment",paymentType:"contribution"})}
               taxPay={()=>setModal({type:"payment",paymentType:"tax"})}
-              account={()=>setModal({type:"account"})}
               profile={()=>setModal({type:"profile"})}
               removeTx={id=>void removeTx(id)}
               editPayment={t=>setModal({type:"payment",paymentType:t.kind==="contribution_payment"?"contribution":"tax",payment:t})}
             />}
-            {section==="treasury"&&<ProRecurringExpenses businessId={suite.activeBusinessId??""} month={selectedProMonth} onPaid={()=>void load()}/>}
+            {section==="dashboard"&&<ProRecurringExpenses businessId={suite.activeBusinessId??""} month={selectedProMonth} onPaid={()=>void load()}/>}
           </>}
         </main>
       </div>
@@ -445,7 +442,7 @@ export default function ProWorkspace({
           estimated={modal.paymentType==="contribution"?(micro?.dueContribution??Math.max(0,(reserves?.monthContributions??0)-paidContrib)):(micro?.dueTax??Math.max(0,(reserves?.monthTax??0)-paidTax))}
           submit={v=>call(modal.paymentType==="contribution"?"budget_pro_contribution_payment_save":"budget_pro_tax_payment_save",{p_payment:v},modal.payment?"Paiement corrigé et soldes recalculés":"Paiement enregistré et soldes recalculés")}
         />}
-        {modal.type==="billing-settings"&&<BillingSettingsForm value={suite.billing} submit={v=>call("budget_pro_billing_save",{p_settings:v},"Coordonnées de facturation enregistrées")}/>} 
+        {modal.type==="billing-settings"&&<BillingSettingsFormV2 value={suite.billing as Parameters<typeof BillingSettingsFormV2>[0]["value"]} submit={v=>call("budget_pro_billing_save",{p_settings:v},"Paramètres de facturation enregistrés")}/>} 
         {modal.type==="account"&&<AccountForm
           value={suite.account} currentBalance={currentReserve?.cashBalance??accountBalance}
           submit={saveProAccount}
@@ -486,7 +483,7 @@ function Empty({text}:{text:string}){return <p className="prosuite-empty">{text}
 
 function ClientsPage({clients,add,edit,remove}:{clients:Client[];add:()=>void;edit:(c:Client)=>void;remove:(c:Client)=>void}){const [q,setQ]=useState("");const rows=clients.filter(c=>(c.name+" "+c.companyName+" "+c.email).toLowerCase().includes(q.toLowerCase()));return <><PageHead eyebrow="CLIENTS" title="Clients" text="Toutes les informations utiles à la facturation et aux rendez-vous." actions={<Btn onClick={add}><Plus size={16}/> Nouveau client</Btn>}/><input className="prosuite-search" placeholder="Rechercher un client…" value={q} onChange={e=>setQ(e.target.value)}/><div className="prosuite-clientgrid">{rows.map(c=><article className="prosuite-client" key={c.id}><div className="prosuite-avatar">{c.name.slice(0,1).toUpperCase()}</div><div><h3>{c.name}</h3>{c.companyName&&<p>{c.companyName}</p>}<small>{[c.email,c.phone].filter(Boolean).join(" · ")||"Aucune coordonnée"}</small><small>{[c.address,c.postalCode,c.city].filter(Boolean).join(" ")}</small></div><div className="prosuite-rowactions"><button onClick={()=>edit(c)}><Pencil size={15}/></button><button onClick={()=>remove(c)}><Trash2 size={15}/></button></div></article>)}</div>{!rows.length&&<Empty text="Aucun client correspondant."/>}</>}
 
-function CatalogPage({products,add,edit,remove}:{products:Product[];add:()=>void;edit:(p:Product)=>void;remove:(p:Product)=>void}){return <><PageHead eyebrow="CATALOGUE" title="Catalogue" text="Enregistre ce que tu vends pour accélérer les encaissements et la facturation." actions={<Btn onClick={add}><Plus size={16}/> Ajouter</Btn>}/><div className="prosuite-productgrid">{products.map(p=><article className="prosuite-product" key={p.id}><span>{p.kind==="product"?"Produit":"Service"}</span><h3>{p.name}</h3><p>{p.description||"Aucune description"}</p><strong>{euro(p.unitPrice)} HT</strong><small>TVA {p.vatRate}% {p.active?"· Actif":"· Archivé"}</small><div className="prosuite-rowactions"><button onClick={()=>edit(p)}><Pencil size={15}/></button><button onClick={()=>remove(p)}><Trash2 size={15}/></button></div></article>)}</div>{!products.length&&<Empty text="Ton catalogue est vide."/>}</>}
+function CatalogPage({products,add,edit,remove}:{products:Product[];add:()=>void;edit:(p:Product)=>void;remove:(p:Product)=>void}){return <><PageHead eyebrow="CATALOGUE" title="Catalogue" text="Enregistre ce que tu vends pour accélérer les encaissements et la facturation." actions={<Btn onClick={add}><Plus size={16}/> Nouveau produit</Btn>}/><div className="prosuite-productgrid">{products.map(p=><article className="prosuite-product" key={p.id}><span>{p.kind==="product"?"Produit":"Service"}</span><h3>{p.name}</h3><p>{p.description||"Aucune description"}</p><strong>{euro(p.unitPrice)} HT</strong><small>TVA {p.vatRate}% {p.active?"· Actif":"· Archivé"}</small><div className="prosuite-rowactions"><button onClick={()=>edit(p)}><Pencil size={15}/></button><button onClick={()=>remove(p)}><Trash2 size={15}/></button></div></article>)}</div>{!products.length&&<Empty text="Ton catalogue est vide."/>}</>}
 
 function AgendaPage({month,events,clients,add,edit,remove,connect}:{month:string;connect?:()=>void;events:EventItem[];clients:Client[];add:(date?:string)=>void;edit:(e:EventItem)=>void;remove:(e:EventItem)=>void}){
   const cursor=new Date(month+"-15T12:00:00");
@@ -503,7 +500,7 @@ function AgendaPage({month,events,clients,add,edit,remove,connect}:{month:string
   const clientName=(id:string|null)=>clients.find(c=>c.id===id)?.name;
   const shownEvents=selectedDay?monthEvents.filter(e=>e.startsAt.slice(0,10)===key(selectedDay)):monthEvents;
   return <>
-    <PageHead eyebrow="AGENDA" title="Agenda" text="Rendez-vous, prestations, échéances et tâches administratives." actions={<>{connect&&<Btn secondary onClick={connect}><Link2 size={16}/> Relier mon calendrier</Btn>}<Btn onClick={add}><Plus size={16}/> Événement</Btn></>}/>
+    <PageHead eyebrow="AGENDA" title="Agenda" text="Rendez-vous, prestations, échéances et tâches administratives." actions={<>{connect&&<Btn secondary onClick={connect}><Link2 size={16}/> Relier mon calendrier</Btn>}<Btn onClick={add}><Plus size={16}/> Rendez-vous</Btn></>}/>
     <section className="prosuite-card prosuite-agenda-calendar-card">
       <h2>{cursor.toLocaleDateString("fr-FR",{month:"long",year:"numeric"})}</h2>
       <div className="calendar-grid prosuite-payment-calendar">
@@ -529,15 +526,14 @@ function AgendaPage({month,events,clients,add,edit,remove,connect}:{month:string
 }
 
 function TreasuryPage({
-  month,suite,reserves,micro,microSettings,onMicroSettingsChange,
-  transferReady,hasCheckingAccount,income,expense,transfer,contributionPay,taxPay,account,profile,removeTx,editPayment,
+  month,suite,reserves,micro,microSettings,
+  contributionPay,taxPay,profile,removeTx,editPayment,
 }:{
   month:string;suite:Suite;reserves:ReserveEstimate;
   micro:ReturnType<typeof microSummary>|null;
-  microSettings:MicroSettings;onMicroSettingsChange:(settings:MicroSettings)=>void;
-  transferReady:boolean;hasCheckingAccount:boolean;
-  income:()=>void;expense:()=>void;transfer:()=>void;contributionPay:()=>void;taxPay:()=>void;
-  account:()=>void;profile:()=>void;removeTx:(id:string)=>void;editPayment:(row:Transaction)=>void;
+  microSettings:MicroSettings;
+  contributionPay:()=>void;taxPay:()=>void;
+  profile:()=>void;removeTx:(id:string)=>void;editPayment:(row:Transaction)=>void;
 }) {
   const [allRows,setAllRows]=useState(false);
   const monthRows=suite.transactions.filter(t=>t.date.slice(0,7)===month)
@@ -545,36 +541,21 @@ function TreasuryPage({
   const rows=allRows?monthRows:monthRows.slice(0,10);
   const isMicro=!!micro;
   const taxProvisioned=!isMicro||microSettings.taxMode!=="none";
-  const canTransfer=transferReady&&hasCheckingAccount&&reserves.ratesConfigured&&reserves.availableForPay!==null&&reserves.availableForPay>0;
   const hasReserved=reserves.totalToKeep>0;
   const periodFrom=micro?.period.key??month;
   const periodTo=micro?.period.end??month;
   const adjustablePayments=proPaymentsForPeriod(suite.transactions,periodFrom,periodTo);
-  return <div className="pro-v4-finances">
-    <div className="pro-v4-finances-title">
-      <div><h1>Finances</h1>
-        <p>Ton argent, les montants à réserver et les échéances au même endroit.</p></div>
-      <button type="button" className="pro-v4-finances-account" onClick={account}><Settings2 size={16}/> Compte Pro</button>
-    </div>
-    <section className="pro-v4-finances-summary" aria-label="Résumé de la trésorerie">
-      <div><span>Solde du compte Pro</span><strong>{reserves.cashBalance===null?"—":euro(reserves.cashBalance)}</strong></div>
-      <div><span>Réserves encore à prévoir</span><strong>{euro(reserves.totalToKeep)}</strong><small>Estimation cumulée, toutes périodes</small></div>
-      <div className="pro-v4-treasury-available"><span>Disponible estimé</span><strong>{reserves.availableForPay===null?"—":euro(reserves.availableForPay)}</strong></div>
-    </section>
-
+  return <div className="pro-v4-finances" id="pro-finances">
     {isMicro?<ProMicroStatus
       profile={suite.profile}
       transactions={suite.transactions}
       month={month}
       settings={microSettings}
-      onSettingsChange={onMicroSettingsChange}
-      onRates={profile}
       onContributionPayment={contributionPay}
       onTaxPayment={taxPay}
     />:<section className="pro-v4-finances-fiscal" aria-label="Cotisations et impôts">
       <div className="pro-v4-finances-section-title">
         <div><h2>Charges et fiscalité</h2><p>Prévisions et paiements associés au mois sélectionné.</p></div>
-        <button type="button" onClick={profile}><Settings2 size={15}/> Taux</button>
       </div>
       <div className="pro-v4-finances-charge-lines">
         <div><span>Cotisations restantes estimées</span><strong>{euro(reserves.contributionsOwed)}</strong>
@@ -603,19 +584,6 @@ function TreasuryPage({
     </button>}
     {!taxProvisioned&&<p className="pro-v4-finances-info"><CircleHelp size={15}/> L’impôt sur le revenu n’est pas provisionné : le disponible estimé ne le déduit pas.</p>}
     {!hasReserved&&<p className="pro-v4-finances-info"><CircleHelp size={15}/> Aucune somme réservée pour le moment. Les provisions se calculent à partir des encaissements.</p>}
-
-    <section className="pro-v4-finances-actions" aria-label="Actions de trésorerie">
-      <div className="pro-v4-finances-section-title"><h2>Actions rapides</h2></div>
-      <div>
-        <button type="button" onClick={income}><Plus size={17}/> Encaisser</button>
-        <button type="button" onClick={expense}><Plus size={17}/> Ajouter une dépense</button>
-        <button type="button" onClick={transfer} disabled={!canTransfer} title={!transferReady?"Le versement vers le foyer attend la validation du serveur":!hasCheckingAccount?"Ajoute un compte courant dans Patrimoine":"Versement vers mon compte courant"}>
-          <ArrowRightLeft size={17}/> Vers mon compte courant
-        </button>
-      </div>
-      {!transferReady&&<small>Les virements vers les comptes personnels seront disponibles après activation sécurisée côté serveur.</small>}
-      {transferReady&&!hasCheckingAccount&&<small>Ajoute un compte courant dans Patrimoine pour pouvoir recevoir un transfert.</small>}
-    </section>
 
     <section className="pro-v4-finances-transactions">
       <div className="pro-v4-finances-section-title">
@@ -923,7 +891,6 @@ function ReservePaymentForm({type,estimated,periodKey,value,submit}:{
   </form>;
 }
 
-function BillingSettingsForm({value,submit}:{value:BillingSettings;submit:(v:Record<string,unknown>)=>Promise<boolean>}){const [v,setV]=useState(value);return <form className="prosuite-form" onSubmit={e=>{e.preventDefault();void submit(v)}}><FormTitle eyebrow="FACTURATION" title="Coordonnées de facturation" text="Ces informations apparaîtront sur les nouvelles factures."/><label>Adresse<input value={v.address} onChange={e=>setV({...v,address:e.target.value})}/></label><div className="prosuite-form2"><label>Code postal<input value={v.postalCode} onChange={e=>setV({...v,postalCode:e.target.value})}/></label><label>Ville<input value={v.city} onChange={e=>setV({...v,city:e.target.value})}/></label></div><div className="prosuite-form2"><label>E-mail<input value={v.email} onChange={e=>setV({...v,email:e.target.value})}/></label><label>Téléphone<input value={v.phone} onChange={e=>setV({...v,phone:e.target.value})}/></label></div><label>IBAN<input value={v.iban} onChange={e=>setV({...v,iban:e.target.value})}/></label><label>Préfixe des factures<input value={v.invoicePrefix} onChange={e=>setV({...v,invoicePrefix:e.target.value.toUpperCase()})}/></label><label>Note de bas de facture<textarea rows={3} value={v.footerNote} onChange={e=>setV({...v,footerNote:e.target.value})}/></label><button className="prosuite-btn">Enregistrer</button></form>}
 
 
 function AccountForm({value,currentBalance,submit}:{
