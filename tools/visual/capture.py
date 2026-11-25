@@ -153,7 +153,7 @@ EXTRAS = [
      for k in range(-1, 5)] + [("ordi-reglages-" + ("menu" if k < 0 else str(k + 1)), "?demo=1", ["click:.sidebar-bottom button"] + ([] if k < 0 else [f"click:.wimm-settings-entry >> nth={k}"]), True)
      for k in range(-1, 5)] + [("ordi-ajouter", "?demo=1", ["click:.desktop-quick-add"], True)] + [("pro-" + slug, "?demo=1&screen=pro", [] if label == "Accueil" else ["click:.pro-v4-nav button >> text=" + label], True)
      for slug, label in [("accueil", "Accueil"), ("facturation", "Facturation"), ("clients", "Clients"),
-                         ("agenda", "Agenda"), ("catalogue", "Catalogue"), ("finances", "Finances"), ("analyse", "Analyse")]]
+                         ("agenda", "Agenda"), ("analyse", "Analyse")]]
 
 
 def capture_extras(browser, url: str, out: Path):

@@ -54,7 +54,7 @@ export default function ProDashboard({
     <nav className="ws-pill-row" aria-label="Actions professionnelles">
       <button type="button" className="ws-pill" onClick={onIncome}>Encaisser</button>
       <button type="button" className="ws-pill" onClick={onExpense}>Dépense</button>
-      <button type="button" className="ws-pill" onClick={onBilling}>Facturer</button>
+      <button type="button" className="ws-pill" onClick={onBilling}>Facture</button>
     </nav>
 
     {(declaration||alerts.length>0)&&<section className="ws-card ws-list" aria-label="À faire">

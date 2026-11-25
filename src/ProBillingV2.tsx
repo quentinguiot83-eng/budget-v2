@@ -13,7 +13,6 @@ import {
   Plus,
   ReceiptText,
   Send,
-  Settings2,
   Trash2,
   X,
   XCircle,
@@ -146,9 +145,6 @@ export default function ProBillingV2({suite,onSuite,setError,setNotice,initialAc
   return <div className="billing-v2">
     <div className="billing-v2-head">
       <div><span className="billing-v2-eyebrow">FACTURATION</span><h1>Facturation</h1><p>Factures, devis et prestations récurrentes.</p></div>
-      <div className="billing-v2-head-actions">
-        <button className="billing-v2-secondary" onClick={()=>setModal({type:"settings"})}><Settings2 size={16}/> Paramètres</button>
-      </div>
     </div>
 
     <div className="billing-v2-tabs">
@@ -251,7 +247,7 @@ function PaymentForm({invoice,busy,submit}:{invoice:Invoice;busy:boolean;submit:
 
 function PaymentHistory({invoice,payments,remove}:{invoice:Invoice;payments:InvoicePayment[];remove:(p:InvoicePayment)=>void}){return <div className="billing-v2-form"><FormHead eyebrow="PAIEMENTS" title={invoice.number} text={`${euro(invoice.paidAmount??0)} encaissé sur ${euro(invoice.totalTtc)}`}/>{payments.length?payments.map(p=><div className="billing-v2-payment" key={p.id}><div><strong>{euro(p.amount)}</strong><span>{dateFr(p.date)} · {payLabel[p.method]}</span>{p.notes&&<small>{p.notes}</small>}</div><button type="button" title="Supprimer le paiement" onClick={()=>remove(p)}><Trash2 size={16}/></button></div>):<Empty text="Aucun paiement enregistré."/>}</div>}
 
-function BillingSettingsFormV2({value,submit}:{value:BillingSettings;submit:(v:Record<string,unknown>)=>Promise<unknown>}){
+export function BillingSettingsFormV2({value,submit}:{value:BillingSettings;submit:(v:Record<string,unknown>)=>Promise<unknown>}){
   const [v,setV]=useState({...value,quotePrefix:value.quotePrefix??"DEV",defaultPaymentDays:value.defaultPaymentDays??30,vatNumber:value.vatNumber??"",registrationText:value.registrationText??"",capitalText:value.capitalText??"",logoData:value.logoData??"",earlyDiscountText:value.earlyDiscountText??"Escompte pour paiement anticipé : néant.",latePenaltyText:value.latePenaltyText??"Pénalités de retard : taux BCE majoré de 10 points."});
   const [logoError,setLogoError]=useState("");
   const readLogo=(file?:File)=>{if(!file)return;if(file.size>500000){setLogoError("Logo trop lourd : 500 Ko maximum.");return;}const r=new FileReader();r.onload=()=>{setLogoError("");setV(x=>({...x,logoData:String(r.result??"")}))};r.readAsDataURL(file)};
