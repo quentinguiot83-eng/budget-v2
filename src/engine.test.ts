@@ -77,7 +77,9 @@ test("disponible : payer une échéance ou l'épargne ne les déduit pas deux fo
   const before = monthEndAvailable(s);
   assert.equal(before.fixed, 10000);
   assert.equal(before.savings, 350000);
-  assert.equal(before.available, 140000);
+  // 40000 de budget « Courses » (fixture) pas encore dépensé sont aussi réservés.
+  assert.equal(before.variableRemaining, 40000);
+  assert.equal(before.available, 100000);
   s.transactions.push({ id: "rent-paid", type: "expense", amount: 10000,
     date, description: "Loyer", account: "current", fixed: true,
     dueKey: dues(s, m)[0].key });
@@ -95,7 +97,7 @@ test("disponible : salaire du mois suivant réservé, estimation exclue, défici
   const a = monthEndAvailable(s);
   assert.equal(a.futureIncome, 400000);
   assert.equal(a.savings, 0);
-  assert.equal(a.available, 100000);
+  assert.equal(a.available, 60000);
   s.transactions.push({ id: "next-saving", type: "transfer", amount: 50000,
     date: today(), savingMonth: shiftMonth(month(), 1), account: "current",
     to: "save", description: "Épargne du mois suivant" });
@@ -103,9 +105,62 @@ test("disponible : salaire du mois suivant réservé, estimation exclue, défici
   assert.equal(monthEndAvailable(s).available, a.available);
   s.projects.push({ id: "p", name: "Projet", type: "other", date: today(),
     amount: 120000, account: "current", active: true, settled: false });
-  assert.equal(monthEndAvailable(s).available, -20000);
+  assert.equal(monthEndAvailable(s).available, -60000);
   s.projects[0].settled = true;
   assert.equal(monthEndAvailable(s).available, a.available);
+});
+test("disponible : budget variable restant réservé, sans double déduction", (t) => {
+  const s = fixture();
+  const m = month();
+  const before = monthEndAvailable(s);
+  // 40000 de budget « Courses » (fixture), rien dépensé : tout réservé.
+  assert.equal(before.variableRemaining, 40000);
+  assert.equal(before.available, 60000);
+
+  // Une dépense courses déjà payée réduit d'autant le reste à réserver,
+  // sans rien changer au total (le solde a déjà baissé du même montant).
+  s.transactions.push({ id: "courses", type: "expense", amount: 15000,
+    date: today(), description: "Courses", account: "current", category: "food" });
+  const after = monthEndAvailable(s);
+  assert.equal(after.variableRemaining, 25000);
+  assert.equal(after.available, before.available);
+
+  // Une dépense courses déjà saisie à l'avance (mais ce mois-ci) est prise en
+  // compte une seule fois : via le budget restant, pas aussi via « committed ».
+  const futureDate = dateAt(m, 31);
+  if (futureDate === today()) { t.skip("dernier jour du mois"); return; }
+  s.transactions.push({ id: "courses-future", type: "expense", amount: 10000,
+    date: futureDate, description: "Courses de fin de mois",
+    account: "current", category: "food" });
+  const future = monthEndAvailable(s);
+  // Comptée une fois dans « committed » (dépense déjà saisie) et une fois en
+  // moins dans le budget restant : le total ne bouge pas (vérifié ci-dessous).
+  assert.equal(future.committed, 10000);
+  assert.equal(future.variableRemaining, 15000);
+  assert.equal(future.available, after.available);
+});
+test("disponible : une charge fixe payée dans une catégorie budgétée n'entame pas son budget variable", () => {
+  const s = fixture();
+  const m = month();
+  s.rules = [{ id: "rent", name: "Loyer", account: "current", category: "food",
+    amount: 10000, start: today(), interval: 1, count: 1, kind: "fixed" }];
+  const before = monthEndAvailable(s);
+  assert.equal(before.fixed, 10000);
+  assert.equal(before.variableRemaining, 40000);
+  s.transactions.push({ id: "rent-paid", type: "expense", amount: 10000,
+    date: today(), description: "Loyer", account: "current", category: "food",
+    fixed: true, dueKey: dues(s, m)[0].key });
+  const after = monthEndAvailable(s);
+  assert.equal(after.fixed, 0);
+  // Le budget « Courses » reste entier : le loyer n'est pas une dépense variable.
+  assert.equal(after.variableRemaining, 40000);
+  assert.equal(after.available, before.available);
+});
+test("disponible : une catégorie liée à un compte personnel n'est pas réservée deux fois", () => {
+  const s = fixture();
+  s.categories[0].personalOwner = "owner";
+  const a = monthEndAvailable(s);
+  assert.equal(a.variableRemaining, 0);
 });
 test("disponible : retards réservés, échéances annulées et comptes séparés exclus", () => {
   const s = fixture();

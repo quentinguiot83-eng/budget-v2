@@ -1,9 +1,9 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { dateAt, emptyState, month, shiftMonth, today } from "./engine";
+import { dateAt, emptyState, month, shiftMonth, today, type State } from "./engine";
 import {
   emptyPersonalState, personalBalance, personalCashBalance, personalDues,
-  personalInstallmentRule, personalMonthOutgoings, personalProjection, validatePersonal,
+  personalInstallmentRule, personalMonthEndAvailable, personalMonthOutgoings, personalProjection, validatePersonal,
 } from "./personal";
 
 const nextMonth = shiftMonth(month(), 1);
@@ -113,4 +113,64 @@ test("dépense perso en plusieurs fois : montants et nombres invalides refusés"
   assert.throws(() => personalInstallmentRule({ ...base, count: 2.5 }), /entre 2 et 1200/);
   assert.throws(() => personalInstallmentRule({ ...base, interval: 2 }), /Fréquence/);
   assert.throws(() => personalInstallmentRule({ ...base, start: "" }), /Date/);
+});
+
+function household(): State {
+  const s = emptyState();
+  s.categories = [{ id: "perso", name: "Loisirs", icon: "other", budgets: {}, personalOwner: "owner" }];
+  return s;
+}
+
+test("disponible perso : solde moins budgets restants, sans double déduction", () => {
+  const p = emptyPersonalState();
+  p.account = account;
+  p.budgets = [{ id: "clothes", name: "Vêtements", amount: 10000, start: month() }];
+  const before = personalMonthEndAvailable(p, household(), "owner", month());
+  assert.equal(before.budgetRemaining, 10000);
+  assert.equal(before.available, 20000 /* opening */ + 0 /* expected */ - 10000);
+
+  p.transactions.push({ id: "achat", type: "expense", date: today(), amount: 4000,
+    description: "Pull", budgetId: "clothes", paymentMethod: "bank" });
+  const after = personalMonthEndAvailable(p, household(), "owner", month());
+  assert.equal(after.budgetRemaining, 6000);
+  assert.equal(after.available, before.available);
+});
+
+test("disponible perso : virement attendu du foyer augmente le disponible", () => {
+  const p = emptyPersonalState();
+  p.account = account;
+  const s = household();
+  s.categories[0].budgets = { [month()]: 15000 };
+  const a = personalMonthEndAvailable(p, s, "owner", month());
+  assert.equal(a.expected, 15000);
+  assert.equal(a.available, 20000 + 15000);
+});
+
+test("disponible perso : échéance oubliée un mois précédent reste réservée", () => {
+  const p = emptyPersonalState();
+  p.account = account;
+  const start = dateAt(shiftMonth(month(), -2), 5);
+  p.rules.push(personalInstallmentRule({
+    id: "tel", description: "Téléphone", amount: 5000, start, interval: 1, count: 6,
+  }));
+  const a = personalMonthEndAvailable(p, household(), "owner", month());
+  // Deux échéances passées (mois -2 et -1) jamais validées, plus celle de ce
+  // mois-ci si elle est déjà passée : aucune n'est vue par le suivi du mois.
+  const thisMonthDue = personalDues(p, month())[0];
+  const expectedOverdue = thisMonthDue.date < today() ? 15000 : 10000;
+  assert.equal(a.overdueCharges, expectedOverdue);
+  assert.equal(a.available, 20000 - expectedOverdue);
+
+  // Une fois validée, l'échéance la plus ancienne n'est plus réservée.
+  p.transactions.push({ id: "paiement", type: "expense", date: today(), amount: 5000,
+    description: "Téléphone", dueKey: personalDues(p, shiftMonth(month(), -2))[0].key,
+    paymentMethod: "bank" });
+  const b = personalMonthEndAvailable(p, household(), "owner", month());
+  assert.equal(b.overdueCharges, expectedOverdue - 5000);
+});
+
+test("disponible perso : sans compte, tout est à zéro", () => {
+  const p = emptyPersonalState();
+  assert.deepEqual(personalMonthEndAvailable(p, household(), "owner", month()),
+    { cash: 0, expected: 0, budgetRemaining: 0, uncovered: 0, overdueCharges: 0, available: 0 });
 });
