@@ -391,6 +391,25 @@ test("refus double validation échéance et référence inconnue", () => {
   s.transactions[0].account = "other-household";
   assert.throws(() => validate(s), /Compte inconnu/);
 });
+test("une dépense future isolée reste refusée ; une échéance ponctuelle est valide", () => {
+  const s = fixture();
+  const futureDate = dateAt(shiftMonth(month(), 1), 15);
+  // Sans échéance correspondante, une dépense future reste bloquée :
+  // c'est ce filet que « Dépense à venir » contourne en créant une échéance.
+  s.transactions.push({ id: "orpheline", type: "expense", account: "current",
+    amount: 5000, date: futureDate, description: "Dépense sans échéance" });
+  assert.throws(() => validate(s), /crée une échéance/);
+  s.transactions.pop();
+
+  // Une échéance ponctuelle (une seule fois) satisfait l'état sans dépense
+  // saisie : rien à valider tant qu'elle n'est pas due.
+  s.rules = [{ id: "cadeau", name: "Cadeau anniversaire", account: "current",
+    category: "food", amount: 5000, start: futureDate, interval: 1, count: 1, kind: "fixed" }];
+  assert.doesNotThrow(() => validate(s));
+  const due = dues(s, month(futureDate))[0];
+  assert.equal(due.date, futureDate);
+  assert.equal(due.paid, undefined);
+});
 test("plafond de solde, de versements, relais et reliquat", () => {
   const s = fixture();
   s.accounts[1].cap = 10000;

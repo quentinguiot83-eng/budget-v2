@@ -840,6 +840,28 @@ export function createTransactionActions(ctx: WimmCore & BaseActions & AccountAc
               "Le montant doit être supérieur à zéro.",
             );
 
+          // Une dépense datée dans le futur devient une échéance ponctuelle
+          // (une seule fois), à valider plus tard depuis les Dépenses
+          // fixes, plutôt que d'être bloquée faute d'échéance existante.
+          if (v.date > today()) {
+            await change(
+              (d) =>
+                createRule(d, {
+                  name: v.description || "Dépense programmée",
+                  amount,
+                  account: v.account,
+                  category: v.category,
+                  start: v.date,
+                  interval: 1,
+                  count: 1,
+                  kind: "fixed",
+                }),
+              "Dépense programmée pour le " + dateLabel(v.date),
+            );
+
+            return;
+          }
+
           ensureCashPayment(v.account,amount);
           await change(
             (d) =>

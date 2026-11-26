@@ -50,7 +50,7 @@ export default function FixedExpensesScreen({ view }: { view: WimmView }) {
             <button type="button" className="ws-row" onClick={() => editRule(r)}>
               <span className="ws-row-main">
                 <span className="ws-row-title">{r.name}</span>
-                <span className="ws-row-sub">{rhythm(r.interval)} · dès le {dateLabel(r.start)}</span>
+                <span className="ws-row-sub">{r.count === 1 ? "Un seul versement" : rhythm(r.interval)} · dès le {dateLabel(r.start)}</span>
               </span>
               <span className="ws-amount">{money(r.amount)}</span>
             </button>
