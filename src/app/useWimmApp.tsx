@@ -271,6 +271,7 @@ function useWimmCore() {
     "transactions",
     "analysis",
     "bank",
+    "loans",
   ];
   const categoryOptions: [string, string][] = s.categories
     .filter((c) => !c.archived || c.archived > selectedMonth)

@@ -1,4 +1,4 @@
-import { monthLabel, money, previousDate, today, dateLabel } from "../engine";
+import { monthLabel, money, previousDate, today, dateLabel, ruleProgress } from "../engine";
 import { SortableList } from "../SortableList";
 import SwipeActions from "../SwipeActions";
 import { BlockInfo } from "../ui";
@@ -73,15 +73,18 @@ export default function FixedExpensesScreen({ view }: { view: WimmView }) {
             </span>
             <button type="button" className="ws-link" onClick={() => navigate("loans")}>Gérer <ChevronRight size={16} aria-hidden="true"/></button>
           </div>
-          {credits.map(r => (
-            <button type="button" className="ws-row" key={r.id} onClick={() => editRule(r, "credit")}>
-              <span className="ws-row-main">
-                <span className="ws-row-title">{r.name}</span>
-                <span className="ws-row-sub">{r.count || 0} échéance(s) prévues</span>
-              </span>
-              <span className="ws-amount">{money(r.amount)} / mois</span>
-            </button>
-          ))}
+          {credits.map(r => {
+            const { paid } = ruleProgress(s, r);
+            return (
+              <button type="button" className="ws-row" key={r.id} onClick={() => editRule(r, "credit")}>
+                <span className="ws-row-main">
+                  <span className="ws-row-title">{r.name}</span>
+                  <span className="ws-row-sub">{paid}/{r.count || 0} échéances</span>
+                </span>
+                <span className="ws-amount">{money(r.amount)} / mois</span>
+              </button>
+            );
+          })}
         </section>
       )}
     </div>

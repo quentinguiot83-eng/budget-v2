@@ -1422,6 +1422,25 @@ export function loanRemaining(s: State, id: string) {
 
 }
 
+/**
+ * Avancement d'un échéancier (crédit, charge fixe à versement unique…) :
+ * échéances déjà réglées, restantes (ni payées ni annulées) et montant
+ * correspondant encore dû.
+ */
+export function ruleProgress(s: State, r: Rule) {
+  let paid = 0, remainingCount = 0, remaining = 0;
+  for (let i = 0; i < (r.count || 0); i++) {
+    const date = addMonths(r.start, i * r.interval);
+    const key = r.id + ":" + date;
+    if (s.transactions.some((t) => t.dueKey === key)) { paid++; continue; }
+    if ((!r.end || date <= r.end) && !s.cancelled.includes(key)) {
+      remaining += r.amount;
+      remainingCount++;
+    }
+  }
+  return { paid, remainingCount, remaining };
+}
+
 export function allocation(
 
   s: State,
