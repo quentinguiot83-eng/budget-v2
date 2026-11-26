@@ -321,7 +321,7 @@ export function createBudgetActions(ctx: WimmCore & BaseActions & AccountActions
     return (<button type="button" className="ws-info" aria-label="Informations : Disponible jusqu’à la fin du mois" onClick={() => explain(
             "Calcul du disponible jusqu’à la fin du mois",
             <>
-              <p>Après les paiements à venir, les projets du mois et l’épargne à effectuer.</p>
+              <p>Après les paiements à venir, les budgets variables restants, les projets du mois et l’épargne à effectuer.</p>
               <p>Calcul au {dateLabel(today())} · jusqu’au {dateLabel(a.end)}</p>
               <Row title="Solde actuel des comptes courants" value={money(a.cash)} />
               <Row title="Charges et échéances encore à payer" value={"− " + money(a.fixed)} />
@@ -330,6 +330,7 @@ export function createBudgetActions(ctx: WimmCore & BaseActions & AccountActions
                 value={money(d.rule.amount)} />)}
               <Row title="Sorties déjà saisies avec une date future" value={"− " + money(a.committed)} />
               <Row title="Revenus réservés aux mois suivants" value={"− " + money(a.futureIncome)} />
+              <Row title="Budgets variables restants (courses, sorties…)" value={"− " + money(a.variableRemaining)} />
               <Row title="Épargne restant à verser" value={"− " + money(a.savings)} />
               <Row title="Projets à financer ce mois sur le compte courant" value={"− " + money(a.projectReserve)} />
               {a.projects.filter((p) => p.amount > 0).map((p) => <Row key={p.project.id}
@@ -338,9 +339,9 @@ export function createBudgetActions(ctx: WimmCore & BaseActions & AccountActions
               <p>Les opérations déjà payées sont dans le solde et ne sont pas déduites une deuxième fois.
                 Les revenus futurs et remboursements attendus ne sont pas ajoutés tant qu’ils ne sont pas reçus.
                 Les échéances annuelles et trimestrielles sont réservées uniquement à leur échéance.</p>
-              <p>Ce montant sert à tes dépenses variables, comme les courses et les sorties :
-                leurs budgets ne sont pas déduits à nouveau. Les dépenses non saisies ne peuvent pas être anticipées.
-                Le solde dépend de tes saisies dans Wimm.</p>
+              <p>Ce montant correspond à ce qu’il reste une fois tes budgets variables couverts :
+                tu peux le dépenser sur autre chose sans toucher aux courses ou sorties déjà prévues.
+                Les dépenses non saisies ne peuvent pas être anticipées. Le solde dépend de tes saisies dans Wimm.</p>
               {!a.hasRealIncome && <p>L’épargne sera réservée après la saisie des revenus affectés à ce mois.</p>}
             </>,
           )}><Info size={17} /></button>);
@@ -355,7 +356,7 @@ export function createBudgetActions(ctx: WimmCore & BaseActions & AccountActions
         <h2>Disponible jusqu’à la fin du mois</h2>{availableInfoButton()}
       </div></div>
       <strong className={`large${a.available < 0 ? " negative" : ""}`}>{money(a.available)}</strong>
-      <small className="available-card-caption">Après les échéances et l’épargne prévues</small>
+      <small className="available-card-caption">Après les échéances, les budgets variables et l’épargne prévus</small>
       {a.available < 0 && <p className="negative">Il manque {money(-a.available)} pour couvrir les sommes réservées.</p>}
       {!a.hasRealIncome && <p className="muted">Épargne non encore réservée : aucun revenu affecté à ce mois n’a été saisi.</p>}
     </section>;

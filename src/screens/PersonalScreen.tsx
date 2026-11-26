@@ -1,5 +1,5 @@
 import { personalBudgetEnvelope, month, dateLabel, money, today, monthLabel, shiftMonth, personalTransferBudgetAmount } from "../engine";
-import { personalBalance, personalCashBalance, personalMonthOutgoings, personalProjection, personalDues } from "../personal";
+import { personalBalance, personalCashBalance, personalMonthEndAvailable, personalProjection, personalDues } from "../personal";
 import PersonalPageStyles from "../PersonalPageStyles";
 import { SortableList } from "../SortableList";
 import SwipeActions from "../SwipeActions";
@@ -251,9 +251,9 @@ export default function PersonalScreen({ view }: { view: WimmView }) {
         const privateBudgetSpent = activePrivateBudgets.reduce((sum,b)=>sum+personalSpentForBudget(b.id),0);
         const privateBudgetPlanned = activePrivateBudgets.reduce((sum,b)=>sum+personalPlannedForBudget(b.id),0);
         const privateBudgetLeft = privateBudgetsTotal - privateBudgetSpent - privateBudgetPlanned;
-        const personalOutgoings = personalMonthOutgoings(ps, selectedMonth);
-        const personalEndOfMonth=privateBalance+Math.max(0,envelope.remaining)-
-          personalOutgoings.budgetRemaining-personalOutgoings.uncovered;
+        const personalEndOfMonth = personalMonthEndAvailable(
+          ps, s, personalOwnerId, selectedMonth,
+        ).available;
         const activeAdvances = s.transactions.filter(t =>
           t.type === "personal_transfer" &&
           t.personalOwner === personalOwnerId &&

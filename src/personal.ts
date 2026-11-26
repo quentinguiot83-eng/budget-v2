@@ -273,6 +273,41 @@ export function personalMonthOutgoings(p: PersonalState, m: string, asOf = today
   };
 }
 
+/**
+ * Disponible estimé du compte perso jusqu'à la fin du mois, sur le même
+ * principe que le disponible du foyer : solde actuel, plus ce qui reste à
+ * virer depuis le budget commun, moins les budgets personnels restants, les
+ * dépenses déjà prévues hors budget et les paiements en plusieurs fois non
+ * réglés — y compris ceux oubliés un mois précédent, que le suivi du mois
+ * en cours ne voit pas.
+ */
+export function personalMonthEndAvailable(
+  p: PersonalState, s: State, ownerId: string, m: string,
+) {
+  if (!p.account)
+    return { cash: 0, expected: 0, budgetRemaining: 0, uncovered: 0, overdueCharges: 0, available: 0 };
+
+  const asOf = today();
+  const cash = personalBalance(p, s, ownerId, asOf);
+  const envelope = personalBudgetEnvelope(s, ownerId, p.account.category, m, month(p.account.date));
+  const expected = Math.max(0, envelope.remaining);
+  const outgoings = personalMonthOutgoings(p, m, asOf);
+
+  // Échéances en retard jamais validées — d'un mois précédent, ou de ce
+  // mois-ci mais déjà passées : le suivi du mois en cours ne regarde que
+  // celles encore à venir (personalMonthOutgoings), pas celles-là.
+  let cursor = p.rules.map(r => month(r.start)).sort()[0] || m;
+  let overdueCharges = 0;
+  while (cursor <= m) {
+    for (const d of personalDues(p, cursor)) if (!d.paid && d.date < asOf) overdueCharges += d.rule.amount;
+    cursor = shiftMonth(cursor, 1);
+  }
+
+  const available = cash + expected - outgoings.budgetRemaining - outgoings.uncovered - overdueCharges;
+  return { cash, expected, budgetRemaining: outgoings.budgetRemaining,
+    uncovered: outgoings.uncovered, overdueCharges, available };
+}
+
 export function personalProjection(
   p: PersonalState,
   shared: State,

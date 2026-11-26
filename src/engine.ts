@@ -996,9 +996,25 @@ export function monthEndAvailable(s: State) {
   });
   const projectReserve = projects.reduce((sum, p) => sum + p.amount, 0);
 
-  const available = cash - fixed - committed - futureIncome - savings - projectReserve;
+  // Reste des budgets variables (courses, sorties…) : compté une seule fois
+  // même pour une dépense déjà saisie à l'avance (prise en compte ici,
+  // qu'elle soit passée ou future, plutôt que dans « committed »).
+  // Les catégories liées à un compte personnel ont déjà leur propre réserve
+  // (« reste à virer », visible dans Budget) : elles ne sont pas reprises ici.
+  const variableRemaining = s.categories.reduce((sum, c) => {
+    if (c.personalOwner || personalAccountForCategory(s, c.id)) return sum;
+    // budget(c, m) est la part strictement variable : les échéances fixes
+    // liées à la catégorie sont déjà réservées via « fixed » ci-dessus.
+    const spent = s.transactions.filter((t) =>
+      t.type === "expense" && t.category === c.id && !t.trip && !t.fixed &&
+      month(t.date) === m && ids.has(t.account),
+    ).reduce((n, t) => n + t.amount, 0);
+    return sum + Math.max(0, budget(c, m) - spent);
+  }, 0);
+
+  const available = cash - fixed - committed - futureIncome - savings - projectReserve - variableRemaining;
   return { cash, fixed, pending, committed, futureIncome, savings,
-    projects, projectReserve, available, end, hasRealIncome: monthly.income > 0 };
+    projects, projectReserve, variableRemaining, available, end, hasRealIncome: monthly.income > 0 };
 }
 
 export function deposits(s: State, id: string) {
