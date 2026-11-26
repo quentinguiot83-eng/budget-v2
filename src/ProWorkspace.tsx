@@ -34,6 +34,8 @@ import MoneyInput from "./MoneyInput";
 import ProClientPicker, {type ProClientDraft, type ProClientChoice} from "./ProClientPicker";
 import ProDashboard from "./ProDashboard";
 import ProMicroStatus, {ProMicroSettings} from "./ProMicroStatus";
+import ProSetup from "./ProSetup";
+import {proSetupNeeded} from "./proSetup";
 import {microEffectiveRates,microSummary,type MicroSettings} from "./proMicro";
 import ProAnalysis from "./ProAnalysis";
 import ProRecurringExpenses from "./ProRecurringExpenses";
@@ -98,12 +100,14 @@ function readMicroPreferences(businessId:string,existingTaxRate:number):MicroSet
 const eventLabel:Record<string,string>={appointment:"Rendez-vous",shooting:"Prestation",deadline:"Échéance",admin:"Administratif",other:"Autre"};
 
 export default function ProWorkspace({
-  native = false, onOpenQuickAdd, householdCurrentAccounts = [], onHouseholdRefresh,
+  native = false, onOpenQuickAdd, householdCurrentAccounts = [], onHouseholdRefresh, onSetupActiveChange,
 }: {
   native?: boolean;
   onOpenQuickAdd?: ()=>void;
   householdCurrentAccounts?: PersonalAccount[];
   onHouseholdRefresh?: ()=>Promise<void>;
+  /** Le premier démarrage de l'entreprise active est en cours : masquer le « + » ailleurs dans l'app. */
+  onSetupActiveChange?: (active: boolean) => void;
 }){
   const [enabled,setEnabled]=useState(native);
   const [open,setOpen]=useState(native);
@@ -112,6 +116,9 @@ export default function ProWorkspace({
   useEffect(()=>{if(section!=="agenda"&&selectedProMonth>currentProMonth())setSelectedProMonth(currentProMonth());},[section,selectedProMonth]);
   const [billingQuickCreate,setBillingQuickCreate]=useState<"quote"|"invoice"|"recurrence"|null>(null);
   const [suite,setSuite]=useState<Suite|null>(null);
+  // Décidée une seule fois par entreprise active, pour ne pas disparaître en
+  // cours d'assistant dès que la première étape enregistre un taux.
+  const [setupDecision,setSetupDecision]=useState<Record<string,boolean>>({});
   const [modal,setModal]=useState<Modal>({type:"none"});
   const [error,setError]=useState("");
   const [notice,setNotice]=useState("");
@@ -299,6 +306,14 @@ export default function ProWorkspace({
     }
   }
 
+  const activeBusinessKey=suite?.activeBusinessId??"";
+  useEffect(()=>{
+    if(!suite||!activeBusinessKey)return;
+    setSetupDecision(prev=>activeBusinessKey in prev?prev:{...prev,[activeBusinessKey]:proSetupNeeded(suite)});
+  },[suite,activeBusinessKey]);
+  const showSetup=!!activeBusinessKey&&(setupDecision[activeBusinessKey]??(suite?proSetupNeeded(suite):false));
+  useEffect(()=>{onSetupActiveChange?.(section==="dashboard"&&showSetup);},[section,showSetup,onSetupActiveChange]);
+  useEffect(()=>()=>onSetupActiveChange?.(false),[onSetupActiveChange]);
   const reserveProfile=suite?.profile.legalStatus==="micro"?microEffectiveRates(suite.profile,microSettings):suite?.profile??null;
   const micro=suite?.profile.legalStatus==="micro"?microSummary(suite.transactions,suite.profile,selectedProMonth,microSettings):null;
   const transactions=suite?.transactions??[];
@@ -357,12 +372,24 @@ export default function ProWorkspace({
         </nav>
         <main className="prosuite-main">
           {error&&<div className="prosuite-error">{error}</div>}{notice&&<div className="prosuite-notice">{notice}</div>}
-          {["dashboard","analysis","agenda"].includes(section)&&
+          {["dashboard","analysis","agenda"].includes(section)&&!(section==="dashboard"&&showSetup)&&
             <ProMonthNavigator month={selectedProMonth} onChange={setSelectedProMonth} allowFuture={section==="agenda"}
                recordedMonths={[...(suite?.transactions.map(t=>t.date.slice(0,7))??[]),currentProMonth()]}/>}
           
           {busy&&!suite?<div className="prosuite-loading">Chargement…</div>:suite&&<>
-            {section==="dashboard"&&<ProDashboard
+            {section==="dashboard"&&showSetup&&<ProSetup
+              initialName={suite.profile.businessName}
+              busy={busy}
+              onActivity={async(result)=>{
+                const ok=await call("budget_pro_profile_save",{p_profile:{...suite.profile,...result.profile}});
+                if(ok)saveMicroSettings({frequency:result.frequency,taxMode:result.taxMode});
+                return ok;
+              }}
+              onAccount={async(amount)=>call("budget_pro_account_save",{p_account:{name:suite.account.name,openingBalance:amount}})}
+              onBilling={async(billing)=>call("budget_pro_billing_save",{p_settings:{...suite.billing,...billing}},"Wimm Pro est prêt.")}
+              onDone={()=>setSetupDecision(prev=>({...prev,[activeBusinessKey]:false}))}
+            />}
+            {section==="dashboard"&&!showSetup&&<ProDashboard
               month={selectedProMonth}
               invoices={suite.invoices}
               events={suite.events}
@@ -406,7 +433,7 @@ export default function ProWorkspace({
             {section==="billing"&&<ProBillingV2 suite={suite} initialAction={billingQuickCreate} onSuite={next=>setSuite(next as Suite)} setError={setError} setNotice={setNotice}/>} 
             {section==="clients"&&<CatalogPage products={suite.products} add={()=>setModal({type:"product"})} edit={p=>setModal({type:"product",product:p})} remove={p=>void removeProduct(p)}/>} 
             {section==="agenda"&&<AgendaPage month={selectedProMonth} connect={suite.activeBusinessId?()=>setModal({type:"calendar",businessId:suite.activeBusinessId!}):undefined} events={suite.events} clients={suite.clients} add={date=>setModal({type:"event",initialDate:date})} edit={e=>setModal({type:"event",event:e})} remove={e=>void removeEvent(e)}/>}
-            {section==="dashboard"&&reserves&&<TreasuryPage
+            {section==="dashboard"&&!showSetup&&reserves&&<TreasuryPage
               month={selectedProMonth} suite={suite} reserves={reserves}
               micro={micro} microSettings={microSettings}
               contributionPay={()=>setModal({type:"payment",paymentType:"contribution"})}
@@ -415,7 +442,7 @@ export default function ProWorkspace({
               removeTx={id=>void removeTx(id)}
               editPayment={t=>setModal({type:"payment",paymentType:t.kind==="contribution_payment"?"contribution":"tax",payment:t})}
             />}
-            {section==="dashboard"&&<ProRecurringExpenses businessId={suite.activeBusinessId??""} month={selectedProMonth} onPaid={()=>void load()}/>}
+            {section==="dashboard"&&!showSetup&&<ProRecurringExpenses businessId={suite.activeBusinessId??""} month={selectedProMonth} onPaid={()=>void load()}/>}
           </>}
         </main>
       </div>

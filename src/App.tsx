@@ -1,6 +1,7 @@
 // Ordre des feuilles de style des composants, figé pour garder la cascade
 // d'avant le découpage d'App.tsx (Vite les applique dans l'ordre de première
 // importation ; les modules ci-dessous les importent aussi).
+import { useState } from "react";
 import { tripPhase } from "./projectGoals";
 import "./SettingsNavigation.css";
 import "./inline-category-creator.css";
@@ -37,6 +38,8 @@ import SettingsScreen from "./screens/SettingsScreen";
 
 export default function App() {
   const app = useWimmApp();
+  // Masqué pendant le tout premier démarrage de Wimm Pro (ProWorkspace).
+  const [proSetupActive, setProSetupActive] = useState(false);
   const {
     authMode, change, current, doc, error, loading, notice, session, setAuthMode, setDoc,
     setError, setNotice, setProEnabled, setSession, setSignupEmail, signupEmail,
@@ -314,7 +317,7 @@ export default function App() {
           <WimmWordmark />
         </button>
         <p className="eyebrow">{doc.household.name}</p>
-        <button
+        {!(route==="pro"&&proSetupActive)&&<button
           type="button"
           ref={desktopQuickAddButtonRef}
           className="desktop-quick-add"
@@ -325,7 +328,7 @@ export default function App() {
           onClick={()=>tripForAdd?operation("expense", tripForAdd):route==="pro"||route==="personal"?setMobileQuickAddOpen(v=>!v):navigate("add")}
         >
           <Plus size={19}/> {tripForAdd?"Dépense de voyage":route==="pro"?"Ajouter dans Wimm Pro":route==="personal"?"Ajouter au compte perso":"Ajouter une opération"}
-        </button>
+        </button>}
         <nav data-tour="desktop-nav" className="desktop-sidebar-nav" aria-label="Navigation ordinateur">
           {desktopNavGroups.map(group=>(
             <div className="desktop-nav-section" key={group.title}>
@@ -494,7 +497,7 @@ export default function App() {
               </button>
             </section>
           )}
-          {route === "pro" && <ProWorkspace native onOpenQuickAdd={()=>setMobileQuickAddOpen(true)} householdCurrentAccounts={currentAccounts.map(a=>({id:a.id,name:a.name,archived:a.archived}))} onHouseholdRefresh={load} />}
+          {route === "pro" && <ProWorkspace native onOpenQuickAdd={()=>setMobileQuickAddOpen(true)} householdCurrentAccounts={currentAccounts.map(a=>({id:a.id,name:a.name,archived:a.archived}))} onHouseholdRefresh={load} onSetupActiveChange={setProSetupActive} />}
           {route === "home" && <HomeScreen view={view} />}
           {route === "budget" && <BudgetScreen view={view} />}
           {route === "fixed" && <FixedExpensesScreen view={view} />}
@@ -633,7 +636,7 @@ export default function App() {
           </div>
         </div>
       )}
-      <button
+      {!(route==="pro"&&proSetupActive)&&<button
         ref={quickAddButtonRef}
         type="button"
         className={mobileQuickAddOpen ? "floating-add-button open" : "floating-add-button"}
@@ -645,7 +648,7 @@ export default function App() {
         onClick={() => { if (tripForAdd && !mobileQuickAddOpen) operation("expense", tripForAdd); else setMobileQuickAddOpen(v => !v); }}
       >
         <Plus size={30} strokeWidth={2.2} className="floating-add-symbol" aria-hidden="true"/>
-      </button>
+      </button>}
       {sheet && (
         <Modal title={sheet.title} close={() => !saving && setSheet(null)}>
           {sheet.body}
