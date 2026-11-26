@@ -2470,7 +2470,9 @@ export function validate(s: State) {
 
     }
 
-    if (t.date > today() && !t.dueKey)
+    // Un revenu futur (ex. versement attendu) n'a pas d'échéance à créer :
+    // il n'existe aucun échéancier de revenus, contrairement aux dépenses.
+    if (t.date > today() && !t.dueKey && t.type !== "income")
 
   throw Error("Pour une opération future, crée une échéance.");
 
