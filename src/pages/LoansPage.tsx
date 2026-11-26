@@ -6,10 +6,10 @@ import {
   type State,
   type Rule,
   today,
-  addMonths,
   money,
   dateLabel,
   loanRemaining,
+  ruleProgress,
 } from "../engine";
 
 type LoansPageProps = {
@@ -38,19 +38,7 @@ export default function LoansPage({
 }: LoansPageProps) {
 
   const credits = state.rules.filter(r => r.kind === "credit" && (!r.end || r.end >= today()));
-  const remainingOf = (r: Rule) => {
-    let remaining = 0, count = 0, paid = 0;
-    for (let i = 0; i < (r.count || 0); i++) {
-      const date = addMonths(r.start, i * r.interval);
-      const key = r.id + ":" + date;
-      if (state.transactions.some(t => t.dueKey === key)) { paid++; continue; }
-      if ((!r.end || date <= r.end) && !state.cancelled.includes(key)) {
-        remaining += r.amount; count++;
-      }
-    }
-    return { remaining, count, paid };
-  };
-  const totalCredits = credits.reduce((n, r) => n + remainingOf(r).remaining, 0);
+  const totalCredits = credits.reduce((n, r) => n + ruleProgress(state, r).remaining, 0);
   const totalLent = state.loans.reduce((n, l) => n + loanRemaining(state, l.id), 0);
 
   return (
@@ -73,7 +61,7 @@ export default function LoansPage({
           <button type="button" className="ws-link" onClick={() => editRule(undefined, "credit")}><Plus size={16} aria-hidden="true"/>Paiement en plusieurs fois</button>
         </div>
         {credits.map(r => {
-          const { remaining, paid } = remainingOf(r);
+          const { remaining, paid } = ruleProgress(state, r);
           return (
             <SwipeActions key={r.id} label={r.name} className="credit-swipe-row" actions={[
               { label: "Modifier", icon: <Pencil size={17}/>, onClick: () => editRule(r, "credit") },
@@ -82,7 +70,7 @@ export default function LoansPage({
               <button type="button" className="ws-row" onClick={() => editRule(r, "credit")}>
                 <span className="ws-row-main">
                   <span className="ws-row-title">{r.name}</span>
-                  <span className="ws-row-sub">{money(r.amount)} / mois · {paid} sur {r.count} échéances</span>
+                  <span className="ws-row-sub">{money(r.amount)} / mois · {paid}/{r.count} échéances</span>
                 </span>
                 <span className="ws-amount">{money(remaining)}</span>
               </button>

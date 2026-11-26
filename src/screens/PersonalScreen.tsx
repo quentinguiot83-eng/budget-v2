@@ -850,7 +850,7 @@ export default function PersonalScreen({ view }: { view: WimmView }) {
                       </small>
 
                       <small>
-                        {paidCount} sur {r.count} échéances
+                        {paidCount}/{r.count} échéances
                       </small>
                     </div>
 

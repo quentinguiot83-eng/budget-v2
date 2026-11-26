@@ -12,6 +12,8 @@ import {
   allocation,
   project,
   loanRemaining,
+  ruleProgress,
+  type Rule,
   today,
   month,
   monthEndAvailable,
@@ -418,6 +420,22 @@ test("un revenu futur reste valide sans échéance : il n'existe pas d'échéanc
   assert.doesNotThrow(() => validate(s));
   // Pas encore compté dans le solde actuel, puisqu'il n'est pas encore arrivé.
   assert.equal(balance(s, "current"), 100000);
+});
+test("avancement d'un échéancier : échéances payées, en cours et annulées", () => {
+  const s = fixture();
+  const start = dateAt(shiftMonth(month(), -1), 5);
+  const rule: Rule = { id: "credit", name: "Canapé", account: "current",
+    category: "food", amount: 10000, start, interval: 1, count: 4, kind: "credit" };
+  s.rules = [rule];
+  assert.deepEqual(ruleProgress(s, rule), { paid: 0, remainingCount: 4, remaining: 40000 });
+
+  s.transactions.push({ id: "p1", type: "expense", account: "current", amount: 10000,
+    date: start, description: "Canapé", dueKey: dues(s, shiftMonth(month(), -1))[0].key });
+  assert.deepEqual(ruleProgress(s, rule), { paid: 1, remainingCount: 3, remaining: 30000 });
+
+  // Une échéance annulée n'est ni payée ni comptée comme restant à régler.
+  s.cancelled.push(dues(s, month())[0].key);
+  assert.deepEqual(ruleProgress(s, rule), { paid: 1, remainingCount: 2, remaining: 20000 });
 });
 test("plafond de solde, de versements, relais et reliquat", () => {
   const s = fixture();
