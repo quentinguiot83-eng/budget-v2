@@ -831,12 +831,7 @@ export default function PersonalScreen({ view }: { view: WimmView }) {
                       <small>
                         {money(
                           r.amount,
-                        )}{" "}
-                        · {r.count} paiement
-                        {r.count >
-                        1
-                          ? "s"
-                          : ""}
+                        )}
                       </small>
 
                       <small>
@@ -855,25 +850,7 @@ export default function PersonalScreen({ view }: { view: WimmView }) {
                       </small>
 
                       <small>
-                        {paidCount} validé
-                        {paidCount >
-                        1
-                          ? "s"
-                          : ""}{" "}
-                        ·{" "}
-                        {Math.max(
-                          0,
-                          r.count -
-                            paidCount,
-                        )}{" "}
-                        restant
-                        {Math.max(
-                          0,
-                          r.count -
-                            paidCount,
-                        ) > 1
-                          ? "s"
-                          : ""}
+                        {paidCount} sur {r.count} échéances
                       </small>
                     </div>
 

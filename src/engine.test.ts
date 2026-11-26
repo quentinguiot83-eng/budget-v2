@@ -410,6 +410,15 @@ test("une dépense future isolée reste refusée ; une échéance ponctuelle est
   assert.equal(due.date, futureDate);
   assert.equal(due.paid, undefined);
 });
+test("un revenu futur reste valide sans échéance : il n'existe pas d'échéancier de revenus", () => {
+  const s = fixture();
+  const futureDate = dateAt(shiftMonth(month(), 1), 15);
+  s.transactions.push({ id: "a-venir", type: "income", account: "current",
+    amount: 50000, date: futureDate, description: "Remboursement attendu" });
+  assert.doesNotThrow(() => validate(s));
+  // Pas encore compté dans le solde actuel, puisqu'il n'est pas encore arrivé.
+  assert.equal(balance(s, "current"), 100000);
+});
 test("plafond de solde, de versements, relais et reliquat", () => {
   const s = fixture();
   s.accounts[1].cap = 10000;
